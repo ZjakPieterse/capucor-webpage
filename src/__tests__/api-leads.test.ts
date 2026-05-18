@@ -60,6 +60,9 @@ describe('POST /api/leads', () => {
     expect(inserted.consent_given).toBe(true);
     expect(typeof inserted.consent_timestamp).toBe('string');
     expect(() => new Date(inserted.consent_timestamp as string).toISOString()).not.toThrow();
+    // P2: consent_version + consent_language stamped from server constants
+    expect(inserted.consent_version).toBe('v1');
+    expect(inserted.consent_language).toBe('en-ZA');
   });
 
   it('2. honeypot — silently 200s without inserting', async () => {
@@ -90,7 +93,12 @@ describe('POST /api/leads', () => {
   });
 
   it('5. zod invalid — missing name returns 422 with field', async () => {
-    const { name: _drop, ...withoutName } = validBody;
+    const withoutName = {
+      source: validBody.source,
+      email: validBody.email,
+      business: validBody.business,
+      consent_given: validBody.consent_given,
+    };
     const res = await POST(makeJsonRequest('http://test/api/leads', withoutName));
     expect(res.status).toBe(422);
     const body = await res.json();

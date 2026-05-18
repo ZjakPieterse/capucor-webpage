@@ -55,7 +55,12 @@ export function MobileTotalBar({
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={scrollToSummary}
+          aria-label="Jump to subscription summary"
+          className="min-w-0 flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:bg-primary/5"
+        >
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
             <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
               {activeSlugs.length} service{activeSlugs.length === 1 ? '' : 's'}
@@ -75,7 +80,7 @@ export function MobileTotalBar({
           ) : (
             <p className="text-sm text-muted-foreground">Pick a tier to see the total</p>
           )}
-        </div>
+        </button>
 
         {selectedTierSlug ? (
           <MagneticButton>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LeadSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
@@ -61,6 +62,8 @@ export async function POST(req: NextRequest) {
       ...fields,
       consent_given,
       consent_timestamp: new Date().toISOString(),
+      consent_version: CONSENT_VERSION,
+      consent_language: CONSENT_LANGUAGE,
     });
 
     if (dbError) throw dbError;
