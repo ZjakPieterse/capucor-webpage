@@ -27,7 +27,7 @@ import { siteConfig } from '@/config/site';
  */
 
 export const metadata: Metadata = {
-  title: 'Welcome to Capucor',
+  title: 'Welcome',
   description: 'Your subscription is active. Book your handover call to get started.',
   robots: { index: false, follow: false },
   alternates: { canonical: `${siteConfig.url}/onboarding` },

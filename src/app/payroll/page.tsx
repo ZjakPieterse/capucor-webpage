@@ -7,7 +7,7 @@ import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
-  title: 'Payroll',
+  title: 'Payroll for SA Businesses',
   description:
     'Accurate, compliant payroll for South African staff teams of any size. PAYE, UIF, and IRP5s handled.',
   alternates: { canonical: `${siteConfig.url}/payroll` },
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.url}/payroll`,
-    title: 'Payroll — Capucor Business Solutions',
     description:
       'Accurate, compliant payroll for South African staff teams of any size. PAYE, UIF, and IRP5s handled.',
     images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],

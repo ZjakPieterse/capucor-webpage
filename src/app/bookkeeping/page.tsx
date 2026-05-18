@@ -7,7 +7,7 @@ import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
-  title: 'Bookkeeping',
+  title: 'Bookkeeping for SA SMEs',
   description:
     'Real-time bookkeeping for South African SMEs. Monthly reconciliations, management accounts, and Xero included.',
   alternates: { canonical: `${siteConfig.url}/bookkeeping` },
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.url}/bookkeeping`,
-    title: 'Bookkeeping — Capucor Business Solutions',
     description:
       'Real-time bookkeeping for South African SMEs. Monthly reconciliations, management accounts, and Xero included.',
     images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],

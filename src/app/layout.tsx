@@ -8,7 +8,7 @@ import './globals.css';
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Capucor Business Solutions — Outsourced Finance for SMEs',
+    default: 'Capucor Business Solutions | Outsourced Finance for SMEs',
     template: '%s | Capucor Business Solutions',
   },
   description: siteConfig.description,
@@ -25,14 +25,20 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_ZA',
     url: siteConfig.url,
-    title: 'Capucor Business Solutions — Outsourced Finance for SMEs',
+    title: {
+      default: 'Capucor Business Solutions | Outsourced Finance for SMEs',
+      template: '%s | Capucor Business Solutions',
+    },
     description: siteConfig.description,
     siteName: siteConfig.name,
     images: [{ url: '/api/og', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Capucor Business Solutions',
+    title: {
+      default: 'Capucor Business Solutions',
+      template: '%s | Capucor Business Solutions',
+    },
     description: siteConfig.description,
     images: ['/api/og'],
   },

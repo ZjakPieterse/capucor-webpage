@@ -17,14 +17,14 @@ import { ScrollToTopOnMount } from '@/components/landing/ScrollToTopOnMount';
 
 export function generateMetadata(): Metadata {
   return {
-    title: 'Capucor Business Solutions — Outsourced Finance for SMEs',
+    title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },
     description: siteConfig.description,
     alternates: { canonical: siteConfig.url },
     openGraph: {
       type: 'website',
       locale: 'en_ZA',
       url: siteConfig.url,
-      title: 'Capucor Business Solutions — Outsourced Finance for SMEs',
+      title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },
       description: siteConfig.description,
       siteName: siteConfig.name,
       images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],

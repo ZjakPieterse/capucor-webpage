@@ -14,7 +14,6 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.url}/pricing`,
-    title: 'Pricing Calculator — Capucor Business Solutions',
     description:
       'Build your exact subscription. Transparent, fixed monthly pricing for accounting, bookkeeping, and payroll.',
     images: [{ url: `${siteConfig.url}/api/og?page=pricing`, width: 1200, height: 630 }],

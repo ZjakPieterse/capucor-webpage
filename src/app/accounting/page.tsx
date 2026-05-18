@@ -7,7 +7,7 @@ import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
-  title: 'Accounting',
+  title: 'Outsourced Accounting for SMEs',
   description:
     'Annual financial statements, tax returns, and CIPC compliance for South African SMEs. Done properly, on time.',
   alternates: { canonical: `${siteConfig.url}/accounting` },
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.url}/accounting`,
-    title: 'Accounting — Capucor Business Solutions',
     description:
       'Annual financial statements, tax returns, and CIPC compliance for South African SMEs. Done properly, on time.',
     images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],
