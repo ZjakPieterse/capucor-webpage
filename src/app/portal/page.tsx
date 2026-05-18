@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import {
+  ArrowRight,
   CheckCircle2,
   Calendar,
   FileText,
@@ -192,12 +194,19 @@ export default async function PortalPage() {
               <FileText className="h-4 w-4 text-primary" />
               Documents
             </h2>
-            <div className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
-              <Lock className="h-5 w-5 mx-auto text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Your monthly P&amp;L, balance sheet, VAT201 confirmations and IRP5s will appear here as the month closes.
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+              Your monthly P&amp;L, balance sheet, VAT201 confirmations and IRP5s live in your shared Drive folder. Drop receipts and supporting documents into the same folder.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              className="gap-2"
+              render={<Link href="/portal/documents" />}
+            >
+              Open documents
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
           </section>
         </div>
 
