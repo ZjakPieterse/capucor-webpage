@@ -234,6 +234,13 @@ export default async function PortalPage() {
                 </dd>
               </div>
             </dl>
+            <Link
+              href="/portal/billing"
+              className="mt-5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              View billing history
+              <ArrowRight className="h-3 w-3" />
+            </Link>
           </section>
 
           <section className="rounded-xl border border-primary/25 bg-primary/[0.04] p-6">
