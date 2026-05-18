@@ -9,22 +9,8 @@ import {
   Clock3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PreviewLockedNotice } from '@/components/portal/PreviewLockedNotice';
-import { isPreviewAllowed } from '@/lib/preview-gate';
+import { requireSession } from '@/lib/auth/requireSession';
 import { siteConfig } from '@/config/site';
-
-/**
- * /onboarding — landing page after Paystack checkout completes.
- *
- * FRAMEWORK STUB. When Paystack is wired:
- *   - Read `?ref=...` and `?subscription=...` query params on the server
- *   - Verify the Paystack transaction status via the Paystack verify endpoint
- *   - Pull the subscription row from Supabase and render its real summary
- *   - Show the team member assigned to the account once we have one
- *
- * For now: a generic post-activation welcome with a Calendly slot booker
- * for the handover call.
- */
 
 export const metadata: Metadata = {
   title: 'Welcome',
@@ -56,20 +42,8 @@ const NEXT_STEPS = [
   },
 ];
 
-interface OnboardingPageProps {
-  searchParams: Promise<{ preview?: string | string[] }>;
-}
-
-export default async function OnboardingPage({ searchParams }: OnboardingPageProps) {
-  const { preview } = await searchParams;
-  if (!isPreviewAllowed(preview)) {
-    return (
-      <PreviewLockedNotice
-        title="You're nearly in."
-        body="Paystack checkout isn't live yet, so this welcome flow is gated. Leave your email and we'll loop you in the moment subscriptions open."
-      />
-    );
-  }
+export default async function OnboardingPage() {
+  await requireSession();
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-16 lg:py-24">
@@ -147,7 +121,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         <Button
           variant="outline"
           nativeButton={false}
-          render={<Link href="/client-portal" />}
+          render={<Link href="/portal" />}
         >
           Go to your client portal
         </Button>

@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/client-portal",
+        destination: "/portal",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,22 +1,19 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import {
   CheckCircle2,
   Calendar,
   FileText,
   MessageSquare,
   Building2,
-  CircleAlert,
   Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { PortalNotifyForm } from '@/components/portal/PortalNotifyForm';
-import { PreviewLockedNotice } from '@/components/portal/PreviewLockedNotice';
-import { isPreviewAllowed } from '@/lib/preview-gate';
+import { requireSession } from '@/lib/auth/requireSession';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { formatZAR } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
-import type { SubscriptionSummary } from '@/types';
+import type { SubscriptionStatus } from '@/types';
 
 export const metadata: Metadata = {
   title: 'Client Portal',
@@ -24,43 +21,23 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-/**
- * /client-portal — FRAMEWORK STUB.
- *
- * Once Paystack + auth are wired:
- *   - Resolve the current user via Supabase auth in a server component
- *   - Fetch their subscription row(s) from the `subscriptions` table
- *   - Render the real summary, document feed, and a working cancel button
- *
- * For now: a preview of the post-launch experience using mock data, plus
- * the existing waitlist form for prospects who do not yet have a
- * subscription.
- */
-
-const MOCK_SUBSCRIPTION: SubscriptionSummary = {
-  id: 'sub_preview_demo',
-  status: 'active',
-  tierSlug: 'pro',
-  tierName: 'Pro',
-  monthlyTotalZAR: 2075,
-  vatZAR: 311,
-  totalChargeZAR: 2386,
-  services: ['accounting', 'bookkeeping'],
-  brackets: { accounting: 1, bookkeeping: 1 },
-  nextBillingDate: '2026-06-01',
-  endAt: null,
-  createdAt: '2026-05-01T08:00:00Z',
+// Mirrors the `tiers` table — kept inline so the portal doesn't make a second
+// round trip just to resolve a display name.
+const TIER_NAMES: Record<string, string> = {
+  basic: 'Basic',
+  pro: 'Pro',
+  premium: 'Premium',
 };
 
-function StatusBadge({ status }: { status: SubscriptionSummary['status'] }) {
-  const styles: Record<SubscriptionSummary['status'], { label: string; cls: string }> = {
+function StatusBadge({ status }: { status: SubscriptionStatus }) {
+  const styles: Record<SubscriptionStatus, { label: string; cls: string }> = {
     active: { label: 'Active', cls: 'bg-primary/15 text-primary border-primary/30' },
     pending_payment: { label: 'Pending payment', cls: 'bg-warning/15 text-warning border-warning/30' },
     cancelling: { label: 'Cancelling', cls: 'bg-warning/15 text-warning border-warning/30' },
     cancelled: { label: 'Cancelled', cls: 'bg-muted text-muted-foreground border-border' },
     past_due: { label: 'Past due', cls: 'bg-destructive/15 text-destructive border-destructive/30' },
   };
-  const s = styles[status];
+  const s = styles[status] ?? styles.pending_payment;
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${s.cls}`}>
       <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -78,40 +55,69 @@ function formatLongDate(iso: string | null): string {
   });
 }
 
-interface ClientPortalPageProps {
-  searchParams: Promise<{ preview?: string | string[] }>;
-}
+export default async function PortalPage() {
+  const user = await requireSession();
+  const supabase = createSupabaseAdminClient();
 
-export default async function ClientPortalPage({ searchParams }: ClientPortalPageProps) {
-  const { preview } = await searchParams;
-  if (!isPreviewAllowed(preview)) {
+  // v1 = one client_org per user.
+  const { data: membership } = await supabase
+    .from('client_org_members')
+    .select('client_org_id')
+    .eq('user_id', user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (!membership) {
     return (
-      <PreviewLockedNotice
-        title="Client portal coming soon"
-        body="We're putting the finishing touches on it. Drop your email and we'll let you know the moment it's ready."
+      <PortalEmptyState
+        title="Your subscription is being set up"
+        body="We're getting your account ready. Your subscription, documents and monthly reports will appear here once setup is complete. If this is taking longer than 24 hours, book a call so we can sort it out."
       />
     );
   }
 
-  const sub = MOCK_SUBSCRIPTION;
+  const orgId = membership.client_org_id as string;
+
+  const [{ data: org }, { data: sub }] = await Promise.all([
+    supabase
+      .from('client_orgs')
+      .select('id, name, status')
+      .eq('id', orgId)
+      .maybeSingle(),
+    supabase
+      .from('subscriptions')
+      .select(
+        'id, status, tier_slug, services, brackets, monthly_total_zar, vat_zar, total_charge_zar, current_period_end, created_at'
+      )
+      .eq('client_org_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  if (!org || !sub) {
+    return (
+      <PortalEmptyState
+        title="Your subscription is being set up"
+        body="Your account is connected, but the subscription record isn't ready yet. Refresh in a few minutes — if it still looks empty, book a call and we'll sort it out."
+      />
+    );
+  }
+
+  const status = sub.status as SubscriptionStatus;
+  const tierName = TIER_NAMES[sub.tier_slug as string] ?? sub.tier_slug;
+  const services = Array.isArray(sub.services) ? (sub.services as string[]) : [];
+  const servicesDisplay = services.length ? services.join(', ') : '—';
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
-      {/* Preview banner — remove once auth is wired */}
-      <div className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 mb-8 flex items-start gap-3">
-        <CircleAlert className="h-4 w-4 mt-0.5 shrink-0 text-warning" />
-        <p className="text-xs leading-relaxed text-warning">
-          <span className="font-semibold">Preview.</span> Once your subscription is active, you&rsquo;ll sign in to see your real subscription, monthly reports and a working cancel button here. The details below are example data so you can see what the portal will look like.
-        </p>
-      </div>
-
       <header className="mb-10">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-          Client portal
+          {org.name}
         </p>
         <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
-          <StatusBadge status={sub.status} />
+          <StatusBadge status={status} />
         </div>
       </header>
 
@@ -131,32 +137,38 @@ export default async function ClientPortalPage({ searchParams }: ClientPortalPag
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   Tier
                 </dt>
-                <dd className="font-medium">{sub.tierName}</dd>
+                <dd className="font-medium">{tierName}</dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   Services
                 </dt>
-                <dd className="font-medium capitalize">{sub.services.join(', ')}</dd>
+                <dd className="font-medium capitalize">{servicesDisplay}</dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   Monthly subtotal
                 </dt>
-                <dd className="font-mono font-medium">{formatZAR(sub.monthlyTotalZAR)}</dd>
+                <dd className="font-mono font-medium">
+                  {formatZAR(Number(sub.monthly_total_zar))}
+                </dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                   VAT (15%)
                 </dt>
-                <dd className="font-mono font-medium">{formatZAR(sub.vatZAR)}</dd>
+                <dd className="font-mono font-medium">
+                  {formatZAR(Number(sub.vat_zar))}
+                </dd>
               </div>
               <div className="sm:col-span-2">
                 <Separator className="my-1" />
               </div>
               <div className="sm:col-span-2 flex items-baseline justify-between">
                 <dt className="text-sm font-semibold">Total monthly charge</dt>
-                <dd className="font-mono font-bold text-lg">{formatZAR(sub.totalChargeZAR)}</dd>
+                <dd className="font-mono font-bold text-lg">
+                  {formatZAR(Number(sub.total_charge_zar))}
+                </dd>
               </div>
             </dl>
 
@@ -164,13 +176,17 @@ export default async function ClientPortalPage({ searchParams }: ClientPortalPag
               <Button variant="outline" disabled className="gap-2">
                 Change tier or services
               </Button>
-              <Button variant="ghost" disabled className="gap-2 text-destructive hover:text-destructive">
+              <Button
+                variant="ghost"
+                disabled
+                className="gap-2 text-destructive hover:text-destructive"
+              >
                 Cancel with 30 days notice
               </Button>
             </div>
           </section>
 
-          {/* Documents (empty stub) */}
+          {/* Documents */}
           <section className="rounded-xl border border-border bg-card p-6">
             <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
@@ -185,7 +201,7 @@ export default async function ClientPortalPage({ searchParams }: ClientPortalPag
           </section>
         </div>
 
-        {/* Right column: at-a-glance */}
+        {/* Right column */}
         <aside className="space-y-6">
           <section className="rounded-xl border border-border bg-card p-6">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
@@ -196,13 +212,17 @@ export default async function ClientPortalPage({ searchParams }: ClientPortalPag
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5">
                   <Calendar className="h-3 w-3" /> Next billing
                 </dt>
-                <dd className="font-medium">{formatLongDate(sub.nextBillingDate)}</dd>
+                <dd className="font-medium">
+                  {formatLongDate(sub.current_period_end as string | null)}
+                </dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5">
                   <CheckCircle2 className="h-3 w-3" /> Subscription started
                 </dt>
-                <dd className="font-medium">{formatLongDate(sub.createdAt)}</dd>
+                <dd className="font-medium">
+                  {formatLongDate(sub.created_at as string)}
+                </dd>
               </div>
             </dl>
           </section>
@@ -232,26 +252,37 @@ export default async function ClientPortalPage({ searchParams }: ClientPortalPag
           </section>
         </aside>
       </div>
+    </main>
+  );
+}
 
-      {/* Waitlist for visitors who do not yet have an account */}
-      <section className="mt-16 pt-10 border-t border-border">
-        <div className="max-w-md mx-auto text-center">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-            Not a client yet?
-          </p>
-          <h2 className="text-2xl font-bold tracking-tight mb-3">Get notified when login goes live</h2>
-          <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-            We&rsquo;ll let you know the moment the portal opens for sign-ups, alongside any major Capucor product updates.
-          </p>
-          <PortalNotifyForm />
-          <Link
-            href="/pricing"
-            className="mt-6 inline-block text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Build your subscription →
-          </Link>
-        </div>
-      </section>
+interface EmptyStateProps {
+  title: string;
+  body: string;
+}
+
+function PortalEmptyState({ title, body }: EmptyStateProps) {
+  return (
+    <main className="max-w-2xl mx-auto px-6 py-16 lg:py-24 text-center">
+      <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 mb-5">
+        <Lock className="h-5 w-5 text-primary" />
+      </div>
+      <h1 className="text-3xl font-bold tracking-tight mb-3">{title}</h1>
+      <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+        {body}
+      </p>
+      <Button
+        nativeButton={false}
+        render={
+          <a
+            href={siteConfig.links.booking}
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        }
+      >
+        Book a 15-minute call
+      </Button>
     </main>
   );
 }
