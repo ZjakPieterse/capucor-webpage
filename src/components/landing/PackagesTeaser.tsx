@@ -75,11 +75,10 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
               <ScrollReveal key={tier.slug} delay={i * 0.1}>
                 <div
                   className={cn(
-                    "premium-card rounded-2xl border bg-card/80 p-8 flex flex-col h-full transition-all duration-[250ms]",
-                    "hover:-translate-y-1 hover:shadow-lg",
+                    "premium-card rounded-2xl border bg-card/80 p-8 flex flex-col h-full",
                     isMiddle
-                      ? "border-primary/40 shadow-lg shadow-primary/10 relative hover:shadow-primary/15"
-                      : "border-white/10 hover:border-primary/30",
+                      ? "border-primary/40 shadow-lg shadow-primary/10 relative"
+                      : "border-white/10",
                   )}
                 >
                   {isMiddle && (

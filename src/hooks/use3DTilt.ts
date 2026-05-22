@@ -26,7 +26,6 @@ export function use3DTilt<T extends HTMLElement>({
   const motionAllowed = useCallback(() => {
     if (typeof window === 'undefined') return false;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    if (!window.matchMedia('(pointer: fine)').matches) return false;
     return true;
   }, []);
 

@@ -193,7 +193,15 @@
   opacity: 0.72;
 }
 
-@media (hover: hover) and (pointer: fine) {
+/* Card hover rules deliberately use `@media all` (always-true) rather than the
+   conventional `@media (hover: hover)` gate. Many Windows hybrid devices
+   (touchscreen laptops with a mouse) get reported by Chromium as
+   `hover: none, pointer: coarse, any-hover: none` even with a mouse plugged in,
+   which silently kills hover effects on those machines. The touch tap-feedback
+   block further down (`@media (hover: none) and (pointer: coarse)`) still
+   provides `:active` press states for pure-touch devices. Do not tighten this
+   gate without confirming hover still works on a hybrid touchscreen device. */
+@media all {
   .premium-card:hover {
     transform: translateY(-6px) scale(1.012);
     border-color: color-mix(in oklch, var(--primary) 38%, var(--border));
@@ -229,7 +237,7 @@
     filter 360ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .premium-card:hover svg,
   .feature-card:hover svg,
   .problem-card:hover svg,
@@ -255,7 +263,7 @@
     opacity 260ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .premium-button:hover {
     transform: translateY(-1px) scale(1.02);
     box-shadow:
@@ -292,7 +300,7 @@
   transition: background-position 480ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .gradient-cta:hover {
     background-position: 100% 50%;
   }
@@ -413,7 +421,7 @@
   animation: marquee 28s linear infinite;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .animate-marquee:hover {
     animation-play-state: paused;
   }
@@ -446,7 +454,7 @@
     border-color 360ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .feature-card:hover,
   .outcome-card:hover {
     transform: translateY(-6px) scale(1.012);
@@ -480,7 +488,7 @@
   z-index: 2;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .feature-card:hover::after,
   .outcome-card:hover::after,
   .problem-card:hover::after {
@@ -496,7 +504,7 @@
     border-color 320ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .problem-card:hover {
     transform: translateY(-4px);
   }
@@ -676,7 +684,7 @@
   z-index: 2;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .how-card:hover {
     transform: translateY(-6px) scale(1.012);
     border-color: color-mix(in oklch, var(--primary) 38%, var(--border));
@@ -793,7 +801,7 @@
     box-shadow 250ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .fcc-grid:has(.fcc-tile:hover) .fcc-tile:not(:hover) {
     opacity: 0.55;
   }
@@ -910,7 +918,7 @@
     box-shadow 220ms ease;
 }
 
-@media (hover: hover) and (pointer: fine) {
+@media all {
   .service-card:not(.is-selected):hover {
     transform: translateY(-3px);
     border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
@@ -1161,14 +1169,26 @@
     animation: none !important;
   }
 
-  .feature-card:hover,
-  .problem-card:hover,
-  .outcome-card:hover,
-  .fcc-tile:hover,
-  .premium-card:hover,
-  .premium-button:hover,
   .tilt-card {
     transform: none !important;
+  }
+
+  /* No smooth animation for these users, so bump the static hover end state
+     so the position change is actually perceptible without motion blur. */
+  .premium-card:hover,
+  .feature-card:hover,
+  .outcome-card:hover,
+  .how-card:hover {
+    transform: translateY(-10px) scale(1.025) !important;
+  }
+  .problem-card:hover {
+    transform: translateY(-7px) !important;
+  }
+  .fcc-tile:hover {
+    transform: translateY(-4px) scale(1.03) !important;
+  }
+  .service-card:not(.is-selected):hover {
+    transform: translateY(-6px) !important;
   }
 
   .fcc-heartbeat {
