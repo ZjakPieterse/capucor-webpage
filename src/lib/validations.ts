@@ -96,3 +96,22 @@ export const PaystackWebhookSchema = z.object({
 });
 
 export type PaystackWebhookPayload = z.infer<typeof PaystackWebhookSchema>;
+
+// ── POPIA data-subject request (P1) ─────────────────────────────────────
+//
+// Submitted by a visitor to exercise their POPIA rights of access or
+// deletion. Stored in public.data_requests, then a magic-link confirm step
+// verifies the email address before we act.
+
+export const DataRequestSchema = z.object({
+  email: z.string().email('Please enter a valid email address').max(254),
+  request_type: z.enum(['access', 'delete'], {
+    message: 'Choose access or delete.',
+  }),
+  consent_given: z.literal(true, {
+    message: 'You must confirm before submitting.',
+  }),
+  website: z.string().max(0).optional(), // honeypot — must be empty
+});
+
+export type DataRequestInput = z.infer<typeof DataRequestSchema>;
