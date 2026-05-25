@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy',
   description:
     'How Capucor Business Solutions collects, uses, and protects your personal information under POPIA.',
-  robots: { index: false, follow: false },
+  robots: { index: true, follow: true },
 };
 
 export default function PrivacyPage() {
