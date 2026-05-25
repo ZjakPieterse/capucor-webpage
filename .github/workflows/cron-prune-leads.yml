@@ -1,0 +1,31 @@
+name: Cron — prune stale leads
+
+# POPIA P3 — daily retention job. Calls /api/cron/prune-leads on production
+# with the REVALIDATE_SECRET so old new-status leads are deleted.
+#
+# Why GitHub Actions and not a Cloudflare cron trigger? OpenNext for
+# Cloudflare exports a fetch-only Worker; there is no `scheduled()` hook to
+# attach. A GitHub Actions cron is the simplest reliable replacement.
+
+on:
+  schedule:
+    # 03:15 UTC daily (05:15 SAST) — off-peak.
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/cron/prune-leads
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET secret is not configured." >&2
+            exit 1
+          fi
+          response=$(curl --silent --show-error --fail-with-body \
+            --max-time 60 \
+            "https://capucor.app/api/cron/prune-leads?secret=$REVALIDATE_SECRET")
+          echo "$response"

@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/config/site';
+import { DataRequestForm } from '@/components/privacy/DataRequestForm';
+import { DATA_REQUEST_SLA_DAYS, LEAD_RETENTION_DAYS } from '@/lib/consent';
+
+const LEAD_RETENTION_MONTHS = Math.round(LEAD_RETENTION_DAYS / 30);
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -66,8 +70,7 @@ export default function PrivacyPage() {
         <div>
           <h2 className="text-xl font-semibold mb-3">Retention period</h2>
           <p className="text-muted-foreground leading-relaxed">
-            {/* [EDITABLE] */}
-            Enquiry data is retained for [X years] after the date of submission, or for as long as required to fulfil the purpose for which it was collected. Clients who engage our services are subject to a separate engagement-level data processing agreement.
+            Website enquiries that do not result in an engagement are automatically deleted after {LEAD_RETENTION_MONTHS} months by a daily scheduled job. Clients who engage our services are governed by a separate engagement letter and data processing agreement, which sets the retention period appropriate to the services provided and any statutory record-keeping obligations (for example, SARS retention rules for accounting records).
           </p>
         </div>
 
@@ -85,13 +88,20 @@ export default function PrivacyPage() {
             <li>Request deletion of your information (subject to legal retention requirements)</li>
           </ul>
           <p className="text-muted-foreground leading-relaxed mt-3">
-            {/* [EDITABLE] */}
-            To exercise any of these rights, email us at{' '}
+            To exercise any of these rights, submit a request using the form below or email us at{' '}
             <a href="mailto:privacy@capucor.co.za" className="text-primary underline underline-offset-2">
               privacy@capucor.co.za
             </a>
-            . We will respond within 30 days.
+            . We will respond within {DATA_REQUEST_SLA_DAYS} days of verifying the request. Verification is by magic-link sent to the email address you submit, so we can confirm you are the data subject and not a third party.
           </p>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Make a request</h2>
+          <p className="text-muted-foreground leading-relaxed mb-5">
+            Submit an access or deletion request for the personal information we hold for you. You will receive a confirmation email within a few minutes — click the link in it within 24 hours to verify the request.
+          </p>
+          <DataRequestForm />
         </div>
 
         <div>
