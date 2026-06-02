@@ -11,7 +11,6 @@ import { bracketPrice } from '@/lib/pricing';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { MagneticButton } from '@/components/ui/MagneticButton';
 import { TIER_HIGHLIGHTS, TIER_CUMULATIVE_LABELS } from '@/config/tiers';
-import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import type { Bracket, Service, Tier, BracketValue, Testimonial } from '@/types';
 
 interface Step3TiersProps {
@@ -54,7 +53,7 @@ export function Step3Tiers({
 
       <RiskReducerStrip />
 
-      <div ref={containerRef} className="cursor-glow grid sm:grid-cols-3 gap-4 sm:pt-5">
+      <div ref={containerRef} className="cursor-glow grid sm:grid-cols-3 gap-3 sm:pt-5">
         {sortedTiers.map((tier) => {
           const isSelected = selectedTier === tier.slug;
 
@@ -71,21 +70,14 @@ export function Step3Tiers({
           const cumulativeLabel = TIER_CUMULATIVE_LABELS[tier.slug];
 
           return (
-            <div
+            <button
               key={tier.slug}
-              role="button"
-              tabIndex={0}
+              type="button"
               onClick={() => onTierSelect(tier.slug)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onTierSelect(tier.slug);
-                }
-              }}
               aria-pressed={isSelected}
               aria-label={`${isSelected ? 'Selected ' : ''}${tier.name} tier`}
               className={cn(
-                'service-card relative rounded-xl border-2 p-6 pr-12 text-left outline-none w-full cursor-pointer',
+                'service-card relative rounded-xl border-2 p-5 pr-11 text-left outline-none w-full',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
@@ -127,15 +119,12 @@ export function Step3Tiers({
                   {filteredItems.map((item) => (
                     <li key={item.text} className="flex items-start gap-2 text-xs">
                       <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
-                      <span className="text-muted-foreground">
-                        {item.text}
-                        {item.tooltip.trim() !== '' && <InfoTooltip content={item.tooltip} />}
-                      </span>
+                      <span className="text-muted-foreground">{item.text}</span>
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
