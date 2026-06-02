@@ -1,51 +1,79 @@
 "use client";
 
 import {
-  Inbox,
-  RefreshCw,
-  CalendarCheck,
-  BarChart2,
-  Lightbulb,
+  Receipt,
+  Database,
+  ListChecks,
+  BarChart3,
+  ShieldCheck,
+  ChevronRight,
+  Wallet,
+  KeyRound,
+  UserCheck,
+  Unlock,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
-const OUTCOMES = [
+// The connected system the client journeys through. Each stage names the tool
+// that powers it (a reference, not a sell) and states the outcome for the client.
+// This is the software system; HowItWorks covers the human monthly rhythm.
+const STAGES = [
   {
-    icon: Inbox,
-    lead: "Capture",
-    rest: " documents without inbox chaos.",
+    icon: Receipt,
+    tool: "Dext",
+    title: "Documents in",
+    body: "Forward invoices and receipts once. They land in one place, not lost in an inbox.",
   },
   {
-    icon: RefreshCw,
-    lead: "Reconcile",
-    rest: " transactions in a live ledger.",
+    icon: Database,
+    tool: "Xero",
+    title: "Your live ledger",
+    body: "Everything posts to Xero, your single source of truth, with your own login to see it any time.",
   },
   {
-    icon: CalendarCheck,
-    lead: "Track",
-    rest: " deadlines and responsibilities.",
+    icon: ListChecks,
+    tool: "Karbon",
+    title: "Tracked and on time",
+    body: "Every request, deadline and responsibility runs through one workflow, so nothing rides on memory.",
   },
   {
-    icon: BarChart2,
-    lead: "Report",
-    rest: " the numbers clearly.",
+    icon: BarChart3,
+    tool: "Syft",
+    title: "Clear reporting",
+    body: "Your numbers become reports you can actually read, not a spreadsheet to decode.",
   },
   {
-    icon: Lightbulb,
-    lead: "Advise",
-    rest: " before problems become urgent.",
+    icon: ShieldCheck,
+    tool: "Draftworx",
+    title: "Signed off",
+    body: "A senior AGA(SA) accountant reviews the month, signs off your statements, and flags what needs your attention.",
   },
 ];
 
-const TOOLS = [
-  { name: "Xero", monogram: "Xe" },
-  { name: "Dext", monogram: "De" },
-  { name: "Syft", monogram: "Sf" },
-  { name: "Karbon", monogram: "Kr" },
-  { name: "SimplePay", monogram: "SP" },
-  { name: "Draftworx", monogram: "Dw" },
+// What the stack is worth to the buyer — every claim is true elsewhere on the site.
+const TRUST = [
+  {
+    icon: Wallet,
+    title: "Included in your price",
+    body: "Xero, Dext and the rest are part of the subscription. No separate software bills to manage.",
+  },
+  {
+    icon: KeyRound,
+    title: "Your own login",
+    body: "You keep full, real-time access to your numbers. Outsourcing the admin doesn't cost you visibility.",
+  },
+  {
+    icon: UserCheck,
+    title: "Signed off by a named accountant",
+    body: "A SAICA-registered AGA(SA) reviews every month-end before it reaches you or SARS.",
+  },
+  {
+    icon: Unlock,
+    title: "No lock-in",
+    body: "Month to month. If you leave, you take your Xero file and a full handover pack.",
+  },
 ];
 
 export function TechStackShowcase() {
@@ -61,50 +89,75 @@ export function TechStackShowcase() {
           />
         </ScrollReveal>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
-          {OUTCOMES.map((o, i) => (
-            <ScrollReveal key={o.lead} delay={i * 0.07}>
-              <div className="outcome-card premium-card h-full rounded-2xl border border-white/10 bg-card/80 p-5 sm:p-6">
+        {/* The connected-system journey */}
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+          {STAGES.map((s, i) => (
+            <ScrollReveal key={s.tool} delay={i * 0.07} className="relative h-full">
+              {i > 0 && (
+                <span aria-hidden className="tech-connector hidden lg:block">
+                  <ChevronRight />
+                </span>
+              )}
+              <div className="outcome-card premium-card flex h-full flex-col items-center rounded-2xl border border-white/10 bg-card/80 p-5 text-center sm:p-6">
                 <span
                   aria-hidden
-                  className="mb-4 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] text-primary shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--primary)_45%,transparent)]"
+                  className="mb-4 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] text-primary shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--primary)_45%,transparent)]"
                 >
-                  <o.icon className="h-5 w-5" />
+                  <s.icon className="h-5 w-5" />
                 </span>
-                <p className="text-sm leading-relaxed">
-                  <span className="font-semibold text-foreground">{o.lead}</span>
-                  <span className="text-muted-foreground">{o.rest}</span>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">
+                  {s.tool}
+                </p>
+                <h3 className="mb-2 text-sm font-semibold text-foreground">
+                  {s.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {s.body}
                 </p>
               </div>
             </ScrollReveal>
           ))}
         </div>
 
-        <ScrollReveal delay={0.2}>
-          <div className="mt-12 flex flex-col items-center gap-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
-              The tools behind it
+        {/* Payroll runs as a parallel stream into the same ledger */}
+        <ScrollReveal delay={0.1}>
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Payroll runs in parallel through{" "}
+            <span className="font-medium text-foreground">SimplePay</span> and feeds
+            into the same ledger.
+          </p>
+        </ScrollReveal>
+
+        {/* What that means for you — the trust / ROI payload */}
+        <div className="mt-14 lg:mt-16">
+          <ScrollReveal>
+            <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+              What that means for you
             </p>
-            <ul
-              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4"
-              role="list"
-            >
-              {TOOLS.map((tool) => (
-                <li key={tool.name} className="flex items-center gap-2.5">
+          </ScrollReveal>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {TRUST.map((t, i) => (
+              <ScrollReveal key={t.title} delay={i * 0.07} className="h-full">
+                <div className="feature-card premium-card flex h-full items-start gap-3.5 rounded-2xl border border-white/10 bg-card/80 p-5">
                   <span
                     aria-hidden
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-gradient-to-br from-primary/[0.14] to-primary/[0.03] font-mono text-xs font-bold tracking-tight text-primary/90"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/[0.07] text-primary"
                   >
-                    {tool.monogram}
+                    <t.icon className="h-4 w-4" />
                   </span>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {tool.name}
-                  </span>
-                </li>
-              ))}
-            </ul>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {t.title}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {t.body}
+                    </p>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
           </div>
-        </ScrollReveal>
+        </div>
       </div>
     </section>
   );

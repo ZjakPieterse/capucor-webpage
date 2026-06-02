@@ -1,16 +1,20 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
+// Real brand marks, painted monochrome via `.logo-mark` (see globals.css) so they
+// inherit the marquee's muted text colour. `ratio` is each asset's natural aspect
+// ratio, so a single shared height renders every logo at its correct proportions.
 const PARTNERS = [
-  { name: 'Xero',      href: 'https://www.xero.com/za/' },
-  { name: 'Dext',      href: 'https://dext.com/za' },
-  { name: 'SimplePay', href: 'https://www.simplepay.co.za/' },
-  { name: 'Karbon',    href: 'https://karbonhq.com/' },
-  { name: 'Draftworx', href: 'https://draftworx.com/' },
-  { name: 'SAICA',     href: 'https://www.saica.org.za/' },
-  { name: 'Intersect', href: 'https://intersectconnect.com/' },
-  { name: 'Syft',      href: 'https://www.syftanalytics.com/' },
+  { name: 'Xero',      href: 'https://www.xero.com/za/',        logo: '/logos/tools/xero.svg',      ratio: '1 / 1' },
+  { name: 'Dext',      href: 'https://dext.com/za',             logo: '/logos/tools/dext.svg',      ratio: '620 / 384' },
+  { name: 'SimplePay', href: 'https://www.simplepay.co.za/',    logo: '/logos/tools/simplepay.png', ratio: '203 / 58' },
+  { name: 'Karbon',    href: 'https://karbonhq.com/',           logo: '/logos/tools/karbon.svg',    ratio: '1 / 1' },
+  { name: 'Draftworx', href: 'https://draftworx.com/',          logo: '/logos/tools/draftworx.png', ratio: '241 / 81' },
+  { name: 'SAICA',     href: 'https://www.saica.org.za/',       logo: '/logos/tools/saica.png',     ratio: '1 / 1' },
+  { name: 'Intersect', href: 'https://intersectconnect.com/',   logo: '/logos/tools/intersect.png', ratio: '350 / 101' },
+  { name: 'Syft',      href: 'https://www.syftanalytics.com/',  logo: '/logos/tools/syft.png',      ratio: '1 / 1' },
 ];
 
 const MARQUEE_ROW = [...PARTNERS, ...PARTNERS, ...PARTNERS, ...PARTNERS];
@@ -38,9 +42,14 @@ export function PartnersAndTech() {
                 href={p.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="logo-placeholder text-lg font-medium tracking-wide text-muted-foreground/80 transition-colors hover:text-foreground"
+                aria-label={p.name}
+                className="inline-flex items-center text-muted-foreground/70 transition-colors hover:text-foreground"
               >
-                {p.name}
+                <span
+                  aria-hidden
+                  className="logo-mark h-6 lg:h-7"
+                  style={{ '--logo': `url(${p.logo})`, aspectRatio: p.ratio } as CSSProperties}
+                />
               </a>
             </li>
           ))}

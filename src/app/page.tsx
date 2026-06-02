@@ -93,7 +93,7 @@ export default async function HomePage() {
       <PageCursorGlow>
         {/* 1. Hero */}
         <HeroSection />
-        {/* 2. Partners & tech logo strip (placeholder badges until real logos land) */}
+        {/* 2. Partners & tech logo strip (real brand marks, monochrome via .logo-mark) */}
         <PartnersAndTech />
         {/* 3. Problem */}
         <ProblemCards />

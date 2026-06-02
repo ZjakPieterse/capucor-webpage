@@ -444,6 +444,55 @@
   );
 }
 
+/* ─── Brand logo marks (monochrome, inherit text colour) ─────────────────────
+   Real partner/tool logos painted in the current text colour via CSS mask, so
+   they match the marquee's muted wordmark styling (muted-foreground → foreground
+   on hover) instead of carrying their own brand colours. Works for single-colour
+   SVGs and transparent-background PNGs alike — the mask uses the asset's alpha.
+   Each instance sets `--logo` (the asset url) and an `aspect-ratio`; height comes
+   from a utility class, so width follows the logo's natural proportions. */
+.logo-mark {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-image: var(--logo);
+          mask-image: var(--logo);
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+          mask-position: center;
+  -webkit-mask-size: contain;
+          mask-size: contain;
+}
+
+/* ─── Tech-stack flow connector ──────────────────────────────────────────────
+   The thin gradient line + chevron that sits in the gap between flow cards on
+   large screens, showing the left-to-right journey. Purely decorative
+   (aria-hidden) and shown only at lg via the `hidden lg:block` utilities on the
+   element — no hover or motion, so no media gating is needed here. */
+.tech-connector {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 1.5rem;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(
+    to right,
+    color-mix(in oklch, var(--primary) 6%, transparent),
+    color-mix(in oklch, var(--primary) 55%, transparent)
+  );
+  color: color-mix(in oklch, var(--primary) 75%, var(--muted-foreground));
+}
+
+.tech-connector svg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 0.8rem;
+  width: 0.8rem;
+  transform: translate(-50%, -50%);
+}
+
 /* ─── Service / outcome card hover ─────────────────────────────────────────── */
 .feature-card,
 .outcome-card {
