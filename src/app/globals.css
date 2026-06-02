@@ -1248,3 +1248,59 @@
     -webkit-backdrop-filter: blur(12px) saturate(130%);
   }
 }
+
+/* ─── Pricing Calculator step 3 card layout improvements ─────────────────── */
+.pricing-grid-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.pricing-card-item {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.pricing-card-header {
+  min-height: auto;
+}
+
+@media (min-width: 640px) {
+  .pricing-grid-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .pricing-card-header {
+    min-height: 5.5rem; /* Robust fallback height for header (Title + Tagline up to 3 lines) */
+  }
+
+  /* When subgrid is supported, let the browser handle perfect height matching */
+  @supports (grid-template-rows: subgrid) {
+    .pricing-grid-container {
+      grid-template-rows: auto auto auto 1fr;
+    }
+
+    .pricing-card-item {
+      grid-row: span 4;
+      display: grid;
+      grid-template-rows: subgrid;
+      align-content: start;
+      height: auto;
+    }
+
+    .pricing-card-header {
+      min-height: 0; /* Reset fallback since subgrid handles it */
+      margin-bottom: 0;
+    }
+
+    .pricing-card-price {
+      margin-bottom: 0;
+    }
+
+    .pricing-card-cumulative {
+      margin-bottom: 0;
+    }
+  }
+}

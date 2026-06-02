@@ -53,7 +53,10 @@ export function Step3Tiers({
 
       <RiskReducerStrip />
 
-      <div ref={containerRef} className="cursor-glow grid sm:grid-cols-3 gap-3 sm:pt-5">
+      <div
+        ref={containerRef}
+        className="cursor-glow grid grid-cols-1 gap-4 sm:gap-6 sm:pt-5 pricing-grid-container"
+      >
         {sortedTiers.map((tier) => {
           const isSelected = selectedTier === tier.slug;
 
@@ -77,7 +80,7 @@ export function Step3Tiers({
               aria-pressed={isSelected}
               aria-label={`${isSelected ? 'Selected ' : ''}${tier.name} tier`}
               className={cn(
-                'service-card relative rounded-xl border-2 p-5 pr-11 text-left outline-none w-full',
+                'service-card pricing-card-item relative rounded-xl border-2 p-6 pr-12 text-left outline-none w-full h-full flex flex-col',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
@@ -95,40 +98,48 @@ export function Step3Tiers({
                 )}
               </span>
 
-              <div className="mb-4" style={{ minHeight: '3.75rem' }}>
-                <div className="font-semibold text-base">{tier.name}</div>
+              {/* Row 1: Header (Title & Tagline) */}
+              <div className="pricing-card-header mb-4 flex flex-col justify-start">
+                <div className="font-bold text-lg tracking-tight text-foreground">{tier.name}</div>
                 {tier.tagline && (
-                  <div
-                    className="text-xs text-muted-foreground mt-0.5"
-                    style={{ minHeight: '2rem' }}
-                  >
+                  <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                     {tier.tagline}
                   </div>
                 )}
               </div>
 
-              <div className="mb-4">
+              {/* Row 2: Pricing (Price / Period) */}
+              <div className="pricing-card-price mb-5 flex flex-col justify-start">
                 <AnimatedPrice amount={regularTotal} size="lg" />
-                <div className="text-xs text-muted-foreground mt-0.5">/month</div>
+                <div className="text-xs text-muted-foreground mt-1.5">/month</div>
               </div>
 
-              {cumulativeLabel && (
-                <div className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <CornerDownRight className="h-3 w-3 text-primary" />
-                  {cumulativeLabel}
-                </div>
-              )}
+              {/* Row 3: Cumulative additions label */}
+              <div className="pricing-card-cumulative mb-3 flex items-center min-h-[1.75rem]">
+                {cumulativeLabel ? (
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1 w-fit">
+                    <CornerDownRight className="h-3.5 w-3.5 text-primary shrink-0" />
+                    {cumulativeLabel}
+                  </div>
+                ) : (
+                  // Invisible placeholder to occupy track space in subgrid layout
+                  <div className="h-0 w-0 pointer-events-none opacity-0" aria-hidden="true" />
+                )}
+              </div>
 
-              {filteredItems.length > 0 && (
-                <ul className="space-y-1.5">
-                  {filteredItems.map((item) => (
-                    <li key={item.text} className="flex items-start gap-2 text-xs">
-                      <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" />
-                      <span className="text-muted-foreground">{item.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {/* Row 4: Features List */}
+              <div className="pricing-card-features flex-grow">
+                {filteredItems.length > 0 && (
+                  <ul className="space-y-2.5">
+                    {filteredItems.map((item) => (
+                      <li key={item.text} className="flex items-start gap-2.5 text-xs">
+                        <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                        <span className="text-muted-foreground leading-normal">{item.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </button>
           );
         })}

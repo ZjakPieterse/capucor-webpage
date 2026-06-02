@@ -15,10 +15,13 @@ const zarFmtDec = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
-export function formatZAR(amount: number): string {
+export function formatZARNumber(amount: number): string {
   const clean = Math.round(amount * 100) / 100;
-  const num = clean % 1 === 0 ? zarFmt.format(clean) : zarFmtDec.format(clean);
-  return 'R ' + num;
+  return clean % 1 === 0 ? zarFmt.format(clean) : zarFmtDec.format(clean);
+}
+
+export function formatZAR(amount: number): string {
+  return 'R ' + formatZARNumber(amount);
 }
 
 export function clamp(value: number, min: number, max: number): number {

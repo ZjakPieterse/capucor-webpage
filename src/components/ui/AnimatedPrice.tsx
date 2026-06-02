@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { animate, useReducedMotion } from 'motion/react';
-import { cn, formatZAR } from '@/lib/utils';
+import { cn, formatZARNumber } from '@/lib/utils';
 
 interface AnimatedPriceProps {
   amount: number;
@@ -29,7 +29,7 @@ export function AnimatedPrice({
     prevRef.current = to;
 
     if (reduceMotion || from === to) {
-      el.textContent = formatZAR(to);
+      el.textContent = formatZARNumber(to);
       return;
     }
 
@@ -50,7 +50,7 @@ export function AnimatedPrice({
       duration: (from === 0 && to > 0) ? 0.8 : duration,
       ease: [0.16, 1, 0.3, 1],
       onUpdate(value) {
-        el.textContent = formatZAR(Math.round(value));
+        el.textContent = formatZARNumber(Math.round(value));
       },
     });
     return () => {
@@ -59,16 +59,29 @@ export function AnimatedPrice({
     };
   }, [amount, duration, reduceMotion]);
 
+  if (size === 'lg') {
+    return (
+      <span className={cn('inline-flex items-baseline font-sans text-foreground tracking-tight', className)}>
+        <span className="text-2xl font-bold text-muted-foreground mr-1 select-none">R</span>
+        <span
+          ref={ref}
+          className="text-4xl font-extrabold font-mono tabular-nums leading-none"
+        >
+          {formatZARNumber(amount)}
+        </span>
+      </span>
+    );
+  }
+
   return (
-    <span
-      ref={ref}
-      className={cn(
-        'font-mono whitespace-nowrap tabular-nums',
-        size === 'lg' ? 'text-4xl font-bold' : 'text-base font-medium',
-        className
-      )}
-    >
-      {formatZAR(amount)}
+    <span className={cn('inline-flex items-baseline font-sans text-foreground', className)}>
+      <span className="text-xs font-semibold text-muted-foreground mr-0.5 select-none">R</span>
+      <span
+        ref={ref}
+        className="text-base font-semibold font-mono tabular-nums"
+      >
+        {formatZARNumber(amount)}
+      </span>
     </span>
   );
 }
