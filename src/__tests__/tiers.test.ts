@@ -59,8 +59,8 @@ describe('TIER_CUMULATIVE_LABELS', () => {
     expect(TIER_CUMULATIVE_LABELS.premium).toBe('Everything in Pro, plus:');
   });
 
-  it('has no label for basic', () => {
-    expect(TIER_CUMULATIVE_LABELS.basic).toBeUndefined();
+  it('uses the approved "Your compliance foundation:" label for basic', () => {
+    expect(TIER_CUMULATIVE_LABELS.basic).toBe('Your compliance foundation:');
   });
 });
 
