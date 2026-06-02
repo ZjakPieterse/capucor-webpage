@@ -50,7 +50,7 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       calculatorOnly: true,
     },
     {
-      text: 'UIF Declarations & Termination Forms',
+      text: 'UIF Compliance',
       services: ['payroll'],
       tooltip: 'UIF declarations submitted and relevant termination documents made available when needed.',
       calculatorOnly: true,

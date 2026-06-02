@@ -95,7 +95,7 @@ export function Step3Tiers({
                 )}
               </span>
 
-              <div className="mb-4">
+              <div className="mb-4 min-h-15">
                 <div className="font-semibold text-base">{tier.name}</div>
                 {tier.tagline && (
                   <div className="text-xs text-muted-foreground mt-0.5">{tier.tagline}</div>
