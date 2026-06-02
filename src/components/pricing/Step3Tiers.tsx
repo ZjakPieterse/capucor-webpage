@@ -95,10 +95,15 @@ export function Step3Tiers({
                 )}
               </span>
 
-              <div className="mb-4 min-h-15">
+              <div className="mb-4" style={{ minHeight: '3.75rem' }}>
                 <div className="font-semibold text-base">{tier.name}</div>
                 {tier.tagline && (
-                  <div className="text-xs text-muted-foreground mt-0.5">{tier.tagline}</div>
+                  <div
+                    className="text-xs text-muted-foreground mt-0.5"
+                    style={{ minHeight: '2rem' }}
+                  >
+                    {tier.tagline}
+                  </div>
                 )}
               </div>
 
