@@ -92,7 +92,7 @@ export function TierComparison({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

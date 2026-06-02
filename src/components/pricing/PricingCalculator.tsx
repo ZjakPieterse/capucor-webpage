@@ -108,7 +108,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
           id="pricing-summary"
           className="premium-section relative pt-14 lg:pt-20 pb-4 lg:pb-6"
         >
-          <div className="max-w-4xl mx-auto px-6">
+          <div className="max-w-7xl mx-auto px-6">
             <p className="text-xs font-medium uppercase tracking-widest text-primary mb-6 text-center">
               3 steps to your monthly price
             </p>
@@ -207,7 +207,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         {/* Trust signals near commitment, not in the warm-up */}
         <section className="premium-section relative py-14 lg:py-20">
           <SectionDivider />
-          <div className="max-w-4xl mx-auto px-6">
+          <div className="max-w-7xl mx-auto px-6">
             <TrustBar />
           </div>
         </section>
@@ -244,7 +244,7 @@ export function PricingCalculator({ data, testimonials }: PricingCalculatorProps
   return (
     <Suspense
       fallback={
-        <div className="max-w-4xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="h-8 w-64 rounded-md bg-muted animate-pulse mb-8 mx-auto" />
           <div className="space-y-4">
             <div className="h-4 w-40 rounded bg-muted animate-pulse" />

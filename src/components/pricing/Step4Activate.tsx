@@ -152,7 +152,7 @@ export function Step4Activate({
   }
 
   const summaryBox = (
-    <div className="rounded-xl border border-primary/25 bg-primary/[0.04] p-5">
+    <div className="rounded-2xl border border-primary/25 bg-primary/[0.04] p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
           Your subscription

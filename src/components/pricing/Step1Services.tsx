@@ -76,7 +76,7 @@ export function Step1Services({ services, selected, onToggle, onNext }: Step1Ser
               aria-pressed={isSelected}
               aria-label={`${isSelected ? 'Remove' : 'Add'} ${svc.name}`}
               className={cn(
-                'service-card relative rounded-xl border-2 p-6 pr-12 text-left outline-none cursor-pointer',
+                'service-card relative rounded-2xl border-2 p-6 pr-12 text-left outline-none cursor-pointer',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'

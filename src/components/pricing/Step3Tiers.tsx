@@ -80,7 +80,7 @@ export function Step3Tiers({
               aria-pressed={isSelected}
               aria-label={`${isSelected ? 'Selected ' : ''}${tier.name} tier`}
               className={cn(
-                'service-card pricing-card-item relative rounded-xl border-2 p-6 pr-12 text-left outline-none w-full h-full flex flex-col',
+                'service-card pricing-card-item relative rounded-2xl border-2 p-6 pr-12 text-left outline-none w-full h-full flex flex-col',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
@@ -146,7 +146,7 @@ export function Step3Tiers({
       </div>
 
       {selectedTier && (
-        <div className="rounded-xl border border-primary/30 bg-primary/[0.08] backdrop-blur-md p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-primary/10">
+        <div className="rounded-2xl border border-primary/30 bg-primary/[0.08] backdrop-blur-md p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-primary/10">
           <div>
             <p className="font-semibold text-sm">Your subscription is ready.</p>
             <p className="text-xs text-muted-foreground mt-0.5">
