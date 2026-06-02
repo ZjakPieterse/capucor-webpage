@@ -10,6 +10,7 @@ import {
   PACKAGE_COMMON_ITEMS,
   type TierHighlightItem,
 } from '@/config/tiers';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import type { Bracket, Tier, BracketValue } from '@/types';
 
 interface TierComparisonProps {
@@ -23,6 +24,7 @@ type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
 
 interface MatrixRow {
   text: string;
+  tooltip: string;
   lowestTier: LowestTier;
 }
 
@@ -49,7 +51,7 @@ export function TierComparison({
     for (const item of PACKAGE_COMMON_ITEMS) {
       if (seen.has(item.text)) continue;
       seen.add(item.text);
-      result.push({ text: item.text, lowestTier: 'common' });
+      result.push({ text: item.text, tooltip: item.tooltip, lowestTier: 'common' });
     }
 
     const tierOrder: LowestTier[] = ['basic', 'pro', 'premium'];
@@ -59,7 +61,7 @@ export function TierComparison({
         if (h.services.length > 0 && !h.services.some((s) => selectedServices.has(s))) continue;
         if (seen.has(h.text)) continue;
         seen.add(h.text);
-        result.push({ text: h.text, lowestTier: tierSlug });
+        result.push({ text: h.text, tooltip: h.tooltip, lowestTier: tierSlug });
       }
     }
     return result;
@@ -144,7 +146,10 @@ export function TierComparison({
                         ) : (
                           <Minus className="h-3 w-3 shrink-0 mt-1 text-muted-foreground/40" />
                         )}
-                        <span>{row.text}</span>
+                        <span>
+                          {row.text}
+                          {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -180,7 +185,10 @@ export function TierComparison({
                       idx % 2 === 0 ? 'bg-transparent' : 'bg-muted/15'
                     )}
                   >
-                    <td className="px-5 py-2.5 text-xs sm:text-sm">{row.text}</td>
+                    <td className="px-5 py-2.5 text-xs sm:text-sm">
+                      {row.text}
+                      {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
+                    </td>
                     {sortedTiers.map((t) => (
                       <td key={t.slug} className="px-3 py-2.5 text-center">
                         {isCovered(t.slug, row.lowestTier) ? (
