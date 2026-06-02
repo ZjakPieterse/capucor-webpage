@@ -75,7 +75,10 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Xero Software Included',
       'Bookkeeping & Monthly Close',
       'Monthly Financial Reports',
-      'Payroll Included',
+      'Payroll Processing & Payslips',
+      'EMP201 & EMP501 Submissions',
+      'UIF Declarations & Termination Forms',
+      'COIDA Annual Submission',
     ]);
   });
 
@@ -85,7 +88,8 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Supplier Processing with Dext',
       'Core Business Metrics Overview',
       'Monthly 5-Min Video Walkthrough',
-      'Payroll Included',
+      'Employee Self-Service Portal',
+      'Leave Management & Approvals',
     ]);
   });
 
@@ -95,7 +99,8 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Budget vs Actual Review',
       'Advanced KPI Dashboard',
       'Rolling Cashflow Forecast',
-      'Payroll Included',
+      'Payroll Payment File Preparation',
+      'Direct Employee Payroll Support',
     ]);
   });
 
@@ -160,11 +165,20 @@ describe('service-filter behaviour', () => {
     expect(basic).toContain('Monthly Financial Reports');
     expect(basic).not.toContain('Xero Software Included');
     expect(basic).not.toContain('Bookkeeping & Monthly Close');
-    expect(basic).not.toContain('Payroll Included');
+    expect(basic).not.toContain('Payroll Processing & Payslips');
+    expect(basic).not.toContain('EMP201 & EMP501 Submissions');
+    expect(basic).not.toContain('UIF Declarations & Termination Forms');
+    expect(basic).not.toContain('COIDA Annual Submission');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
     expect(pro).not.toContain('Supplier Processing with Dext');
+    expect(pro).not.toContain('Employee Self-Service Portal');
+    expect(pro).not.toContain('Leave Management & Approvals');
     expect(pro).toContain('Quarterly Performance Review');
+
+    const premium = visibleItems('premium', sel).map((i) => i.text);
+    expect(premium).not.toContain('Payroll Payment File Preparation');
+    expect(premium).not.toContain('Direct Employee Payroll Support');
   });
 
   it('Case 3 — bookkeeping only: hides accounting-only items', () => {
@@ -181,11 +195,31 @@ describe('service-filter behaviour', () => {
     expect(pro).toContain('Supplier Processing with Dext');
   });
 
-  it('Case 4 — payroll only: no accounting/bookkeeping items leak through', () => {
+  it('Case 4 — payroll only: shows each tier’s approved payroll items in order', () => {
     const sel = new Set(['payroll']);
+
+    expect(visibleItems('basic', sel).map((i) => i.text)).toEqual([
+      'Payroll Processing & Payslips',
+      'EMP201 & EMP501 Submissions',
+      'UIF Declarations & Termination Forms',
+      'COIDA Annual Submission',
+    ]);
+
+    expect(visibleItems('pro', sel).map((i) => i.text)).toEqual([
+      'Employee Self-Service Portal',
+      'Leave Management & Approvals',
+    ]);
+
+    expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
+      'Payroll Payment File Preparation',
+      'Direct Employee Payroll Support',
+    ]);
+
     for (const t of ['basic', 'pro', 'premium'] as const) {
       const items = visibleItems(t, sel).map((i) => i.text);
-      expect(items).toEqual(['Payroll Included']);
+      expect(items).not.toContain('Payroll Included');
+      expect(items).not.toContain('Annual Financial Statements');
+      expect(items).not.toContain('Bookkeeping & Monthly Close');
     }
   });
 });
@@ -253,5 +287,61 @@ describe('TierComparison accumulation', () => {
 
   it('omits all rows when no services are selected', () => {
     expect(buildMatrix(new Set()).filter((r) => r.lowestTier !== 'common')).toEqual([]);
+  });
+});
+
+// ─── payroll accumulation in the comparison matrix ──────────────────────────
+
+describe('payroll accumulation in the comparison matrix', () => {
+  const sel = new Set(['payroll']);
+  const rows = buildMatrix(sel);
+
+  const basicPayrollTexts = [
+    'Payroll Processing & Payslips',
+    'EMP201 & EMP501 Submissions',
+    'UIF Declarations & Termination Forms',
+    'COIDA Annual Submission',
+  ];
+  const proPayrollTexts = ['Employee Self-Service Portal', 'Leave Management & Approvals'];
+  const premiumPayrollTexts = [
+    'Payroll Payment File Preparation',
+    'Direct Employee Payroll Support',
+  ];
+
+  it('places basic payroll items at lowestTier "basic" and covers them in all three tiers', () => {
+    for (const text of basicPayrollTexts) {
+      const row = rows.find((r) => r.text === text);
+      expect(row, `expected row "${text}"`).toBeDefined();
+      expect(row!.lowestTier).toBe('basic');
+      expect(isCovered('basic', row!.lowestTier)).toBe(true);
+      expect(isCovered('pro', row!.lowestTier)).toBe(true);
+      expect(isCovered('premium', row!.lowestTier)).toBe(true);
+    }
+  });
+
+  it('places pro payroll items at lowestTier "pro" and covers them in pro and premium only', () => {
+    for (const text of proPayrollTexts) {
+      const row = rows.find((r) => r.text === text);
+      expect(row, `expected row "${text}"`).toBeDefined();
+      expect(row!.lowestTier).toBe('pro');
+      expect(isCovered('basic', row!.lowestTier)).toBe(false);
+      expect(isCovered('pro', row!.lowestTier)).toBe(true);
+      expect(isCovered('premium', row!.lowestTier)).toBe(true);
+    }
+  });
+
+  it('places premium payroll items at lowestTier "premium" and covers them in premium only', () => {
+    for (const text of premiumPayrollTexts) {
+      const row = rows.find((r) => r.text === text);
+      expect(row, `expected row "${text}"`).toBeDefined();
+      expect(row!.lowestTier).toBe('premium');
+      expect(isCovered('basic', row!.lowestTier)).toBe(false);
+      expect(isCovered('pro', row!.lowestTier)).toBe(false);
+      expect(isCovered('premium', row!.lowestTier)).toBe(true);
+    }
+  });
+
+  it('contains no legacy "Payroll Included" row', () => {
+    expect(rows.find((r) => r.text === 'Payroll Included')).toBeUndefined();
   });
 });

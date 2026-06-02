@@ -37,7 +37,30 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive regular financial reports to stay informed about business performance.',
     },
-    { text: 'Payroll Included', services: ['payroll'], tooltip: '', calculatorOnly: true },
+    {
+      text: 'Payroll Processing & Payslips',
+      services: ['payroll'],
+      tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time.',
+      calculatorOnly: true,
+    },
+    {
+      text: 'EMP201 & EMP501 Submissions',
+      services: ['payroll'],
+      tooltip: 'Monthly and bi-annual employer payroll submissions prepared and lodged as required.',
+      calculatorOnly: true,
+    },
+    {
+      text: 'UIF Declarations & Termination Forms',
+      services: ['payroll'],
+      tooltip: 'UIF declarations submitted and relevant termination documents made available when needed.',
+      calculatorOnly: true,
+    },
+    {
+      text: 'COIDA Annual Submission',
+      services: ['payroll'],
+      tooltip: 'Annual COIDA Return of Earnings information prepared and submitted for compliance purposes.',
+      calculatorOnly: true,
+    },
   ],
   pro: [
     {
@@ -60,7 +83,18 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
-    { text: 'Payroll Included', services: ['payroll'], tooltip: '', calculatorOnly: true },
+    {
+      text: 'Employee Self-Service Portal',
+      services: ['payroll'],
+      tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
+      calculatorOnly: true,
+    },
+    {
+      text: 'Leave Management & Approvals',
+      services: ['payroll'],
+      tooltip: 'Employees submit leave digitally and managers approve requests through a structured workflow.',
+      calculatorOnly: true,
+    },
   ],
   premium: [
     {
@@ -83,7 +117,18 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Maintain a forward-looking view of expected cash inflows, outflows, and potential pressure points.',
     },
-    { text: 'Payroll Included', services: ['payroll'], tooltip: '', calculatorOnly: true },
+    {
+      text: 'Payroll Payment File Preparation',
+      services: ['payroll'],
+      tooltip: 'A bank-upload salary-payment file is prepared after payroll finalisation to simplify the payment process.',
+      calculatorOnly: true,
+    },
+    {
+      text: 'Direct Employee Payroll Support',
+      services: ['payroll'],
+      tooltip: 'Employees receive direct assistance with defined payroll-related queries, reducing routine admin for management.',
+      calculatorOnly: true,
+    },
   ],
 };
 
