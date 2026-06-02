@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Check, CornerDownRight, Plus } from 'lucide-react';
+import { ArrowRight, Check, CornerDownRight, Layers, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
@@ -71,6 +71,7 @@ export function Step3Tiers({
             item.services.some((s) => selectedServices.has(s))
           );
           const cumulativeLabel = TIER_CUMULATIVE_LABELS[tier.slug];
+          const CumulativeIcon = tier.slug === 'basic' ? Layers : CornerDownRight;
 
           return (
             <button
@@ -109,16 +110,16 @@ export function Step3Tiers({
               </div>
 
               {/* Row 2: Pricing (Price / Period) */}
-              <div className="pricing-card-price mb-5 flex flex-col justify-start">
+              <div className="pricing-card-price mb-5 flex items-baseline gap-1.5">
                 <AnimatedPrice amount={regularTotal} size="lg" />
-                <div className="text-xs text-muted-foreground mt-1.5">/month</div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">/month</span>
               </div>
 
               {/* Row 3: Cumulative additions label */}
               <div className="pricing-card-cumulative mb-3 flex items-center min-h-[1.75rem]">
                 {cumulativeLabel ? (
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1 w-fit">
-                    <CornerDownRight className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <CumulativeIcon className="h-3.5 w-3.5 text-primary shrink-0" />
                     {cumulativeLabel}
                   </div>
                 ) : (

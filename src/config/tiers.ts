@@ -133,6 +133,7 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
 };
 
 export const TIER_CUMULATIVE_LABELS: Record<string, string> = {
+  basic: 'Your compliance foundation:',
   pro: 'Everything in Basic, plus:',
   premium: 'Everything in Pro, plus:',
 };
