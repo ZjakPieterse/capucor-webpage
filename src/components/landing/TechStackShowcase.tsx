@@ -1,62 +1,51 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import {
+  Inbox,
+  RefreshCw,
+  CalendarCheck,
+  BarChart2,
+  Lightbulb,
+} from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
-const TOOLS = [
+const OUTCOMES = [
   {
-    name: "Xero",
-    monogram: "Xe",
-    tagline: "Real-time ledger",
-    benefit:
-      "Your business records live in one cloud ledger that is processed, reconciled and ready for reporting.",
+    icon: Inbox,
+    lead: "Capture",
+    rest: " documents without inbox chaos.",
   },
   {
-    name: "Dext",
-    monogram: "De",
-    tagline: "Document capture",
-    benefit:
-      "Supplier invoices and receipts are captured and pushed into the bookkeeping workflow instead of sitting in inboxes.",
+    icon: RefreshCw,
+    lead: "Reconcile",
+    rest: " transactions in a live ledger.",
   },
   {
-    name: "Syft",
-    monogram: "Sf",
-    tagline: "Management reporting",
-    benefit:
-      "Reports and dashboards turn the ledger into a clearer view of revenue, expenses, cash flow and performance.",
+    icon: CalendarCheck,
+    lead: "Track",
+    rest: " deadlines and responsibilities.",
   },
   {
-    name: "Karbon",
-    monogram: "Kr",
-    tagline: "Workflow control",
-    benefit:
-      "Monthly tasks, compliance dates and client queries are tracked so work does not rely on memory or scattered emails.",
+    icon: BarChart2,
+    lead: "Report",
+    rest: " the numbers clearly.",
   },
   {
-    name: "SimplePay",
-    monogram: "SP",
-    tagline: "Payroll processing",
-    benefit:
-      "Payslips, payroll calculations, EMP201 support and year-end payroll records stay structured and compliant.",
-  },
-  {
-    name: "Draftworx",
-    monogram: "Dw",
-    tagline: "Financial statements",
-    benefit:
-      "Annual financial statements are prepared from clean records and reviewed for SARS, banks and stakeholders.",
+    icon: Lightbulb,
+    lead: "Advise",
+    rest: " before problems become urgent.",
   },
 ];
 
-const WORKFLOW_STEPS = [
-  "Capture",
-  "Reconcile",
-  "Track",
-  "Report",
-  "Pay",
-  "Finalise",
+const TOOLS = [
+  { name: "Xero", monogram: "Xe" },
+  { name: "Dext", monogram: "De" },
+  { name: "Syft", monogram: "Sf" },
+  { name: "Karbon", monogram: "Kr" },
+  { name: "SimplePay", monogram: "SP" },
+  { name: "Draftworx", monogram: "Dw" },
 ];
 
 export function TechStackShowcase() {
@@ -72,52 +61,50 @@ export function TechStackShowcase() {
           />
         </ScrollReveal>
 
-        <ScrollReveal delay={0.1}>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-2 gap-y-2">
-            {WORKFLOW_STEPS.map((step, i) => (
-              <span key={step} className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/[0.08] px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-primary/90">
-                  {step}
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-5">
+          {OUTCOMES.map((o, i) => (
+            <ScrollReveal key={o.lead} delay={i * 0.07}>
+              <div className="outcome-card premium-card h-full rounded-2xl border border-white/10 bg-card/80 p-5 sm:p-6">
+                <span
+                  aria-hidden
+                  className="mb-4 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] text-primary shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--primary)_45%,transparent)]"
+                >
+                  <o.icon className="h-5 w-5" />
                 </span>
-                {i < WORKFLOW_STEPS.length - 1 && (
-                  <ArrowRight
-                    className="h-3 w-3 shrink-0 text-primary/45"
-                    aria-hidden
-                  />
-                )}
-              </span>
-            ))}
-          </div>
-        </ScrollReveal>
-
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {TOOLS.map((tool, i) => (
-            <ScrollReveal key={tool.name} delay={i * 0.07}>
-              <div className="feature-card premium-card rounded-2xl border border-white/10 bg-card/80 p-5 sm:p-6 h-full">
-                <div className="mb-4 flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-gradient-to-br from-primary/[0.18] to-primary/[0.04] font-mono text-sm font-bold tracking-tight text-primary shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--primary)_45%,transparent)]"
-                  >
-                    {tool.monogram}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-base font-semibold leading-tight text-foreground">
-                      {tool.name}
-                    </p>
-                    <p className="mt-0.5 text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-primary/80">
-                      {tool.tagline}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {tool.benefit}
+                <p className="text-sm leading-relaxed">
+                  <span className="font-semibold text-foreground">{o.lead}</span>
+                  <span className="text-muted-foreground">{o.rest}</span>
                 </p>
               </div>
             </ScrollReveal>
           ))}
         </div>
+
+        <ScrollReveal delay={0.2}>
+          <div className="mt-12 flex flex-col items-center gap-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+              The tools behind it
+            </p>
+            <ul
+              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4"
+              role="list"
+            >
+              {TOOLS.map((tool) => (
+                <li key={tool.name} className="flex items-center gap-2.5">
+                  <span
+                    aria-hidden
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-gradient-to-br from-primary/[0.14] to-primary/[0.03] font-mono text-xs font-bold tracking-tight text-primary/90"
+                  >
+                    {tool.monogram}
+                  </span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {tool.name}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );

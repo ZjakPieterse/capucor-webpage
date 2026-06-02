@@ -10,7 +10,7 @@ const SERVICES = [
     icon: BarChart2,
     title: "Accounting",
     pitch:
-      "Annual financials, tax and statutory compliance handled properly and on time.",
+      "Your financials and filings are ready before SARS, the bank or a funder asks.",
     bestFor:
       "Companies that need AFS, income tax, VAT and CIPC responsibilities managed by professionals.",
     bullets: [
@@ -26,7 +26,7 @@ const SERVICES = [
     icon: BookMarked,
     title: "Bookkeeping",
     pitch:
-      "Current Xero records and monthly management accounts you can actually use.",
+      "Make decisions using current numbers rather than gut feel and bank balance.",
     bestFor:
       "Businesses that want their ledger processed, reconciled and ready for decisions every month.",
     bullets: [
@@ -43,7 +43,7 @@ const SERVICES = [
     icon: Users,
     title: "Payroll",
     pitch:
-      "Accurate payroll, payslips and SARS/UIF compliance without spreadsheet risk.",
+      "Pay staff correctly and keep monthly submissions off your worry list.",
     bestFor:
       "Employers that want payroll handled correctly, confidentially and on time.",
     bullets: [

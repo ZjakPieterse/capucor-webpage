@@ -11,14 +11,14 @@ const STEPS = [
     title: "Collect",
     body: "You know exactly what to send, where to send it, and by when. We make the monthly admin clear and repeatable, so both sides can deliver properly.",
     deliverable:
-      "VAT201, EMP201, provisional tax and CIPC deadlines tracked through a structured workflow, not memory or last-minute panic.",
+      "Clear monthly requests and one structured place for your information to flow, so there are fewer follow-ups and nothing gets lost in email.",
   },
   {
     number: "02",
     title: "Process",
     body: "We capture, code and reconcile the month’s activity in Xero, including bank feeds, supplier invoices, payroll entries and key control accounts.",
     deliverable:
-      "Your Xero ledger stays reconciled and decision-ready. When the bank, SARS or a funder needs a number, you are not scrambling to catch up.",
+      "Your Xero ledger stays reconciled and decision-ready, and VAT201, EMP201, provisional tax and CIPC deadlines are tracked through the workflow. When the bank, SARS or a funder needs a number, you are not scrambling to catch up.",
   },
   {
     number: "03",

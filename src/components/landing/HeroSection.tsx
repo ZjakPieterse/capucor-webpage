@@ -293,7 +293,10 @@ function FinanceCommandCentre() {
 
 // ── Hero Section ──────────────────────────────────────────────────────────────────
 export function HeroSection() {
-  const headline = "Make your finance functions work harder for you";
+  const headline =
+    "Get your weekends back. We’ll handle your accounting, payroll, and SARS compliance";
+  // Cyan gradient highlight on the benefit hook "weekends back" (word indices 2-3).
+  const HIGHLIGHT_RANGE = [2, 4] as const;
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -347,10 +350,14 @@ export function HeroSection() {
             </motion.p>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-[1.1] mb-6 flex flex-wrap gap-[0.25em]">
-              {headline.split(" ").map((word, i, arr) => (
+              {headline.split(" ").map((word, i) => (
                 <motion.span
                   key={i}
-                  className={i >= arr.length - 3 ? "gradient-text-brand" : undefined}
+                  className={
+                    i >= HIGHLIGHT_RANGE[0] && i < HIGHLIGHT_RANGE[1]
+                      ? "gradient-text-brand"
+                      : undefined
+                  }
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
