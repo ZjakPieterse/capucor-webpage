@@ -59,7 +59,7 @@ const TRUST = [
   {
     icon: Unlock,
     title: "No lock-in",
-    body: "A month-to-month agreement, never a long contract. If you leave, your full Xero file and handover pack come with you.",
+    body: "A month-to-month agreement. If you leave, your full Xero file and handover pack goes with you.",
   },
 ];
 
