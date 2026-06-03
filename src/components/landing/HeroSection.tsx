@@ -294,9 +294,9 @@ function FinanceCommandCentre() {
 // ── Hero Section ──────────────────────────────────────────────────────────────────
 export function HeroSection() {
   const headline =
-    "Grow your business, while we handle the accounting, bookkeeping, and payroll";
-  // Cyan gradient highlight on the benefit hook "Grow your business," (word indices 0-2).
-  const HIGHLIGHT_RANGE = [0, 3] as const;
+    "We’ll keep your finances running. You keep growing";
+  // Cyan gradient highlight on the benefit hook "You keep growing" (word indices 5-7).
+  const HIGHLIGHT_RANGE = [5, 8] as const;
   const prefersReducedMotion = useReducedMotion();
 
   return (
