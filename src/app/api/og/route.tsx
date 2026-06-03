@@ -1,8 +1,9 @@
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 
-export const runtime = 'edge';
-
+// No `runtime = 'edge'` here: on OpenNext/Cloudflare the Worker already runs at
+// the edge, and declaring the edge runtime makes OpenNext refuse to bundle the
+// route into the main worker. The default runtime is what Cloudflare wants.
 export function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const page = searchParams.get('page') ?? 'landing';
