@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { CalendarCheck, Check, ShieldCheck, Users } from "lucide-react";
+import {
+  CalendarCheck,
+  Check,
+  CornerDownRight,
+  Layers,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
@@ -20,12 +27,9 @@ interface PackagesTeaserProps {
 function getDisplayItems(
   tierSlug: string,
 ): { text: string; tooltip: string }[] {
-  const items = (TIER_HIGHLIGHTS[tierSlug] ?? [])
+  return (TIER_HIGHLIGHTS[tierSlug] ?? [])
     .filter((i) => !i.calculatorOnly)
     .map((i) => ({ text: i.text, tooltip: i.tooltip }));
-  const label = TIER_CUMULATIVE_LABELS[tierSlug];
-  if (label) return [{ text: label, tooltip: "" }, ...items];
-  return items;
 }
 
 export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
@@ -70,6 +74,9 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
           {sortedTiers.map((tier, i) => {
             const isMiddle = i === 1;
             const displayItems = getDisplayItems(tier.slug);
+            const cumulativeLabel = TIER_CUMULATIVE_LABELS[tier.slug];
+            const CumulativeIcon =
+              tier.slug === "basic" ? Layers : CornerDownRight;
 
             return (
               <ScrollReveal key={tier.slug} delay={i * 0.1}>
@@ -99,6 +106,15 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
                       </p>
                     ) : null}
                   </div>
+
+                  {cumulativeLabel && (
+                    <div className="mb-4">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1 w-fit">
+                        <CumulativeIcon className="h-3.5 w-3.5 text-primary shrink-0" />
+                        {cumulativeLabel}
+                      </div>
+                    </div>
+                  )}
 
                   <ul className="space-y-2 flex-1">
                     {displayItems.map((item) => (
