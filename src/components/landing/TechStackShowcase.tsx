@@ -5,11 +5,9 @@ import {
   Database,
   ListChecks,
   BarChart3,
-  ShieldCheck,
   ChevronRight,
   Wallet,
   KeyRound,
-  UserCheck,
   Unlock,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -44,12 +42,6 @@ const STAGES = [
     title: "Clear reporting",
     body: "Your numbers become reports you can actually read, not a spreadsheet to decode.",
   },
-  {
-    icon: ShieldCheck,
-    tool: "Draftworx",
-    title: "Signed off",
-    body: "A senior accountant reviews the month, signs off your statements, and flags what needs your attention.",
-  },
 ];
 
 // What the stack is worth to the buyer — every claim is true elsewhere on the site.
@@ -63,11 +55,6 @@ const TRUST = [
     icon: KeyRound,
     title: "Your own login",
     body: "You keep full, real-time access to your numbers. Outsourcing the admin doesn't cost you visibility.",
-  },
-  {
-    icon: UserCheck,
-    title: "Signed off by a named accountant",
-    body: "A SAICA-registered accountant reviews every month-end before it reaches you or SARS.",
   },
   {
     icon: Unlock,
@@ -90,7 +77,7 @@ export function TechStackShowcase() {
         </ScrollReveal>
 
         {/* The connected-system journey */}
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {STAGES.map((s, i) => (
             <ScrollReveal key={s.tool} delay={i * 0.07} className="relative h-full">
               {i > 0 && (
@@ -135,7 +122,7 @@ export function TechStackShowcase() {
               What that means for you
             </p>
           </ScrollReveal>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {TRUST.map((t, i) => (
               <ScrollReveal key={t.title} delay={i * 0.07} className="h-full">
                 <div className="feature-card premium-card flex h-full items-start gap-3.5 rounded-2xl border border-white/10 bg-card/80 p-5">
