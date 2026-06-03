@@ -12,9 +12,9 @@ const PARTNERS = [
   { name: 'SimplePay', href: 'https://www.simplepay.co.za/',    logo: '/logos/tools/simplepay.png', ratio: '203 / 58' },
   { name: 'Karbon',    href: 'https://karbonhq.com/',           logo: '/logos/tools/karbon.svg',    ratio: '1 / 1' },
   { name: 'Draftworx', href: 'https://draftworx.com/',          logo: '/logos/tools/draftworx.png', ratio: '241 / 81' },
-  { name: 'SAICA',     href: 'https://www.saica.org.za/',       logo: '/logos/tools/saica.png',     ratio: '1 / 1' },
+  { name: 'SAICA',     href: 'https://www.saica.org.za/',       logo: '/logos/tools/saica.svg',     ratio: '206.1 / 88.5' },
   { name: 'Intersect', href: 'https://intersectconnect.com/',   logo: '/logos/tools/intersect.png', ratio: '350 / 101' },
-  { name: 'Syft',      href: 'https://www.syftanalytics.com/',  logo: '/logos/tools/syft.png',      ratio: '1 / 1' },
+  { name: 'Syft',      href: 'https://www.syftanalytics.com/',  logo: '/logos/tools/syft.png',      ratio: '501 / 364' },
 ];
 
 const MARQUEE_ROW = [...PARTNERS, ...PARTNERS, ...PARTNERS, ...PARTNERS];
