@@ -9,6 +9,7 @@ import {
   LineChart,
   MessageSquare,
   Building2,
+  ShoppingBag,
   Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -249,6 +250,27 @@ export default async function PortalPage() {
               render={<Link href="/portal/dates" />}
             >
               See key dates
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </section>
+
+          {/* Add-on services */}
+          <section className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4 text-primary" />
+              Add-on services
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+              Once-off jobs outside your monthly plan — tax returns, annual financial statements, CIPC filings and more. Billed separately, only when you need them.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              className="gap-2"
+              render={<Link href="/portal/shop" />}
+            >
+              Browse services
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </section>
