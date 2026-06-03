@@ -4,7 +4,9 @@ import {
   ArrowRight,
   CheckCircle2,
   Calendar,
+  CalendarClock,
   FileText,
+  LineChart,
   MessageSquare,
   Building2,
   Lock,
@@ -205,6 +207,48 @@ export default async function PortalPage() {
               render={<Link href="/portal/documents" />}
             >
               Open documents
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </section>
+
+          {/* Finance */}
+          <section className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <LineChart className="h-4 w-4 text-primary" />
+              Finance
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+              A daily snapshot of your numbers — cash, revenue, expenses and runway — pulled straight from Xero once your organisation is linked.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              className="gap-2"
+              render={<Link href="/portal/finance" />}
+            >
+              View finance
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </section>
+
+          {/* Key dates */}
+          <section className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-primary" />
+              Key dates
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+              The SARS and statutory deadlines on the horizon — PAYE, VAT, provisional tax and employer reconciliations. We handle the filing; this keeps you in the loop.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              className="gap-2"
+              render={<Link href="/portal/dates" />}
+            >
+              See key dates
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </section>

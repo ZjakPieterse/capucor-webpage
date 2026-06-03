@@ -1,0 +1,32 @@
+name: Cron — expire stale proposals
+
+# Proposal-flow PR11 — daily sweep. Calls /api/cron/expire-proposals on
+# production with the REVALIDATE_SECRET so proposals past their expires_at are
+# flipped from sent/viewed to expired.
+#
+# Why GitHub Actions and not a Cloudflare cron trigger? OpenNext for Cloudflare
+# exports a fetch-only Worker; there is no `scheduled()` hook to attach. A
+# GitHub Actions cron is the simplest reliable replacement (same as prune-leads).
+
+on:
+  schedule:
+    # 03:30 UTC daily (05:30 SAST) — off-peak, just after the prune-leads job.
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit /api/cron/expire-proposals
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET secret is not configured." >&2
+            exit 1
+          fi
+          response=$(curl --silent --show-error --fail-with-body \
+            --max-time 60 \
+            "https://capucor.app/api/cron/expire-proposals?secret=$REVALIDATE_SECRET")
+          echo "$response"
