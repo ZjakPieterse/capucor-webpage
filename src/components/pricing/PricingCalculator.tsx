@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
 import { usePricingState } from '@/hooks/usePricingState';
@@ -11,7 +11,7 @@ import { StepIndicator } from './StepIndicator';
 import { Step1Services } from './Step1Services';
 import { Step2Brackets } from './Step2Brackets';
 import { Step3Tiers } from './Step3Tiers';
-import { Step4Activate } from './Step4Activate';
+import { ActivateProposalModal } from './ActivateProposalModal';
 import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
 import type { PricingData, Testimonial } from '@/types';
@@ -70,6 +70,8 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
 
   const {
     state,
+    completed,
+    markCompleted,
     setStep,
     setStepBack,
     toggleService,
@@ -80,13 +82,15 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
     canProceedStep3,
   } = usePricingState();
 
+  const [activateOpen, setActivateOpen] = useState(false);
+
   const scrollToTop = () => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
   };
 
-  const goForward = (step: 2 | 3 | 4) => {
+  const goForward = (step: 2 | 3) => {
     setStep(step);
     scrollToTop();
   };
@@ -96,8 +100,9 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
     scrollToTop();
   };
 
-  const advanceToActivate = () => {
-    if (canProceedStep3) goForward(4);
+  // "Activate" no longer routes to payment — it opens the proposal modal.
+  const openActivateModal = () => {
+    if (canProceedStep3) setActivateOpen(true);
   };
 
   return (
@@ -112,7 +117,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
             <p className="text-xs font-medium uppercase tracking-widest text-primary mb-6 text-center">
               3 steps to your monthly price
             </p>
-            <StepIndicator currentStep={state.step} />
+            <StepIndicator currentStep={state.step} completed={completed} />
             <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">
               <AnimatePresence mode="wait">
                 {state.step === 1 && (
@@ -174,28 +179,8 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
                       selectedTier={state.selectedTier}
                       onTierSelect={setTier}
                       onBack={() => goBack(2)}
-                      onActivate={advanceToActivate}
+                      onActivate={openActivateModal}
                       testimonial={spotlightTestimonial}
-                    />
-                  </motion.div>
-                )}
-
-                {state.step === 4 && (
-                  <motion.div
-                    key="step4"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <Step4Activate
-                      services={services}
-                      brackets={brackets}
-                      tiers={tiers}
-                      selectedServices={state.selectedServices}
-                      selectedBrackets={state.selectedBrackets}
-                      selectedTier={state.selectedTier}
-                      onBack={() => goBack(3)}
                     />
                   </motion.div>
                 )}
@@ -222,8 +207,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         tiers={tiers}
         brackets={brackets}
         summaryAnchorId="pricing-summary"
-        onActivate={advanceToActivate}
-        currentStep={state.step}
+        onActivate={openActivateModal}
       />
 
       <StickyConfigChip
@@ -234,6 +218,18 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         brackets={brackets}
         observeElementId="pricing-summary"
         scrollToId="pricing-summary"
+      />
+
+      <ActivateProposalModal
+        open={activateOpen}
+        onOpenChange={setActivateOpen}
+        services={services}
+        brackets={brackets}
+        tiers={tiers}
+        selectedServices={state.selectedServices}
+        selectedBrackets={state.selectedBrackets}
+        selectedTier={state.selectedTier}
+        onSuccess={markCompleted}
       />
     </>
   );

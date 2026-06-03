@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { BracketValue, CalculatorStep, PricingState } from '@/types';
 
-const STORAGE_KEY = 'capucor.pricing.draft.v1';
+// Bumped to v2 when the calculator dropped its 4th input step (Activate). Old
+// v1 drafts could carry step:4 which is no longer a valid CalculatorStep.
+const STORAGE_KEY = 'capucor.pricing.draft.v2';
 
 const DEFAULT_STATE: PricingState = {
   step: 1,
@@ -41,6 +43,11 @@ export function clearPricingDraft() {
 export function usePricingState() {
   const [state, setState] = useState<PricingState>(DEFAULT_STATE);
 
+  // True once the user has submitted the Activate modal and a proposal has been
+  // sent. Drives the stepper's 4th "Done" segment. Not persisted — a refresh
+  // starts a fresh configuration. Any change to the selection clears it.
+  const [completed, setCompleted] = useState(false);
+
   // Every visit to /pricing starts blank: the first persist overwrites any
   // prior draft with DEFAULT_STATE. Continue/Back within the page don't
   // unmount this hook, so in-session step state still flows; only fresh
@@ -53,9 +60,12 @@ export function usePricingState() {
     setState((s) => ({ ...s, step }));
   }, []);
 
+  const markCompleted = useCallback(() => setCompleted(true), []);
+
   // Going Back clears selections made in later steps so each step is a fresh
   // choice when re-entered from below. Step 1 selections (services) are kept.
   const setStepBack = useCallback((step: CalculatorStep) => {
+    setCompleted(false);
     setState((s) => {
       const next: PricingState = { ...s, step };
       if (step <= 1) next.selectedBrackets = {};
@@ -65,6 +75,7 @@ export function usePricingState() {
   }, []);
 
   const toggleService = useCallback((slug: string) => {
+    setCompleted(false);
     setState((s) => {
       const next = new Set(s.selectedServices);
       if (next.has(slug)) {
@@ -81,6 +92,7 @@ export function usePricingState() {
   }, []);
 
   const setBracket = useCallback((slug: string, value: BracketValue) => {
+    setCompleted(false);
     setState((s) => ({
       ...s,
       selectedBrackets: { ...s.selectedBrackets, [slug]: value },
@@ -88,6 +100,7 @@ export function usePricingState() {
   }, []);
 
   const setTier = useCallback((tierSlug: string) => {
+    setCompleted(false);
     setState((s) => ({ ...s, selectedTier: tierSlug }));
   }, []);
 
@@ -99,6 +112,8 @@ export function usePricingState() {
 
   return {
     state,
+    completed,
+    markCompleted,
     setStep,
     setStepBack,
     toggleService,

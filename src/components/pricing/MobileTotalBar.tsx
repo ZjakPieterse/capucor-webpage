@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { MagneticButton } from '@/components/ui/MagneticButton';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { monthlyTotal } from '@/lib/pricing';
-import type { Bracket, BracketValue, CalculatorStep, Tier } from '@/types';
+import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface MobileTotalBarProps {
   selectedServices: Set<string>;
@@ -17,7 +17,6 @@ interface MobileTotalBarProps {
   brackets: Bracket[];
   summaryAnchorId: string;
   onActivate: () => void;
-  currentStep: CalculatorStep;
 }
 
 export function MobileTotalBar({
@@ -28,7 +27,6 @@ export function MobileTotalBar({
   brackets,
   summaryAnchorId,
   onActivate,
-  currentStep,
 }: MobileTotalBarProps) {
   const activeSlugs = [...selectedServices];
   const tier = tiers.find((t) => t.slug === selectedTierSlug) ?? null;
@@ -42,10 +40,6 @@ export function MobileTotalBar({
   }, [summaryAnchorId]);
 
   if (activeSlugs.length === 0) return null;
-
-  // Hide the bar entirely on Step 4 — the user is filling the activation form
-  // and the form's own submit button is what they need.
-  if (currentStep === 4) return null;
 
   return (
     <div

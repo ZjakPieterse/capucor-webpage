@@ -16,7 +16,7 @@ export const CalculatorConfigSchema = z.object({
 export type CalculatorConfig = z.infer<typeof CalculatorConfigSchema>;
 
 export const LeadSchema = z.object({
-  source: z.enum(['signup', 'quote', 'enterprise', 'contact', 'call']),
+  source: z.enum(['signup', 'quote', 'enterprise', 'contact', 'call', 'proposal']),
   name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Please enter a valid email address'),
   business: z.string().max(100).optional(),
@@ -81,6 +81,33 @@ export const SubscriptionRequestSchema = z.object({
 });
 
 export type SubscriptionRequestInput = z.infer<typeof SubscriptionRequestSchema>;
+
+// ── Proposal request (Activate modal of the calculator) ─────────────────
+//
+// Contract between the ActivateProposalModal form and /api/proposals. The
+// endpoint recomputes pricing server-side, stores the contact as a lead, and
+// generates a proposal that is emailed to the client + a central Capucor inbox.
+// Lighter than SubscriptionRequestSchema by design — Ignition-style: detailed
+// business info (CIPC / VAT / sector) is collected later, at proposal sign-off.
+
+export const ProposalRequestSchema = z.object({
+  // Calculator config — integer brackets only, no enterprise
+  services: z.array(z.string().min(1)).min(1, 'Select at least one service'),
+  brackets: z.record(z.string(), z.number().int().nonnegative()),
+  tierSlug: z.string().min(1, 'Choose a package'),
+  // Contact
+  firstName: z.string().min(1, 'First name is required').max(80),
+  lastName: z.string().min(1, 'Surname is required').max(80),
+  businessName: z.string().min(2, 'Business name is required').max(120),
+  email: z.string().email('Enter a valid email address'),
+  // Consent + honeypot
+  consentGiven: z.literal(true, {
+    message: 'You must consent before continuing.',
+  }),
+  website: z.string().max(0).optional(), // honeypot — must be empty
+});
+
+export type ProposalRequestInput = z.infer<typeof ProposalRequestSchema>;
 
 // ── Paystack webhook payload (stub, mirrors Paystack event envelope) ────
 //

@@ -61,7 +61,9 @@ export interface PricingData {
   inclusions: TierInclusion[];
 }
 
-export type CalculatorStep = 1 | 2 | 3 | 4;
+// The calculator has three real input steps (Services → Business → Package).
+// The 4th stepper segment is a completion marker ("Done"), not an input step.
+export type CalculatorStep = 1 | 2 | 3;
 
 export interface PricingState {
   step: CalculatorStep;
@@ -115,7 +117,7 @@ export interface SubscriptionRequestPayload {
 }
 
 export interface LeadPayload {
-  source: 'signup' | 'quote' | 'enterprise' | 'contact' | 'call';
+  source: 'signup' | 'quote' | 'enterprise' | 'contact' | 'call' | 'proposal';
   name: string;
   email: string;
   business?: string;

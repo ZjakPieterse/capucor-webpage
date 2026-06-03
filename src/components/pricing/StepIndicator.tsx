@@ -5,22 +5,29 @@ import type { CalculatorStep } from '@/types';
 
 interface StepIndicatorProps {
   currentStep: CalculatorStep;
+  /** True once the Activate modal has been submitted and the proposal sent. */
+  completed?: boolean;
 }
 
+// Three real input steps + a 4th "Done" completion marker (not an input step).
+// The banner above reads "3 steps to your monthly price"; the 4th segment only
+// signals that the process is complete.
 const STEPS = [
   { number: 1, label: 'Select services' },
   { number: 2, label: 'Your business' },
   { number: 3, label: 'Choose package' },
-  { number: 4, label: 'Activate' },
+  { number: 4, label: 'Done' },
 ] as const;
 
-export function StepIndicator({ currentStep }: StepIndicatorProps) {
+export function StepIndicator({ currentStep, completed = false }: StepIndicatorProps) {
   return (
     <nav aria-label="Calculator progress" className="mb-8">
       <ol className="flex items-start gap-0">
         {STEPS.map((step, i) => {
-          const isDone = step.number < currentStep;
-          const isActive = step.number === currentStep;
+          // On completion every segment lights up and the 4th ("Done") gets the
+          // active glow as the celebratory end state.
+          const isDone = completed ? true : step.number < currentStep;
+          const isActive = completed ? step.number === 4 : step.number === currentStep;
 
           return (
             <li

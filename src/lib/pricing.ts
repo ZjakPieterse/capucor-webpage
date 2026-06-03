@@ -1,4 +1,4 @@
-import type { Bracket, BracketValue } from '@/types';
+import type { Bracket, BracketValue, Service } from '@/types';
 
 export function bracketPrice(
   bracket: Pick<Bracket, 'basic_price' | 'pro_price' | 'premium_price'>,
@@ -21,6 +21,40 @@ export function monthlyTotal(
     const b = allBrackets.find((x) => x.service_slug === slug && x.ordinal === sel);
     return b ? sum + bracketPrice(b, tierSlug) : sum;
   }, 0);
+}
+
+export interface ProposalLineItem {
+  slug: string;
+  name: string;
+  label: string | null;
+  price: number;
+}
+
+// One priced line per selected service, for the proposal summary, email, and
+// proposal page. Enterprise / unconfigured selections are skipped (they carry
+// no self-serve price). Shares its price source with monthlyTotal so the lines
+// always sum to the displayed total.
+export function buildLineItems(
+  selectedSlugs: string[],
+  bracketSelections: Record<string, BracketValue>,
+  tierSlug: string,
+  services: Pick<Service, 'slug' | 'name'>[],
+  allBrackets: Pick<Bracket, 'service_slug' | 'ordinal' | 'label' | 'basic_price' | 'pro_price' | 'premium_price'>[]
+): ProposalLineItem[] {
+  const items: ProposalLineItem[] = [];
+  for (const slug of selectedSlugs) {
+    const sel = bracketSelections[slug];
+    if (sel === 'enterprise' || sel === undefined) continue;
+    const bracket = allBrackets.find((x) => x.service_slug === slug && x.ordinal === sel);
+    if (!bracket) continue;
+    items.push({
+      slug,
+      name: services.find((s) => s.slug === slug)?.name ?? slug,
+      label: bracket.label ?? null,
+      price: bracketPrice(bracket, tierSlug),
+    });
+  }
+  return items;
 }
 
 export function hasEnterpriseService(
