@@ -7,10 +7,10 @@ import { ScrollReveal } from '@/components/ui/ScrollReveal';
 // inherit the marquee's muted text colour. `ratio` is each asset's natural aspect
 // ratio, so a single shared height renders every logo at its correct proportions.
 const PARTNERS = [
-  { name: 'Xero',      href: 'https://www.xero.com/za/',        logo: '/logos/tools/xero.svg',      ratio: '1 / 1' },
+  { name: 'Xero',      href: 'https://www.xero.com/za/',        logo: '/logos/tools/xero.svg',      ratio: '79 / 22' },
   { name: 'Dext',      href: 'https://dext.com/za',             logo: '/logos/tools/dext.svg',      ratio: '620 / 384' },
   { name: 'SimplePay', href: 'https://www.simplepay.co.za/',    logo: '/logos/tools/simplepay.png', ratio: '203 / 58' },
-  { name: 'Karbon',    href: 'https://karbonhq.com/',           logo: '/logos/tools/karbon.svg',    ratio: '1 / 1' },
+  { name: 'Karbon',    href: 'https://karbonhq.com/',           logo: '/logos/tools/karbon.svg',    ratio: '121 / 42' },
   { name: 'Draftworx', href: 'https://draftworx.com/',          logo: '/logos/tools/draftworx.png', ratio: '241 / 81' },
   { name: 'SAICA',     href: 'https://www.saica.org.za/',       logo: '/logos/tools/saica.svg',     ratio: '206.1 / 88.5' },
   { name: 'Intersect', href: 'https://intersectconnect.com/',   logo: '/logos/tools/intersect.png', ratio: '350 / 101' },
