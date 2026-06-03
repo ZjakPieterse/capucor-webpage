@@ -12,6 +12,7 @@
 import { NextRequest } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { DATA_REQUEST_SLA_DAYS } from '@/lib/consent';
+import { siteConfig } from '@/config/site';
 
 type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error';
 
@@ -67,7 +68,7 @@ export async function GET(req: NextRequest) {
           const { Resend } = await import('resend');
           const resend = new Resend(resendKey);
           await resend.emails.send({
-            from: 'Capucor Website <noreply@capucor.co.za>',
+            from: siteConfig.email.senderWebsite,
             to: ownerEmail,
             subject: `Data ${requestType} request CONFIRMED: ${email}`,
             text: [
@@ -113,7 +114,7 @@ function htmlResponse(outcome: Outcome): Response {
     },
     error: {
       title: 'Something went wrong',
-      body: 'We could not process this confirmation. Please try again later or email privacy@capucor.co.za.',
+      body: `We could not process this confirmation. Please try again later or email ${siteConfig.email.contact}.`,
     },
   };
 

@@ -212,7 +212,8 @@ export async function POST(req: NextRequest) {
       const resend = new Resend(resendKey);
 
       await resend.emails.send({
-        from: 'Capucor <noreply@capucor.co.za>',
+        from: siteConfig.email.sender,
+        replyTo: siteConfig.email.replyTo,
         to: input.email,
         subject: 'Your Capucor proposal is ready',
         html: renderProposalEmail({
@@ -229,7 +230,7 @@ export async function POST(req: NextRequest) {
 
       if (ownerEmail) {
         await resend.emails.send({
-          from: 'Capucor Website <noreply@capucor.co.za>',
+          from: siteConfig.email.senderWebsite,
           to: ownerEmail,
           subject: `New proposal — ${input.businessName}`,
           text: [

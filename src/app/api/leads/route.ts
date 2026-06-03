@@ -3,6 +3,7 @@ import { LeadSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
+import { siteConfig } from '@/config/site';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
       const { Resend } = await import('resend');
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: 'Capucor Website <noreply@capucor.co.za>',
+        from: siteConfig.email.senderWebsite,
         to: ownerEmail,
         subject: `New lead: ${fields.name} (${fields.source})`,
         text: [

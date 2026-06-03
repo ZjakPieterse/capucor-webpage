@@ -136,7 +136,8 @@ export async function POST(req: NextRequest) {
       ].join('\n');
 
       await resend.emails.send({
-        from: 'Capucor Privacy <noreply@capucor.co.za>',
+        from: siteConfig.email.senderPrivacy,
+        replyTo: siteConfig.email.replyTo,
         to: email,
         subject: requesterSubject,
         text: requesterBody,
@@ -144,7 +145,7 @@ export async function POST(req: NextRequest) {
 
       if (ownerEmail) {
         await resend.emails.send({
-          from: 'Capucor Website <noreply@capucor.co.za>',
+          from: siteConfig.email.senderWebsite,
           to: ownerEmail,
           subject: `Data ${request_type} request: ${email}`,
           text: [
