@@ -44,15 +44,9 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       calculatorOnly: true,
     },
     {
-      text: 'EMP201 & EMP501 Submissions',
+      text: 'EMP & UIF Compliance',
       services: ['payroll'],
-      tooltip: 'Monthly and bi-annual employer payroll submissions prepared and lodged as required.',
-      calculatorOnly: true,
-    },
-    {
-      text: 'UIF Compliance',
-      services: ['payroll'],
-      tooltip: 'UIF declarations submitted and relevant termination documents made available when needed.',
+      tooltip: 'EMP201 and EMP501 employer submissions prepared and lodged on their monthly and bi-annual cycles, with UIF declarations and termination documents handled when needed.',
       calculatorOnly: true,
     },
     {

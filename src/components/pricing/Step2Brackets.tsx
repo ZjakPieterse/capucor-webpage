@@ -9,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { cn, formatZAR } from '@/lib/utils';
-import { bracketPrice } from '@/lib/pricing';
+import { cn } from '@/lib/utils';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { MagneticButton } from '@/components/ui/MagneticButton';
 import type { Bracket, BracketValue, Service } from '@/types';
@@ -69,11 +68,6 @@ export function Step2Brackets({
           const selectValue = currentValue !== undefined ? String(currentValue) : '';
           const isSet = currentValue !== undefined && typeof currentValue === 'number';
 
-          const currentBracket = isSet
-            ? brackets.find((b) => b.service_slug === svc.slug && b.ordinal === currentValue)
-            : undefined;
-          const fromPrice = currentBracket ? bracketPrice(currentBracket, 'basic') : 0;
-
           return (
             <div key={svc.slug} className={cn('step2-row', isSet && 'is-set')}>
               <div className="flex items-center gap-3 min-w-0">
@@ -117,13 +111,6 @@ export function Step2Brackets({
                   </SelectContent>
                 </Select>
               </div>
-
-              <span
-                className={cn('step2-price-chip', isSet && 'is-set')}
-                aria-live="polite"
-              >
-                {isSet ? `From ${formatZAR(fromPrice)}` : '—'}
-              </span>
             </div>
           );
         })}

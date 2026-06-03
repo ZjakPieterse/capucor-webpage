@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import { bracketPrice } from '@/lib/pricing';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { MagneticButton } from '@/components/ui/MagneticButton';
-import { TIER_HIGHLIGHTS, TIER_CUMULATIVE_LABELS } from '@/config/tiers';
+import { TIER_HIGHLIGHTS, TIER_CUMULATIVE_LABELS, TIER_BUYER_FIT } from '@/config/tiers';
 import type { Bracket, Service, Tier, BracketValue, Testimonial } from '@/types';
 
 interface Step3TiersProps {
@@ -47,7 +47,7 @@ export function Step3Tiers({
       <div>
         <h2 className="text-xl font-semibold mb-1">Pick the perfect fit for your growth.</h2>
         <p className="text-sm text-muted-foreground">
-          Choose the level of support that matches your business goals. Remember, there are no lock-in contracts, just pure support.
+          Click on the level of support that matches your business goals. Remember, there are no lock-in contracts, just pure support.
         </p>
       </div>
 
@@ -102,9 +102,9 @@ export function Step3Tiers({
               {/* Row 1: Header (Title & Tagline) */}
               <div className="pricing-card-header mb-4 flex flex-col justify-start">
                 <div className="font-bold text-lg tracking-tight text-foreground">{tier.name}</div>
-                {tier.tagline && (
+                {(TIER_BUYER_FIT[tier.slug] ?? tier.tagline) && (
                   <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                    {tier.tagline}
+                    {TIER_BUYER_FIT[tier.slug] ?? tier.tagline}
                   </div>
                 )}
               </div>
