@@ -76,8 +76,7 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Bookkeeping & Monthly Close',
       'Monthly Financial Reports',
       'Payroll Processing & Payslips',
-      'EMP201 & EMP501 Submissions',
-      'UIF Compliance',
+      'EMP & UIF Compliance',
       'COIDA Annual Submission',
     ]);
   });
@@ -166,8 +165,7 @@ describe('service-filter behaviour', () => {
     expect(basic).not.toContain('Xero Software Included');
     expect(basic).not.toContain('Bookkeeping & Monthly Close');
     expect(basic).not.toContain('Payroll Processing & Payslips');
-    expect(basic).not.toContain('EMP201 & EMP501 Submissions');
-    expect(basic).not.toContain('UIF Compliance');
+    expect(basic).not.toContain('EMP & UIF Compliance');
     expect(basic).not.toContain('COIDA Annual Submission');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
@@ -200,8 +198,7 @@ describe('service-filter behaviour', () => {
 
     expect(visibleItems('basic', sel).map((i) => i.text)).toEqual([
       'Payroll Processing & Payslips',
-      'EMP201 & EMP501 Submissions',
-      'UIF Compliance',
+      'EMP & UIF Compliance',
       'COIDA Annual Submission',
     ]);
 
@@ -298,8 +295,7 @@ describe('payroll accumulation in the comparison matrix', () => {
 
   const basicPayrollTexts = [
     'Payroll Processing & Payslips',
-    'EMP201 & EMP501 Submissions',
-    'UIF Compliance',
+    'EMP & UIF Compliance',
     'COIDA Annual Submission',
   ];
   const proPayrollTexts = ['Employee Self-Service Portal', 'Leave Management & Approvals'];
