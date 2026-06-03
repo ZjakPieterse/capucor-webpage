@@ -193,6 +193,34 @@
   opacity: 0.72;
 }
 
+/* Emphasised "Most popular" pricing card — brighter cyan border + a soft static
+   glow in the spirit of .cursor-glow, to pull the eye to the recommended tier.
+   The glow lives on ::after because .premium-card::before is already the white
+   sheen; isolation + z-index: -1 keep it behind the card content and badge. */
+.popular-card {
+  isolation: isolate;
+  border-color: color-mix(in oklch, var(--primary) 55%, var(--border));
+  box-shadow:
+    0 1px 0 color-mix(in oklch, white 12%, transparent) inset,
+    0 0 0 1px color-mix(in oklch, var(--primary) 30%, transparent),
+    0 26px 70px -30px color-mix(in oklch, var(--primary) 55%, transparent),
+    0 12px 32px -28px rgba(0, 0, 0, 0.85);
+}
+
+.popular-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    460px circle at 50% 0%,
+    color-mix(in oklch, var(--primary) 16%, transparent),
+    transparent 62%
+  );
+}
+
 /* Card hover rules deliberately use `@media all` (always-true) rather than the
    conventional `@media (hover: hover)` gate. Many Windows hybrid devices
    (touchscreen laptops with a mouse) get reported by Chromium as

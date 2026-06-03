@@ -64,7 +64,7 @@ export default function AccountingPage() {
                 Financial statements, tax returns and CIPC, handled before the deadlines move
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Annual financials, provisional and income tax, VAT201 and CIPC annual returns. A SAICA-registered AGA(SA) accountant signs off on the file before anything reaches SARS.
+                Annual financials, provisional and income tax, VAT201 and CIPC annual returns. A SAICA-registered accountant signs off on the file before anything reaches SARS.
               </p>
               <Link
                 href="/pricing"

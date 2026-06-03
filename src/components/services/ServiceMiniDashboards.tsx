@@ -208,7 +208,7 @@ export function AccountingDashboard() {
       >
         <ShieldCheck className="h-4 w-4 shrink-0 text-success" />
         <span className="text-xs font-medium">
-          Reviewed and signed off by a SAICA-registered AGA(SA) accountant.
+          Reviewed and signed off by a SAICA-registered accountant.
         </span>
       </motion.div>
     </Shell>

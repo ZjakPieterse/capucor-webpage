@@ -249,7 +249,7 @@ export default async function PortalPage() {
               Need to speak to your accountant?
             </h2>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
-              Your assigned AGA(SA) reviewer responds within one business day.
+              Your assigned accountant responds within one business day.
             </p>
             <Button
               variant="outline"

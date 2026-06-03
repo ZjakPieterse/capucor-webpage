@@ -48,7 +48,7 @@ const STAGES = [
     icon: ShieldCheck,
     tool: "Draftworx",
     title: "Signed off",
-    body: "A senior AGA(SA) accountant reviews the month, signs off your statements, and flags what needs your attention.",
+    body: "A senior accountant reviews the month, signs off your statements, and flags what needs your attention.",
   },
 ];
 
@@ -67,7 +67,7 @@ const TRUST = [
   {
     icon: UserCheck,
     title: "Signed off by a named accountant",
-    body: "A SAICA-registered AGA(SA) reviews every month-end before it reaches you or SARS.",
+    body: "A SAICA-registered accountant reviews every month-end before it reaches you or SARS.",
   },
   {
     icon: Unlock,

@@ -76,9 +76,7 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
                 <div
                   className={cn(
                     "premium-card rounded-2xl border bg-card/80 p-8 flex flex-col h-full",
-                    isMiddle
-                      ? "border-primary/40 shadow-lg shadow-primary/10 relative"
-                      : "border-white/10",
+                    isMiddle ? "popular-card" : "border-white/10",
                   )}
                 >
                   {isMiddle && (

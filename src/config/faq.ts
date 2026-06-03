@@ -62,6 +62,6 @@ export const faqs: FaqItem[] = [
   {
     question: 'Who actually does the work on my books?',
     answer:
-      'A small, named team. Day-to-day processing is done by a bookkeeper assigned to your business so the same person sees your transactions month after month. Every month-end is reviewed and signed off by a SAICA-registered AGA(SA) accountant before anything reaches you or SARS. You always know who to email.',
+      'A small, named team. Day-to-day processing is done by a bookkeeper assigned to your business so the same person sees your transactions month after month. Every month-end is reviewed and signed off by a SAICA-registered accountant before anything reaches you or SARS. You always know who to email.',
   },
 ];

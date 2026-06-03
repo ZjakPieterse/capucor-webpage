@@ -294,9 +294,9 @@ function FinanceCommandCentre() {
 // ── Hero Section ──────────────────────────────────────────────────────────────────
 export function HeroSection() {
   const headline =
-    "Get your weekends back. We’ll handle your accounting, payroll, and SARS compliance";
-  // Cyan gradient highlight on the benefit hook "weekends back" (word indices 2-3).
-  const HIGHLIGHT_RANGE = [2, 4] as const;
+    "Grow your business, while we handle the accounting, bookkeeping, and payroll";
+  // Cyan gradient highlight on the benefit hook "Grow your business," (word indices 0-2).
+  const HIGHLIGHT_RANGE = [0, 3] as const;
   const prefersReducedMotion = useReducedMotion();
 
   return (

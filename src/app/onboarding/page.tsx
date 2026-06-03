@@ -96,7 +96,7 @@ export default async function OnboardingPage() {
             </p>
             <h3 className="text-xl font-bold tracking-tight">Pick a handover-call slot</h3>
             <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed max-w-md">
-              30 minutes with the AGA(SA) accountant who will sign off on your monthly close. Pick a time in the next 5 working days that suits you.
+              30 minutes with the SAICA-registered accountant who will sign off on your monthly close. Pick a time in the next 5 working days that suits you.
             </p>
           </div>
         </div>
