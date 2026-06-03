@@ -18,7 +18,7 @@ const STEPS = [
     title: "Process",
     body: "We capture, code and reconcile the month’s activity in Xero, including bank feeds, supplier invoices, payroll entries and key control accounts.",
     deliverable:
-      "Your Xero ledger stays reconciled and decision-ready, and VAT201, EMP201, provisional tax and CIPC deadlines are tracked through the workflow. When the bank, SARS or a funder needs a number, you are not scrambling to catch up.",
+      "Your ledger stays reconciled and decision-ready, with tax and compliance deadlines tracked through the workflow. When someone needs a number, you are not scrambling to catch up.",
   },
   {
     number: "03",

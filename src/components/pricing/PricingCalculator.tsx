@@ -49,7 +49,7 @@ function BottomCTA() {
       <div className="max-w-4xl mx-auto px-6">
         <p className="text-lg font-semibold mb-1">Not ready to commit?</p>
         <p className="text-sm text-muted-foreground mb-6">
-          Book a 15-minute fit call and we&rsquo;ll walk you through which services fit your business.
+          Book a fit call and we&rsquo;ll walk you through which services fit your business.
         </p>
         <a
           href={siteConfig.links.booking}
@@ -57,7 +57,7 @@ function BottomCTA() {
           rel="noopener noreferrer"
           className="premium-glass border inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium hover:border-primary/60 transition-colors"
         >
-          Book a 15-minute fit call →
+          Book a fit call →
         </a>
       </div>
     </section>

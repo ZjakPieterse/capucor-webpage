@@ -155,17 +155,17 @@ export function Footer() {
           {/* Credentials */}
           <div className="col-span-2 md:col-span-1 space-y-3">
             <p className="text-sm font-medium">Credentials</p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col items-start gap-2">
               <span className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90">
                 Xero Gold Partner
               </span>
-              <span className="inline-block rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <span className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90">
                 SAICA Member
               </span>
+              <span className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90">
+                POPIA Compliant
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed pt-2">
-              POPIA compliant. Your data is always yours.
-            </p>
           </div>
         </div>
 

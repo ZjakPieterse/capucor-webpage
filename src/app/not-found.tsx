@@ -45,7 +45,7 @@ export default function NotFound() {
           }
         >
           <Calendar className="h-4 w-4" />
-          Book a 15-minute fit call
+          Book a fit call
         </Button>
       </div>
     </div>

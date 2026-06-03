@@ -58,7 +58,7 @@ export function FinalCTA() {
                 className="premium-button inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-input bg-input/30 backdrop-blur-md px-6 text-sm font-semibold hover:bg-input/50 transition-all"
               >
                 <Calendar className="h-4 w-4" />
-                Book a 15-minute fit call
+                Book a fit call
               </a>
             </MagneticButton>
           </div>

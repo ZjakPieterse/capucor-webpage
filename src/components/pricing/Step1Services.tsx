@@ -159,7 +159,7 @@ export function Step1Services({ services, selected, onToggle, onNext }: Step1Ser
           rel="noopener noreferrer"
           className="text-primary/80 underline underline-offset-2 hover:text-primary"
         >
-          Book a 15-minute fit call →
+          Book a fit call →
         </a>
       </p>
     </div>

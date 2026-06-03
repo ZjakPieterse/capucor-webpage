@@ -49,7 +49,7 @@ const TRUST = [
   {
     icon: Wallet,
     title: "Included in your price",
-    body: "Xero, Dext and the rest are part of the subscription. No separate software bills to manage.",
+    body: "Your software costs are built into the subscription. No separate software bills to manage.",
   },
   {
     icon: KeyRound,
@@ -59,7 +59,7 @@ const TRUST = [
   {
     icon: Unlock,
     title: "No lock-in",
-    body: "Month to month. If you leave, you take your Xero file and a full handover pack.",
+    body: "A month-to-month agreement, never a long contract. If you leave, your full Xero file and handover pack come with you.",
   },
 ];
 

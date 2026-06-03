@@ -420,7 +420,7 @@ export function HeroSection() {
                   size="lg"
                   className="gap-2 w-full sm:w-auto"
                 >
-                  <Calendar className="h-4 w-4" /> Book a 15-minute fit call
+                  <Calendar className="h-4 w-4" /> Book a fit call
                 </Button>
               </MagneticButton>
             </motion.div>

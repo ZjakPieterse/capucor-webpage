@@ -53,7 +53,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
           }
         >
           <Calendar className="h-4 w-4" />
-          Book a 15-minute fit call
+          Book a fit call
         </Button>
       </div>
 
