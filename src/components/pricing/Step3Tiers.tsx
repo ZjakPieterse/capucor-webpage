@@ -151,12 +151,12 @@ export function Step3Tiers({
           <div>
             <p className="font-semibold text-sm">Your subscription is ready.</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              A few details, then a secure Paystack checkout. Cancel any time with 30 days notice.
+              Add a few details and we&rsquo;ll email you a proposal to review and sign. No payment needed yet, and you can cancel any time with 30 days notice.
             </p>
           </div>
           <MagneticButton>
             <Button onClick={onActivate} className="shrink-0 gap-2 cta-armed">
-              Activate
+              Get my proposal
               <ArrowRight className="h-4 w-4" />
             </Button>
           </MagneticButton>

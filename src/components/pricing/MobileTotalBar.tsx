@@ -79,7 +79,7 @@ export function MobileTotalBar({
         {selectedTierSlug ? (
           <MagneticButton>
             <Button size="sm" onClick={onActivate} className="shrink-0 shadow-lg shadow-primary/20">
-              Activate
+              Get proposal
             </Button>
           </MagneticButton>
         ) : (
