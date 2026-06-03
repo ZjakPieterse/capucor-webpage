@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Calendar,
   CalendarClock,
+  ClipboardList,
   FileText,
   LineChart,
   MessageSquare,
@@ -271,6 +272,27 @@ export default async function PortalPage() {
               render={<Link href="/portal/shop" />}
             >
               Browse services
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </section>
+
+          {/* Year-end planner */}
+          <section className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-primary" />
+              Year-end planner
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
+              A prep checklist for your annual financial statements. Tick off what you&apos;ve gathered — the sooner it&apos;s complete, the sooner your AFS and tax return are done.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              className="gap-2"
+              render={<Link href="/portal/year-end" />}
+            >
+              Open planner
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </section>
