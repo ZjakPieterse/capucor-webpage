@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart2, BookMarked, Users } from 'lucide-react';
+import { BarChart2, BookMarked, Check, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -44,6 +44,12 @@ export function Step2Brackets({
   const activeServices = services.filter((s) => selectedServices.has(s.slug));
   const containerRef = useCursorGlow<HTMLDivElement>();
 
+  const totalLines = activeServices.length;
+  const configuredLines = activeServices.filter(
+    (s) => typeof selectedBrackets[s.slug] === 'number'
+  ).length;
+  const allConfigured = totalLines > 0 && configuredLines === totalLines;
+
   return (
     <div className="space-y-6">
       <div>
@@ -70,19 +76,14 @@ export function Step2Brackets({
 
           return (
             <div key={svc.slug} className={cn('step2-row', isSet && 'is-set')}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className={cn(
-                    'inline-flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors duration-200',
-                    isSet ? 'bg-primary/15' : 'bg-muted'
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={cn('step2-row__icon', isSet && 'is-set')}>
+                  <Icon className="h-5 w-5" />
+                  {isSet && (
+                    <span className="step2-row__check" aria-hidden>
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                    </span>
                   )}
-                >
-                  <Icon
-                    className={cn(
-                      'h-4 w-4 transition-colors duration-200',
-                      isSet ? 'text-primary' : 'text-muted-foreground'
-                    )}
-                  />
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-sm">{svc.name}</p>
@@ -98,7 +99,10 @@ export function Step2Brackets({
                 >
                   <SelectTrigger
                     size="default"
-                    className="w-full h-10 text-sm border-border bg-background/60"
+                    className={cn(
+                      'step2-trigger w-full h-10 text-sm',
+                      isSet ? 'is-set' : 'border-border bg-background/60'
+                    )}
                   >
                     <SelectValue placeholder={`Select ${svc.bracket_unit_label ?? 'size'} range…`} />
                   </SelectTrigger>
@@ -116,12 +120,23 @@ export function Step2Brackets({
         })}
       </div>
 
-      <div className="flex justify-between pt-2">
+      <div className="flex items-center justify-between gap-3 pt-2">
         <MagneticButton>
           <Button variant="outline" onClick={onBack}>
             ← Back
           </Button>
         </MagneticButton>
+
+        <div className="hidden sm:block">
+          <span
+            className={cn('selection-counter', allConfigured && 'is-active')}
+            aria-live="polite"
+          >
+            {allConfigured && <Check className="h-3 w-3" strokeWidth={3} />}
+            {configuredLines} of {totalLines} configured
+          </span>
+        </div>
+
         <MagneticButton>
           <Button
             onClick={onNext}
