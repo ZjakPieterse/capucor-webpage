@@ -203,7 +203,6 @@ export async function POST(req: NextRequest) {
             email: row.email,
             method: input.method,
             signedAt: nowIso,
-            signatureImage: input.imageDataUrl,
             proposalUrl,
           }),
         });
@@ -257,7 +256,6 @@ function renderSignedOwnerEmail(d: {
   email: string;
   method: string;
   signedAt: string;
-  signatureImage: string;
   proposalUrl: string;
 }): string {
   const when = new Date(d.signedAt).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' });
@@ -275,11 +273,10 @@ function renderSignedOwnerEmail(d: {
         <tr><td style="padding:4px 0;color:#6b7280;">Method</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.method)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7280;">When</td><td style="padding:4px 0;text-align:right;">${escapeHtml(when)}</td></tr>
       </table>
-      <p style="margin:20px 0 8px;font-size:12px;color:#6b7280;">Signature</p>
-      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center;background:#fafafa;">
-        <img src="${d.signatureImage}" alt="Signature" style="max-width:100%;max-height:160px;" />
-      </div>
-      <a href="${d.proposalUrl}" style="display:inline-block;margin-top:20px;font-size:13px;color:#0f766e;">Open the proposal &rarr;</a>
+      <a href="${d.proposalUrl}" style="display:inline-block;margin-top:24px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;">
+        View the signed proposal
+      </a>
+      <p style="margin:14px 0 0;font-size:12px;color:#9ca3af;">The signature is shown on the proposal page.</p>
     </div>
   </div>
 </body>
