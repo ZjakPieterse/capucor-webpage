@@ -9,8 +9,8 @@
 //   - When one tab is enabled, the left column renders it without tab chrome.
 //   - When both are enabled, the column shows a tab switcher.
 //
-// The lead-magnet ("guide") tab stays off until a downloadable asset exists.
-// See capucor-web/AGENTS.md → Pending Content before switching it on.
+// The "guide" tab delivers the printable /resources/compliance-calendar page
+// (LeadMagnetSignup). Dark it down again if the resource is taken offline.
 
 export type ContactTabId = 'roi' | 'guide';
 
@@ -23,7 +23,7 @@ export interface ContactTab {
 
 export const CONTACT_LEFT_TABS: ContactTab[] = [
   { id: 'roi', label: 'Estimate your costs', enabled: true },
-  { id: 'guide', label: 'Get the free guide', enabled: false },
+  { id: 'guide', label: 'Get the free guide', enabled: true },
 ];
 
 export const enabledContactTabs = (): ContactTab[] =>

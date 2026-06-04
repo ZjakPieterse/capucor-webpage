@@ -1,18 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, FileText } from 'lucide-react';
+import Link from 'next/link';
+import { Loader2, FileText, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
 
-// Lead-magnet email capture. Built and wired (source='lead_magnet'), but kept
-// dark behind the CONTACT_LEFT_TABS flag in src/config/homepage.ts until a real
-// downloadable asset exists. When the asset is ready: drop the file under
-// /public, point DOWNLOAD_HREF at it, finalise the copy, and flip the flag.
-const DOWNLOAD_TITLE = 'The SME finance compliance calendar';
+// Lead-magnet email capture (source='lead_magnet'). On success we record the
+// lead and reveal the resource directly — DOWNLOAD_HREF points at the printable
+// /resources/compliance-calendar page (which carries its own "save as PDF").
+const DOWNLOAD_TITLE = 'The South African SME compliance calendar';
 const DOWNLOAD_BLURB =
-  'Every SARS, CIPC and payroll deadline that matters for a South African small business, on one page. We will email it to you.';
+  'Every SARS, CIPC and payroll deadline that matters for a South African small business, on one page.';
+const DOWNLOAD_HREF = '/resources/compliance-calendar';
 
 export function LeadMagnetSignup() {
   const [name, setName] = useState('');
@@ -67,9 +68,17 @@ export function LeadMagnetSignup() {
 
   if (done) {
     return (
-      <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm text-muted-foreground leading-relaxed">
-        On its way. Check{' '}
-        <span className="text-foreground font-medium">{email.trim()}</span> for the download.
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-5">
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Thanks{name.trim() ? `, ${name.trim().split(' ')[0]}` : ''}. Here&apos;s your calendar —
+          open it below, then use &ldquo;Print or save as PDF&rdquo; to keep a copy.
+        </p>
+        <Link
+          href={DOWNLOAD_HREF}
+          className="premium-button mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Open your compliance calendar <ArrowRight className="size-4" />
+        </Link>
       </div>
     );
   }
@@ -131,10 +140,10 @@ export function LeadMagnetSignup() {
         <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? (
             <>
-              <Loader2 className="size-4 mr-2 animate-spin" /> Sending…
+              <Loader2 className="size-4 mr-2 animate-spin" /> Getting it…
             </>
           ) : (
-            'Send me the guide'
+            'Get the calendar'
           )}
         </Button>
       </form>

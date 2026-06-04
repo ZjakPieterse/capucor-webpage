@@ -26,7 +26,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/70 shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
+    <header className="no-print sticky top-0 z-50 w-full border-b border-white/10 bg-background/70 shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
       <nav className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <Link

@@ -55,13 +55,14 @@ const services = [
 const company = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Our Tech Stack", href: "/#tech-stack" },
+  { label: "Compliance calendar", href: "/resources/compliance-calendar" },
   { label: "Contact", href: "/#contact" },
   { label: "Privacy Policy", href: "/privacy" },
 ];
 
 export function Footer() {
   return (
-    <footer className="premium-section relative border-t border-white/10 bg-card/70 backdrop-blur-xl">
+    <footer className="no-print premium-section relative border-t border-white/10 bg-card/70 backdrop-blur-xl">
       <div
         aria-hidden
         className="premium-divider pointer-events-none absolute inset-x-0 top-0 h-px"

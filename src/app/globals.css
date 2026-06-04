@@ -1461,3 +1461,25 @@
     }
   }
 }
+
+/* ── Print ─────────────────────────────────────────────────────────────────
+   Used by the printable resource pages (e.g. /resources/compliance-calendar).
+   Anything marked .no-print is dropped, and .print-doc is flipped to black-on-
+   white so a "Save as PDF" produces a clean, ink-friendly one-pager. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .print-doc,
+  .print-doc * {
+    color: #111 !important;
+    background: transparent !important;
+    border-color: #d4d4d8 !important;
+    box-shadow: none !important;
+  }
+}
