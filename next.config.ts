@@ -6,6 +6,21 @@ import type { NextConfig } from "next";
 // wildcard, but the build should always have it set.
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
+// Fail the build loudly in CI when the public Supabase env never reached
+// `next build`. A missing URL silently breaks login on the deployed site:
+// the CSP connect-src drops to bare 'self' and the browser Supabase client
+// throws "Your project's URL and API key are required". A red build is far
+// better than a green deploy of a broken site. Gated on CI so local dev and
+// `preview:cf` (which may run without the env) are unaffected — GitHub
+// Actions sets CI=true automatically.
+if (process.env.CI && !SUPABASE_URL) {
+  throw new Error(
+    "NEXT_PUBLIC_SUPABASE_URL is empty during a CI build. Refusing to build a " +
+      "production bundle without the Supabase env — login would be broken on " +
+      "the deployed site. Check the CI env wiring / repository secrets.",
+  );
+}
+
 const CSP_DIRECTIVES: Record<string, string[]> = {
   "default-src": ["'self'"],
   // 'unsafe-inline' is needed for:

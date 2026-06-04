@@ -10,6 +10,23 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    # Env lives at the job level (not on the Build step) so it is inherited by
+    # every step AND every child process — including the `next build` that
+    # OpenNext spawns as a grandchild via execSync('npm run build'). A
+    # step-scoped env can fail to reach that grandchild; the job scope cannot.
+    # NEXT_PUBLIC_SUPABASE_URL is consumed at build time (CSP in next.config.ts
+    # + inlined into the client bundle); if it is empty the deployed login page
+    # silently breaks. See the post-build assertion below, which fails the run
+    # before deploy if the value did not get baked into the bundle.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+      OWNER_NOTIFICATION_EMAIL: zjak@capucor.com
+      NEXT_PUBLIC_BOOKING_URL: ${{ secrets.NEXT_PUBLIC_BOOKING_URL }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -32,17 +49,50 @@ jobs:
 
       - name: Build (Cloudflare)
         run: npm run build:cf
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
-          OWNER_NOTIFICATION_EMAIL: zjak@capucor.com
-          NEXT_PUBLIC_BOOKING_URL: ${{ secrets.NEXT_PUBLIC_BOOKING_URL }}
+
+      # Hard gate before deploy: prove the Supabase URL was actually inlined
+      # into the client bundle. Catches any path where the env failed to reach
+      # `next build` (silent broken-login deploy). Derives the host from the
+      # env so it stays project-agnostic. A failure here is red → no deploy.
+      - name: Assert Supabase env was inlined into the build
+        run: |
+          set -euo pipefail
+          if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ]; then
+            echo "::error::NEXT_PUBLIC_SUPABASE_URL is empty in the CI env — the secret is not wired up. Refusing to deploy."
+            exit 1
+          fi
+          host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
+          host="${host%%/*}"
+          if grep -rqF "$host" .open-next/assets/_next/static; then
+            echo "✓ Supabase host inlined into the client bundle."
+          else
+            echo "::error::Supabase URL did not get inlined into the client bundle — login would be broken on the deployed site. Refusing to deploy."
+            exit 1
+          fi
 
       - name: Deploy (Cloudflare)
         if: github.event_name == 'push'
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Post-deploy proof: the live /login must advertise the Supabase URL in
+      # its CSP connect-src. Retries to absorb edge propagation. Red if the
+      # deployed site is broken, even though the upload itself succeeded.
+      - name: Smoke test deployed /login CSP
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
+          host="${host%%/*}"
+          for attempt in 1 2 3 4 5 6; do
+            csp="$(curl -fsS -D - -o /dev/null https://capucor.app/login | grep -i '^content-security-policy:' || true)"
+            if echo "$csp" | grep -qF "$host"; then
+              echo "✓ Deployed /login CSP includes the Supabase host."
+              exit 0
+            fi
+            echo "Attempt $attempt: CSP missing Supabase host, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::Deployed /login CSP never advertised the Supabase URL — login is broken in production. Roll back."
+          exit 1
