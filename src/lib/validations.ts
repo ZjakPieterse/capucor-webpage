@@ -16,7 +16,19 @@ export const CalculatorConfigSchema = z.object({
 export type CalculatorConfig = z.infer<typeof CalculatorConfigSchema>;
 
 export const LeadSchema = z.object({
-  source: z.enum(['signup', 'quote', 'enterprise', 'contact', 'call', 'proposal']),
+  // Keep in sync with the leads.source CHECK constraint (supabase/migrations —
+  // last widened in 009 to add 'roi' and 'lead_magnet') and LeadPayload in
+  // src/types/index.ts.
+  source: z.enum([
+    'signup',
+    'quote',
+    'enterprise',
+    'contact',
+    'call',
+    'proposal',
+    'roi',
+    'lead_magnet',
+  ]),
   name: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Please enter a valid email address'),
   business: z.string().max(100).optional(),

@@ -117,7 +117,15 @@ export interface SubscriptionRequestPayload {
 }
 
 export interface LeadPayload {
-  source: 'signup' | 'quote' | 'enterprise' | 'contact' | 'call' | 'proposal';
+  source:
+    | 'signup'
+    | 'quote'
+    | 'enterprise'
+    | 'contact'
+    | 'call'
+    | 'proposal'
+    | 'roi'
+    | 'lead_magnet';
   name: string;
   email: string;
   business?: string;

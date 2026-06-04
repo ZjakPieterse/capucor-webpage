@@ -55,7 +55,7 @@ const services = [
 const company = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Our Tech Stack", href: "/#tech-stack" },
-  { label: "FAQ", href: "/#faq" },
+  { label: "Contact", href: "/#contact" },
   { label: "Privacy Policy", href: "/privacy" },
 ];
 
