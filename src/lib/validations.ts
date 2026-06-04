@@ -109,6 +109,45 @@ export const ProposalRequestSchema = z.object({
 
 export type ProposalRequestInput = z.infer<typeof ProposalRequestSchema>;
 
+// ── Proposal e-signature (PR7 — /proposal/<token> sign step) ─────────────
+//
+// Contract between ProposalSignForm and /api/proposals/sign. The signer can
+// type, draw, or upload an image of their signature; the client normalises all
+// three to a single PNG data URL before posting. We always capture the printed
+// legal name alongside the image (POPIA/ECTA audit trail), plus a fresh consent
+// affirmation. The opaque proposal token gates the write through the admin client.
+
+// Largest decoded signature image we accept. The client downscales to ~600px,
+// so a real signature lands well under this; the cap stops an oversized upload
+// from bloating the proposals row. Enforced again server-side by decoded size.
+export const MAX_SIGNATURE_BYTES = 512 * 1024;
+
+// Base64 inflates ~4/3, plus the `data:image/png;base64,` prefix. Give the zod
+// string cap headroom above MAX_SIGNATURE_BYTES so the precise byte-size check
+// in the route (not the char count) is what rejects a too-large image.
+const MAX_SIGNATURE_DATA_URL_CHARS = 750_000;
+
+export const SignProposalSchema = z.object({
+  token: z.string().min(16, 'This proposal link is invalid.'),
+  signatureName: z
+    .string()
+    .min(2, 'Please type your full name')
+    .max(120, 'Name is too long'),
+  method: z.enum(['typed', 'drawn', 'uploaded'], {
+    message: 'Choose how you would like to sign.',
+  }),
+  imageDataUrl: z
+    .string()
+    .regex(/^data:image\/(png|jpeg);base64,/, 'Your signature image is invalid.')
+    .max(MAX_SIGNATURE_DATA_URL_CHARS, 'Your signature image is too large.'),
+  consentGiven: z.literal(true, {
+    message: 'Please confirm before signing.',
+  }),
+  website: z.string().max(0).optional(), // honeypot — must be empty
+});
+
+export type SignProposalInput = z.infer<typeof SignProposalSchema>;
+
 // ── Paystack webhook payload (stub, mirrors Paystack event envelope) ────
 //
 // Paystack webhooks deliver POST bodies of the shape:

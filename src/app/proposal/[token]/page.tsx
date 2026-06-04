@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { FileSignature, BadgePercent, ShieldCheck, Clock3, Lock } from 'lucide-react';
+import { Check, ShieldCheck, Clock3, Lock } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ProposalSummary } from '@/components/pricing/ProposalSummary';
+import { ProposalSignForm } from '@/components/proposal/ProposalSignForm';
 import { Button } from '@/components/ui/button';
-import { siteConfig } from '@/config/site';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 export const metadata: Metadata = {
@@ -27,7 +27,13 @@ interface ProposalRow {
   total_charge_zar: number;
   status: string;
   expires_at: string | null;
+  signed_at: string | null;
+  signature_name: string | null;
+  signature_method: string | null;
+  signature_image: string | null;
 }
+
+const SIGNED_STATUSES = new Set(['signed', 'paid', 'active']);
 
 const TERMS = [
   { icon: ShieldCheck, text: 'No lock-in contract. Cancel any time with 30 days’ notice.' },
@@ -50,7 +56,7 @@ async function loadProposal(token: string): Promise<LoadResult> {
   const { data, error } = await admin
     .from('proposals')
     .select(
-      'id, first_name, last_name, business_name, email, services, brackets, tier_slug, monthly_total_zar, vat_zar, total_charge_zar, status, expires_at',
+      'id, first_name, last_name, business_name, email, services, brackets, tier_slug, monthly_total_zar, vat_zar, total_charge_zar, status, expires_at, signed_at, signature_name, signature_method, signature_image',
     )
     .eq('token', token)
     .maybeSingle();
@@ -63,10 +69,14 @@ async function loadProposal(token: string): Promise<LoadResult> {
   const row = data as unknown as ProposalRow;
 
   const now = Date.now();
+  // Only pre-signature proposals expire. Once signed, the link stays valid so
+  // the client can revisit their accepted proposal regardless of expires_at.
+  const isPreSigned = row.status === 'sent' || row.status === 'viewed';
   const expired =
-    (row.expires_at && new Date(row.expires_at).getTime() < now) || row.status === 'expired';
+    row.status === 'expired' ||
+    (isPreSigned && !!row.expires_at && new Date(row.expires_at).getTime() < now);
   if (expired) {
-    if (row.status === 'sent' || row.status === 'viewed') {
+    if (isPreSigned) {
       await admin.from('proposals').update({ status: 'expired' }).eq('id', row.id);
     }
     return { ok: false, reason: 'expired' };
@@ -160,36 +170,15 @@ export default async function ProposalPage({
             </ul>
           </div>
 
-          {/* Sign + pay — Phase 2 stub */}
-          <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/[0.03] p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <FileSignature className="h-4 w-4 text-primary" />
-              Sign &amp; accept
-            </div>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Electronic sign-off is being finalised. For now, reply to your proposal email or book a
-              call and we&rsquo;ll get your engagement started.
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/15 bg-primary/[0.04] px-3 py-2 text-xs text-muted-foreground">
-              <BadgePercent className="h-3.5 w-3.5 text-primary" />
-              Add your payment details when you sign and unlock a discount — coming soon.
-            </div>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Button disabled className="gap-2">
-                <FileSignature className="h-4 w-4" />
-                Sign &amp; accept (coming soon)
-              </Button>
-              <Button
-                variant="outline"
-                nativeButton={false}
-                render={
-                  <a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />
-                }
-              >
-                Book a call
-              </Button>
-            </div>
-          </div>
+          {/* Sign & accept */}
+          {SIGNED_STATUSES.has(row.status) ? (
+            <SignedConfirmation row={row} />
+          ) : (
+            <ProposalSignForm
+              token={token}
+              defaultName={`${row.first_name} ${row.last_name}`.trim()}
+            />
+          )}
         </div>
       </div>
 
@@ -199,6 +188,47 @@ export default async function ProposalPage({
           get in touch
         </Link>
         .
+      </p>
+    </div>
+  );
+}
+
+function SignedConfirmation({ row }: { row: ProposalRow }) {
+  const signedOn = row.signed_at
+    ? new Date(row.signed_at).toLocaleDateString('en-ZA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      })
+    : null;
+
+  return (
+    <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-6">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Check className="h-4 w-4" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold">Proposal accepted</p>
+          {signedOn && (
+            <p className="text-xs text-muted-foreground">
+              Signed{row.signature_name ? ` by ${row.signature_name}` : ''} on {signedOn}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {row.signature_image && (
+        <div className="mt-4 flex items-center justify-center overflow-hidden rounded-lg border border-input bg-white p-3">
+          {/* Stored signature image (a normalised PNG data URL). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={row.signature_image} alt="Signature" className="max-h-28" />
+        </div>
+      )}
+
+      <p className="mt-4 text-sm text-muted-foreground">
+        Thanks — there&rsquo;s nothing more you need to do right now. Someone from the Capucor team
+        will be in touch shortly to set up your onboarding.
       </p>
     </div>
   );
