@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { requireSession } from '@/lib/auth/requireSession';
+import { SignOutButton } from '@/components/portal/SignOutButton';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { formatZAR } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
@@ -117,14 +118,17 @@ export default async function PortalPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
-      <header className="mb-10">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-          {org.name}
-        </p>
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
-          <StatusBadge status={status} />
+      <header className="mb-10 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+            {org.name}
+          </p>
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
+            <StatusBadge status={status} />
+          </div>
         </div>
+        <SignOutButton className="shrink-0" />
       </header>
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
@@ -375,18 +379,21 @@ function PortalEmptyState({ title, body }: EmptyStateProps) {
       <p className="text-sm text-muted-foreground leading-relaxed mb-8">
         {body}
       </p>
-      <Button
-        nativeButton={false}
-        render={
-          <a
-            href={siteConfig.links.booking}
-            target="_blank"
-            rel="noopener noreferrer"
-          />
-        }
-      >
-        Book a 15-minute call
-      </Button>
+      <div className="flex flex-col items-center gap-3">
+        <Button
+          nativeButton={false}
+          render={
+            <a
+              href={siteConfig.links.booking}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+        >
+          Book a 15-minute call
+        </Button>
+        <SignOutButton />
+      </div>
     </main>
   );
 }
