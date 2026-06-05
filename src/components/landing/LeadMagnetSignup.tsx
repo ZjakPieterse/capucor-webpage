@@ -103,7 +103,7 @@ export function LeadMagnetSignup() {
             aria-label="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Name and Surname"
           />
           <Input
             type="email"

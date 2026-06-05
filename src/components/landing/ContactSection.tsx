@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { SectionDivider } from '@/components/ui/SectionDivider';
@@ -10,7 +9,6 @@ import { ContactForm } from '@/components/landing/ContactForm';
 import { SavingsCalculator } from '@/components/landing/SavingsCalculator';
 import { LeadMagnetSignup } from '@/components/landing/LeadMagnetSignup';
 import { enabledContactTabs, type ContactTabId } from '@/config/homepage';
-import { siteConfig } from '@/config/site';
 import type { Bracket, Service, Tier } from '@/types';
 
 interface ContactSectionProps {
@@ -80,24 +78,7 @@ export function ContactSection({ services, brackets, tiers }: ContactSectionProp
               <div className="mt-5">
                 <ContactForm />
               </div>
-              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-sm text-muted-foreground">
-                <a
-                  href={`mailto:${siteConfig.email.contact}`}
-                  className="inline-flex items-center gap-2 hover:text-foreground"
-                >
-                  <Mail className="size-4 text-primary" />
-                  {siteConfig.email.contact}
-                </a>
-                <a
-                  href={siteConfig.links.booking}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 hover:text-foreground"
-                >
-                  <Phone className="size-4 text-primary" />
-                  Book a fit call
-                </a>
-              </div>
+
             </div>
           </ScrollReveal>
         </div>

@@ -87,7 +87,7 @@ export function ContactForm() {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Thandi Nkosi"
+          placeholder="Name and Surname"
         />
       </div>
 
