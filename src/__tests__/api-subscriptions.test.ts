@@ -5,8 +5,8 @@ vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createSupabaseServerClient: vi.fn(),
+vi.mock('@/lib/supabase/anon', () => ({
+  createSupabaseAnonClient: vi.fn(),
 }));
 
 vi.mock('@/lib/paystack', () => ({
@@ -23,11 +23,11 @@ vi.mock('@/lib/paystack', () => ({
 }));
 
 import { checkRateLimit } from '@/lib/rate-limit';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { getOrCreateCustomer, initSubscriptionTransaction } from '@/lib/paystack';
 import { POST } from '@/app/api/subscriptions/route';
 
-type SupabaseStub = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+type SupabaseStub = ReturnType<typeof createSupabaseAnonClient>;
 
 // Pro prices: accounting 0-1Mil = 950, payroll 1emp = 600 → 1550 monthly
 const PRO_BRACKETS = [
@@ -39,7 +39,7 @@ const DORMANT_BRACKETS = [
 ];
 
 function mountBrackets(rows: unknown, error: unknown = null) {
-  vi.mocked(createSupabaseServerClient).mockResolvedValue({
+  vi.mocked(createSupabaseAnonClient).mockReturnValue({
     from: () => ({
       select: () => ({
         in: () => ({
@@ -118,7 +118,7 @@ describe('POST /api/subscriptions', () => {
       ok: true,
       authorizationUrl: '/onboarding?ref=bot',
     });
-    expect(createSupabaseServerClient).not.toHaveBeenCalled();
+    expect(createSupabaseAnonClient).not.toHaveBeenCalled();
     expect(getOrCreateCustomer).not.toHaveBeenCalled();
     expect(initSubscriptionTransaction).not.toHaveBeenCalled();
   });
@@ -128,7 +128,7 @@ describe('POST /api/subscriptions', () => {
     const res = await POST(makeJsonRequest('http://test/api/subscriptions', validBody));
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('17');
-    expect(createSupabaseServerClient).not.toHaveBeenCalled();
+    expect(createSupabaseAnonClient).not.toHaveBeenCalled();
     expect(initSubscriptionTransaction).not.toHaveBeenCalled();
   });
 
