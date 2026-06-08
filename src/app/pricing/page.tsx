@@ -70,15 +70,31 @@ async function getPricingData(): Promise<{
       (t) => !t.name.startsWith('[') && !t.quote.startsWith('[')
     );
 
-    return {
-      pricing: {
-        services: (servicesRes.data ?? []) as PricingData['services'],
-        brackets: (bracketsRes.data ?? []) as PricingData['brackets'],
-        tiers: (tiersRes.data ?? []) as PricingData['tiers'],
-        inclusions: (inclusionsRes.data ?? []) as PricingData['inclusions'],
-      },
-      testimonials,
+    const pricing: PricingData = {
+      services: (servicesRes.data ?? []) as PricingData['services'],
+      brackets: (bracketsRes.data ?? []) as PricingData['brackets'],
+      tiers: (tiersRes.data ?? []) as PricingData['tiers'],
+      inclusions: (inclusionsRes.data ?? []) as PricingData['inclusions'],
     };
+
+    // A successful query can still come back empty (e.g. a transient Supabase
+    // cold-start). The calculator can't function without these three essential
+    // tables — treat empty as unavailable so users get the clear fallback
+    // message instead of a dead step 1 with no options to select.
+    if (
+      pricing.services.length === 0 ||
+      pricing.brackets.length === 0 ||
+      pricing.tiers.length === 0
+    ) {
+      console.error('[pricing] empty pricing data', {
+        services: pricing.services.length,
+        brackets: pricing.brackets.length,
+        tiers: pricing.tiers.length,
+      });
+      return null;
+    }
+
+    return { pricing, testimonials };
   } catch (err) {
     console.error('[pricing] supabase fetch failed', err);
     return null;
