@@ -107,6 +107,27 @@ npm run db:types
 
 Generated types land in `src/types/db.ts` (gitignored — regenerate after pulling schema changes).
 
+### Supabase clients — pick the right one (load-bearing)
+
+There are three server-side clients in `src/lib/supabase/`; choosing wrong causes silent data
+loss, not an error:
+
+- **`createSupabaseAnonClient()` (`anon.ts`) — for PUBLIC reads.** Cookieless; always runs as the
+  `anon` role. Use for the public pricing config (`services`, `brackets`, `tiers`,
+  `tier_inclusions`) and `testimonials` — on the pricing calculator, homepage packages teaser,
+  proposal view, and server-side price math.
+- **`createSupabaseServerClient()` (`server.ts`) — for per-user/auth reads.** Cookie-bound; adopts
+  the visitor's session role. Use for auth, the client portal, and lead/data-request inserts.
+- **`createSupabaseAdminClient()` (`admin.ts`) — for privileged writes.** Service-role; bypasses
+  RLS. Server-only mutations (Paystack webhook, Karbon/Xero sync, portal writes). Never import
+  into browser code.
+
+⚠️ **The public pricing tables only grant `select to anon`** (see `001_schema.sql`; no
+`to authenticated` policy). Reading them via the cookie-bound server client means a **signed-in**
+visitor runs as `authenticated`, matches no policy, and silently gets **zero rows** (no error) —
+which renders the calculator unavailable for logged-in users only. Always read public data with
+`createSupabaseAnonClient`.
+
 ## Project Structure
 
 ```
