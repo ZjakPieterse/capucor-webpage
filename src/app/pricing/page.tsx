@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { PricingCalculator } from '@/components/pricing/PricingCalculator';
 import { PricingErrorBoundary, PricingUnavailable } from '@/components/pricing/PricingErrorBoundary';
 import { siteConfig } from '@/config/site';
@@ -31,7 +31,9 @@ const PRICING_RETRY_BASE_DELAY_MS = 250;
 // One fetch attempt. Throws on a query error OR an empty essential table so the
 // caller's retry loop can treat both as transient and try again.
 async function fetchPricingDataOnce(): Promise<PricingResult> {
-  const supabase = await createSupabaseServerClient();
+  // Public pricing config is read as the `anon` role regardless of whether the
+  // visitor is signed in — see anon.ts for why a session-bound client breaks it.
+  const supabase = createSupabaseAnonClient();
 
   const [servicesRes, bracketsRes, tiersRes, inclusionsRes, testimonialsRes] =
     await Promise.all([

@@ -23,7 +23,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SubscriptionRequestSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { initSubscriptionTransaction, getOrCreateCustomer } from '@/lib/paystack';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { monthlyTotal } from '@/lib/pricing';
 import type { Bracket } from '@/types';
 
@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
   //    the live Supabase `brackets` table so the client cannot tamper.
   let monthlyTotalZAR = 0;
   try {
-    const supabase = await createSupabaseServerClient();
+    // Public pricing data — read as `anon` (brackets only grant select to anon).
+    const supabase = createSupabaseAnonClient();
     const { data: bracketRows, error } = await supabase
       .from('brackets')
       .select('service_slug, ordinal, basic_price, pro_price, premium_price')

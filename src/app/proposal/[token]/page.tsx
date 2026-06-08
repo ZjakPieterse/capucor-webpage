@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Check, ShieldCheck, Clock3, Lock } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { ProposalSummary } from '@/components/pricing/ProposalSummary';
 import { ProposalSignForm } from '@/components/proposal/ProposalSignForm';
 import { Button } from '@/components/ui/button';
@@ -106,8 +106,9 @@ export default async function ProposalPage({
   }
   const row = result.row;
 
-  // Public pricing tables for the rich line-item labels.
-  const supabase = await createSupabaseServerClient();
+  // Public pricing tables for the rich line-item labels — read as `anon` so the
+  // proposal renders correctly even when the viewer is signed in.
+  const supabase = createSupabaseAnonClient();
   const [servicesRes, bracketsRes, tiersRes] = await Promise.all([
     supabase.from('services').select('*').eq('active', true).order('display_order'),
     supabase.from('brackets').select('*').eq('active', true).order('display_order'),

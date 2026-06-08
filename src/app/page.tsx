@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { siteConfig } from '@/config/site';
 import type { Bracket, Service, Tier } from '@/types';
 
@@ -38,7 +38,8 @@ async function getLandingData(): Promise<{
   tiers: Tier[];
 }> {
   try {
-    const supabase = await createSupabaseServerClient();
+    // Public pricing config — read as `anon` so it works for signed-in visitors too.
+    const supabase = createSupabaseAnonClient();
 
     const [servicesRes, bracketsRes, tiersRes] = await Promise.all([
       supabase
