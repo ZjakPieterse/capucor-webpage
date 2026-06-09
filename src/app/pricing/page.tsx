@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   },
 };
 
+// ISR: cache for an hour via the OpenNext KV incremental cache. Pricing edits
+// in Supabase show up after POST /api/revalidate?secret=... (or within the hour).
+export const revalidate = 3600;
+
 type PricingResult = {
   pricing: PricingData;
   testimonials: Testimonial[];
@@ -116,8 +120,13 @@ async function getPricingData(): Promise<PricingResult | null> {
         err
       );
       if (attempt < PRICING_FETCH_ATTEMPTS) {
+        // Jitter so concurrent requests retrying through the same Supabase
+        // blip don't hit it again in synchronized waves.
         await new Promise((resolve) =>
-          setTimeout(resolve, PRICING_RETRY_BASE_DELAY_MS * attempt)
+          setTimeout(
+            resolve,
+            PRICING_RETRY_BASE_DELAY_MS * attempt + Math.random() * 100
+          )
         );
       }
     }

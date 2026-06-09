@@ -87,6 +87,11 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   Cloudflare cannot bundle a Turbopack build into a working worker.
 - **No edge-runtime routes.** Cloudflare Workers are already edge; do not add
   `export const runtime = 'edge'` (it breaks the OpenNext bundle — e.g. `/api/og` had it removed).
+- **ISR caching:** `/` and `/pricing` are cached for 1 hour (`export const revalidate = 3600`)
+  via the OpenNext KV incremental cache (`open-next.config.ts` + the `NEXT_INC_CACHE_KV` binding
+  in `wrangler.jsonc`). After editing pricing in Supabase, refresh them immediately with
+  `POST /api/revalidate?secret=<REVALIDATE_SECRET>` (GET also works for browser use). Do not add
+  `revalidate` to `/proposal/[token]` (it mutates status on view) or any portal page (per-user).
 - Prod smoke-check: `curl -sD- -o /dev/null https://capucor.app/login | grep -i content-security-policy`
   should show the Supabase host in `connect-src`.
 
@@ -263,7 +268,9 @@ user-visible copy.
 The following are intentional stubs awaiting Paystack integration:
 
 - `src/app/api/subscriptions/route.ts` — pricing math + Supabase insert
-- `src/app/api/webhooks/paystack/route.ts` — webhook event handling
+- `src/app/api/webhooks/paystack/route.ts` — webhook **event handling** only (no-op cases).
+  Signature verification is real: HMAC-SHA512 over the raw body, failing closed when
+  `PAYSTACK_SECRET_KEY` is unset — set that Cloudflare secret before Paystack goes live
 - `src/app/client-portal/page.tsx` — real auth + subscription fetch
 - `src/app/onboarding/page.tsx` — real transaction verification
 

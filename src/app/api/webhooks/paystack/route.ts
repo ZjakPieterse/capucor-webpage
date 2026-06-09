@@ -30,8 +30,9 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get('x-paystack-signature');
 
-  // 2. Signature check — stub always returns true; replace with real HMAC
-  if (!verifyWebhookSignature(rawBody, signature)) {
+  // 2. Signature check — HMAC-SHA512 over the raw body; fails closed when
+  // PAYSTACK_SECRET_KEY is unset (no live webhooks exist until Paystack is wired).
+  if (!(await verifyWebhookSignature(rawBody, signature))) {
     console.warn('[WEBHOOK:PAYSTACK] signature mismatch');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }

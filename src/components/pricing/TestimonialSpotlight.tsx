@@ -29,6 +29,8 @@ export function TestimonialSpotlight({ testimonial: t }: TestimonialSpotlightPro
           <img
             src={t.avatar_url}
             alt={t.name}
+            width={40}
+            height={40}
             loading="lazy"
             decoding="async"
             className="h-10 w-10 rounded-full object-cover"

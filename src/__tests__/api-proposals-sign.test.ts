@@ -30,6 +30,7 @@ const PAST = new Date(Date.now() - 1000).toISOString();
 // Mutable per-test state, read at call time by the from() closures below.
 let lookupResult: { data: Record<string, unknown> | null; error: unknown };
 let updateResult: { error: unknown };
+let updateRows: { id: string }[];
 const updatePayloads: Record<string, unknown>[] = [];
 
 function viewedRow(overrides: Record<string, unknown> = {}) {
@@ -45,9 +46,31 @@ function viewedRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Chainable update stub: supports both the status-guarded sign update
+// (.eq().in().select() → rows) and the awaited sent-at update (.eq() → result).
+interface UpdateBuilder {
+  eq: () => UpdateBuilder;
+  in: () => UpdateBuilder;
+  select: () => Promise<{ data: { id: string }[] | null; error: unknown }>;
+  then: (
+    onFulfilled: (v: { error: unknown }) => unknown,
+    onRejected?: (e: unknown) => unknown,
+  ) => Promise<unknown>;
+}
+
 const proposalUpdate = vi.fn((payload: Record<string, unknown>) => {
   updatePayloads.push(payload);
-  return { eq: async () => updateResult };
+  const builder: UpdateBuilder = {
+    eq: () => builder,
+    in: () => builder,
+    select: async () => ({
+      data: updateResult.error ? null : updateRows,
+      error: updateResult.error,
+    }),
+    then: (onFulfilled, onRejected) =>
+      Promise.resolve(updateResult).then(onFulfilled, onRejected),
+  };
+  return builder;
 });
 
 function mountAdmin() {
@@ -75,6 +98,7 @@ beforeEach(() => {
   updatePayloads.length = 0;
   lookupResult = { data: viewedRow(), error: null };
   updateResult = { error: null };
+  updateRows = [{ id: 'prop_1' }];
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
   process.env.RESEND_API_KEY = 're_test';
@@ -246,5 +270,15 @@ describe('POST /api/proposals/sign', () => {
     expect(res.status).toBe(200);
     expect(updatePayloads[0]!.status).toBe('signed');
     errorSpy.mockRestore();
+  });
+
+  it('19. lost race — status changed between read and write returns 409, no emails', async () => {
+    // The guarded update matches zero rows (e.g. a concurrent sign or the
+    // expiry cron got there first).
+    updateRows = [];
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/already been signed/i);
+    expect(sendMock).not.toHaveBeenCalled();
   });
 });

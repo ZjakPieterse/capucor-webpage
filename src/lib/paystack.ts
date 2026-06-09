@@ -15,7 +15,13 @@
  *
  * Why Paystack: ZAR-native, supports debit-order recurring, dominant SA
  * processor. See: https://paystack.com/docs/payments/subscriptions
+ *
+ * Exception: verifyWebhookSignature below is REAL (not a stub) — it
+ * authenticates incoming webhooks with HMAC-SHA512 and fails closed when
+ * PAYSTACK_SECRET_KEY is not configured.
  */
+
+import { timingSafeEqual } from '@/lib/security';
 
 export interface PaystackCustomer {
   id: string;
@@ -89,12 +95,32 @@ export async function initSubscriptionTransaction(
 
 /**
  * Verify a webhook signature using HMAC-SHA512 with PAYSTACK_SECRET_KEY.
- * Currently returns true to keep the stub flow working; replace with a
- * real comparison once keys are wired.
+ *
+ * Paystack signs the raw request body and sends the hex digest in the
+ * `x-paystack-signature` header. Fails closed: without a configured secret
+ * or a signature header the event cannot be authenticated, so it is
+ * rejected. Uses Web Crypto (Cloudflare Workers-safe — no Node `crypto`).
  */
-export function verifyWebhookSignature(_rawBody: string, _signature: string | null): boolean {
-  // STUB — always trust in dev. Wire HMAC-SHA512 when going live.
-  return true;
+export async function verifyWebhookSignature(
+  rawBody: string,
+  signature: string | null,
+): Promise<boolean> {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  if (!secret || !signature) return false;
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-512' },
+    false,
+    ['sign'],
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode(rawBody));
+  const expectedHex = Array.from(new Uint8Array(mac))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return timingSafeEqual(expectedHex, signature.toLowerCase());
 }
 
 /**

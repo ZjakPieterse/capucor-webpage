@@ -9,6 +9,9 @@
     "binding": "ASSETS"
   },
   "kv_namespaces": [
-    { "binding": "RATE_LIMIT_KV", "id": "ffcfa7b24bec47c3a8df2390a28786ca" }
+    { "binding": "RATE_LIMIT_KV", "id": "ffcfa7b24bec47c3a8df2390a28786ca" },
+    // OpenNext incremental cache (ISR for / and /pricing). Binding name is
+    // fixed by @opennextjs/cloudflare's kv-incremental-cache override.
+    { "binding": "NEXT_INC_CACHE_KV", "id": "4ce31da6a8354e0a8928a8f3623bf379" }
   ]
 }

@@ -12,11 +12,23 @@
 import { NextRequest } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { DATA_REQUEST_SLA_DAYS } from '@/lib/consent';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { siteConfig } from '@/config/site';
 
-type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error';
+type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error' | 'rate_limited';
 
 export async function GET(req: NextRequest) {
+  // Per-IP rate limit — same bucket as the submit endpoint, so the token
+  // lookup can't be hammered.
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+  const { allowed } = await checkRateLimit(ip);
+  if (!allowed) {
+    return htmlResponse('rate_limited');
+  }
+
   const token = req.nextUrl.searchParams.get('token');
 
   if (!token || token.length < 16) {
@@ -53,11 +65,19 @@ export async function GET(req: NextRequest) {
         .eq('id', row.id as string);
       outcome = 'expired';
     } else {
-      const { error: updErr } = await supabase
+      // Guard on the status we read so a concurrent confirm (or expiry
+      // sweep) between the check and this update can't double-transition.
+      const { data: updated, error: updErr } = await supabase
         .from('data_requests')
         .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-        .eq('id', row.id as string);
+        .eq('id', row.id as string)
+        .eq('status', row.status as string)
+        .select('id');
       if (updErr) throw updErr;
+      if (!updated || updated.length === 0) {
+        // Someone else won the race — the row is already confirmed/expired.
+        return htmlResponse('already');
+      }
       outcome = 'confirmed';
 
       // Owner notification — non-fatal.
@@ -116,10 +136,19 @@ function htmlResponse(outcome: Outcome): Response {
       title: 'Something went wrong',
       body: `We could not process this confirmation. Please try again later or email ${siteConfig.email.contact}.`,
     },
+    rate_limited: {
+      title: 'Too many attempts',
+      body: 'Please wait a few minutes and open the confirmation link again.',
+    },
   };
 
   const { title, body } = copy[outcome];
-  const status = outcome === 'confirmed' || outcome === 'already' ? 200 : 400;
+  const status =
+    outcome === 'confirmed' || outcome === 'already'
+      ? 200
+      : outcome === 'rate_limited'
+        ? 429
+        : 400;
 
   const html = `<!doctype html>
 <html lang="en">

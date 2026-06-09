@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useRef } from 'react';
 import { motion, useSpring, useMotionValue } from 'motion/react';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,11 @@ export function MagneticButton({
   className?: string;
 }) {
   const ref = useCursorGlow<HTMLDivElement>();
+  // Centre of the button, captured once per hover. mousemove can fire well
+  // over 100×/s and getBoundingClientRect forces a layout flush each call —
+  // reading it there causes frame drops. The element also translates while
+  // hovered, so the entry rect is the more stable anchor anyway.
+  const center = useRef<{ x: number; y: number } | null>(null);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -21,18 +26,20 @@ export function MagneticButton({
   const springX = useSpring(x, springConfig);
   const springY = useSpring(y, springConfig);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseEnter = () => {
     if (!ref.current) return;
-    const { clientX, clientY } = e;
     const { height, width, left, top } = ref.current.getBoundingClientRect();
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
+    center.current = { x: left + width / 2, y: top + height / 2 };
+  };
 
-    x.set((clientX - centerX) * 0.3);
-    y.set((clientY - centerY) * 0.3);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!center.current) return;
+    x.set((e.clientX - center.current.x) * 0.3);
+    y.set((e.clientY - center.current.y) * 0.3);
   };
 
   const handleMouseLeave = () => {
+    center.current = null;
     x.set(0);
     y.set(0);
   };
@@ -40,6 +47,7 @@ export function MagneticButton({
   return (
     <motion.div
       ref={ref}
+      onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{ x: springX, y: springY }}

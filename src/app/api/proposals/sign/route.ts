@@ -146,10 +146,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 8. Record the signature.
+  // 8. Record the signature. The status filter repeats the guards above so a
+  // concurrent sign request (or the expiry cron) between the read and this
+  // write can't double-sign; zero updated rows means we lost that race.
   const nowIso = new Date().toISOString();
   try {
-    const { error } = await admin
+    const { data: updated, error } = await admin
       .from('proposals')
       .update({
         status: 'signed',
@@ -159,9 +161,17 @@ export async function POST(req: NextRequest) {
         signature_image: input.imageDataUrl,
         signature_ip: ip === 'unknown' ? null : ip,
       })
-      .eq('id', row.id);
+      .eq('id', row.id)
+      .in('status', ['sent', 'viewed'])
+      .select('id');
 
     if (error) throw error;
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { error: 'This proposal has already been signed.' },
+        { status: 409 },
+      );
+    }
   } catch (err) {
     console.error('[PROPOSALS/SIGN] update error:', err);
     return NextResponse.json(
@@ -177,6 +187,7 @@ export async function POST(req: NextRequest) {
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 
   if (resendKey) {
+    let emailsSent = false;
     try {
       const { Resend } = await import('resend');
       const resend = new Resend(resendKey);
@@ -208,12 +219,22 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      await admin
+      emailsSent = true;
+    } catch (err) {
+      console.error('[PROPOSALS/SIGN] Resend send error:', err);
+    }
+
+    // Record that the confirmation email went out — outside the Resend
+    // try/catch so a DB failure here isn't mislogged as an email error, and
+    // only when the sends actually succeeded.
+    if (emailsSent) {
+      const { error: sentAtErr } = await admin
         .from('proposals')
         .update({ signed_email_sent_at: new Date().toISOString() })
         .eq('id', row.id);
-    } catch (err) {
-      console.error('[PROPOSALS/SIGN] Resend send error:', err);
+      if (sentAtErr) {
+        console.error('[PROPOSALS/SIGN] signed_email_sent_at update error:', sentAtErr);
+      }
     }
   } else {
     console.log(`[PROPOSAL SIGNED] business=${row.business_name} email=${row.email} method=${input.method}`);

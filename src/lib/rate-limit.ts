@@ -79,7 +79,16 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
 
   if (kv) {
     const raw = await kv.get(key);
-    const bucket: Bucket | null = raw ? (JSON.parse(raw) as Bucket) : null;
+    let bucket: Bucket | null = null;
+    if (raw) {
+      try {
+        bucket = JSON.parse(raw) as Bucket;
+      } catch {
+        // Corrupt KV value — treat as an empty bucket rather than crash
+        // every request from this IP.
+        bucket = null;
+      }
+    }
     const { next, allowed, retryAfter } = checkBucket(bucket, now);
 
     if (allowed) {
@@ -91,7 +100,12 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
     return { allowed, retryAfter };
   }
 
-  // In-memory fallback
+  // In-memory fallback. The KV binding exists in wrangler.jsonc, so landing
+  // here in production means the binding is broken — buckets then only live
+  // per isolate and the limit is effectively much looser.
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('[RATE_LIMIT] RATE_LIMIT_KV unavailable; using per-isolate in-memory fallback');
+  }
   const { next, allowed, retryAfter } = checkBucket(memoryStore.get(ip) ?? null, now);
   if (allowed) memoryStore.set(ip, next);
   return { allowed, retryAfter };

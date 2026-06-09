@@ -15,6 +15,10 @@ import { FinalCTA } from '@/components/landing/FinalCTA';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { ScrollToTopOnMount } from '@/components/landing/ScrollToTopOnMount';
 
+// ISR: cache for an hour via the OpenNext KV incremental cache. Pricing edits
+// in Supabase show up after POST /api/revalidate?secret=... (or within the hour).
+export const revalidate = 3600;
+
 export function generateMetadata(): Metadata {
   return {
     title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },

@@ -82,6 +82,7 @@ const VAT_STATUS_STYLES: Record<VatStatus, { bg: string; color: string }> = {
 function FinanceCommandCentre() {
   const dates = computeDashboardDates();
   const vatStyle = VAT_STATUS_STYLES[dates.vatStatus];
+  const prefersReducedMotion = useReducedMotion();
   const { ref: tiltRef, rotateX, rotateY, lift, scale, onMouseMove, onMouseLeave } =
     use3DTilt<HTMLDivElement>();
 
@@ -125,7 +126,7 @@ function FinanceCommandCentre() {
           <motion.div
             className="w-1.5 h-1.5 rounded-full"
             style={{ background: "#22d3ee", boxShadow: "0 0 5px #22d3ee" }}
-            animate={{ opacity: [1, 0.4, 1] }}
+            animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           />
           Live
@@ -153,7 +154,7 @@ function FinanceCommandCentre() {
                 background:
                   "linear-gradient(to right, var(--brand-cyan), var(--success))",
               }}
-              initial={{ width: 0 }}
+              initial={prefersReducedMotion ? false : { width: 0 }}
               animate={{ width: "35%" }}
               transition={{ delay: 1.4, duration: 0.9, ease: "easeOut" }}
             />
@@ -238,7 +239,7 @@ function FinanceCommandCentre() {
           <div className="flex items-center gap-1.5">
             <motion.div
               className="w-2 h-2 rounded-full shrink-0 bg-success"
-              animate={{ opacity: [1, 0.4, 1] }}
+              animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
             <span className="text-xs font-semibold text-success">

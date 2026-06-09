@@ -70,6 +70,26 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
           </div>
         </ScrollReveal>
 
+        {/* Empty state — pricing config didn't load (e.g. Supabase blip). Keep
+            the section honest instead of rendering a silent gap. */}
+        {sortedTiers.length === 0 && (
+          <ScrollReveal delay={0.1}>
+            <div className="mt-6 rounded-2xl border border-white/10 bg-card/80 px-8 py-10 text-center">
+              <p className="text-sm text-muted-foreground mb-5">
+                Package details aren&apos;t loading right now. You can still build
+                your subscription on the pricing page.
+              </p>
+              <Link
+                href="/pricing"
+                className="premium-button inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-all"
+              >
+                Build your subscription →
+              </Link>
+            </div>
+          </ScrollReveal>
+        )}
+
+        {sortedTiers.length > 0 && (
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedTiers.map((tier, i) => {
             const isMiddle = i === 1;
@@ -141,6 +161,7 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
             );
           })}
         </div>
+        )}
       </div>
     </section>
   );

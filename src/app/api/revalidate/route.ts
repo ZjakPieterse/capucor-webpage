@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { timingSafeEqual } from '@/lib/security';
 
 export async function POST(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get('secret');
 
-  if (!process.env.REVALIDATE_SECRET || secret !== process.env.REVALIDATE_SECRET) {
+  if (
+    !process.env.REVALIDATE_SECRET ||
+    !secret ||
+    !timingSafeEqual(secret, process.env.REVALIDATE_SECRET)
+  ) {
     return NextResponse.json({ error: 'Invalid secret.' }, { status: 401 });
   }
 
