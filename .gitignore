@@ -46,3 +46,6 @@ next-env.d.ts
 
 # local Cloudflare/Wrangler state
 .wrangler/
+
+# Supabase CLI local state
+supabase/.temp/
