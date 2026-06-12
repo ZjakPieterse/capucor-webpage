@@ -119,7 +119,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         >
           <div className="max-w-[1090px] mx-auto px-6">
             <p className="text-xs font-medium uppercase tracking-widest text-primary mb-6 text-center">
-              2 steps to your monthly price
+              3 steps to your monthly price
             </p>
             <StepIndicator currentStep={state.step} completed={completed} />
             <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">

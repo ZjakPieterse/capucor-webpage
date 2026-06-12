@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   CalendarCheck,
   Check,
+  Cloud,
   CornerDownRight,
   Layers,
   ShieldCheck,
@@ -23,6 +24,10 @@ interface PackagesTeaserProps {
   services: Service[];
   tiers: Tier[];
 }
+
+// Icons are positional — one per PACKAGE_COMMON_ITEMS entry, same order as the
+// pricing-page strip (RiskReducerStrip).
+const COMMON_ITEM_ICONS = [Users, ShieldCheck, CalendarCheck, Cloud];
 
 function getDisplayItems(
   tierSlug: string,
@@ -55,12 +60,14 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
             <p className="text-xs font-medium uppercase tracking-widest text-center text-muted-foreground mb-5">
               Included in every package
             </p>
-            <div className="flex flex-wrap justify-center gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
               {PACKAGE_COMMON_ITEMS.map((item, idx) => {
-                const Icon =
-                  idx === 0 ? Users : idx === 1 ? ShieldCheck : CalendarCheck;
+                const Icon = COMMON_ITEM_ICONS[idx] ?? Users;
                 return (
-                  <div key={item.text} className="flex items-center gap-2.5">
+                  <div
+                    key={item.text}
+                    className="flex items-center justify-center gap-2.5"
+                  >
                     <Icon className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm font-medium">{item.text}</span>
                   </div>

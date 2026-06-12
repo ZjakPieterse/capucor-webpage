@@ -23,11 +23,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'VAT returns prepared and submitted accurately for each applicable cycle.',
     },
     {
-      text: 'Xero Software Included',
-      services: ['bookkeeping'],
-      tooltip: 'Xero accounting software included as part of your monthly subscription.',
-    },
-    {
       text: 'Bookkeeping & Monthly Close',
       services: ['bookkeeping'],
       tooltip: 'Transactions processed, reconciled, and closed off through a structured monthly workflow.',
@@ -118,6 +113,7 @@ export const PACKAGE_COMMON_ITEMS = [
   { text: 'Dedicated Finance Team', tooltip: 'A named team that knows your business.' },
   { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
   { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant — not just at year-end.' },
+  { text: 'Xero Software Included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
 ];
 
 // Optional add-ons available with every package in the pricing calculator.

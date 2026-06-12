@@ -10,7 +10,7 @@ interface StepIndicatorProps {
 }
 
 // Two real input steps + a 3rd "Done" completion marker (not an input step).
-// The banner above reads "2 steps to your monthly price"; the last segment only
+// The banner above reads "3 steps to your monthly price"; the last segment
 // signals that the process is complete.
 const STEPS = [
   { number: 1, label: 'Your business' },
@@ -33,7 +33,11 @@ export function StepIndicator({ currentStep, completed = false }: StepIndicatorP
               key={step.number}
               className={cn('flex items-start', i === STEPS.length - 1 ? '' : 'flex-1')}
             >
-              <div className="flex flex-col items-center shrink-0">
+              {/* Column width is pinned to the circle (w-8) so label widths
+                  can't skew the flex layout — labels get a fixed w-20 and
+                  overflow the column symmetrically. This keeps circle 2 at the
+                  true container center, aligned with the eyebrow above. */}
+              <div className="flex flex-col items-center shrink-0 w-8">
                 <motion.div
                   initial={false}
                   animate={{
@@ -66,7 +70,7 @@ export function StepIndicator({ currentStep, completed = false }: StepIndicatorP
                 </motion.div>
                 <span
                   className={cn(
-                    'mt-2 text-[10px] sm:text-xs font-medium text-center max-w-[80px] leading-tight transition-colors duration-300',
+                    'mt-2 w-20 text-[10px] sm:text-xs font-medium text-center leading-tight transition-colors duration-300',
                     isActive ? 'text-foreground' : 'text-muted-foreground'
                   )}
                 >

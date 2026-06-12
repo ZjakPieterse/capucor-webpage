@@ -72,7 +72,6 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Annual Financial Statements',
       'SARS & CIPC Compliance',
       'VAT Reporting & Submission',
-      'Xero Software Included',
       'Bookkeeping & Monthly Close',
       'Core Monthly Financials',
       'Payroll Processing & Payslips',
@@ -154,6 +153,15 @@ describe('PACKAGE_COMMON_ITEMS', () => {
     expect(texts).toContain('Year-round Support');
     expect(texts).not.toContain('Year-round Advisory');
   });
+
+  it('lists Xero Software Included as the last common item, not a tier highlight', () => {
+    const texts = PACKAGE_COMMON_ITEMS.map((i) => i.text);
+    expect(texts[texts.length - 1]).toBe('Xero Software Included');
+    const allTierTexts = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
+      TIER_HIGHLIGHTS[t].map((i) => i.text)
+    );
+    expect(allTierTexts).not.toContain('Xero Software Included');
+  });
 });
 
 // ─── service-filter cases ───────────────────────────────────────────────────
@@ -165,7 +173,6 @@ describe('service-filter behaviour', () => {
       'Annual Financial Statements',
       'SARS & CIPC Compliance',
       'VAT Reporting & Submission',
-      'Xero Software Included',
       'Bookkeeping & Monthly Close',
       'Core Monthly Financials',
     ]);
@@ -207,7 +214,6 @@ describe('service-filter behaviour', () => {
   it('Case 3 — bookkeeping only: hides accounting-only items', () => {
     const sel = new Set(['bookkeeping']);
     const basic = visibleItems('basic', sel).map((i) => i.text);
-    expect(basic).toContain('Xero Software Included');
     expect(basic).toContain('Bookkeeping & Monthly Close');
     expect(basic).toContain('Core Monthly Financials');
     expect(basic).not.toContain('Annual Financial Statements');
@@ -253,7 +259,6 @@ describe('TierComparison accumulation', () => {
     const basicTexts = [
       'Annual Financial Statements',
       'VAT Reporting & Submission',
-      'Xero Software Included',
       'Bookkeeping & Monthly Close',
       'Core Monthly Financials',
     ];
@@ -302,6 +307,12 @@ describe('TierComparison accumulation', () => {
     const sarsRows = rows.filter((r) => r.text === 'SARS & CIPC Compliance');
     expect(sarsRows).toHaveLength(1);
     expect(sarsRows[0].lowestTier).toBe('common');
+  });
+
+  it('places Xero Software Included on a single common-tier row', () => {
+    const xeroRows = rows.filter((r) => r.text === 'Xero Software Included');
+    expect(xeroRows).toHaveLength(1);
+    expect(xeroRows[0].lowestTier).toBe('common');
   });
 
   it('omits all rows when no services are selected', () => {
