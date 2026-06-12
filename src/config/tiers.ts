@@ -112,8 +112,8 @@ export const TIER_CUMULATIVE_LABELS: Record<string, string> = {
 export const PACKAGE_COMMON_ITEMS = [
   { text: 'Dedicated Finance Team', tooltip: 'A named team that knows your business.' },
   { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
-  { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant — not just at year-end.' },
   { text: 'Xero Software Included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
+  { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant — not just at year-end.' },
 ];
 
 // Optional add-ons available with every package in the pricing calculator.

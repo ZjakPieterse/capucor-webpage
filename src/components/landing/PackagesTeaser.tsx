@@ -27,7 +27,7 @@ interface PackagesTeaserProps {
 
 // Icons are positional — one per PACKAGE_COMMON_ITEMS entry, same order as the
 // pricing-page strip (RiskReducerStrip).
-const COMMON_ITEM_ICONS = [Users, ShieldCheck, CalendarCheck, Cloud];
+const COMMON_ITEM_ICONS = [Users, ShieldCheck, Cloud, CalendarCheck];
 
 function getDisplayItems(
   tierSlug: string,
@@ -60,7 +60,9 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
             <p className="text-xs font-medium uppercase tracking-widest text-center text-muted-foreground mb-5">
               Included in every package
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
+            {/* Constrained + centered so the items cluster toward the middle of
+                the strip, leading the eye down to the "Most popular" card. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4 max-w-4xl mx-auto">
               {PACKAGE_COMMON_ITEMS.map((item, idx) => {
                 const Icon = COMMON_ITEM_ICONS[idx] ?? Users;
                 return (

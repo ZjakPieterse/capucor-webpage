@@ -154,9 +154,13 @@ describe('PACKAGE_COMMON_ITEMS', () => {
     expect(texts).not.toContain('Year-round Advisory');
   });
 
-  it('lists Xero Software Included as the last common item, not a tier highlight', () => {
-    const texts = PACKAGE_COMMON_ITEMS.map((i) => i.text);
-    expect(texts[texts.length - 1]).toBe('Xero Software Included');
+  it('uses the approved order, with Xero as a common item rather than a tier highlight', () => {
+    expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).toEqual([
+      'Dedicated Finance Team',
+      'SARS & CIPC Compliance',
+      'Xero Software Included',
+      'Year-round Support',
+    ]);
     const allTierTexts = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
     );
