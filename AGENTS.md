@@ -229,6 +229,13 @@ UI work so the front end stays visually consistent. Canonical examples are cited
   placeholder (`h-0 w-0 opacity-0 aria-hidden`) so the subgrid row still exists and the
   cards line up. See the `else` branch of the cumulative-label row in `Step2Tiers.tsx`.
 
+### Tailwind layering gotcha
+
+- **Don't mix responsive shorthand with base side-overrides.** `p-4 sm:p-5 pr-12` silently
+  loses the right padding at `sm+` — the `sm:p-5` media-query rule lands later in the cascade
+  and resets all four sides. Pair them per breakpoint instead: `p-4 pr-14 sm:p-5 sm:pr-16`.
+  (This is how the add-on card's corner toggle ended up overlapping its price.)
+
 ### Repeated component treatments
 
 - When a visual element appears on some cards in a set, give it to **all** peers for rhythm;
