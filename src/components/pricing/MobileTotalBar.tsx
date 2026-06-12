@@ -6,13 +6,14 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { MagneticButton } from '@/components/ui/MagneticButton';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
-import { monthlyTotal } from '@/lib/pricing';
+import { addonTotal, monthlyTotal } from '@/lib/pricing';
 import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface MobileTotalBarProps {
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
   selectedTierSlug: string | null;
+  selectedAddons?: string[];
   tiers: Tier[];
   brackets: Bracket[];
   summaryAnchorId: string;
@@ -23,6 +24,7 @@ export function MobileTotalBar({
   selectedServices,
   selectedBrackets,
   selectedTierSlug,
+  selectedAddons = [],
   tiers,
   brackets,
   summaryAnchorId,
@@ -31,7 +33,7 @@ export function MobileTotalBar({
   const activeSlugs = [...selectedServices];
   const tier = tiers.find((t) => t.slug === selectedTierSlug) ?? null;
   const total = tier
-    ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets)
+    ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets) + addonTotal(selectedAddons)
     : 0;
 
   const scrollToSummary = useCallback(() => {

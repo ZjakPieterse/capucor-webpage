@@ -1,5 +1,5 @@
 import { cn, formatZAR } from '@/lib/utils';
-import { buildLineItems, monthlyTotal } from '@/lib/pricing';
+import { addonTotal, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 const VAT_RATE = 0.15;
@@ -11,6 +11,8 @@ interface ProposalSummaryProps {
   selectedServices: string[]; // slugs
   selectedBrackets: Record<string, BracketValue>;
   tierSlug: string;
+  /** Optional add-on slugs — rendered as flat-fee lines after the service lines. */
+  selectedAddons?: string[];
   /** Server-stored totals — pass to display the figures locked in at send time. */
   monthlyZAR?: number;
   vatZAR?: number;
@@ -29,15 +31,22 @@ export function ProposalSummary({
   selectedServices,
   selectedBrackets,
   tierSlug,
+  selectedAddons = [],
   monthlyZAR,
   vatZAR,
   totalZAR,
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
-  const lineItems = buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets);
+  const lineItems = [
+    ...buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
+    ...buildAddonLineItems(selectedAddons),
+  ];
 
-  const monthly = monthlyZAR ?? monthlyTotal(selectedServices, selectedBrackets, tierSlug, brackets);
+  const monthly =
+    monthlyZAR ??
+    monthlyTotal(selectedServices, selectedBrackets, tierSlug, brackets) +
+      addonTotal(selectedAddons);
   const vat = vatZAR ?? Math.round(monthly * VAT_RATE);
   const total = totalZAR ?? monthly + vat;
 

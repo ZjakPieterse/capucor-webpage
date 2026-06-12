@@ -25,7 +25,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { monthlyTotal, buildLineItems } from '@/lib/pricing';
+import { monthlyTotal, buildLineItems, addonTotal, buildAddonLineItems } from '@/lib/pricing';
+import { PRICING_ADDONS } from '@/config/tiers';
 import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
@@ -112,24 +113,34 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const monthlyTotalZAR = monthlyTotal(input.services, input.brackets, input.tierSlug, bracketRows);
-  if (monthlyTotalZAR <= 0) {
+  // Add-ons: whitelist against the shared config before pricing. The bracket
+  // total alone must clear the > 0 guard — an add-on can't carry a proposal.
+  const addonSlugs = [...new Set(input.addons)].filter((slug) =>
+    PRICING_ADDONS.some((a) => a.slug === slug),
+  );
+
+  const bracketTotalZAR = monthlyTotal(input.services, input.brackets, input.tierSlug, bracketRows);
+  if (bracketTotalZAR <= 0) {
     return NextResponse.json(
       { error: 'No priced services in your selection. Please pick at least one regular bracket.' },
       { status: 422 },
     );
   }
+  const monthlyTotalZAR = bracketTotalZAR + addonTotal(addonSlugs);
   const vatZAR = Math.round(monthlyTotalZAR * VAT_RATE);
   const totalChargeZAR = monthlyTotalZAR + vatZAR;
 
   const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
-  const lineItems = buildLineItems(
-    input.services,
-    input.brackets,
-    input.tierSlug,
-    serviceCatalogue,
-    bracketRows,
-  );
+  const lineItems = [
+    ...buildLineItems(
+      input.services,
+      input.brackets,
+      input.tierSlug,
+      serviceCatalogue,
+      bracketRows,
+    ),
+    ...buildAddonLineItems(addonSlugs),
+  ];
 
   // 6. Persist — lead first (so the contact lands in the existing pipeline),
   //    then the proposal row linked to it.
@@ -145,7 +156,12 @@ export async function POST(req: NextRequest) {
         name: fullName,
         business: input.businessName,
         email: input.email,
-        config: { services: input.services, brackets: input.brackets, tier: input.tierSlug },
+        config: {
+          services: input.services,
+          brackets: input.brackets,
+          tier: input.tierSlug,
+          addons: addonSlugs,
+        },
         consent_given: true,
         consent_timestamp: nowIso,
         consent_version: CONSENT_VERSION,
@@ -178,6 +194,7 @@ export async function POST(req: NextRequest) {
       services: input.services,
       brackets: input.brackets,
       tier_slug: input.tierSlug,
+      addons: addonSlugs,
       monthly_total_zar: monthlyTotalZAR,
       vat_zar: vatZAR,
       total_charge_zar: totalChargeZAR,

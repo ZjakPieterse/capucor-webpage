@@ -9,14 +9,13 @@ interface StepIndicatorProps {
   completed?: boolean;
 }
 
-// Three real input steps + a 4th "Done" completion marker (not an input step).
-// The banner above reads "3 steps to your monthly price"; the 4th segment only
+// Two real input steps + a 3rd "Done" completion marker (not an input step).
+// The banner above reads "2 steps to your monthly price"; the last segment only
 // signals that the process is complete.
 const STEPS = [
-  { number: 1, label: 'Select services' },
-  { number: 2, label: 'Your business' },
-  { number: 3, label: 'Choose package' },
-  { number: 4, label: 'Done' },
+  { number: 1, label: 'Your business' },
+  { number: 2, label: 'Choose package' },
+  { number: 3, label: 'Done' },
 ] as const;
 
 export function StepIndicator({ currentStep, completed = false }: StepIndicatorProps) {
@@ -24,10 +23,10 @@ export function StepIndicator({ currentStep, completed = false }: StepIndicatorP
     <nav aria-label="Calculator progress" className="mb-8">
       <ol className="flex items-start gap-0">
         {STEPS.map((step, i) => {
-          // On completion every segment lights up and the 4th ("Done") gets the
-          // active glow as the celebratory end state.
+          // On completion every segment lights up and the last ("Done") gets
+          // the active glow as the celebratory end state.
           const isDone = completed ? true : step.number < currentStep;
-          const isActive = completed ? step.number === 4 : step.number === currentStep;
+          const isActive = completed ? step.number === 3 : step.number === currentStep;
 
           return (
             <li

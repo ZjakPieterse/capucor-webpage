@@ -22,6 +22,7 @@ interface ProposalRow {
   services: string[];
   brackets: Record<string, number>;
   tier_slug: string;
+  addons: string[] | null;
   monthly_total_zar: number;
   vat_zar: number;
   total_charge_zar: number;
@@ -56,7 +57,7 @@ async function loadProposal(token: string): Promise<LoadResult> {
   const { data, error } = await admin
     .from('proposals')
     .select(
-      'id, first_name, last_name, business_name, email, services, brackets, tier_slug, monthly_total_zar, vat_zar, total_charge_zar, status, expires_at, signed_at, signature_name, signature_method, signature_image',
+      'id, first_name, last_name, business_name, email, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, status, expires_at, signed_at, signature_name, signature_method, signature_image',
     )
     .eq('token', token)
     .maybeSingle();
@@ -151,6 +152,7 @@ export default async function ProposalPage({
             selectedServices={row.services}
             selectedBrackets={selectedBrackets}
             tierSlug={row.tier_slug}
+            selectedAddons={row.addons ?? []}
             monthlyZAR={Number(row.monthly_total_zar)}
             vatZAR={Number(row.vat_zar)}
             totalZAR={Number(row.total_charge_zar)}

@@ -33,20 +33,14 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'Transactions processed, reconciled, and closed off through a structured monthly workflow.',
     },
     {
-      text: 'Monthly Financial Reports',
+      text: 'Core Monthly Financials',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive regular financial reports to stay informed about business performance.',
     },
     {
       text: 'Payroll Processing & Payslips',
       services: ['payroll'],
-      tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time.',
-      calculatorOnly: true,
-    },
-    {
-      text: 'EMP & UIF Compliance',
-      services: ['payroll'],
-      tooltip: 'EMP201 and EMP501 employer submissions prepared and lodged on their monthly and bi-annual cycles, with UIF declarations and termination documents handled when needed.',
+      tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time, with EMP201 and EMP501 submissions lodged on their cycles and UIF declarations handled when needed.',
       calculatorOnly: true,
     },
     {
@@ -58,22 +52,22 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
   pro: [
     {
-      text: 'Quarterly Performance Review',
+      text: 'Quarterly Review Meeting',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A structured quarterly review to discuss performance, key concerns, and areas requiring attention.',
     },
     {
-      text: 'Supplier Processing with Dext',
+      text: 'Accounts Payable Management',
       services: ['bookkeeping'],
-      tooltip: 'Supplier invoices processed through Dext to improve recordkeeping and supplier-balance visibility.',
+      tooltip: 'Supplier invoices captured and processed, keeping supplier balances accurate and easy to track.',
     },
     {
-      text: 'Core Business Metrics Overview',
+      text: 'Monthly Insights Report',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'View selected business metrics for a clearer snapshot of financial performance.',
+      tooltip: 'A monthly report covering selected business metrics for a clearer snapshot of financial performance.',
     },
     {
-      text: 'Monthly 5-Min Video Walkthrough',
+      text: 'Monthly 5min Video Walkthrough',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
@@ -81,12 +75,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       text: 'Employee Self-Service Portal',
       services: ['payroll'],
       tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
-      calculatorOnly: true,
-    },
-    {
-      text: 'Leave Management & Approvals',
-      services: ['payroll'],
-      tooltip: 'Employees submit leave digitally and managers approve requests through a structured workflow.',
       calculatorOnly: true,
     },
   ],
@@ -97,7 +85,7 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'A monthly discussion focused on performance, financial priorities, and practical next steps.',
     },
     {
-      text: 'Budget vs Actual Review',
+      text: 'Budget vs Actual Reporting',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Compare actual financial performance against budget and identify areas requiring attention.',
     },
@@ -107,20 +95,14 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'Access a broader KPI dashboard with deeper financial and operational performance insights.',
     },
     {
-      text: 'Rolling Cashflow Forecast',
+      text: 'Benchmark Analysis',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'Maintain a forward-looking view of expected cash inflows, outflows, and potential pressure points.',
+      tooltip: 'See how your key numbers compare against similar businesses, showing where you lead and where there is room to improve.',
     },
     {
-      text: 'Payroll Payment File Preparation',
+      text: 'Payroll Payment Files Prepared',
       services: ['payroll'],
       tooltip: 'A bank-upload salary-payment file is prepared after payroll finalisation to simplify the payment process.',
-      calculatorOnly: true,
-    },
-    {
-      text: 'Direct Employee Payroll Support',
-      services: ['payroll'],
-      tooltip: 'Employees receive direct assistance with defined payroll-related queries, reducing routine admin for management.',
       calculatorOnly: true,
     },
   ],
@@ -135,7 +117,28 @@ export const TIER_CUMULATIVE_LABELS: Record<string, string> = {
 export const PACKAGE_COMMON_ITEMS = [
   { text: 'Dedicated Finance Team', tooltip: 'A named team that knows your business.' },
   { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
-  { text: 'Year-round Advisory', tooltip: 'Ongoing guidance from your accountant — not just at year-end.' },
+  { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant — not just at year-end.' },
+];
+
+// Optional add-ons available with every package in the pricing calculator.
+// Flat monthly fees excl. VAT, added on top of the bracket-based tier price.
+// Server-side proposal pricing reads from this same list, so a slug here is
+// the whitelist for /api/proposals.
+export interface PricingAddon {
+  slug: string;
+  name: string;
+  priceZAR: number;
+  description: string;
+}
+
+export const PRICING_ADDONS: PricingAddon[] = [
+  {
+    slug: 'dext',
+    name: 'Dext Software Access',
+    priceZAR: 375,
+    description:
+      'Snap receipts and invoices with the Dext app and they flow straight into your books.',
+  },
 ];
 
 export const TIER_BUYER_FIT: Record<string, string> = {

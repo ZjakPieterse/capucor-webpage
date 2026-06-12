@@ -224,10 +224,10 @@ UI work so the front end stays visually consistent. Canonical examples are cited
 - Rows of peer cards align their internal rows via CSS subgrid, not hand-tuned heights. The
   grid declares `grid-template-rows: auto auto … 1fr` and each card uses
   `grid-template-rows: subgrid` (see `.pricing-grid-container` / `.pricing-card-item` in
-  `globals.css`, consumed by `Step3Tiers.tsx`).
+  `globals.css`, consumed by `Step2Tiers.tsx`).
 - **Always reserve a row even when a card has no content for it** — render an invisible
   placeholder (`h-0 w-0 opacity-0 aria-hidden`) so the subgrid row still exists and the
-  cards line up. See the `else` branch of the cumulative-label row in `Step3Tiers.tsx`.
+  cards line up. See the `else` branch of the cumulative-label row in `Step2Tiers.tsx`.
 
 ### Repeated component treatments
 
@@ -242,7 +242,7 @@ UI work so the front end stays visually consistent. Canonical examples are cited
 - Show the amount and the period (`/month`) on one baseline-aligned row: the period is a
   small `whitespace-nowrap` subtext to the right of the price, never stacked below it and
   never allowed to wrap. Use `AnimatedPrice` for ZAR amounts (handles the animated count-up,
-  the `R` glyph, tabular nums, and reduced-motion). See the price block in `Step3Tiers.tsx`.
+  the `R` glyph, tabular nums, and reduced-motion). See the price block in `Step2Tiers.tsx`.
 
 ### Voice & copy (applies to all UI text)
 

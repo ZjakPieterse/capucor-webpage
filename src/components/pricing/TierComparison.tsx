@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Check, ChevronDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
-import { bracketPrice } from '@/lib/pricing';
+import { addonTotal, bracketPrice } from '@/lib/pricing';
 import {
   TIER_HIGHLIGHTS,
   PACKAGE_COMMON_ITEMS,
@@ -18,6 +18,8 @@ interface TierComparisonProps {
   brackets: Bracket[];
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
+  /** Selected optional add-on slugs — included in the footer totals so they match the tier cards. */
+  selectedAddons?: string[];
 }
 
 type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
@@ -33,6 +35,7 @@ export function TierComparison({
   brackets,
   selectedServices,
   selectedBrackets,
+  selectedAddons = [],
 }: TierComparisonProps) {
   const [open, setOpen] = useState(false);
 
@@ -67,8 +70,10 @@ export function TierComparison({
     return result;
   }, [selectedServices]);
 
-  // Per-tier total for the footer row
+  // Per-tier total for the footer row. Includes the flat add-on fee so the
+  // figures match the tier cards above.
   const tierTotals = useMemo(() => {
+    const addonsZAR = addonTotal(selectedAddons);
     const out: Record<string, { total: number }> = {};
     for (const tier of sortedTiers) {
       let total = 0;
@@ -78,10 +83,10 @@ export function TierComparison({
         const b = brackets.find((x) => x.service_slug === slug && x.ordinal === bv);
         if (b) total += bracketPrice(b, tier.slug);
       }
-      out[tier.slug] = { total };
+      out[tier.slug] = { total: total > 0 ? total + addonsZAR : 0 };
     }
     return out;
-  }, [sortedTiers, selectedServices, selectedBrackets, brackets]);
+  }, [sortedTiers, selectedServices, selectedBrackets, brackets, selectedAddons]);
 
   if (selectedServices.size === 0) return null;
 

@@ -40,6 +40,7 @@ interface ActivateProposalModalProps {
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
+  selectedAddons?: string[];
   /** Called after a proposal is successfully sent — marks the flow complete. */
   onSuccess: () => void;
 }
@@ -53,6 +54,7 @@ export function ActivateProposalModal({
   selectedServices,
   selectedBrackets,
   selectedTier,
+  selectedAddons = [],
   onSuccess,
 }: ActivateProposalModalProps) {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -107,6 +109,7 @@ export function ActivateProposalModal({
       services: activeServiceSlugs,
       brackets: integerBrackets,
       tierSlug: selectedTier,
+      addons: selectedAddons,
       firstName: values.firstName,
       lastName: values.lastName,
       businessName: values.businessName,
@@ -179,6 +182,7 @@ export function ActivateProposalModal({
               selectedServices={activeServiceSlugs}
               selectedBrackets={selectedBrackets}
               tierSlug={selectedTier ?? ''}
+              selectedAddons={selectedAddons}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

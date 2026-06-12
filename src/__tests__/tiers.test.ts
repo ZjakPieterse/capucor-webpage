@@ -6,7 +6,7 @@ import {
   type TierHighlightItem,
 } from '@/config/tiers';
 
-// ─── helpers replicating Step3Tiers + TierComparison logic ──────────────────
+// ─── helpers replicating Step2Tiers + TierComparison logic ──────────────────
 
 function visibleItems(tierSlug: 'basic' | 'pro' | 'premium', selected: Set<string>) {
   return (TIER_HIGHLIGHTS[tierSlug] ?? []).filter((i) =>
@@ -74,33 +74,39 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'VAT Reporting & Submission',
       'Xero Software Included',
       'Bookkeeping & Monthly Close',
-      'Monthly Financial Reports',
+      'Core Monthly Financials',
       'Payroll Processing & Payslips',
-      'EMP & UIF Compliance',
       'COIDA Annual Submission',
     ]);
   });
 
   it('pro uses the approved order', () => {
     expect(TIER_HIGHLIGHTS.pro.map((i) => i.text)).toEqual([
-      'Quarterly Performance Review',
-      'Supplier Processing with Dext',
-      'Core Business Metrics Overview',
-      'Monthly 5-Min Video Walkthrough',
+      'Quarterly Review Meeting',
+      'Accounts Payable Management',
+      'Monthly Insights Report',
+      'Monthly 5min Video Walkthrough',
       'Employee Self-Service Portal',
-      'Leave Management & Approvals',
     ]);
   });
 
   it('premium uses the approved order', () => {
     expect(TIER_HIGHLIGHTS.premium.map((i) => i.text)).toEqual([
       'Monthly Strategy Session',
-      'Budget vs Actual Review',
+      'Budget vs Actual Reporting',
       'Advanced KPI Dashboard',
-      'Rolling Cashflow Forecast',
-      'Payroll Payment File Preparation',
-      'Direct Employee Payroll Support',
+      'Benchmark Analysis',
+      'Payroll Payment Files Prepared',
     ]);
+  });
+
+  it('merged EMP/UIF wording lives in the Payroll Processing tooltip', () => {
+    const payrollItem = TIER_HIGHLIGHTS.basic.find(
+      (i) => i.text === 'Payroll Processing & Payslips'
+    );
+    expect(payrollItem).toBeDefined();
+    expect(payrollItem!.tooltip).toContain('EMP201');
+    expect(payrollItem!.tooltip).toContain('UIF');
   });
 
   it('contains no legacy package wording', () => {
@@ -118,6 +124,18 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Budget vs Actuals',
       'Live KPI Dashboard',
       'SARS and CIPC Compliance',
+      // Retired in the 2026-06 wording pass
+      'Monthly Financial Reports',
+      'Quarterly Performance Review',
+      'Supplier Processing with Dext',
+      'Core Business Metrics Overview',
+      'Monthly 5-Min Video Walkthrough',
+      'EMP & UIF Compliance',
+      'Leave Management & Approvals',
+      'Budget vs Actual Review',
+      'Rolling Cashflow Forecast',
+      'Payroll Payment File Preparation',
+      'Direct Employee Payroll Support',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -125,6 +143,16 @@ describe('TIER_HIGHLIGHTS ordering', () => {
     for (const phrase of legacy) {
       expect(allText).not.toContain(phrase);
     }
+  });
+});
+
+// ─── common items ───────────────────────────────────────────────────────────
+
+describe('PACKAGE_COMMON_ITEMS', () => {
+  it('uses "Year-round Support" (not the retired "Year-round Advisory")', () => {
+    const texts = PACKAGE_COMMON_ITEMS.map((i) => i.text);
+    expect(texts).toContain('Year-round Support');
+    expect(texts).not.toContain('Year-round Advisory');
   });
 });
 
@@ -139,19 +167,19 @@ describe('service-filter behaviour', () => {
       'VAT Reporting & Submission',
       'Xero Software Included',
       'Bookkeeping & Monthly Close',
-      'Monthly Financial Reports',
+      'Core Monthly Financials',
     ]);
     expect(visibleItems('pro', sel).map((i) => i.text)).toEqual([
-      'Quarterly Performance Review',
-      'Supplier Processing with Dext',
-      'Core Business Metrics Overview',
-      'Monthly 5-Min Video Walkthrough',
+      'Quarterly Review Meeting',
+      'Accounts Payable Management',
+      'Monthly Insights Report',
+      'Monthly 5min Video Walkthrough',
     ]);
     expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
       'Monthly Strategy Session',
-      'Budget vs Actual Review',
+      'Budget vs Actual Reporting',
       'Advanced KPI Dashboard',
-      'Rolling Cashflow Forecast',
+      'Benchmark Analysis',
     ]);
   });
 
@@ -161,22 +189,19 @@ describe('service-filter behaviour', () => {
     expect(basic).toContain('Annual Financial Statements');
     expect(basic).toContain('SARS & CIPC Compliance');
     expect(basic).toContain('VAT Reporting & Submission');
-    expect(basic).toContain('Monthly Financial Reports');
+    expect(basic).toContain('Core Monthly Financials');
     expect(basic).not.toContain('Xero Software Included');
     expect(basic).not.toContain('Bookkeeping & Monthly Close');
     expect(basic).not.toContain('Payroll Processing & Payslips');
-    expect(basic).not.toContain('EMP & UIF Compliance');
     expect(basic).not.toContain('COIDA Annual Submission');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
-    expect(pro).not.toContain('Supplier Processing with Dext');
+    expect(pro).not.toContain('Accounts Payable Management');
     expect(pro).not.toContain('Employee Self-Service Portal');
-    expect(pro).not.toContain('Leave Management & Approvals');
-    expect(pro).toContain('Quarterly Performance Review');
+    expect(pro).toContain('Quarterly Review Meeting');
 
     const premium = visibleItems('premium', sel).map((i) => i.text);
-    expect(premium).not.toContain('Payroll Payment File Preparation');
-    expect(premium).not.toContain('Direct Employee Payroll Support');
+    expect(premium).not.toContain('Payroll Payment Files Prepared');
   });
 
   it('Case 3 — bookkeeping only: hides accounting-only items', () => {
@@ -184,13 +209,13 @@ describe('service-filter behaviour', () => {
     const basic = visibleItems('basic', sel).map((i) => i.text);
     expect(basic).toContain('Xero Software Included');
     expect(basic).toContain('Bookkeeping & Monthly Close');
-    expect(basic).toContain('Monthly Financial Reports');
+    expect(basic).toContain('Core Monthly Financials');
     expect(basic).not.toContain('Annual Financial Statements');
     expect(basic).not.toContain('SARS & CIPC Compliance');
     expect(basic).not.toContain('VAT Reporting & Submission');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
-    expect(pro).toContain('Supplier Processing with Dext');
+    expect(pro).toContain('Accounts Payable Management');
   });
 
   it('Case 4 — payroll only: shows each tier’s approved payroll items in order', () => {
@@ -198,18 +223,15 @@ describe('service-filter behaviour', () => {
 
     expect(visibleItems('basic', sel).map((i) => i.text)).toEqual([
       'Payroll Processing & Payslips',
-      'EMP & UIF Compliance',
       'COIDA Annual Submission',
     ]);
 
     expect(visibleItems('pro', sel).map((i) => i.text)).toEqual([
       'Employee Self-Service Portal',
-      'Leave Management & Approvals',
     ]);
 
     expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
-      'Payroll Payment File Preparation',
-      'Direct Employee Payroll Support',
+      'Payroll Payment Files Prepared',
     ]);
 
     for (const t of ['basic', 'pro', 'premium'] as const) {
@@ -233,7 +255,7 @@ describe('TierComparison accumulation', () => {
       'VAT Reporting & Submission',
       'Xero Software Included',
       'Bookkeeping & Monthly Close',
-      'Monthly Financial Reports',
+      'Core Monthly Financials',
     ];
     for (const text of basicTexts) {
       const row = rows.find((r) => r.text === text);
@@ -246,10 +268,10 @@ describe('TierComparison accumulation', () => {
 
   it('marks pro items as covered in pro and premium only', () => {
     const proTexts = [
-      'Quarterly Performance Review',
-      'Supplier Processing with Dext',
-      'Core Business Metrics Overview',
-      'Monthly 5-Min Video Walkthrough',
+      'Quarterly Review Meeting',
+      'Accounts Payable Management',
+      'Monthly Insights Report',
+      'Monthly 5min Video Walkthrough',
     ];
     for (const text of proTexts) {
       const row = rows.find((r) => r.text === text);
@@ -263,9 +285,9 @@ describe('TierComparison accumulation', () => {
   it('marks premium items as covered in premium only', () => {
     const premiumTexts = [
       'Monthly Strategy Session',
-      'Budget vs Actual Review',
+      'Budget vs Actual Reporting',
       'Advanced KPI Dashboard',
-      'Rolling Cashflow Forecast',
+      'Benchmark Analysis',
     ];
     for (const text of premiumTexts) {
       const row = rows.find((r) => r.text === text);
@@ -293,16 +315,9 @@ describe('payroll accumulation in the comparison matrix', () => {
   const sel = new Set(['payroll']);
   const rows = buildMatrix(sel);
 
-  const basicPayrollTexts = [
-    'Payroll Processing & Payslips',
-    'EMP & UIF Compliance',
-    'COIDA Annual Submission',
-  ];
-  const proPayrollTexts = ['Employee Self-Service Portal', 'Leave Management & Approvals'];
-  const premiumPayrollTexts = [
-    'Payroll Payment File Preparation',
-    'Direct Employee Payroll Support',
-  ];
+  const basicPayrollTexts = ['Payroll Processing & Payslips', 'COIDA Annual Submission'];
+  const proPayrollTexts = ['Employee Self-Service Portal'];
+  const premiumPayrollTexts = ['Payroll Payment Files Prepared'];
 
   it('places basic payroll items at lowestTier "basic" and covers them in all three tiers', () => {
     for (const text of basicPayrollTexts) {

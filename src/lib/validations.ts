@@ -107,6 +107,9 @@ export const ProposalRequestSchema = z.object({
   services: z.array(z.string().min(1)).min(1, 'Select at least one service'),
   brackets: z.record(z.string(), z.number().int().nonnegative()),
   tierSlug: z.string().min(1, 'Choose a package'),
+  // Optional flat-fee add-ons. The route whitelists slugs against
+  // PRICING_ADDONS (config/tiers.ts) before pricing them.
+  addons: z.array(z.string().min(1)).max(5).optional().default([]),
   // Contact
   firstName: z.string().min(1, 'First name is required').max(80),
   lastName: z.string().min(1, 'Surname is required').max(80),

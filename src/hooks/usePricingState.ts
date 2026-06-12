@@ -3,15 +3,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { BracketValue, CalculatorStep, PricingState } from '@/types';
 
-// Bumped to v2 when the calculator dropped its 4th input step (Activate). Old
-// v1 drafts could carry step:4 which is no longer a valid CalculatorStep.
-const STORAGE_KEY = 'capucor.pricing.draft.v2';
+// Bumped to v3 when the calculator collapsed to two input steps (the old
+// "Select services" step folded into the scope questions) and gained add-ons.
+// Old drafts carry step:3 and no selectedAddons, which no longer fit the shape.
+const STORAGE_KEY = 'capucor.pricing.draft.v3';
 
 const DEFAULT_STATE: PricingState = {
   step: 1,
   selectedServices: new Set(),
   selectedBrackets: {},
   selectedTier: null,
+  selectedAddons: [],
 };
 
 function persistToStorage(state: PricingState) {
@@ -24,6 +26,7 @@ function persistToStorage(state: PricingState) {
         selectedServices: [...state.selectedServices],
         selectedBrackets: state.selectedBrackets,
         selectedTier: state.selectedTier,
+        selectedAddons: state.selectedAddons,
       })
     );
   } catch {
@@ -44,7 +47,7 @@ export function usePricingState() {
   const [state, setState] = useState<PricingState>(DEFAULT_STATE);
 
   // True once the user has submitted the Activate modal and a proposal has been
-  // sent. Drives the stepper's 4th "Done" segment. Not persisted — a refresh
+  // sent. Drives the stepper's final "Done" segment. Not persisted — a refresh
   // starts a fresh configuration. Any change to the selection clears it.
   const [completed, setCompleted] = useState(false);
 
@@ -63,40 +66,39 @@ export function usePricingState() {
   const markCompleted = useCallback(() => setCompleted(true), []);
 
   // Going Back clears selections made in later steps so each step is a fresh
-  // choice when re-entered from below. Step 1 selections (services) are kept.
+  // choice when re-entered from below. Step 1 answers (brackets) are kept.
   const setStepBack = useCallback((step: CalculatorStep) => {
     setCompleted(false);
     setState((s) => {
       const next: PricingState = { ...s, step };
-      if (step <= 1) next.selectedBrackets = {};
-      if (step <= 2) next.selectedTier = null;
+      if (step <= 1) {
+        next.selectedTier = null;
+        next.selectedAddons = [];
+      }
       return next;
     });
   }, []);
 
-  const toggleService = useCallback((slug: string) => {
-    setCompleted(false);
-    setState((s) => {
-      const next = new Set(s.selectedServices);
-      if (next.has(slug)) {
-        next.delete(slug);
-        const brackets = { ...s.selectedBrackets };
-        delete brackets[slug];
-        const selectedTier = next.size === 0 ? null : s.selectedTier;
-        return { ...s, selectedServices: next, selectedBrackets: brackets, selectedTier };
-      } else {
-        next.add(slug);
-        return { ...s, selectedServices: next };
-      }
-    });
-  }, []);
-
+  // The single entry point of the scope step: a numeric bracket opts the
+  // service in, 'not_required' explicitly opts it out. selectedServices is
+  // maintained here so downstream consumers keep their existing shape.
   const setBracket = useCallback((slug: string, value: BracketValue) => {
     setCompleted(false);
-    setState((s) => ({
-      ...s,
-      selectedBrackets: { ...s.selectedBrackets, [slug]: value },
-    }));
+    setState((s) => {
+      const services = new Set(s.selectedServices);
+      if (typeof value === 'number') {
+        services.add(slug);
+      } else {
+        services.delete(slug);
+      }
+      const selectedTier = services.size === 0 ? null : s.selectedTier;
+      return {
+        ...s,
+        selectedServices: services,
+        selectedBrackets: { ...s.selectedBrackets, [slug]: value },
+        selectedTier,
+      };
+    });
   }, []);
 
   const setTier = useCallback((tierSlug: string) => {
@@ -104,11 +106,20 @@ export function usePricingState() {
     setState((s) => ({ ...s, selectedTier: tierSlug }));
   }, []);
 
-  const canProceedStep1 = state.selectedServices.size > 0;
-  const canProceedStep2 =
-    state.selectedServices.size > 0 &&
-    [...state.selectedServices].every((slug) => slug in state.selectedBrackets);
-  const canProceedStep3 = state.selectedTier !== null;
+  const toggleAddon = useCallback((addonSlug: string) => {
+    setCompleted(false);
+    setState((s) => ({
+      ...s,
+      selectedAddons: s.selectedAddons.includes(addonSlug)
+        ? s.selectedAddons.filter((a) => a !== addonSlug)
+        : [...s.selectedAddons, addonSlug],
+    }));
+  }, []);
+
+  // Step-1 gating ("every question answered, at least one priced") needs the
+  // services list from Supabase, so the calculator computes it — see
+  // canProceedScopeStep below. Step 2 only needs a tier.
+  const canProceedStep2 = state.selectedTier !== null;
 
   return {
     state,
@@ -116,11 +127,22 @@ export function usePricingState() {
     markCompleted,
     setStep,
     setStepBack,
-    toggleService,
     setBracket,
     setTier,
-    canProceedStep1,
+    toggleAddon,
     canProceedStep2,
-    canProceedStep3,
   };
+}
+
+// True when every service has an explicit answer (a bracket or 'not_required')
+// and at least one carries a real bracket. Lives here rather than in the hook
+// because the service list comes from Supabase via the page, not from state.
+export function canProceedScopeStep(
+  serviceSlugs: string[],
+  selectedBrackets: Record<string, BracketValue>
+): boolean {
+  if (serviceSlugs.length === 0) return false;
+  const allAnswered = serviceSlugs.every((slug) => slug in selectedBrackets);
+  const anyPriced = serviceSlugs.some((slug) => typeof selectedBrackets[slug] === 'number');
+  return allAnswered && anyPriced;
 }

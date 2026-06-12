@@ -5,13 +5,14 @@ import { ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
-import { monthlyTotal } from '@/lib/pricing';
+import { addonTotal, monthlyTotal } from '@/lib/pricing';
 import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface StickyConfigChipProps {
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
   selectedTierSlug: string | null;
+  selectedAddons?: string[];
   tiers: Tier[];
   brackets: Bracket[];
   observeElementId: string;
@@ -22,6 +23,7 @@ export function StickyConfigChip({
   selectedServices,
   selectedBrackets,
   selectedTierSlug,
+  selectedAddons = [],
   tiers,
   brackets,
   observeElementId,
@@ -52,7 +54,7 @@ export function StickyConfigChip({
 
   const tier = tiers.find((t) => t.slug === selectedTierSlug) ?? null;
   const total = tier
-    ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets)
+    ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets) + addonTotal(selectedAddons)
     : 0;
 
   return (

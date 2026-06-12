@@ -3,14 +3,13 @@
 import { Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
-import { usePricingState } from '@/hooks/usePricingState';
+import { canProceedScopeStep, usePricingState } from '@/hooks/usePricingState';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { StepIndicator } from './StepIndicator';
-import { Step1Services } from './Step1Services';
-import { Step2Brackets } from './Step2Brackets';
-import { Step3Tiers } from './Step3Tiers';
+import { Step1Scope } from './Step1Scope';
+import { Step2Tiers } from './Step2Tiers';
 import { ActivateProposalModal } from './ActivateProposalModal';
 import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
@@ -74,13 +73,18 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
     markCompleted,
     setStep,
     setStepBack,
-    toggleService,
     setBracket,
     setTier,
-    canProceedStep1,
+    toggleAddon,
     canProceedStep2,
-    canProceedStep3,
   } = usePricingState();
+
+  // "Every question answered, at least one priced" — needs the service list
+  // from Supabase, so it lives here rather than in the hook.
+  const canProceedStep1 = canProceedScopeStep(
+    services.map((s) => s.slug),
+    state.selectedBrackets
+  );
 
   const [activateOpen, setActivateOpen] = useState(false);
 
@@ -90,19 +94,19 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
     }
   };
 
-  const goForward = (step: 2 | 3) => {
+  const goForward = (step: 2) => {
     setStep(step);
     scrollToTop();
   };
 
-  const goBack = (step: 1 | 2 | 3) => {
+  const goBack = (step: 1) => {
     setStepBack(step);
     scrollToTop();
   };
 
   // "Activate" no longer routes to payment — it opens the proposal modal.
   const openActivateModal = () => {
-    if (canProceedStep3) setActivateOpen(true);
+    if (canProceedStep2) setActivateOpen(true);
   };
 
   return (
@@ -115,7 +119,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         >
           <div className="max-w-[1090px] mx-auto px-6">
             <p className="text-xs font-medium uppercase tracking-widest text-primary mb-6 text-center">
-              3 steps to your monthly price
+              2 steps to your monthly price
             </p>
             <StepIndicator currentStep={state.step} completed={completed} />
             <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">
@@ -128,13 +132,15 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <Step1Services
+                    <Step1Scope
                       services={services}
-                      selected={state.selectedServices}
-                      onToggle={toggleService}
+                      brackets={brackets}
+                      selectedBrackets={state.selectedBrackets}
+                      onBracketChange={setBracket}
                       onNext={() => {
                         if (canProceedStep1) goForward(2);
                       }}
+                      canProceed={canProceedStep1}
                     />
                   </motion.div>
                 )}
@@ -147,38 +153,17 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   >
-                    <Step2Brackets
-                      services={services}
-                      brackets={brackets}
-                      selectedServices={state.selectedServices}
-                      selectedBrackets={state.selectedBrackets}
-                      onBracketChange={setBracket}
-                      onBack={() => goBack(1)}
-                      onNext={() => {
-                        if (canProceedStep2) goForward(3);
-                      }}
-                      canProceed={canProceedStep2}
-                    />
-                  </motion.div>
-                )}
-
-                {state.step === 3 && (
-                  <motion.div
-                    key="step3"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <Step3Tiers
+                    <Step2Tiers
                       services={services}
                       brackets={brackets}
                       tiers={tiers}
                       selectedServices={state.selectedServices}
                       selectedBrackets={state.selectedBrackets}
                       selectedTier={state.selectedTier}
+                      selectedAddons={state.selectedAddons}
                       onTierSelect={setTier}
-                      onBack={() => goBack(2)}
+                      onToggleAddon={toggleAddon}
+                      onBack={() => goBack(1)}
                       onActivate={openActivateModal}
                       testimonial={spotlightTestimonial}
                     />
@@ -204,6 +189,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         selectedServices={state.selectedServices}
         selectedBrackets={state.selectedBrackets}
         selectedTierSlug={state.selectedTier}
+        selectedAddons={state.selectedAddons}
         tiers={tiers}
         brackets={brackets}
         summaryAnchorId="pricing-summary"
@@ -214,6 +200,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         selectedServices={state.selectedServices}
         selectedBrackets={state.selectedBrackets}
         selectedTierSlug={state.selectedTier}
+        selectedAddons={state.selectedAddons}
         tiers={tiers}
         brackets={brackets}
         observeElementId="pricing-summary"
@@ -229,6 +216,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         selectedServices={state.selectedServices}
         selectedBrackets={state.selectedBrackets}
         selectedTier={state.selectedTier}
+        selectedAddons={state.selectedAddons}
         onSuccess={markCompleted}
       />
     </>

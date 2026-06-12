@@ -1,4 +1,7 @@
-export type BracketValue = number | 'enterprise';
+// 'not_required' is the explicit opt-out a visitor picks in the calculator's
+// scope step for a service they don't need. Pricing math only ever counts
+// numeric values, so it (like 'enterprise') never contributes to a total.
+export type BracketValue = number | 'enterprise' | 'not_required';
 
 export interface Service {
   id: string;
@@ -61,15 +64,20 @@ export interface PricingData {
   inclusions: TierInclusion[];
 }
 
-// The calculator has three real input steps (Services → Business → Package).
-// The 4th stepper segment is a completion marker ("Done"), not an input step.
-export type CalculatorStep = 1 | 2 | 3;
+// The calculator has two real input steps (Business scope → Package). The 3rd
+// stepper segment is a completion marker ("Done"), not an input step.
+export type CalculatorStep = 1 | 2;
 
 export interface PricingState {
   step: CalculatorStep;
+  // Derived from selectedBrackets: slugs whose bracket is numeric. Kept in
+  // state so every consumer (tiers step, totals, proposal payload) reads one
+  // shape; setBracket maintains it.
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
+  // Optional flat-fee add-ons (PRICING_ADDONS slugs), chosen in the package step.
+  selectedAddons: string[];
 }
 
 // ── Subscription / activation ────────────────────────────────────────────

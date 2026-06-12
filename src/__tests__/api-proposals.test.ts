@@ -216,4 +216,59 @@ describe('POST /api/proposals', () => {
     expect((await res.json()).error).toMatch(/generate your proposal/i);
     errorSpy.mockRestore();
   });
+
+  it('13. addons omitted — defaults to empty, no addon charge', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload.addons).toEqual([]);
+    expect(propPayload.monthly_total_zar).toBe(1550);
+  });
+
+  it('14. dext add-on — flat R375 added to the recomputed total and persisted', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, addons: ['dext'] }),
+    );
+    expect(res.status).toBe(200);
+
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    const expectedMonthly = 1550 + 375;
+    expect(propPayload).toMatchObject({
+      addons: ['dext'],
+      monthly_total_zar: expectedMonthly,
+      vat_zar: Math.round(expectedMonthly * 0.15),
+      total_charge_zar: expectedMonthly + Math.round(expectedMonthly * 0.15),
+    });
+
+    const leadPayload = leadInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect((leadPayload.config as Record<string, unknown>).addons).toEqual(['dext']);
+  });
+
+  it('15. unknown addon slugs are filtered out, not priced', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        addons: ['dext', 'mystery-addon'],
+      }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload.addons).toEqual(['dext']);
+    expect(propPayload.monthly_total_zar).toBe(1550 + 375);
+  });
+
+  it('16. an add-on alone cannot carry a proposal — dormant selection still 422', async () => {
+    bracketRows = DORMANT_BRACKETS;
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        services: ['bookkeeping'],
+        brackets: { bookkeeping: 0 },
+        addons: ['dext'],
+      }),
+    );
+    expect(res.status).toBe(422);
+    expect((await res.json()).error).toMatch(/no priced services/i);
+    expect(proposalInsert).not.toHaveBeenCalled();
+  });
 });

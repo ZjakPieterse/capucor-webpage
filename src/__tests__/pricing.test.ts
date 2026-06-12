@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { bracketPrice, monthlyTotal, hasEnterpriseService } from '@/lib/pricing';
+import {
+  addonTotal,
+  bracketPrice,
+  buildAddonLineItems,
+  monthlyTotal,
+  hasEnterpriseService,
+} from '@/lib/pricing';
 import { formatZAR } from '@/lib/utils';
 
 // Minimal bracket fixtures matching PDF price list
@@ -116,6 +122,45 @@ describe('monthlyTotal', () => {
     // Bookkeeping Up to 50 Premium: 1800
     // Payroll 1 Employee Premium: 950
     expect(total).toBe(1050 + 1800 + 950); // 3800
+  });
+
+  it('skips not_required selections (explicit opt-out from the scope step)', () => {
+    const total = monthlyTotal(
+      ['accounting', 'payroll'],
+      { accounting: 4, payroll: 'not_required' },
+      'pro',
+      allBrackets
+    );
+    expect(total).toBe(1825); // only accounting 5-10Mil Pro
+  });
+});
+
+// ─── add-ons ──────────────────────────────────────────────────────────────────
+
+describe('addonTotal', () => {
+  it('prices the Dext add-on at a flat R375', () => {
+    expect(addonTotal(['dext'])).toBe(375);
+  });
+
+  it('ignores unknown add-on slugs', () => {
+    expect(addonTotal(['dext', 'mystery-addon'])).toBe(375);
+  });
+
+  it('returns 0 for an empty selection', () => {
+    expect(addonTotal([])).toBe(0);
+  });
+});
+
+describe('buildAddonLineItems', () => {
+  it('builds a flat-fee line for the Dext add-on', () => {
+    expect(buildAddonLineItems(['dext'])).toEqual([
+      { slug: 'dext', name: 'Dext Software Access', label: null, price: 375 },
+    ]);
+  });
+
+  it('skips unknown slugs and returns nothing for an empty selection', () => {
+    expect(buildAddonLineItems(['mystery-addon'])).toEqual([]);
+    expect(buildAddonLineItems([])).toEqual([]);
   });
 });
 
