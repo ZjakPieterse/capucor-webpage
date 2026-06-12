@@ -173,7 +173,7 @@ export function Step2Tiers({
                 aria-pressed={isOn}
                 aria-label={`${isOn ? 'Remove' : 'Add'} ${addon.name}`}
                 className={cn(
-                  'service-card relative w-full rounded-2xl border-2 p-4 sm:p-5 pr-12 text-left outline-none',
+                  'service-card relative w-full rounded-2xl border-2 p-4 pr-14 sm:p-5 sm:pr-16 text-left outline-none',
                   'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   isOn
                     ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
@@ -182,7 +182,7 @@ export function Step2Tiers({
               >
                 <span
                   aria-hidden
-                  className={cn('service-card-toggle', isOn && 'is-selected')}
+                  className={cn('service-card-toggle service-card-toggle--center', isOn && 'is-selected')}
                 >
                   {isOn ? (
                     <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -211,8 +211,8 @@ export function Step2Tiers({
                       {addon.description}
                     </p>
                   </div>
-                  <div className="shrink-0 flex items-baseline gap-1 ml-1">
-                    <span className="font-mono text-sm font-bold">{formatZAR(addon.priceZAR)}</span>
+                  <div className="shrink-0 flex items-baseline gap-1 ml-2">
+                    <span className="font-mono text-sm font-bold whitespace-nowrap">{formatZAR(addon.priceZAR)}</span>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap">/month</span>
                   </div>
                 </div>

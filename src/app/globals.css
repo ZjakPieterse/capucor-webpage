@@ -1029,6 +1029,15 @@
   pointer-events: none;
 }
 
+/* Slim horizontal cards (e.g. the add-on toggle) centre the toggle on the row
+   instead of pinning it to the top corner. Uses margin-top rather than a
+   translateY transform so the selection pop animation's scale() keyframes
+   don't clobber the centering mid-animation. */
+.service-card-toggle--center {
+  top: 50%;
+  margin-top: -0.875rem;
+}
+
 .service-card-toggle.is-selected {
   background: var(--primary);
   border-color: var(--primary);
