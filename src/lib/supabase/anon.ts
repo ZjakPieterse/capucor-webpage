@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Cookieless anon Supabase client for reading PUBLIC data (pricing config —
-// services, brackets, tiers, tier_inclusions — and testimonials) from the
+// services, brackets, tiers — and testimonials) from the
 // server. Unlike createSupabaseServerClient it does NOT attach the visitor's
 // session, so reads always run as the `anon` role. This matters because the
 // public pricing tables only grant `select to anon`: a signed-in visitor's

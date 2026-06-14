@@ -39,7 +39,7 @@ async function fetchPricingDataOnce(): Promise<PricingResult> {
   // visitor is signed in — see anon.ts for why a session-bound client breaks it.
   const supabase = createSupabaseAnonClient();
 
-  const [servicesRes, bracketsRes, tiersRes, inclusionsRes, testimonialsRes] =
+  const [servicesRes, bracketsRes, tiersRes, testimonialsRes] =
     await Promise.all([
       supabase
         .from('services')
@@ -57,22 +57,13 @@ async function fetchPricingDataOnce(): Promise<PricingResult> {
         .eq('active', true)
         .order('display_order'),
       supabase
-        .from('tier_inclusions')
-        .select('*')
-        .order('display_order'),
-      supabase
         .from('testimonials')
         .select('*')
         .eq('active', true)
         .order('display_order'),
     ]);
 
-    if (
-      servicesRes.error ||
-      bracketsRes.error ||
-      tiersRes.error ||
-      inclusionsRes.error
-    ) {
+    if (servicesRes.error || bracketsRes.error || tiersRes.error) {
       throw new Error('Supabase query error');
     }
 
@@ -86,7 +77,6 @@ async function fetchPricingDataOnce(): Promise<PricingResult> {
     services: (servicesRes.data ?? []) as PricingData['services'],
     brackets: (bracketsRes.data ?? []) as PricingData['brackets'],
     tiers: (tiersRes.data ?? []) as PricingData['tiers'],
-    inclusions: (inclusionsRes.data ?? []) as PricingData['inclusions'],
   };
 
   // A successful query can still come back empty (e.g. a transient Supabase

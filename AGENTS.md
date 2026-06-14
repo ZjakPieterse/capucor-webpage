@@ -118,9 +118,9 @@ There are three server-side clients in `src/lib/supabase/`; choosing wrong cause
 loss, not an error:
 
 - **`createSupabaseAnonClient()` (`anon.ts`) — for PUBLIC reads.** Cookieless; always runs as the
-  `anon` role. Use for the public pricing config (`services`, `brackets`, `tiers`,
-  `tier_inclusions`) and `testimonials` — on the pricing calculator, homepage packages teaser,
-  proposal view, and server-side price math.
+  `anon` role. Use for the public pricing config (`services`, `brackets`, `tiers`) and
+  `testimonials` — on the pricing calculator, homepage packages teaser, proposal view, and
+  server-side price math.
 - **`createSupabaseServerClient()` (`server.ts`) — for per-user/auth reads.** Cookie-bound; adopts
   the visitor's session role. Use for auth, the client portal, and lead/data-request inserts.
 - **`createSupabaseAdminClient()` (`admin.ts`) — for privileged writes.** Service-role; bypasses
@@ -139,13 +139,13 @@ which renders the calculator unavailable for logged-in users only. Always read p
 src/
 ├── app/              # Next.js App Router pages and API routes
 ├── components/
-│   ├── landing/      # Homepage sections (Hero, FAQ, etc.)
+│   ├── landing/      # Homepage sections (Hero, ProblemCards, etc.)
 │   ├── pricing/      # Multi-step pricing calculator
 │   ├── ui/           # shadcn + custom UI primitives
 │   ├── layout/       # Navbar, Footer
 │   ├── portal/       # Client portal components
 │   └── services/     # Service page components
-├── config/           # siteConfig, tier config, FAQ data
+├── config/           # siteConfig, tier config
 ├── hooks/            # usePricingState, useCursorGlow
 ├── lib/              # utils, pricing logic, Supabase clients, validations
 └── types/            # TypeScript interfaces
@@ -287,6 +287,6 @@ All TODOs are inline-documented in each file.
 
 The homepage section that used to live between Tech Stack (#7) and the next section — formerly "A Month with Capucor" / `OutcomeStories.tsx` — has been removed and the slot is reserved for **real client testimonials / social proof**.
 
-- Placement: `src/app/page.tsx` between `TechStackShowcase` and `ContactSection` (look for the placeholder HTML comment). The homepage FAQ was retired; `FaqAccordion` + `config/faq.ts` are parked in the repo, unused, for possible later reuse.
+- Placement: `src/app/page.tsx` between `TechStackShowcase` and `ContactSection` (look for the placeholder HTML comment). The homepage FAQ was retired and its `FaqAccordion` + `config/faq.ts` removed; rebuild fresh if a FAQ section is wanted later.
 - Blocker: testimonials still need to be collected from clients. Once 3–5 quotes (name, role, company, quote, ideally a headshot) are in hand, build a new `Testimonials.tsx` landing component and slot it in.
 - Do not ship the old four-week timeline visual back — it was scrapped intentionally. Build fresh around the real quotes.

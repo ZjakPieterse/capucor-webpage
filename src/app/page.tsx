@@ -119,7 +119,7 @@ export default async function HomePage() {
         {/* 7. Tech stack */}
         <TechStackShowcase />
         {/* 8. Testimonials / social proof — placeholder. Section is intentionally hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
-        {/* 9. Contact + lead capture (replaced the homepage FAQ). FaqAccordion + config/faq.ts are parked in the repo, unused, for possible later reuse. */}
+        {/* 9. Contact + lead capture (replaced the homepage FAQ). */}
         <ContactSection services={services} brackets={brackets} tiers={tiers} />
         {/* 10. Final CTA */}
         <FinalCTA />

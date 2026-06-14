@@ -7,8 +7,9 @@ export function cn(...inputs: ClassValue[]) {
 
 // PLAN §12: comma-thousands separator, period-decimal (SA accounting convention).
 // en-ZA locale uses space/comma which differs from SA business practice, so we
-// use en-US number formatting. The MonoPrice component adds CSS nowrap to prevent
-// the "R" from splitting across lines — NBSP is a layout concern, not data.
+// use en-US number formatting. Keeping the "R" glyph from wrapping away from the
+// number is a layout concern handled in the price components (e.g. AnimatedPrice),
+// not here.
 const zarFmt    = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const zarFmtDec = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,

@@ -37,14 +37,6 @@ export interface Tier {
   active: boolean;
 }
 
-export interface TierInclusion {
-  id: string;
-  tier_slug: string;
-  service_slug: string;
-  inclusion: string;
-  display_order: number;
-}
-
 export interface Testimonial {
   id: string;
   name: string;
@@ -61,7 +53,6 @@ export interface PricingData {
   services: Service[];
   brackets: Bracket[];
   tiers: Tier[];
-  inclusions: TierInclusion[];
 }
 
 // The calculator has two real input steps (Business scope → Package). The 3rd
