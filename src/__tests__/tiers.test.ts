@@ -84,7 +84,7 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Quarterly Review Meeting',
       'Accounts Payable Management',
       'Monthly Insights Report',
-      'Monthly 5min Video Walkthrough',
+      'Monthly 5-Min Video Explainer',
       'Employee Self-Service Portal',
     ]);
   });
@@ -135,6 +135,8 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Rolling Cashflow Forecast',
       'Payroll Payment File Preparation',
       'Direct Employee Payroll Support',
+      // Retired in the 2026-06 wording pass (renamed to "Monthly 5-Min Video Explainer")
+      'Monthly 5min Video Walkthrough',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -184,7 +186,7 @@ describe('service-filter behaviour', () => {
       'Quarterly Review Meeting',
       'Accounts Payable Management',
       'Monthly Insights Report',
-      'Monthly 5min Video Walkthrough',
+      'Monthly 5-Min Video Explainer',
     ]);
     expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
       'Monthly Strategy Session',
@@ -280,7 +282,7 @@ describe('TierComparison accumulation', () => {
       'Quarterly Review Meeting',
       'Accounts Payable Management',
       'Monthly Insights Report',
-      'Monthly 5min Video Walkthrough',
+      'Monthly 5-Min Video Explainer',
     ];
     for (const text of proTexts) {
       const row = rows.find((r) => r.text === text);

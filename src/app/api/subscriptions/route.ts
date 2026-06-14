@@ -27,8 +27,6 @@ import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { monthlyTotal } from '@/lib/pricing';
 import type { Bracket } from '@/types';
 
-const VAT_RATE = 0.15;
-
 export async function POST(req: NextRequest) {
   // 1. Rate limit
   const ip =
@@ -112,8 +110,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const vatZAR = Math.round(monthlyTotalZAR * VAT_RATE);
-  const totalChargeZAR = monthlyTotalZAR + vatZAR;
+  // The configured price is the final, all-in monthly price. VAT is handled in
+  // Xero (the billing pipeline), not on-site, so the site records no VAT split.
+  const vatZAR = 0;
+  const totalChargeZAR = monthlyTotalZAR;
 
   // 5. Persist subscription — STUB
   const subscriptionId = `sub_stub_${Math.random().toString(36).slice(2, 10)}`;

@@ -62,7 +62,7 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'A monthly report covering selected business metrics for a clearer snapshot of financial performance.',
     },
     {
-      text: 'Monthly 5min Video Walkthrough',
+      text: 'Monthly 5-Min Video Explainer',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
@@ -117,7 +117,7 @@ export const PACKAGE_COMMON_ITEMS = [
 ];
 
 // Optional add-ons available with every package in the pricing calculator.
-// Flat monthly fees excl. VAT, added on top of the bracket-based tier price.
+// Flat monthly fees added on top of the bracket-based tier price.
 // Server-side proposal pricing reads from this same list, so a slug here is
 // the whitelist for /api/proposals.
 export interface PricingAddon {

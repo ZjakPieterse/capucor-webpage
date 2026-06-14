@@ -100,9 +100,9 @@ export interface SubscriptionSummary {
   status: SubscriptionStatus;
   tierSlug: string;
   tierName: string;
-  monthlyTotalZAR: number;       // excl. VAT
-  vatZAR: number;                // 15%
-  totalChargeZAR: number;        // incl. VAT
+  monthlyTotalZAR: number;       // final all-in monthly price (services + add-ons)
+  vatZAR: number;                // always 0 — VAT handled in Xero, not on-site
+  totalChargeZAR: number;        // equals monthlyTotalZAR
   services: string[];            // slugs
   brackets: Record<string, BracketValue>;
   nextBillingDate: string | null;   // ISO date

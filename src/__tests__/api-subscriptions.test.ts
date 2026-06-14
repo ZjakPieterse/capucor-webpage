@@ -80,8 +80,8 @@ describe('POST /api/subscriptions', () => {
       ok: true,
       authorizationUrl: 'https://paystack.test/checkout/xyz',
       monthlyTotalZAR: 1550,           // 950 + 600
-      vatZAR: Math.round(1550 * 0.15), // 233
-      totalChargeZAR: 1550 + Math.round(1550 * 0.15),
+      vatZAR: 0,                       // VAT handled in Xero, not on-site
+      totalChargeZAR: 1550,
     });
     expect(body.subscriptionId).toMatch(/^sub_stub_/);
     expect(getOrCreateCustomer).toHaveBeenCalledTimes(1);
@@ -101,7 +101,7 @@ describe('POST /api/subscriptions', () => {
     const body = await res.json();
     expect(body.monthlyTotalZAR).toBe(1550); // server-computed, not 1
     const initCall = vi.mocked(initSubscriptionTransaction).mock.calls[0]![0];
-    const serverTotal = 1550 + Math.round(1550 * 0.15);
+    const serverTotal = 1550; // final price = monthly; no VAT added on-site
     expect(initCall.amountCents).toBe(serverTotal * 100);
     expect(initCall.amountCents).not.toBe(100);
   });

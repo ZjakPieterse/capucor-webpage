@@ -104,8 +104,8 @@ describe('POST /api/proposals', () => {
     expect(propPayload).toMatchObject({
       status: 'sent',
       monthly_total_zar: 1550,
-      vat_zar: Math.round(1550 * 0.15),
-      total_charge_zar: 1550 + Math.round(1550 * 0.15),
+      vat_zar: 0,
+      total_charge_zar: 1550,
       tier_slug: 'pro',
     });
     expect(typeof propPayload.token).toBe('string');
@@ -236,8 +236,8 @@ describe('POST /api/proposals', () => {
     expect(propPayload).toMatchObject({
       addons: ['dext'],
       monthly_total_zar: expectedMonthly,
-      vat_zar: Math.round(expectedMonthly * 0.15),
-      total_charge_zar: expectedMonthly + Math.round(expectedMonthly * 0.15),
+      vat_zar: 0,
+      total_charge_zar: expectedMonthly,
     });
 
     const leadPayload = leadInsert.mock.calls[0]![0] as Record<string, unknown>;

@@ -20,8 +20,6 @@ import { bracketPrice, monthlyTotal } from '@/lib/pricing';
 import { clearPricingDraft } from '@/hooks/usePricingState';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
-const VAT_RATE = 0.15;
-
 const FormSchema = z.object({
   fullName: z.string().min(1, 'Name is required').max(100),
   email: z.string().email('Enter a valid email address'),
@@ -79,8 +77,6 @@ export function Step4Activate({
   const monthlyZAR = tier
     ? monthlyTotal(activeServiceSlugs, selectedBrackets, tier.slug, brackets)
     : 0;
-  const vatZAR = Math.round(monthlyZAR * VAT_RATE);
-  const totalChargeZAR = monthlyZAR + vatZAR;
 
   const {
     register,
@@ -185,18 +181,10 @@ export function Step4Activate({
         })}
       </ul>
       <div className="border-t border-primary/20 pt-3 space-y-1.5 text-sm">
-        <div className="flex items-center justify-between text-muted-foreground">
-          <span>Subtotal</span>
-          <span className="font-mono">{formatZAR(monthlyZAR)}</span>
-        </div>
-        <div className="flex items-center justify-between text-muted-foreground">
-          <span>VAT (15%)</span>
-          <span className="font-mono">{formatZAR(vatZAR)}</span>
-        </div>
-        <div className="flex items-baseline justify-between pt-2 border-t border-primary/15">
+        <div className="flex items-baseline justify-between">
           <span className="font-semibold">Total monthly charge</span>
           <span className="font-mono font-bold text-lg">
-            <AnimatedPrice amount={totalChargeZAR} />
+            <AnimatedPrice amount={monthlyZAR} />
           </span>
         </div>
         {tier && (

@@ -62,7 +62,7 @@ export function MobileTotalBar({
               {activeSlugs.length} service{activeSlugs.length === 1 ? '' : 's'}
             </span>
             <span>·</span>
-            <span>{tier ? `${tier.name} plan` : 'excl. VAT'}</span>
+            <span>{tier ? `${tier.name} plan` : 'Select a plan'}</span>
           </p>
           {total > 0 ? (
             <motion.div

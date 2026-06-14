@@ -155,22 +155,6 @@ export default async function PortalPage() {
                 </dt>
                 <dd className="font-medium capitalize">{servicesDisplay}</dd>
               </div>
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                  Monthly subtotal
-                </dt>
-                <dd className="font-mono font-medium">
-                  {formatZAR(Number(sub.monthly_total_zar))}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                  VAT (15%)
-                </dt>
-                <dd className="font-mono font-medium">
-                  {formatZAR(Number(sub.vat_zar))}
-                </dd>
-              </div>
               <div className="sm:col-span-2">
                 <Separator className="my-1" />
               </div>

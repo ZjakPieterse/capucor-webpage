@@ -2,8 +2,6 @@ import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
-const VAT_RATE = 0.15;
-
 interface ProposalSummaryProps {
   services: Service[];
   brackets: Bracket[];
@@ -13,10 +11,8 @@ interface ProposalSummaryProps {
   tierSlug: string;
   /** Optional add-on slugs — rendered as flat-fee lines after the service lines. */
   selectedAddons?: string[];
-  /** Server-stored totals — pass to display the figures locked in at send time. */
+  /** Server-stored total — pass to display the figure locked in at send time. */
   monthlyZAR?: number;
-  vatZAR?: number;
-  totalZAR?: number;
   className?: string;
 }
 
@@ -33,8 +29,6 @@ export function ProposalSummary({
   tierSlug,
   selectedAddons = [],
   monthlyZAR,
-  vatZAR,
-  totalZAR,
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
@@ -47,8 +41,6 @@ export function ProposalSummary({
     monthlyZAR ??
     monthlyTotal(selectedServices, selectedBrackets, tierSlug, brackets) +
       addonTotal(selectedAddons);
-  const vat = vatZAR ?? Math.round(monthly * VAT_RATE);
-  const total = totalZAR ?? monthly + vat;
 
   return (
     <div className={cn('rounded-2xl border border-primary/25 bg-primary/[0.04] p-5', className)}>
@@ -69,17 +61,9 @@ export function ProposalSummary({
       </ul>
 
       <div className="space-y-1.5 border-t border-primary/20 pt-3 text-sm">
-        <div className="flex items-center justify-between text-muted-foreground">
-          <span>Subtotal</span>
-          <span className="font-mono">{formatZAR(monthly)}</span>
-        </div>
-        <div className="flex items-center justify-between text-muted-foreground">
-          <span>VAT (15%)</span>
-          <span className="font-mono">{formatZAR(vat)}</span>
-        </div>
-        <div className="flex items-baseline justify-between border-t border-primary/15 pt-2">
+        <div className="flex items-baseline justify-between">
           <span className="font-semibold">Total monthly charge</span>
-          <span className="font-mono text-lg font-bold">{formatZAR(total)}</span>
+          <span className="font-mono text-lg font-bold">{formatZAR(monthly)}</span>
         </div>
         {tier && (
           <p className="pt-1 text-[11px] text-muted-foreground">

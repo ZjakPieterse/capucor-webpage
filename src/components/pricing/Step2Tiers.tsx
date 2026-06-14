@@ -160,7 +160,7 @@ export function Step2Tiers({
       {/* Optional add-ons — flat monthly fee, available with every package */}
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-          Optional add-on
+          Optional add-ons
         </p>
         <div className="space-y-3">
           {PRICING_ADDONS.map((addon) => {

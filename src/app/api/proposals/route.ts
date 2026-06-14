@@ -33,7 +33,6 @@ import { siteConfig } from '@/config/site';
 import { formatZAR } from '@/lib/utils';
 import type { Bracket } from '@/types';
 
-const VAT_RATE = 0.15;
 const PROPOSAL_TTL_DAYS = 30;
 
 type BracketRow = Pick<
@@ -127,8 +126,10 @@ export async function POST(req: NextRequest) {
     );
   }
   const monthlyTotalZAR = bracketTotalZAR + addonTotal(addonSlugs);
-  const vatZAR = Math.round(monthlyTotalZAR * VAT_RATE);
-  const totalChargeZAR = monthlyTotalZAR + vatZAR;
+  // The configured price is the final, all-in monthly price. VAT is handled in
+  // Xero (the billing pipeline), not on-site, so the site records no VAT split.
+  const vatZAR = 0;
+  const totalChargeZAR = monthlyTotalZAR;
 
   const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
   const lineItems = [
@@ -238,8 +239,6 @@ export async function POST(req: NextRequest) {
           businessName: input.businessName,
           tierName,
           lineItems,
-          monthlyTotalZAR,
-          vatZAR,
           totalChargeZAR,
           proposalUrl,
         }),
@@ -259,8 +258,6 @@ export async function POST(req: NextRequest) {
             `Package: ${tierName}`,
             ...lineItems.map((li) => `  · ${li.name}${li.label ? ` (${li.label})` : ''}: ${formatZAR(li.price)}`),
             ``,
-            `Monthly (excl. VAT): ${formatZAR(monthlyTotalZAR)}`,
-            `VAT (15%): ${formatZAR(vatZAR)}`,
             `Total monthly charge: ${formatZAR(totalChargeZAR)}`,
             ``,
             `Proposal link: ${proposalUrl}`,
@@ -282,8 +279,6 @@ interface ProposalEmailData {
   businessName: string;
   tierName: string;
   lineItems: { name: string; label: string | null; price: number }[];
-  monthlyTotalZAR: number;
-  vatZAR: number;
   totalChargeZAR: number;
   proposalUrl: string;
 }
@@ -321,9 +316,7 @@ function renderProposalEmail(d: ProposalEmailData): string {
         ${rows}
       </table>
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
-        <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;">Subtotal</td><td style="padding:8px 0;text-align:right;color:#6b7280;font-size:14px;">${formatZAR(d.monthlyTotalZAR)}</td></tr>
-        <tr><td style="padding:4px 0;color:#6b7280;font-size:14px;">VAT (15%)</td><td style="padding:4px 0;text-align:right;color:#6b7280;font-size:14px;">${formatZAR(d.vatZAR)}</td></tr>
-        <tr><td style="padding:8px 0;color:#111827;font-size:16px;font-weight:700;border-top:1px solid #e5e7eb;">Total monthly charge</td><td style="padding:8px 0;text-align:right;color:#111827;font-size:16px;font-weight:700;border-top:1px solid #e5e7eb;">${formatZAR(d.totalChargeZAR)}</td></tr>
+        <tr><td style="padding:8px 0;color:#111827;font-size:16px;font-weight:700;">Total monthly charge</td><td style="padding:8px 0;text-align:right;color:#111827;font-size:16px;font-weight:700;">${formatZAR(d.totalChargeZAR)}</td></tr>
       </table>
 
       <a href="${d.proposalUrl}" style="display:block;margin:28px 0 8px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:15px;padding:14px 20px;border-radius:10px;">

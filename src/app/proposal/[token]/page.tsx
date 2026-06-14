@@ -154,8 +154,6 @@ export default async function ProposalPage({
             tierSlug={row.tier_slug}
             selectedAddons={row.addons ?? []}
             monthlyZAR={Number(row.monthly_total_zar)}
-            vatZAR={Number(row.vat_zar)}
-            totalZAR={Number(row.total_charge_zar)}
           />
 
           {/* Engagement terms */}
