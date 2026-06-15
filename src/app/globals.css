@@ -102,6 +102,8 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+    /* Clear the 64px sticky navbar when jumping to in-page anchors (#contact). */
+    scroll-padding-top: 5rem;
   }
 }
 
