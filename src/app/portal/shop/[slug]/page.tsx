@@ -63,7 +63,7 @@ export default async function PortalShopProductPage({
             <span className="font-mono text-2xl font-bold tracking-tight">
               {formatZAR(product.priceZAR)}
             </span>
-            <span className="text-xs text-muted-foreground">once-off, excl. VAT</span>
+            <span className="text-xs text-muted-foreground">once-off</span>
           </div>
         </div>
 
@@ -124,7 +124,7 @@ export default async function PortalShopProductPage({
 
       <p className="mt-6 flex items-start justify-center gap-2 text-center text-xs text-muted-foreground leading-relaxed">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-        Prices are indicative and exclude VAT. Your accountant confirms the final quote for your specific situation.
+        Prices are indicative. Your accountant confirms the final quote for your specific situation.
       </p>
     </main>
   );

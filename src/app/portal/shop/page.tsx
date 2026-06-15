@@ -51,7 +51,7 @@ export default async function PortalShopPage() {
         )}
         <h1 className="text-3xl font-bold tracking-tight">Add-on services</h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-prose">
-          Once-off jobs that sit outside your monthly plan — billed separately, only when you need them. Prices exclude VAT.
+          Once-off jobs that sit outside your monthly plan — billed separately, only when you need them.
         </p>
       </header>
 

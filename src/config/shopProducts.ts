@@ -7,8 +7,8 @@
  * When Paystack checkout lands (B4/B5) we swap this for a seeded DB read so
  * `shop_orders.product_id` has a real FK target.
  *
- * Prices are once-off and EXCLUDE 15% VAT. They are starter placeholders —
- * confirm the SKUs + amounts before the shop is shown to live clients.
+ * Prices are once-off starter placeholders — confirm the SKUs + amounts
+ * before the shop is shown to live clients.
  */
 
 import {
@@ -24,7 +24,7 @@ import {
 export interface ShopProduct {
   slug: string;
   name: string;
-  /** Once-off price in ZAR, excluding VAT. */
+  /** Once-off price in ZAR. */
   priceZAR: number;
   /** One-line summary for the catalogue card. */
   summary: string;
