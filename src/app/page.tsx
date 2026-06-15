@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { siteConfig } from '@/config/site';
-import type { Bracket, Service, Tier } from '@/types';
+import type { Service, Tier } from '@/types';
 
 import { HeroSection } from '@/components/landing/HeroSection';
 import { PartnersAndTech } from '@/components/landing/PartnersAndTech';
@@ -39,26 +39,19 @@ export function generateMetadata(): Metadata {
 
 async function getLandingData(): Promise<{
   services: Service[];
-  brackets: Bracket[];
   tiers: Tier[];
 }> {
   try {
     // Public pricing config — read as `anon` so it works for signed-in visitors too.
     const supabase = createSupabaseAnonClient();
 
-    const [servicesRes, bracketsRes, tiersRes] = await Promise.all([
+    const [servicesRes, tiersRes] = await Promise.all([
       supabase
         .from('services')
         .select('*')
         .eq('active', true)
         .order('display_order')
         .returns<Service[]>(),
-      supabase
-        .from('brackets')
-        .select('*')
-        .eq('active', true)
-        .order('display_order')
-        .returns<Bracket[]>(),
       supabase
         .from('tiers')
         .select('*')
@@ -69,17 +62,16 @@ async function getLandingData(): Promise<{
 
     return {
       services: servicesRes.data ?? [],
-      brackets: bracketsRes.data ?? [],
       tiers: tiersRes.data ?? [],
     };
   } catch (err) {
     console.error('[landing] supabase fetch failed', err);
-    return { services: [], brackets: [], tiers: [] };
+    return { services: [], tiers: [] };
   }
 }
 
 export default async function HomePage() {
-  const { services, brackets, tiers } = await getLandingData();
+  const { services, tiers } = await getLandingData();
 
   return (
     <>
@@ -121,7 +113,7 @@ export default async function HomePage() {
         {/* 8. Tech stack — parked 2026-06-15 (trust cards moved into ServicePillars). Decide keep vs delete ~2026-06-29. */}
         {/* <TechStackShowcase /> */}
         {/* 9. Contact + lead capture (replaced the homepage FAQ). */}
-        <ContactSection services={services} brackets={brackets} tiers={tiers} />
+        <ContactSection />
         {/* 10. Final CTA */}
         <FinalCTA />
       </PageCursorGlow>
