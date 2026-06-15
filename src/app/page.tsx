@@ -115,11 +115,11 @@ export default async function HomePage() {
         <HowItWorks />
         {/* 5. Services */}
         <ServicePillars />
-        {/* 6. Packages */}
+        {/* 6. Testimonials / social proof — placeholder between Services and Packages. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
+        {/* 7. Packages */}
         <PackagesTeaser services={services} tiers={tiers} />
-        {/* 7. Tech stack — parked 2026-06-15 (trust cards moved into ServicePillars). Decide keep vs delete ~2026-06-29. */}
+        {/* 8. Tech stack — parked 2026-06-15 (trust cards moved into ServicePillars). Decide keep vs delete ~2026-06-29. */}
         {/* <TechStackShowcase /> */}
-        {/* 8. Testimonials / social proof — placeholder. Section is intentionally hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
         {/* 9. Contact + lead capture (replaced the homepage FAQ). */}
         <ContactSection services={services} brackets={brackets} tiers={tiers} />
         {/* 10. Final CTA */}

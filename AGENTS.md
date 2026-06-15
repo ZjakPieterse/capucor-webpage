@@ -285,8 +285,8 @@ All TODOs are inline-documented in each file.
 
 ## Pending Content: Client Testimonials / Social Proof
 
-The homepage section that used to live between Tech Stack (#7) and the next section — formerly "A Month with Capucor" / `OutcomeStories.tsx` — has been removed and the slot is reserved for **real client testimonials / social proof**.
+The slot reserved for **real client testimonials / social proof** sits between the **What we do** (`ServicePillars`) and **Packages** (`PackagesTeaser`) sections. Its previous occupant — the "A Month with Capucor" four-week timeline (`OutcomeStories.tsx`) — was removed.
 
-- Placement: `src/app/page.tsx` between `TechStackShowcase` and `ContactSection` (look for the placeholder HTML comment). The homepage FAQ was retired and its `FaqAccordion` + `config/faq.ts` removed; rebuild fresh if a FAQ section is wanted later.
+- Placement: `src/app/page.tsx`, between `ServicePillars` and `PackagesTeaser` (look for the placeholder HTML comment). The homepage FAQ was retired and its `FaqAccordion` + `config/faq.ts` removed; rebuild fresh if a FAQ section is wanted later.
 - Blocker: testimonials still need to be collected from clients. Once 3–5 quotes (name, role, company, quote, ideally a headshot) are in hand, build a new `Testimonials.tsx` landing component and slot it in.
 - Do not ship the old four-week timeline visual back — it was scrapped intentionally. Build fresh around the real quotes.
