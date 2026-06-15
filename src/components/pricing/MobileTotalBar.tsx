@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
-import { MagneticButton } from '@/components/ui/MagneticButton';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, monthlyTotal } from '@/lib/pricing';
 import type { Bracket, BracketValue, Tier } from '@/types';
@@ -79,23 +78,19 @@ export function MobileTotalBar({
         </button>
 
         {selectedTierSlug ? (
-          <MagneticButton>
-            <Button size="sm" onClick={onActivate} className="shrink-0 shadow-lg shadow-primary/20">
-              Get proposal
-            </Button>
-          </MagneticButton>
+          <Button size="sm" onClick={onActivate} className="shrink-0 shadow-lg shadow-primary/20">
+            Get proposal
+          </Button>
         ) : (
-          <MagneticButton>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={scrollToSummary}
-              className="shrink-0 gap-1 border-primary/20 hover:bg-primary/5"
-            >
-              <ChevronUp className="h-4 w-4" />
-              View summary
-            </Button>
-          </MagneticButton>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={scrollToSummary}
+            className="shrink-0 gap-1 border-primary/20 hover:bg-primary/5"
+          >
+            <ChevronUp className="h-4 w-4" />
+            View summary
+          </Button>
         )}
       </div>
     </div>

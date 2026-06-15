@@ -9,7 +9,6 @@ import { RiskReducerStrip } from './RiskReducerStrip';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice } from '@/lib/pricing';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
-import { MagneticButton } from '@/components/ui/MagneticButton';
 import {
   PRICING_ADDONS,
   TIER_HIGHLIGHTS,
@@ -230,12 +229,10 @@ export function Step2Tiers({
               Add a few details and we&rsquo;ll email you a proposal to review and sign. No payment needed yet, and you can cancel any time with 30 days notice.
             </p>
           </div>
-          <MagneticButton>
-            <Button onClick={onActivate} className="shrink-0 gap-2 cta-armed">
-              Get my proposal
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </MagneticButton>
+          <Button onClick={onActivate} className="shrink-0 gap-2 cta-armed">
+            Get my proposal
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
@@ -257,11 +254,9 @@ export function Step2Tiers({
       )}
 
       <div className="flex justify-start pt-2">
-        <MagneticButton>
-          <Button variant="outline" onClick={onBack}>
-            ← Back
-          </Button>
-        </MagneticButton>
+        <Button variant="outline" onClick={onBack}>
+          ← Back
+        </Button>
       </div>
     </div>
   );

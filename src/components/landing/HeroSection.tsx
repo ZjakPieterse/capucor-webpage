@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
-import { MagneticButton } from "@/components/ui/MagneticButton";
 // ── Date helpers ──────────────────────────────────────────────────────────────────
 const MONTH_SHORT = [
   "Jan",
@@ -395,35 +394,31 @@ export function HeroSection() {
                 delay: prefersReducedMotion ? 0 : 0.7,
               }}
             >
-              <MagneticButton>
-                <Button
-                  nativeButton={false}
-                  render={<Link href="/pricing" />}
-                  size="lg"
-                  className="gradient-cta gradient-border-cta cta-cursor-glow gap-2 w-full sm:w-auto"
-                >
-                  <span className="relative z-[2] inline-flex items-center gap-2">
-                    Build your subscription <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Button>
-              </MagneticButton>
-              <MagneticButton>
-                <Button
-                  nativeButton={false}
-                  render={
-                    <a
-                      href={siteConfig.links.booking}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    />
-                  }
-                  variant="outline"
-                  size="lg"
-                  className="gap-2 w-full sm:w-auto"
-                >
-                  <Calendar className="h-4 w-4" /> Book a fit call
-                </Button>
-              </MagneticButton>
+              <Button
+                nativeButton={false}
+                render={<Link href="/pricing" />}
+                size="lg"
+                className="gradient-cta gradient-border-cta gap-2 w-full sm:w-auto"
+              >
+                <span className="relative z-[2] inline-flex items-center gap-2">
+                  Build your subscription <ArrowRight className="h-4 w-4" />
+                </span>
+              </Button>
+              <Button
+                nativeButton={false}
+                render={
+                  <a
+                    href={siteConfig.links.booking}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                }
+                variant="outline"
+                size="lg"
+                className="gap-2 w-full sm:w-auto"
+              >
+                <Calendar className="h-4 w-4" /> Book a fit call
+              </Button>
             </motion.div>
 
           </div>

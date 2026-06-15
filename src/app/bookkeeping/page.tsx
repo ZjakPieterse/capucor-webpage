@@ -122,7 +122,7 @@ export default function BookkeepingPage() {
           </p>
           <a
             href="/pricing"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+            className="premium-button inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all"
           >
             Build your subscription →
           </a>

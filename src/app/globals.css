@@ -279,6 +279,7 @@
 }
 
 .premium-button {
+  position: relative;
   border-radius: calc(var(--radius) * 1.1);
   box-shadow:
     0 1px 0 color-mix(in oklch, white 18%, transparent) inset,
@@ -293,10 +294,38 @@
 
 @media all {
   .premium-button:hover {
-    transform: translateY(-1px) scale(1.02);
+    transform: translateY(-2px);
     box-shadow:
       0 1px 0 color-mix(in oklch, white 22%, transparent) inset,
-      0 18px 42px -20px color-mix(in oklch, var(--primary) 86%, transparent);
+      0 20px 46px -22px color-mix(in oklch, var(--primary) 88%, transparent);
+  }
+}
+
+/* Shine sweep on buttons — same one-pass diagonal as the cards (see the
+   .feature-card::after block). Excluded on .gradient-cta so the flagship
+   buttons keep their own shimmer rather than doubling up. */
+.premium-button:not(.gradient-cta)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-position: 150% 0%;
+  transition: background-position 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  mix-blend-mode: overlay;
+  z-index: 2;
+}
+
+@media all {
+  .premium-button:not(.gradient-cta):hover::after {
+    background-position: -150% 0%;
   }
 }
 
@@ -409,30 +438,6 @@
   to {
     --gradient-angle: 360deg;
   }
-}
-
-/* Button-scope cursor-follow glow — pairs with the existing useCursorGlow
-   hook, scoped tighter (160px) than the section-wide .cursor-glow (600px). */
-.cta-cursor-glow {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-
-.cta-cursor-glow::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: var(--cursor-glow-opacity, 0);
-  background: radial-gradient(
-    160px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
-    color-mix(in oklch, white 22%, transparent),
-    transparent 70%
-  );
-  mix-blend-mode: overlay;
-  transition: opacity 220ms ease;
 }
 
 /* ─── Marquee carousel ────────────────────────────────────────────────────── */
@@ -574,16 +579,18 @@
 }
 
 /* ─── Problem card hover ─────────────────────────────────────────────────── */
+/* Motion matches the standard card hover (.feature-card etc.); only the red /
+   blue [data-state] border + glow below diverge — those carry the narrative. */
 .problem-card {
   transition:
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 360ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media all {
   .problem-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px) scale(1.012);
   }
 
   .problem-card[data-state="problem"]:hover {
@@ -1349,11 +1356,9 @@
   .premium-card:hover,
   .feature-card:hover,
   .outcome-card:hover,
-  .how-card:hover {
-    transform: translateY(-10px) scale(1.025) !important;
-  }
+  .how-card:hover,
   .problem-card:hover {
-    transform: translateY(-7px) !important;
+    transform: translateY(-10px) scale(1.025) !important;
   }
   .fcc-tile:hover {
     transform: translateY(-4px) scale(1.03) !important;
@@ -1366,8 +1371,7 @@
     animation: none !important;
   }
 
-  .cursor-glow::before,
-  .cta-cursor-glow::before {
+  .cursor-glow::before {
     opacity: 0 !important;
   }
 
@@ -1382,7 +1386,8 @@
 
   .feature-card::after,
   .outcome-card::after,
-  .problem-card::after {
+  .problem-card::after,
+  .premium-button:not(.gradient-cta)::after {
     transition: none !important;
     background-position: 150% 0% !important;
   }

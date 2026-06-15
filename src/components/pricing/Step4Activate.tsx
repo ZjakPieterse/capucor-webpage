@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
-import { MagneticButton } from '@/components/ui/MagneticButton';
 import {
   BusinessDetailsSchema,
   SubscriptionRequestSchema,
@@ -377,27 +376,25 @@ export function Step4Activate({
         <Button type="button" variant="outline" onClick={onBack} disabled={isSubmitting}>
           ← Back to package
         </Button>
-        <MagneticButton>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="gradient-cta gradient-border-cta cta-cursor-glow gap-2"
-          >
-            <span className="relative z-[2] inline-flex items-center gap-2">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Securing checkout...
-                </>
-              ) : (
-                <>
-                  Continue to secure checkout
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </span>
-          </Button>
-        </MagneticButton>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="gradient-cta gradient-border-cta gap-2"
+        >
+          <span className="relative z-[2] inline-flex items-center gap-2">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Securing checkout...
+              </>
+            ) : (
+              <>
+                Continue to secure checkout
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </span>
+        </Button>
       </div>
     </form>
   );

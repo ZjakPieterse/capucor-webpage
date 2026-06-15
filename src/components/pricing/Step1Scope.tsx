@@ -14,7 +14,6 @@ import {
 import { cn } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
-import { MagneticButton } from '@/components/ui/MagneticButton';
 import type { Bracket, BracketValue, Service } from '@/types';
 
 const SERVICE_ICONS: Record<string, React.ElementType> = {
@@ -157,15 +156,13 @@ export function Step1Scope({
           {allAnswered && canProceed && <Check className="h-3 w-3" strokeWidth={3} />}
           {answered} of {totalQuestions} answered
         </span>
-        <MagneticButton>
-          <Button
-            onClick={onNext}
-            disabled={!canProceed}
-            className={cn('gap-2', canProceed && 'cta-armed')}
-          >
-            Continue →
-          </Button>
-        </MagneticButton>
+        <Button
+          onClick={onNext}
+          disabled={!canProceed}
+          className={cn('gap-2', canProceed && 'cta-armed')}
+        >
+          Continue →
+        </Button>
       </div>
 
       {allAnswered && !canProceed && (

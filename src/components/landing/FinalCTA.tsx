@@ -5,7 +5,6 @@ import { ArrowRight, Calendar } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
-import { MagneticButton } from "@/components/ui/MagneticButton";
 import { Button } from "@/components/ui/button";
 
 export function FinalCTA() {
@@ -36,31 +35,27 @@ export function FinalCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-            <MagneticButton>
-              <Button
-                nativeButton={false}
-                render={<Link href="/pricing" />}
-                size="lg"
-                className="gradient-cta gradient-border-cta cta-cursor-glow gap-2 w-full sm:w-auto"
-              >
-                <span className="relative z-[2] inline-flex items-center gap-2">
-                  Build your subscription
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </Button>
-            </MagneticButton>
+            <Button
+              nativeButton={false}
+              render={<Link href="/pricing" />}
+              size="lg"
+              className="gradient-cta gradient-border-cta gap-2 w-full sm:w-auto"
+            >
+              <span className="relative z-[2] inline-flex items-center gap-2">
+                Build your subscription
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Button>
 
-            <MagneticButton>
-              <a
-                href={siteConfig.links.booking}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="premium-button inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-input bg-input/30 backdrop-blur-md px-6 text-sm font-semibold hover:bg-input/50 transition-all"
-              >
-                <Calendar className="h-4 w-4" />
-                Book a fit call
-              </a>
-            </MagneticButton>
+            <a
+              href={siteConfig.links.booking}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="premium-button inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-input bg-input/30 backdrop-blur-md px-6 text-sm font-semibold hover:bg-input/50 transition-all"
+            >
+              <Calendar className="h-4 w-4" />
+              Book a fit call
+            </a>
           </div>
         </ScrollReveal>
       </div>
