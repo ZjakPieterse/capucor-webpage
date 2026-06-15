@@ -294,9 +294,10 @@ function FinanceCommandCentre() {
 // ── Hero Section ──────────────────────────────────────────────────────────────────
 export function HeroSection() {
   const headline =
-    "We’ll keep your finances running. You keep growing";
-  // Cyan gradient highlight on the benefit hook "You keep growing" (word indices 5-7).
-  const HIGHLIGHT_RANGE = [5, 8] as const;
+    "Zero tax nightmares. 20+ hours saved. Let’s grow your empire.";
+  // Cyan brand-gradient highlight on the two value phrases: "20+ hours" (indices 3-4)
+  // and "your empire" (indices 8-9).
+  const HIGHLIGHT_INDICES = new Set([3, 4, 8, 9]);
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -354,9 +355,7 @@ export function HeroSection() {
                 <motion.span
                   key={i}
                   className={
-                    i >= HIGHLIGHT_RANGE[0] && i < HIGHLIGHT_RANGE[1]
-                      ? "gradient-text-brand"
-                      : undefined
+                    HIGHLIGHT_INDICES.has(i) ? "gradient-text-brand" : undefined
                   }
                   initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
