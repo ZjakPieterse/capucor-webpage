@@ -6,9 +6,6 @@ import {
   ListChecks,
   BarChart3,
   ChevronRight,
-  Wallet,
-  KeyRound,
-  Unlock,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -41,25 +38,6 @@ const STAGES = [
     tool: "Syft",
     title: "Clear reporting",
     body: "Your numbers become reports you can actually read, not a spreadsheet to decode.",
-  },
-];
-
-// What the stack is worth to the buyer — every claim is true elsewhere on the site.
-const TRUST = [
-  {
-    icon: Wallet,
-    title: "Included in your price",
-    body: "Your software costs are built into the subscription. No separate software bills to manage.",
-  },
-  {
-    icon: KeyRound,
-    title: "Your own login",
-    body: "You keep full, real-time access to your numbers. Outsourcing the admin doesn't cost you visibility.",
-  },
-  {
-    icon: Unlock,
-    title: "No lock-in",
-    body: "A month-to-month agreement. If you leave, your full Xero file and handover pack goes with you.",
   },
 ];
 
@@ -114,37 +92,6 @@ export function TechStackShowcase() {
             into the same ledger.
           </p>
         </ScrollReveal>
-
-        {/* What that means for you — the trust / ROI payload */}
-        <div className="mt-14 lg:mt-16">
-          <ScrollReveal>
-            <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
-              What that means for you
-            </p>
-          </ScrollReveal>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {TRUST.map((t, i) => (
-              <ScrollReveal key={t.title} delay={i * 0.07} className="h-full">
-                <div className="feature-card premium-card flex h-full items-start gap-3.5 rounded-2xl border border-white/10 bg-card/80 p-5">
-                  <span
-                    aria-hidden
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/[0.07] text-primary"
-                  >
-                    <t.icon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {t.title}
-                    </h3>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      {t.body}
-                    </p>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );
