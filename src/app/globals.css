@@ -301,10 +301,12 @@
   }
 }
 
-/* Shine sweep on buttons — same one-pass diagonal as the cards (see the
-   .feature-card::after block). Excluded on .gradient-cta so the flagship
-   buttons keep their own shimmer rather than doubling up. */
-.premium-button:not(.gradient-cta)::after {
+/* ── PREMIUM button hover: slight lift (above) + one-pass shine sweep ──────
+   A clearly visible white/silver diagonal that crosses once on hover. Normal
+   blend (no overlay) so the streak reads the same on the cyan flagship as on
+   darker buttons and never fades into the background colour. Filled / main
+   CTAs get this; quiet (.btn-quiet) buttons opt out. */
+.premium-button:not(.btn-quiet)::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -312,20 +314,40 @@
   border-radius: inherit;
   background: linear-gradient(
     115deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.22) 50%,
-    transparent 65%
+    transparent 38%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 62%
   );
   background-size: 250% 100%;
   background-position: 150% 0%;
-  transition: background-position 900ms cubic-bezier(0.16, 1, 0.3, 1);
-  mix-blend-mode: overlay;
+  transition: background-position 850ms cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 2;
 }
 
 @media all {
-  .premium-button:not(.gradient-cta):hover::after {
+  .premium-button:not(.btn-quiet):hover::after {
     background-position: -150% 0%;
+  }
+}
+
+/* ── PRIMARY (quiet) button hover: no lift, no shine ──────────────────────
+   Resets the premium lift/glow back to the resting state. */
+@media all {
+  .btn-quiet:hover {
+    transform: none;
+    box-shadow:
+      0 1px 0 color-mix(in oklch, white 18%, transparent) inset,
+      0 12px 30px -18px color-mix(in oklch, var(--primary) 70%, transparent);
+  }
+}
+
+/* Outline buttons (e.g. hero "Book a fit call"): hover gives a cyan border and
+   a slightly transparent cyan fill. Pairs with .btn-quiet. */
+@media all {
+  .btn-outline-hover:hover {
+    border-color: color-mix(in oklch, var(--primary) 70%, transparent);
+    background-color: color-mix(in oklch, var(--primary) 12%, transparent);
+    color: var(--foreground);
   }
 }
 
@@ -342,8 +364,8 @@
 
 /* ─── Gradient utility classes ───────────────────────────────────────────── */
 
-/* Premium filled CTA — used on the two flagship buttons (hero + activate).
-   Hover slides the background-position across to create a shimmer. */
+/* Premium filled CTA — the cyan flagship fill with a static cyan border.
+   Hover behaviour (lift + shine) comes from .premium-button. */
 .gradient-cta {
   background: linear-gradient(
     135deg,
@@ -351,16 +373,8 @@
     color-mix(in oklch, var(--primary) 55%, var(--brand-cyan)) 50%,
     var(--brand-cyan) 100%
   );
-  background-size: 200% 200%;
-  background-position: 0% 50%;
+  border-color: color-mix(in oklch, var(--brand-cyan) 78%, white);
   color: var(--primary-foreground);
-  transition: background-position 480ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media all {
-  .gradient-cta:hover {
-    background-position: 100% 50%;
-  }
 }
 
 /* Animated brand-clip text — used on a single hero verb and section titles. */
@@ -396,48 +410,6 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-
-/* Animated conic gradient border for flagship CTAs. Two CTAs sitewide.
-   Uses the same mask-composite technique proven in .trust-banner::before. */
-@property --gradient-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-.gradient-border-cta {
-  position: relative;
-  isolation: isolate;
-}
-
-.gradient-border-cta::before {
-  content: "";
-  position: absolute;
-  inset: -1.5px;
-  z-index: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--gradient-angle, 0deg),
-    var(--primary),
-    var(--brand-cyan),
-    var(--brand-navy),
-    var(--primary)
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: gradient-border-spin 6s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes gradient-border-spin {
-  to {
-    --gradient-angle: 360deg;
-  }
 }
 
 /* ─── Marquee carousel ────────────────────────────────────────────────────── */
@@ -546,37 +518,6 @@
   }
 }
 
-/* Shine sweep: a thin diagonal of light crosses the card once on hover.
-   Uses background-position animation so the pseudo stays inside the card's
-   inset:0 bounds — no overflow:hidden needed, SVG drop-shadows still bleed. */
-.feature-card::after,
-.outcome-card::after,
-.problem-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(
-    115deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.22) 50%,
-    transparent 65%
-  );
-  background-size: 250% 100%;
-  background-position: 150% 0%;
-  transition: background-position 900ms cubic-bezier(0.16, 1, 0.3, 1);
-  mix-blend-mode: overlay;
-  z-index: 2;
-}
-
-@media all {
-  .feature-card:hover::after,
-  .outcome-card:hover::after,
-  .problem-card:hover::after {
-    background-position: -150% 0%;
-  }
-}
 
 /* ─── Problem card hover ─────────────────────────────────────────────────── */
 /* Motion matches the standard card hover (.feature-card etc.); only the red /
@@ -749,25 +690,6 @@
     border-color 360ms ease;
 }
 
-.how-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: inherit;
-  background: linear-gradient(
-    115deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.22) 50%,
-    transparent 65%
-  );
-  background-size: 250% 100%;
-  background-position: 150% 0%;
-  transition: background-position 900ms cubic-bezier(0.16, 1, 0.3, 1);
-  mix-blend-mode: overlay;
-  z-index: 2;
-}
-
 @media all {
   .how-card:hover {
     transform: translateY(-6px) scale(1.012);
@@ -775,9 +697,6 @@
     box-shadow:
       0 28px 70px -36px color-mix(in oklch, var(--primary) 52%, transparent),
       0 4px 20px rgba(0, 0, 0, 0.04);
-  }
-  .how-card:hover::after {
-    background-position: -150% 0%;
   }
 }
 
@@ -1380,20 +1299,9 @@
     background-position: 0% 50% !important;
   }
 
-  .gradient-border-cta::before {
-    animation: none !important;
-  }
-
-  .feature-card::after,
-  .outcome-card::after,
-  .problem-card::after,
-  .premium-button:not(.gradient-cta)::after {
+  .premium-button:not(.btn-quiet)::after {
     transition: none !important;
     background-position: 150% 0% !important;
-  }
-
-  .gradient-cta {
-    transition: none !important;
   }
 }
 

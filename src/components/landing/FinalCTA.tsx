@@ -39,7 +39,7 @@ export function FinalCTA() {
               nativeButton={false}
               render={<Link href="/pricing" />}
               size="lg"
-              className="gradient-cta gradient-border-cta gap-2 w-full sm:w-auto"
+              className="gradient-cta gap-2 w-full sm:w-auto"
             >
               <span className="relative z-[2] inline-flex items-center gap-2">
                 Build your subscription
@@ -51,7 +51,7 @@ export function FinalCTA() {
               href={siteConfig.links.booking}
               target="_blank"
               rel="noopener noreferrer"
-              className="premium-button inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-input bg-input/30 backdrop-blur-md px-6 text-sm font-semibold hover:bg-input/50 transition-all"
+              className="premium-button btn-quiet btn-outline-hover inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-input bg-input/30 backdrop-blur-md px-6 text-sm font-semibold transition-all"
             >
               <Calendar className="h-4 w-4" />
               Book a fit call

@@ -398,7 +398,7 @@ export function HeroSection() {
                 nativeButton={false}
                 render={<Link href="/pricing" />}
                 size="lg"
-                className="gradient-cta gradient-border-cta gap-2 w-full sm:w-auto"
+                className="gradient-cta gap-2 w-full sm:w-auto"
               >
                 <span className="relative z-[2] inline-flex items-center gap-2">
                   Build your subscription <ArrowRight className="h-4 w-4" />

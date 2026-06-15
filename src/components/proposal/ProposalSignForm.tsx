@@ -408,7 +408,7 @@ export function ProposalSignForm({
         <Button
           type="submit"
           disabled={submitting}
-          className="gradient-cta gradient-border-cta w-full gap-2"
+          className="gradient-cta w-full gap-2"
         >
           <span className="relative z-[2] inline-flex items-center gap-2">
             {submitting ? (

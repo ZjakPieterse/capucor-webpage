@@ -271,7 +271,7 @@ export function ActivateProposalModal({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="gradient-cta gradient-border-cta w-full gap-2"
+              className="gradient-cta w-full gap-2"
             >
               <span className="relative z-[2] inline-flex items-center gap-2">
                 {isSubmitting ? (

@@ -379,7 +379,7 @@ export function Step4Activate({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="gradient-cta gradient-border-cta gap-2"
+          className="gradient-cta gap-2"
         >
           <span className="relative z-[2] inline-flex items-center gap-2">
             {isSubmitting ? (
