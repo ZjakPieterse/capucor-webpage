@@ -157,15 +157,28 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1 space-y-3">
             <p className="text-sm font-medium">Credentials</p>
             <div className="flex flex-col items-start gap-2">
-              <span className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90">
+              <a
+                href="https://www.xero.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-primary"
+              >
                 Xero Gold Partner
-              </span>
-              <span className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90">
+              </a>
+              <a
+                href="https://www.saica.org.za/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-primary"
+              >
                 SAICA Member
-              </span>
-              <span className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90">
+              </a>
+              <Link
+                href="/privacy"
+                className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-primary"
+              >
                 POPIA Compliant
-              </span>
+              </Link>
             </div>
           </div>
         </div>
