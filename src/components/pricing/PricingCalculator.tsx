@@ -54,7 +54,7 @@ function BottomCTA() {
           href={siteConfig.links.booking}
           target="_blank"
           rel="noopener noreferrer"
-          className="premium-glass border inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium hover:border-primary/60 transition-colors"
+          className="premium-button btn-quiet btn-outline-hover inline-flex items-center gap-2 rounded-lg border border-input bg-input/30 backdrop-blur-md px-5 py-2.5 text-sm font-medium transition-all"
         >
           Book a fit call →
         </a>
