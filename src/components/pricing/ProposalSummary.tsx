@@ -67,7 +67,7 @@ export function ProposalSummary({
         </div>
         {tier && (
           <p className="pt-1 text-[11px] text-muted-foreground">
-            {tier.name} tier · billed monthly in arrears · cancel any time with 30 days notice
+            {tier.name} tier · billed monthly in advance · cancel any time with 30 days notice
           </p>
         )}
       </div>

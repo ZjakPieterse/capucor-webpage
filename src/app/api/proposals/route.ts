@@ -296,7 +296,7 @@ function renderProposalEmail(d: ProposalEmailData): string {
         View &amp; sign your proposal
       </a>
       <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-align:center;">
-        Billed monthly in arrears · cancel any time with 30 days&rsquo; notice
+        Billed monthly in advance · cancel any time with 30 days&rsquo; notice
       </p>
     </div>
     <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">

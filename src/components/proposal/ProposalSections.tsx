@@ -125,9 +125,9 @@ export function ScheduleOfServices({
 
 export function FeesNotes() {
   const notes = [
-    'Billed monthly in arrears. Your first close runs at the end of your first full month.',
-    'The figure above is the all-in monthly price. VAT, where it applies, is shown on your Xero invoice, not here.',
-    'Processing for the 3 months before your start date is included. Older periods are catch-up work and quoted separately.',
+    'Billed monthly in advance. Your first close runs in the following new month.',
+    'The figure above is the all-inclusive monthly price. VAT, where it applies, is shown on your Xero invoice, not here.',
+    'Processing for the 3 months before your start date is included. Older periods are considered catch-up work and will be billed separately.',
   ];
   return (
     <ul className="mt-3 space-y-1.5">

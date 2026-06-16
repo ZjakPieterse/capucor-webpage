@@ -188,7 +188,7 @@ export function Step4Activate({
         </div>
         {tier && (
           <p className="text-[11px] text-muted-foreground pt-1">
-            {tier.name} tier · billed monthly in arrears · cancel any time with 30 days notice
+            {tier.name} tier · billed monthly in advance · cancel any time with 30 days notice
           </p>
         )}
       </div>
