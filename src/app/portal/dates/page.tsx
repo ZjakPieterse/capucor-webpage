@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, CalendarClock, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { requireSession } from '@/lib/auth/requireSession';
-import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getPortalContext } from '@/lib/portal/portalContext';
+import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
 import { siteConfig } from '@/config/site';
 import { upcomingKeyDates } from '@/config/keyDates';
 
@@ -30,26 +30,9 @@ function dueLabel(daysUntil: number): { text: string; cls: string } {
 
 export default async function PortalKeyDatesPage() {
   // General SARS reference — useful even before the org is fully provisioned, so
-  // we gate on a session only and personalise the header when an org exists.
-  const user = await requireSession();
-  const supabase = createSupabaseAdminClient();
-
-  const { data: membership } = await supabase
-    .from('client_org_members')
-    .select('client_org_id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
-
-  let orgName: string | null = null;
-  if (membership) {
-    const { data: org } = await supabase
-      .from('client_orgs')
-      .select('name')
-      .eq('id', membership.client_org_id)
-      .maybeSingle();
-    orgName = (org?.name as string | undefined) ?? null;
-  }
+  // we gate on a session only (getPortalContext → requireSession) and personalise
+  // the header when an org exists.
+  const { orgs, activeOrg } = await getPortalContext();
 
   const dates = upcomingKeyDates();
 
@@ -64,11 +47,7 @@ export default async function PortalKeyDatesPage() {
       </Link>
 
       <header className="mb-8">
-        {orgName && (
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-            {orgName}
-          </p>
-        )}
+        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
         <h1 className="text-3xl font-bold tracking-tight">Key dates</h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-prose">
           The standard SARS and statutory deadlines on the horizon. Your assigned accountant manages every submission — this list is here so nothing catches you by surprise.

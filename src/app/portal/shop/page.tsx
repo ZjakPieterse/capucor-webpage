@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
-import { requireSession } from '@/lib/auth/requireSession';
-import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getPortalContext } from '@/lib/portal/portalContext';
+import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
 import { formatZAR } from '@/lib/utils';
 import { SHOP_PRODUCTS } from '@/config/shopProducts';
 
@@ -13,25 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PortalShopPage() {
-  const user = await requireSession();
-  const supabase = createSupabaseAdminClient();
-
-  const { data: membership } = await supabase
-    .from('client_org_members')
-    .select('client_org_id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
-
-  let orgName: string | null = null;
-  if (membership) {
-    const { data: org } = await supabase
-      .from('client_orgs')
-      .select('name')
-      .eq('id', membership.client_org_id)
-      .maybeSingle();
-    orgName = (org?.name as string | undefined) ?? null;
-  }
+  const { orgs, activeOrg } = await getPortalContext();
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-12 lg:py-16">
@@ -44,11 +26,7 @@ export default async function PortalShopPage() {
       </Link>
 
       <header className="mb-8">
-        {orgName && (
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-            {orgName}
-          </p>
-        )}
+        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
         <h1 className="text-3xl font-bold tracking-tight">Add-on services</h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-prose">
           Once-off jobs that sit outside your monthly plan — billed separately, only when you need them.

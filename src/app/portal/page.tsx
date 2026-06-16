@@ -15,12 +15,14 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { requireSession } from '@/lib/auth/requireSession';
 import { SignOutButton } from '@/components/portal/SignOutButton';
+import { SubscriptionStatusBadge } from '@/components/portal/StatusBadge';
+import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getPortalContext } from '@/lib/portal/portalContext';
+import { getOrgSubscription } from '@/lib/portal/orgData';
 import { formatZAR } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
-import type { SubscriptionStatus } from '@/types';
 
 export const metadata: Metadata = {
   title: 'Client Portal',
@@ -36,23 +38,6 @@ const TIER_NAMES: Record<string, string> = {
   premium: 'Premium',
 };
 
-function StatusBadge({ status }: { status: SubscriptionStatus }) {
-  const styles: Record<SubscriptionStatus, { label: string; cls: string }> = {
-    active: { label: 'Active', cls: 'bg-primary/15 text-primary border-primary/30' },
-    pending_payment: { label: 'Pending payment', cls: 'bg-warning/15 text-warning border-warning/30' },
-    cancelling: { label: 'Cancelling', cls: 'bg-warning/15 text-warning border-warning/30' },
-    cancelled: { label: 'Cancelled', cls: 'bg-muted text-muted-foreground border-border' },
-    past_due: { label: 'Past due', cls: 'bg-destructive/15 text-destructive border-destructive/30' },
-  };
-  const s = styles[status] ?? styles.pending_payment;
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${s.cls}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {s.label}
-    </span>
-  );
-}
-
 function formatLongDate(iso: string | null): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-ZA', {
@@ -63,18 +48,9 @@ function formatLongDate(iso: string | null): string {
 }
 
 export default async function PortalPage() {
-  const user = await requireSession();
-  const supabase = createSupabaseAdminClient();
+  const { orgs, activeOrg } = await getPortalContext();
 
-  // v1 = one client_org per user.
-  const { data: membership } = await supabase
-    .from('client_org_members')
-    .select('client_org_id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (!membership) {
+  if (!activeOrg) {
     return (
       <PortalEmptyState
         title="Your subscription is being set up"
@@ -83,26 +59,10 @@ export default async function PortalPage() {
     );
   }
 
-  const orgId = membership.client_org_id as string;
+  const admin = createSupabaseAdminClient();
+  const sub = await getOrgSubscription(admin, activeOrg.id);
 
-  const [{ data: org }, { data: sub }] = await Promise.all([
-    supabase
-      .from('client_orgs')
-      .select('id, name, status')
-      .eq('id', orgId)
-      .maybeSingle(),
-    supabase
-      .from('subscriptions')
-      .select(
-        'id, status, tier_slug, services, brackets, monthly_total_zar, vat_zar, total_charge_zar, current_period_end, created_at'
-      )
-      .eq('client_org_id', orgId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
-
-  if (!org || !sub) {
+  if (!sub) {
     return (
       <PortalEmptyState
         title="Your subscription is being set up"
@@ -111,21 +71,18 @@ export default async function PortalPage() {
     );
   }
 
-  const status = sub.status as SubscriptionStatus;
-  const tierName = TIER_NAMES[sub.tier_slug as string] ?? sub.tier_slug;
-  const services = Array.isArray(sub.services) ? (sub.services as string[]) : [];
+  const tierName = TIER_NAMES[sub.tier_slug] ?? sub.tier_slug;
+  const services = Array.isArray(sub.services) ? sub.services : [];
   const servicesDisplay = services.length ? services.join(', ') : '—';
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
       <header className="mb-10 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-            {org.name}
-          </p>
+          <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
           <div className="flex flex-wrap items-baseline gap-3">
             <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
-            <StatusBadge status={status} />
+            <SubscriptionStatusBadge status={sub.status} />
           </div>
         </div>
         <SignOutButton className="shrink-0" />
@@ -298,7 +255,7 @@ export default async function PortalPage() {
                   <Calendar className="h-3 w-3" /> Next billing
                 </dt>
                 <dd className="font-medium">
-                  {formatLongDate(sub.current_period_end as string | null)}
+                  {formatLongDate(sub.current_period_end)}
                 </dd>
               </div>
               <div>
@@ -306,7 +263,7 @@ export default async function PortalPage() {
                   <CheckCircle2 className="h-3 w-3" /> Subscription started
                 </dt>
                 <dd className="font-medium">
-                  {formatLongDate(sub.created_at as string)}
+                  {formatLongDate(sub.created_at)}
                 </dd>
               </div>
             </dl>

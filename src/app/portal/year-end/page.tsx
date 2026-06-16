@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { requireSession } from '@/lib/auth/requireSession';
-import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getPortalContext } from '@/lib/portal/portalContext';
+import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
 import { siteConfig } from '@/config/site';
 import { YearEndChecklist } from '@/components/portal/YearEndChecklist';
 
@@ -14,25 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PortalYearEndPage() {
-  const user = await requireSession();
-  const supabase = createSupabaseAdminClient();
-
-  const { data: membership } = await supabase
-    .from('client_org_members')
-    .select('client_org_id')
-    .eq('user_id', user.id)
-    .limit(1)
-    .maybeSingle();
-
-  let orgName: string | null = null;
-  if (membership) {
-    const { data: org } = await supabase
-      .from('client_orgs')
-      .select('name')
-      .eq('id', membership.client_org_id)
-      .maybeSingle();
-    orgName = (org?.name as string | undefined) ?? null;
-  }
+  const { orgs, activeOrg } = await getPortalContext();
 
   return (
     <main className="max-w-3xl mx-auto px-6 py-12 lg:py-16">
@@ -45,11 +27,7 @@ export default async function PortalYearEndPage() {
       </Link>
 
       <header className="mb-8">
-        {orgName && (
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-            {orgName}
-          </p>
-        )}
+        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
         <h1 className="text-3xl font-bold tracking-tight">Year-end planner</h1>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-prose">
           Everything we need to close your year and prepare your annual financial statements. Tick items off as you gather them — the faster this is complete, the sooner your AFS and tax return are done.

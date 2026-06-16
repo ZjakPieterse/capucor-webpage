@@ -1,15 +1,23 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Building2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { SignOutButton } from '@/components/portal/SignOutButton';
 import type { InternalUser } from '@/lib/auth/requireInternal';
 
-// Shared top bar for the /internal staff hub. Server component — it takes the
-// already-resolved internal user from the layout, so the only client island is
-// SignOutButton. Proposals is the single link today; Leads / Clients (and a
-// usePathname-driven active state) land with PR13d.
-const NAV_LINKS = [{ href: '/internal/proposals', label: 'Proposals' }];
+// Shared top bar for the /internal staff hub. Client component so usePathname can
+// drive the active-link state (PR13d). It takes the already-resolved internal
+// user from the layout, so the only network island is SignOutButton.
+const NAV_LINKS = [
+  { href: '/internal/proposals', label: 'Proposals' },
+  { href: '/internal/clients', label: 'Clients' },
+];
 
 export function InternalNav({ user }: { user: InternalUser }) {
+  const pathname = usePathname();
+
   return (
     <header className="border-b border-border bg-card/40">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
@@ -18,11 +26,24 @@ export function InternalNav({ user }: { user: InternalUser }) {
           Capucor internal
         </Link>
         <nav className="flex items-center gap-4 text-sm">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="text-foreground">
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'transition-colors',
+                  active
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
           <span className="hidden text-muted-foreground sm:inline">
