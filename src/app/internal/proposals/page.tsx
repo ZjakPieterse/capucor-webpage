@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { timingSafeEqual } from '@/lib/security';
+import { requireInternal } from '@/lib/auth/requireInternal';
+import { SignOutButton } from '@/components/portal/SignOutButton';
 import { formatZAR } from '@/lib/utils';
 
-// Internal, secret-gated proposal tracker. Read-only by design: amend / resend
-// run through /api/proposals/{amend,resend} (also secret-guarded) so the secret
-// never ships into client JS. Replace the ?secret= gate with real staff auth
-// when that surface exists.
+// Internal proposal tracker. Access is gated by a verified internal session
+// (requireInternal → the public.internal_users allowlist, migration 011), not a
+// URL secret. Read-only by design: amend / resend still run through
+// /api/proposals/{amend,resend} (admin-only mutations land in PR13c).
 export const dynamic = 'force-dynamic';
+
+const PATH = '/internal/proposals';
 
 export const metadata: Metadata = {
   title: 'Proposals',
@@ -33,25 +36,24 @@ interface ListRow {
 const dateZA = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
 
-function authorised(secret: string | undefined): boolean {
-  return (
-    !!process.env.REVALIDATE_SECRET &&
-    !!secret &&
-    timingSafeEqual(secret, process.env.REVALIDATE_SECRET)
-  );
-}
-
-export default async function InternalProposalsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ secret?: string }>;
-}) {
-  const { secret } = await searchParams;
-  if (!authorised(secret)) {
+export default async function InternalProposalsPage() {
+  // Redirects to /login when signed out; returns null when signed in but not on
+  // the internal allowlist.
+  const internal = await requireInternal(PATH);
+  if (!internal) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Not authorised</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Add the access secret to view this page.</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          This area is for Capucor staff. If you think you should have access, ask an
+          administrator to add your email.
+        </p>
+        <div className="mt-6 flex items-center gap-3">
+          <Link href="/portal" className="text-sm text-primary underline underline-offset-2">
+            Go to your portal
+          </Link>
+          <SignOutButton />
+        </div>
       </div>
     );
   }
@@ -69,13 +71,14 @@ export default async function InternalProposalsPage({
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Proposals</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {rows.length} most recent · amend &amp; resend via the secret-guarded API.
+            {rows.length} most recent · signed in as {internal.email} ({internal.role}).
           </p>
         </div>
+        <SignOutButton className="shrink-0" />
       </div>
 
       {error && (
