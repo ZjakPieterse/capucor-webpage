@@ -6,15 +6,15 @@
  * `sent`, and emails the client the link again. The reference number stays the
  * same — it's the same proposal, just re-sent.
  *
- * Secret-guarded (same REVALIDATE_SECRET as the cron routes) until a proper
- * staff-auth surface exists. Not a public endpoint, so no honeypot.
+ * Internal-admin-gated (requireInternalApi({ admin: true }) → the
+ * public.internal_users allowlist). Not a public endpoint, so no honeypot.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ResendProposalSchema } from '@/lib/validations';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { generateOpaqueToken } from '@/lib/token';
-import { timingSafeEqual } from '@/lib/security';
+import { requireInternalApi } from '@/lib/auth/requireInternalApi';
 import { siteConfig } from '@/config/site';
 import { formatZAR } from '@/lib/utils';
 
@@ -32,14 +32,8 @@ interface Row {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.nextUrl.searchParams.get('secret');
-  if (
-    !process.env.REVALIDATE_SECRET ||
-    !secret ||
-    !timingSafeEqual(secret, process.env.REVALIDATE_SECRET)
-  ) {
-    return NextResponse.json({ error: 'Invalid secret.' }, { status: 401 });
-  }
+  const auth = await requireInternalApi({ admin: true });
+  if (!auth.ok) return auth.response;
 
   let body: unknown;
   try {

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Select,
   SelectContent,
@@ -11,9 +12,14 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { formatZAR } from '@/lib/utils';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn, formatZAR } from '@/lib/utils';
 import { isReviewDue } from '@/lib/internal/proposalReview';
+
+// Mirrors the resend route's RESENDABLE guard — a fresh link only makes sense
+// while the proposal is still open or has lapsed. Other statuses (signed/etc.)
+// are amended instead.
+const RESENDABLE = new Set(['sent', 'viewed', 'expired']);
 
 export interface ProposalRow {
   id: string;
@@ -60,10 +66,40 @@ export function ProposalsTable({
   rows: ProposalRow[];
   canManage: boolean;
 }) {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('all');
   const [reviewOnly, setReviewOnly] = useState(false);
   const [sort, setSort] = useState<SortKey>('newest');
+  // Per-row resend feedback: the id being sent, and a one-line result message.
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState<{ id: string; text: string; ok: boolean } | null>(null);
+
+  async function handleResend(row: ProposalRow) {
+    if (resendingId) return;
+    if (!window.confirm(`Re-send this proposal to ${row.email}?`)) return;
+    setResendingId(row.id);
+    setResendMsg(null);
+    try {
+      const res = await fetch('/api/proposals/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposalId: row.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Could not re-send the proposal.');
+      setResendMsg({ id: row.id, text: 'Sent', ok: true });
+      router.refresh();
+    } catch (err) {
+      setResendMsg({
+        id: row.id,
+        text: err instanceof Error ? err.message : 'Could not re-send.',
+        ok: false,
+      });
+    } finally {
+      setResendingId(null);
+    }
+  }
 
   // id → row, so revision lineage can resolve a ref + token to link to. Only
   // covers rows in the current window; an ancestor outside it shows unlinked.
@@ -248,14 +284,40 @@ export function ProposalsTable({
                   {canManage && (
                     <td className="whitespace-nowrap px-3 py-2">
                       <div className="flex items-center gap-2">
-                        {/* Surfaced here; wired in PR13c (amend opens a prefilled
-                            calculator, resend issues a fresh token). */}
-                        <Button variant="outline" size="sm" disabled title="Wired in PR13c">
-                          Amend
+                        {/* Amend opens the calculator seeded from this proposal;
+                            submit issues a new revision (supersedes this one). */}
+                        {superseded ? (
+                          <Button variant="outline" size="sm" disabled title="Already superseded">
+                            Amend
+                          </Button>
+                        ) : (
+                          <Link
+                            href={`/internal/proposals/${r.id}/amend`}
+                            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+                          >
+                            Amend
+                          </Link>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={!RESENDABLE.has(r.status) || resendingId === r.id}
+                          title={
+                            RESENDABLE.has(r.status)
+                              ? 'Send a fresh link to the client'
+                              : 'Only open or expired proposals can be re-sent'
+                          }
+                          onClick={() => handleResend(r)}
+                        >
+                          {resendingId === r.id ? 'Sending…' : 'Resend'}
                         </Button>
-                        <Button variant="outline" size="sm" disabled title="Wired in PR13c">
-                          Resend
-                        </Button>
+                        {resendMsg?.id === r.id && (
+                          <span
+                            className={`text-xs ${resendMsg.ok ? 'text-primary' : 'text-destructive'}`}
+                          >
+                            {resendMsg.text}
+                          </span>
+                        )}
                       </div>
                     </td>
                   )}

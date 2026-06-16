@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
-import { canProceedScopeStep, usePricingState } from '@/hooks/usePricingState';
+import { canProceedScopeStep, usePricingState, type PricingSeed } from '@/hooks/usePricingState';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
@@ -15,9 +15,28 @@ import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
 import type { PricingData, Testimonial } from '@/types';
 
+/**
+ * Amend context (PR13c). When present, the calculator runs in amend mode: it's
+ * seeded from an existing proposal and the Activate modal sends to
+ * /api/proposals/amend (issuing a new revision) with the contact pre-filled.
+ */
+export interface AmendContext {
+  proposalId: string;
+  contact: {
+    firstName: string;
+    lastName: string;
+    businessName: string;
+    email: string;
+  };
+}
+
 interface PricingCalculatorProps {
   data: PricingData;
   testimonials?: Testimonial[];
+  /** Pre-populates the calculator (amend flow). Public callers omit this. */
+  seed?: PricingSeed;
+  /** Routes submit through the amend flow. Public callers omit this. */
+  amend?: AmendContext;
 }
 
 const TRUST_ITEMS = [
@@ -63,7 +82,7 @@ function BottomCTA() {
   );
 }
 
-function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorProps) {
+function PricingCalculatorInner({ data, testimonials = [], seed, amend }: PricingCalculatorProps) {
   const { services, brackets, tiers } = data;
   const spotlightTestimonial = testimonials[0] ?? null;
 
@@ -77,7 +96,7 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
     setTier,
     toggleAddon,
     canProceedStep2,
-  } = usePricingState();
+  } = usePricingState(seed);
 
   // "Every question answered, at least one priced" — needs the service list
   // from Supabase, so it lives here rather than in the hook.
@@ -218,13 +237,14 @@ function PricingCalculatorInner({ data, testimonials = [] }: PricingCalculatorPr
         selectedTier={state.selectedTier}
         selectedAddons={state.selectedAddons}
         onSuccess={markCompleted}
+        amend={amend}
       />
     </>
   );
 }
 
 // Wrap in Suspense for useSearchParams
-export function PricingCalculator({ data, testimonials }: PricingCalculatorProps) {
+export function PricingCalculator({ data, testimonials, seed, amend }: PricingCalculatorProps) {
   return (
     <Suspense
       fallback={
@@ -241,7 +261,7 @@ export function PricingCalculator({ data, testimonials }: PricingCalculatorProps
         </div>
       }
     >
-      <PricingCalculatorInner data={data} testimonials={testimonials} />
+      <PricingCalculatorInner data={data} testimonials={testimonials} seed={seed} amend={amend} />
     </Suspense>
   );
 }

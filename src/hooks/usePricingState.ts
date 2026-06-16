@@ -16,6 +16,30 @@ const DEFAULT_STATE: PricingState = {
   selectedAddons: [],
 };
 
+// Serializable selection used to pre-populate the calculator from an existing
+// proposal (PR13c amend flow). Crosses the server→client boundary, so it's
+// plain arrays/objects — the Set is rebuilt here. `brackets` may carry
+// 'not_required' for services the proposal opted out of, so Back-to-step-1
+// shows every service already answered.
+export interface PricingSeed {
+  services: string[];
+  brackets: Record<string, BracketValue>;
+  tierSlug: string;
+  addons: string[];
+}
+
+function seededState(seed: PricingSeed): PricingState {
+  return {
+    // The selection is complete, so open on the tier step (priced result +
+    // Activate). Back to step 1 still works to adjust scope.
+    step: 2,
+    selectedServices: new Set(seed.services),
+    selectedBrackets: { ...seed.brackets },
+    selectedTier: seed.tierSlug,
+    selectedAddons: [...seed.addons],
+  };
+}
+
 function persistToStorage(state: PricingState) {
   if (typeof window === 'undefined') return;
   try {
@@ -43,17 +67,22 @@ export function clearPricingDraft() {
   }
 }
 
-export function usePricingState() {
-  const [state, setState] = useState<PricingState>(DEFAULT_STATE);
+export function usePricingState(seed?: PricingSeed) {
+  // Lazy initialiser: when seeded (amend flow) the calculator starts from the
+  // proposal's selection; otherwise every visit starts blank (see below).
+  const [state, setState] = useState<PricingState>(() =>
+    seed ? seededState(seed) : DEFAULT_STATE
+  );
 
   // True once the user has submitted the Activate modal and a proposal has been
   // sent. Drives the stepper's final "Done" segment. Not persisted — a refresh
   // starts a fresh configuration. Any change to the selection clears it.
   const [completed, setCompleted] = useState(false);
 
-  // Every visit to /pricing starts blank: the first persist overwrites any
-  // prior draft with DEFAULT_STATE. Continue/Back within the page don't
-  // unmount this hook, so in-session step state still flows; only fresh
+  // Every visit to /pricing starts blank: the hook never reads the stored
+  // draft on init (it starts from DEFAULT_STATE, or the amend seed), and the
+  // first persist overwrites any prior draft. Continue/Back within the page
+  // don't unmount this hook, so in-session step state still flows; only fresh
   // navigation or refresh resets it.
   useEffect(() => {
     persistToStorage(state);

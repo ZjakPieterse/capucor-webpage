@@ -11,7 +11,9 @@
  * and its signature stays intact). Reference numbers are unique per row, so a
  * revision gets a new FT number; the lineage is the supersedes/superseded link.
  *
- * Secret-guarded (REVALIDATE_SECRET) until a proper staff-auth surface exists.
+ * Internal-admin-gated (requireInternalApi({ admin: true }) → the
+ * public.internal_users allowlist). The hub hides this action for basic staff;
+ * the gate enforces it server-side too.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -19,7 +21,7 @@ import { AmendProposalSchema } from '@/lib/validations';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
-import { timingSafeEqual } from '@/lib/security';
+import { requireInternalApi } from '@/lib/auth/requireInternalApi';
 import { siteConfig } from '@/config/site';
 import { formatZAR } from '@/lib/utils';
 
@@ -39,14 +41,8 @@ interface OriginalRow {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = req.nextUrl.searchParams.get('secret');
-  if (
-    !process.env.REVALIDATE_SECRET ||
-    !secret ||
-    !timingSafeEqual(secret, process.env.REVALIDATE_SECRET)
-  ) {
-    return NextResponse.json({ error: 'Invalid secret.' }, { status: 401 });
-  }
+  const auth = await requireInternalApi({ admin: true });
+  if (!auth.ok) return auth.response;
 
   let body: unknown;
   try {
