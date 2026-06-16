@@ -34,12 +34,18 @@ const DORMANT_BRACKETS = [
 let bracketRows: unknown = PRO_BRACKETS;
 let bracketError: unknown = null;
 let leadResult: { data: { id: string } | null; error: unknown } = { data: { id: 'lead_1' }, error: null };
-let proposalResult: { error: unknown } = { error: null };
+// The route reads the trigger-assigned ref_number back via .select().single().
+let proposalResult: { data: { ref_number: string } | null; error: unknown } = {
+  data: { ref_number: 'FT-2026-06-0001' },
+  error: null,
+};
 
 const leadInsert = vi.fn((_payload: Record<string, unknown>) => ({
   select: () => ({ single: async () => leadResult }),
 }));
-const proposalInsert = vi.fn(async (_payload: Record<string, unknown>) => proposalResult);
+const proposalInsert = vi.fn((_payload: Record<string, unknown>) => ({
+  select: () => ({ single: async () => proposalResult }),
+}));
 
 function mountAdmin() {
   vi.mocked(createSupabaseAdminClient).mockReturnValue({
@@ -74,7 +80,7 @@ beforeEach(() => {
   bracketRows = PRO_BRACKETS;
   bracketError = null;
   leadResult = { data: { id: 'lead_1' }, error: null };
-  proposalResult = { error: null };
+  proposalResult = { data: { ref_number: 'FT-2026-06-0001' }, error: null };
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
   process.env.RESEND_API_KEY = 're_test';
@@ -209,7 +215,7 @@ describe('POST /api/proposals', () => {
   });
 
   it('12. proposal insert error — 500', async () => {
-    proposalResult = { error: new Error('proposal boom') };
+    proposalResult = { data: null, error: new Error('proposal boom') };
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
     expect(res.status).toBe(500);

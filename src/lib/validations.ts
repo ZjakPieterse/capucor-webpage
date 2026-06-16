@@ -124,6 +124,36 @@ export const ProposalRequestSchema = z.object({
 
 export type ProposalRequestInput = z.infer<typeof ProposalRequestSchema>;
 
+// ── Proposal amend / resend (staff-side, secret-guarded) ─────────────────
+//
+// Used by the internal "living document" endpoints. These are not public:
+// /api/proposals/amend and /api/proposals/resend are gated by ?secret= (the
+// same REVALIDATE_SECRET the cron routes use), so they carry no honeypot.
+
+export const ResendProposalSchema = z.object({
+  proposalId: z.string().uuid('Invalid proposal id'),
+});
+
+export type ResendProposalInput = z.infer<typeof ResendProposalSchema>;
+
+// Amend changes the priced selection (and optionally the contact). The route
+// recomputes pricing server-side, supersedes the original, and issues a new
+// revision with a fresh token + reference for re-signing.
+export const AmendProposalSchema = z.object({
+  proposalId: z.string().uuid('Invalid proposal id'),
+  services: z.array(z.string().min(1)).min(1, 'Select at least one service'),
+  brackets: z.record(z.string(), z.number().int().nonnegative()),
+  tierSlug: z.string().min(1, 'Choose a package'),
+  addons: z.array(z.string().min(1)).max(5).optional().default([]),
+  // Optional contact overrides — default to the original proposal's contact.
+  firstName: z.string().min(1).max(80).optional(),
+  lastName: z.string().min(1).max(80).optional(),
+  businessName: z.string().min(2).max(120).optional(),
+  email: z.string().email('Enter a valid email address').optional(),
+});
+
+export type AmendProposalInput = z.infer<typeof AmendProposalSchema>;
+
 // ── Proposal e-signature (PR7 — /proposal/<token> sign step) ─────────────
 //
 // Contract between ProposalSignForm and /api/proposals/sign. The signer can

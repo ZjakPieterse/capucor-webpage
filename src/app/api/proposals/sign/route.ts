@@ -30,6 +30,7 @@ import { siteConfig } from '@/config/site';
 
 interface ProposalSignRow {
   id: string;
+  ref_number: string | null;
   first_name: string;
   last_name: string;
   business_name: string;
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
   try {
     const { data, error } = await admin
       .from('proposals')
-      .select('id, first_name, last_name, business_name, email, status, expires_at')
+      .select('id, ref_number, first_name, last_name, business_name, email, status, expires_at')
       .eq('token', input.token)
       .maybeSingle();
 
@@ -207,11 +208,12 @@ export async function POST(req: NextRequest) {
         await resend.emails.send({
           from: siteConfig.email.senderWebsite,
           to: ownerEmail,
-          subject: `Proposal signed — ${row.business_name}`,
+          subject: `Proposal signed — ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
           html: renderSignedOwnerEmail({
             fullName,
             businessName: row.business_name,
             email: row.email,
+            refNumber: row.ref_number,
             method: input.method,
             signedAt: nowIso,
             proposalUrl,
@@ -275,6 +277,7 @@ function renderSignedOwnerEmail(d: {
   fullName: string;
   businessName: string;
   email: string;
+  refNumber: string | null;
   method: string;
   signedAt: string;
   proposalUrl: string;
@@ -288,6 +291,11 @@ function renderSignedOwnerEmail(d: {
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:28px;">
       <h1 style="margin:0 0 16px;font-size:18px;color:#111827;">Proposal signed</h1>
       <table style="width:100%;border-collapse:collapse;font-size:14px;color:#1f2937;">
+        ${
+          d.refNumber
+            ? `<tr><td style="padding:4px 0;color:#6b7280;">Reference</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.refNumber)}</td></tr>`
+            : ''
+        }
         <tr><td style="padding:4px 0;color:#6b7280;">Business</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.businessName)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7280;">Signed by</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.fullName)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.email)}</td></tr>

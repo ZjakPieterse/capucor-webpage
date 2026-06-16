@@ -1,11 +1,26 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Check, ShieldCheck, Clock3, Lock } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { ProposalSummary } from '@/components/pricing/ProposalSummary';
 import { ProposalSignForm } from '@/components/proposal/ProposalSignForm';
+import {
+  DocumentHeader,
+  ScheduleOfServices,
+  FeesNotes,
+  FeeChangesSection,
+  ResponsibilitiesSection,
+  TermsBlocks,
+} from '@/components/proposal/ProposalSections';
 import { Button } from '@/components/ui/button';
+import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
+import {
+  PROPOSAL_TERMS,
+  INLINE_TERM_IDS,
+  RESPONSIBILITIES_OURS,
+  RESPONSIBILITIES_YOURS,
+} from '@/config/proposalTerms';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 export const metadata: Metadata = {
@@ -15,6 +30,8 @@ export const metadata: Metadata = {
 
 interface ProposalRow {
   id: string;
+  ref_number: string | null;
+  version: number;
   first_name: string;
   last_name: string;
   business_name: string;
@@ -27,6 +44,7 @@ interface ProposalRow {
   vat_zar: number;
   total_charge_zar: number;
   status: string;
+  sent_at: string | null;
   expires_at: string | null;
   signed_at: string | null;
   signature_name: string | null;
@@ -35,12 +53,6 @@ interface ProposalRow {
 }
 
 const SIGNED_STATUSES = new Set(['signed', 'paid', 'active']);
-
-const TERMS = [
-  { icon: ShieldCheck, text: 'No lock-in contract. Cancel any time with 30 days’ notice.' },
-  { icon: Clock3, text: 'Billed monthly in arrears. Your first close runs at the end of the first full month.' },
-  { icon: Lock, text: 'Your data stays yours. We handle it in line with POPIA at every step.' },
-];
 
 type LoadResult =
   | { ok: true; row: ProposalRow }
@@ -57,7 +69,7 @@ async function loadProposal(token: string): Promise<LoadResult> {
   const { data, error } = await admin
     .from('proposals')
     .select(
-      'id, first_name, last_name, business_name, email, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, status, expires_at, signed_at, signature_name, signature_method, signature_image',
+      'id, ref_number, version, first_name, last_name, business_name, email, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, status, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image',
     )
     .eq('token', token)
     .maybeSingle();
@@ -82,6 +94,9 @@ async function loadProposal(token: string): Promise<LoadResult> {
     }
     return { ok: false, reason: 'expired' };
   }
+
+  // A superseded proposal has been replaced by a newer revision.
+  if (row.status === 'superseded') return { ok: false, reason: 'expired' };
 
   // First open: flag the proposal as viewed.
   if (row.status === 'sent') {
@@ -121,54 +136,91 @@ export default async function ProposalPage({
   const tiers = (tiersRes.data ?? []) as Tier[];
   const selectedBrackets = row.brackets as Record<string, BracketValue>;
 
+  // Derived schedule + terms (config-driven; see lib/schedule.ts).
+  const inclusions = cumulativeInclusions(row.services, row.tier_slug);
+  const fairUsage = buildFairUsage(row.services, selectedBrackets, brackets);
+  const outOfScope = outOfScopeItems(row.services, services);
+  const debitBlock = PROPOSAL_TERMS.find((b) => b.id === 'debit-order');
+  const inlineIds = INLINE_TERM_IDS as readonly string[];
+  const inlineTerms = PROPOSAL_TERMS.filter((b) => inlineIds.includes(b.id));
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12 lg:py-20">
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        {/* Document header */}
-        <div className="border-b border-border bg-primary/[0.04] p-6 sm:p-8">
-          <p className="mb-4 text-base font-bold tracking-tight text-primary">Capucor</p>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Proposal
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-            For {row.business_name}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Prepared for {row.first_name} {row.last_name}
-          </p>
-        </div>
+        <DocumentHeader
+          businessName={row.business_name}
+          firstName={row.first_name}
+          lastName={row.last_name}
+          refNumber={row.ref_number}
+          sentAt={row.sent_at}
+          expiresAt={row.expires_at}
+          version={row.version}
+        />
 
         <div className="space-y-8 p-6 sm:p-8">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Hi {row.first_name}, thanks for configuring a plan with us. Here is your proposed
-            subscription. Review the details below, then sign electronically to get started — there
-            is no payment required up front.
+            Hi {row.first_name}, here&apos;s your proposed plan. Everything we&apos;ll do, what it
+            costs, and the terms are set out below. Review it, then sign at the bottom to get started.
+            There&apos;s no payment needed up front.
           </p>
 
-          <ProposalSummary
-            services={services}
-            brackets={brackets}
-            tiers={tiers}
-            selectedServices={row.services}
-            selectedBrackets={selectedBrackets}
-            tierSlug={row.tier_slug}
-            selectedAddons={row.addons ?? []}
-            monthlyZAR={Number(row.monthly_total_zar)}
+          <ScheduleOfServices
+            inclusions={inclusions}
+            fairUsage={fairUsage}
+            outOfScope={outOfScope}
           />
 
-          {/* Engagement terms */}
           <div>
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              How it works
+              Your fees
             </p>
-            <ul className="space-y-2.5">
-              {TERMS.map((t) => (
-                <li key={t.text} className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                  <t.icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>{t.text}</span>
-                </li>
+            <ProposalSummary
+              services={services}
+              brackets={brackets}
+              tiers={tiers}
+              selectedServices={row.services}
+              selectedBrackets={selectedBrackets}
+              tierSlug={row.tier_slug}
+              selectedAddons={row.addons ?? []}
+              monthlyZAR={Number(row.monthly_total_zar)}
+            />
+            <FeesNotes />
+          </div>
+
+          <FeeChangesSection fairUsage={fairUsage} />
+
+          <ResponsibilitiesSection ours={RESPONSIBILITIES_OURS} yours={RESPONSIBILITIES_YOURS} />
+
+          {/* Debit-order authorisation — signing authorises collection; banking
+              details are captured later at the payment step. */}
+          {debitBlock && (
+            <div className="rounded-xl border border-border bg-card/40 p-5">
+              <h2 className="text-sm font-semibold">{debitBlock.heading}</h2>
+              {debitBlock.paragraphs.map((p, i) => (
+                <p key={i} className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {p}
+                </p>
               ))}
-            </ul>
+            </div>
+          )}
+
+          {/* Key terms inline + link to the full engagement terms. */}
+          <div>
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Terms
+            </p>
+            <TermsBlocks blocks={inlineTerms} />
+            <p className="mt-4 text-xs text-muted-foreground">
+              These are the key points. Read the{' '}
+              <Link
+                href="/terms/engagement"
+                className="text-primary underline underline-offset-2"
+                target="_blank"
+              >
+                full engagement terms
+              </Link>{' '}
+              — signing accepts them in full.
+            </p>
           </div>
 
           {/* Sign & accept */}

@@ -25,20 +25,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { monthlyTotal, buildLineItems, addonTotal, buildAddonLineItems } from '@/lib/pricing';
-import { PRICING_ADDONS } from '@/config/tiers';
+import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { formatZAR } from '@/lib/utils';
-import type { Bracket } from '@/types';
 
 const PROPOSAL_TTL_DAYS = 30;
-
-type BracketRow = Pick<
-  Bracket,
-  'service_slug' | 'ordinal' | 'label' | 'basic_price' | 'pro_price' | 'premium_price'
->;
 
 function titleCase(slug: string): string {
   return slug
@@ -93,55 +86,17 @@ export async function POST(req: NextRequest) {
   const input = parsed.data;
   const admin = createSupabaseAdminClient();
 
-  // 5. Recompute pricing server-side + build line items from the live brackets.
-  let bracketRows: BracketRow[];
-  try {
-    const { data, error } = await admin
-      .from('brackets')
-      .select('service_slug, ordinal, label, basic_price, pro_price, premium_price')
-      .in('service_slug', input.services)
-      .returns<BracketRow[]>();
-
-    if (error || !data) throw error ?? new Error('Brackets fetch returned no rows');
-    bracketRows = data;
-  } catch (err) {
-    console.error('[PROPOSALS] price recomputation failed:', err);
-    return NextResponse.json(
-      { error: 'Could not price your proposal. Please try again.' },
-      { status: 500 },
-    );
+  // 5. Recompute pricing server-side from the live brackets (anti-tamper).
+  const priced = await priceProposalSelection(admin, {
+    services: input.services,
+    brackets: input.brackets,
+    tierSlug: input.tierSlug,
+    addons: input.addons,
+  });
+  if (!priced.ok) {
+    return NextResponse.json({ error: priced.error }, { status: priced.status });
   }
-
-  // Add-ons: whitelist against the shared config before pricing. The bracket
-  // total alone must clear the > 0 guard — an add-on can't carry a proposal.
-  const addonSlugs = [...new Set(input.addons)].filter((slug) =>
-    PRICING_ADDONS.some((a) => a.slug === slug),
-  );
-
-  const bracketTotalZAR = monthlyTotal(input.services, input.brackets, input.tierSlug, bracketRows);
-  if (bracketTotalZAR <= 0) {
-    return NextResponse.json(
-      { error: 'No priced services in your selection. Please pick at least one regular bracket.' },
-      { status: 422 },
-    );
-  }
-  const monthlyTotalZAR = bracketTotalZAR + addonTotal(addonSlugs);
-  // The configured price is the final, all-in monthly price. VAT is handled in
-  // Xero (the billing pipeline), not on-site, so the site records no VAT split.
-  const vatZAR = 0;
-  const totalChargeZAR = monthlyTotalZAR;
-
-  const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
-  const lineItems = [
-    ...buildLineItems(
-      input.services,
-      input.brackets,
-      input.tierSlug,
-      serviceCatalogue,
-      bracketRows,
-    ),
-    ...buildAddonLineItems(addonSlugs),
-  ];
+  const { addonSlugs, lineItems, monthlyTotalZAR, vatZAR, totalChargeZAR } = priced.data;
 
   // 6. Persist — lead first (so the contact lands in the existing pipeline),
   //    then the proposal row linked to it.
@@ -184,31 +139,39 @@ export async function POST(req: NextRequest) {
   const token = generateOpaqueToken();
   const expiresAt = new Date(Date.now() + PROPOSAL_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
+  // Human-readable reference (FT-YYYY-MM-NNNN) assigned by the DB trigger on
+  // insert — read it back for the emails.
+  let refNumber: string | null = null;
   try {
-    const { error: propErr } = await admin.from('proposals').insert({
-      token,
-      lead_id: leadId,
-      first_name: input.firstName,
-      last_name: input.lastName,
-      business_name: input.businessName,
-      email: input.email,
-      services: input.services,
-      brackets: input.brackets,
-      tier_slug: input.tierSlug,
-      addons: addonSlugs,
-      monthly_total_zar: monthlyTotalZAR,
-      vat_zar: vatZAR,
-      total_charge_zar: totalChargeZAR,
-      status: 'sent',
-      consent_version: CONSENT_VERSION,
-      consent_language: CONSENT_LANGUAGE,
-      ip_address: ip === 'unknown' ? null : ip,
-      user_agent: req.headers.get('user-agent') ?? null,
-      sent_at: nowIso,
-      expires_at: expiresAt,
-    });
+    const { data: propRow, error: propErr } = await admin
+      .from('proposals')
+      .insert({
+        token,
+        lead_id: leadId,
+        first_name: input.firstName,
+        last_name: input.lastName,
+        business_name: input.businessName,
+        email: input.email,
+        services: input.services,
+        brackets: input.brackets,
+        tier_slug: input.tierSlug,
+        addons: addonSlugs,
+        monthly_total_zar: monthlyTotalZAR,
+        vat_zar: vatZAR,
+        total_charge_zar: totalChargeZAR,
+        status: 'sent',
+        consent_version: CONSENT_VERSION,
+        consent_language: CONSENT_LANGUAGE,
+        ip_address: ip === 'unknown' ? null : ip,
+        user_agent: req.headers.get('user-agent') ?? null,
+        sent_at: nowIso,
+        expires_at: expiresAt,
+      })
+      .select('ref_number')
+      .single();
 
     if (propErr) throw propErr;
+    refNumber = (propRow?.ref_number as string) ?? null;
   } catch (err) {
     console.error('[PROPOSALS] proposal insert error:', err);
     return NextResponse.json(
@@ -233,11 +196,14 @@ export async function POST(req: NextRequest) {
         from: siteConfig.email.sender,
         replyTo: siteConfig.email.replyTo,
         to: input.email,
-        subject: 'Your Capucor proposal is ready',
+        subject: refNumber
+          ? `Your Capucor proposal (${refNumber}) is ready`
+          : 'Your Capucor proposal is ready',
         html: renderProposalEmail({
           firstName: input.firstName,
           businessName: input.businessName,
           tierName,
+          refNumber,
           lineItems,
           totalChargeZAR,
           proposalUrl,
@@ -248,10 +214,11 @@ export async function POST(req: NextRequest) {
         await resend.emails.send({
           from: siteConfig.email.senderWebsite,
           to: ownerEmail,
-          subject: `New proposal — ${input.businessName}`,
+          subject: `New proposal — ${input.businessName}${refNumber ? ` (${refNumber})` : ''}`,
           text: [
             `A new proposal was generated from the pricing calculator.`,
             ``,
+            `Reference: ${refNumber ?? '(pending)'}`,
             `Name: ${fullName}`,
             `Business: ${input.businessName}`,
             `Email: ${input.email}`,
@@ -278,6 +245,7 @@ interface ProposalEmailData {
   firstName: string;
   businessName: string;
   tierName: string;
+  refNumber: string | null;
   lineItems: { name: string; label: string | null; price: number }[];
   totalChargeZAR: number;
   proposalUrl: string;
@@ -305,6 +273,11 @@ function renderProposalEmail(d: ProposalEmailData): string {
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;">
       <p style="margin:0 0 24px;font-weight:700;font-size:18px;letter-spacing:-0.01em;color:#0f766e;">Capucor</p>
+      ${
+        d.refNumber
+          ? `<p style="margin:0 0 8px;font-size:12px;color:#6b7280;">Reference ${escapeHtml(d.refNumber)}</p>`
+          : ''
+      }
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Hi ${escapeHtml(d.firstName)}, here&rsquo;s your proposal</h1>
       <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#4b5563;">
         Thanks for configuring a plan for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
