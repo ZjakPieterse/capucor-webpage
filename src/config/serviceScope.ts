@@ -42,7 +42,7 @@ export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
     allowance:
       'Your processing allowance is the transaction count in your selected bracket, measured per month (bank lines, invoices, bills and journals).',
     overage:
-      'Months that run over the allowance are billed at R200 per extra 20 transactions. We measure this on the quarterly review against your rolling average, not on a single busy month.',
+      'Months that run over the allowance are billed at R200 per extra 25 transactions. We measure this on the quarterly review against your rolling average, not on a single busy month.',
   },
   payroll: {
     name: 'Payroll',
