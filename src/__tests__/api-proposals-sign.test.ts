@@ -9,6 +9,12 @@ vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: vi.fn(),
 }));
 
+// PR9 provisioning is exercised in its own suite (portal-provision.test.ts); here
+// it's mocked so the sign-route tests stay focused on the route's own behaviour.
+vi.mock('@/lib/portal/provision', () => ({
+  provisionFromSignedProposal: vi.fn(),
+}));
+
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 vi.mock('resend', () => ({
   Resend: class {
@@ -18,6 +24,7 @@ vi.mock('resend', () => ({
 
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { provisionFromSignedProposal } from '@/lib/portal/provision';
 import { POST } from '@/app/api/proposals/sign/route';
 
 // A real (tiny) 1×1 PNG data URL — passes the prefix regex and decodes small.
@@ -42,6 +49,15 @@ function viewedRow(overrides: Record<string, unknown> = {}) {
     email: 'pat@example.com',
     status: 'viewed',
     expires_at: FUTURE,
+    // Priced selection — read by the route and handed to (mocked) provisioning.
+    services: ['accounting'],
+    brackets: { accounting: 0 },
+    tier_slug: 'pro',
+    addons: [],
+    monthly_total_zar: 1325,
+    vat_zar: 0,
+    total_charge_zar: 1325,
+    client_org_id: null,
     ...overrides,
   };
 }
@@ -101,6 +117,13 @@ beforeEach(() => {
   updateRows = [{ id: 'prop_1' }];
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+  // Default: provisioning succeeds. Individual tests override as needed.
+  vi.mocked(provisionFromSignedProposal).mockResolvedValue({
+    ok: true,
+    orgId: 'org_1',
+    userId: 'user_1',
+    created: { org: true, membership: true, subscription: true },
+  });
   process.env.RESEND_API_KEY = 're_test';
   process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
   mountAdmin();
@@ -280,5 +303,54 @@ describe('POST /api/proposals/sign', () => {
     expect(res.status).toBe(409);
     expect((await res.json()).error).toMatch(/already been signed/i);
     expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it('20. provisioned — calls provisioning, emails portal-ready client + billing-setup owner', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+    expect(res.status).toBe(200);
+
+    // Provisioning ran with the priced selection from the row.
+    expect(provisionFromSignedProposal).toHaveBeenCalledTimes(1);
+    const provisionArg = vi.mocked(provisionFromSignedProposal).mock.calls[0]![1];
+    expect(provisionArg).toMatchObject({
+      id: 'prop_1',
+      email: 'pat@example.com',
+      status: 'signed',
+      tier_slug: 'pro',
+    });
+
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    const clientEmail = sendMock.mock.calls[0]![0];
+    const ownerEmail = sendMock.mock.calls[1]![0];
+    expect(clientEmail.subject).toMatch(/portal is ready/i);
+    expect(clientEmail.html).toContain('/login?next=/portal');
+    expect(ownerEmail.subject).toMatch(/set up billing/i);
+    expect(ownerEmail.html).toMatch(/Paysoft Flow/i);
+  });
+
+  it('21. provisioning failed — still 200, fallback client email + owner failure alert', async () => {
+    vi.mocked(provisionFromSignedProposal).mockResolvedValueOnce({
+      ok: false,
+      error: 'auth user mint failed',
+    });
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+    expect(res.status).toBe(200);
+
+    // Signature still saved as `signed`; the route never flips to active (that is
+    // provisioning's job, and it failed).
+    expect(updatePayloads[0]!.status).toBe('signed');
+
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    const clientEmail = sendMock.mock.calls[0]![0];
+    const ownerEmail = sendMock.mock.calls[1]![0];
+    expect(clientEmail.subject).toMatch(/received your signed proposal/i);
+    expect(ownerEmail.subject).toMatch(/provisioning failed/i);
+    expect(ownerEmail.html).toContain('auth user mint failed');
+  });
+
+  it('22. provisioning runs only after the signature is recorded (not on lost race)', async () => {
+    updateRows = [];
+    await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+    expect(provisionFromSignedProposal).not.toHaveBeenCalled();
   });
 });

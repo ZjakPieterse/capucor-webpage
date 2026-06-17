@@ -191,8 +191,8 @@ export default async function ProposalPage({
 
           <ResponsibilitiesSection ours={RESPONSIBILITIES_OURS} yours={RESPONSIBILITIES_YOURS} />
 
-          {/* Debit-order authorisation — signing authorises collection; banking
-              details are captured later at the payment step. */}
+          {/* Debit-order authorisation. Signing authorises collection; bank
+              details are arranged directly at onboarding, never captured on the site. */}
           {debitBlock && (
             <div className="rounded-xl border border-border bg-card/40 p-5">
               <h2 className="text-sm font-semibold">{debitBlock.heading}</h2>
@@ -279,10 +279,27 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
         </div>
       )}
 
-      <p className="mt-4 text-sm text-muted-foreground">
-        Thanks — there&rsquo;s nothing more you need to do right now. Someone from the Capucor team
-        will be in touch shortly to set up your onboarding.
-      </p>
+      {row.status === 'active' ? (
+        <>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Thanks, that&rsquo;s accepted. Your client portal is ready. Sign in any time to see your
+            plan, key dates and documents. Someone from the Capucor team will be in touch shortly to
+            set up your onboarding.
+          </p>
+          <Button
+            nativeButton={false}
+            className="mt-5"
+            render={<Link href="/login?next=/portal" />}
+          >
+            Sign in to your portal
+          </Button>
+        </>
+      ) : (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Thanks, there&rsquo;s nothing more you need to do right now. Someone from the Capucor team
+          will be in touch shortly to set up your onboarding.
+        </p>
+      )}
     </div>
   );
 }

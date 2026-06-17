@@ -15,17 +15,22 @@
  *      proposals can be signed; expired/already-signed/declined are rejected.
  *   5. Flip the row to `status='signed'` and record signed_at / signature_name /
  *      signature_method / signature_image / signature_ip.
- *   6. Email a confirmation to the client + a copy (with the signature inline) to
- *      the central inbox. Non-fatal — the row is already saved.
+ *   6. Provision portal access (PR9): create-or-locate the org + membership + a
+ *      subscription, then promote the proposal to `active`. The signed proposal
+ *      is the debit-order mandate — no payment API is called; collection is set
+ *      up manually via Paysoft Flow off Xero (the owner email below is the cue).
+ *   7. Email the client (portal-ready, or a fallback "we'll be in touch" if
+ *      provisioning failed) + the owner (a billing-setup cue, or a failure
+ *      alert). Non-fatal — the row is already saved.
  *
- * On-accept provisioning (PR9) and payment-for-discount (PR8) are out of scope:
- * after signing we simply confirm and tell the client we'll be in touch.
+ * Payment-for-discount (PR8) is dropped (see project_billing_model_xero).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SignProposalSchema, MAX_SIGNATURE_BYTES } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { provisionFromSignedProposal } from '@/lib/portal/provision';
 import { siteConfig } from '@/config/site';
 
 interface ProposalSignRow {
@@ -37,6 +42,15 @@ interface ProposalSignRow {
   email: string;
   status: string;
   expires_at: string | null;
+  // Priced selection — copied into the provisioned subscription (PR9).
+  services: string[];
+  brackets: Record<string, number>;
+  tier_slug: string;
+  addons: string[] | null;
+  monthly_total_zar: number | string;
+  vat_zar: number | string;
+  total_charge_zar: number | string;
+  client_org_id: string | null;
 }
 
 // Decoded byte length of a base64 data URL, computed from the string length so
@@ -107,7 +121,9 @@ export async function POST(req: NextRequest) {
   try {
     const { data, error } = await admin
       .from('proposals')
-      .select('id, ref_number, first_name, last_name, business_name, email, status, expires_at')
+      .select(
+        'id, ref_number, first_name, last_name, business_name, email, status, expires_at, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, client_org_id',
+      )
       .eq('token', input.token)
       .maybeSingle();
 
@@ -181,9 +197,35 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 9. Confirmation emails — non-fatal. The signature is already saved.
+  // 9. Provision portal access (PR9). The proposal is now signed, so pass that
+  //    status explicitly (the row we read predates the flip). A failure here is
+  //    non-fatal: the signature stays saved and the proposal stays `signed` (not
+  //    a half-provisioned `active`); the owner gets a failure alert below.
+  const provision = await provisionFromSignedProposal(admin, {
+    id: row.id,
+    email: row.email,
+    first_name: row.first_name,
+    last_name: row.last_name,
+    business_name: row.business_name,
+    services: row.services,
+    brackets: row.brackets,
+    tier_slug: row.tier_slug,
+    addons: row.addons,
+    monthly_total_zar: row.monthly_total_zar,
+    vat_zar: row.vat_zar,
+    total_charge_zar: row.total_charge_zar,
+    status: 'signed',
+    client_org_id: row.client_org_id,
+  });
+  const provisioned = provision.ok;
+
+  // 10. Emails — non-fatal. The signature is already saved. Content depends on
+  //     whether provisioning succeeded: the client gets a portal-ready invite or
+  //     a "we'll be in touch" fallback; the owner gets a billing-setup cue or a
+  //     failure alert to provision by hand.
   const fullName = `${row.first_name} ${row.last_name}`.trim();
   const proposalUrl = `${siteConfig.url}/proposal/${input.token}`;
+  const loginUrl = `${siteConfig.url}/login?next=/portal`;
   const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 
@@ -197,27 +239,46 @@ export async function POST(req: NextRequest) {
         from: siteConfig.email.sender,
         replyTo: siteConfig.email.replyTo,
         to: row.email,
-        subject: 'We’ve received your signed proposal',
-        html: renderSignedClientEmail({
-          firstName: row.first_name,
-          businessName: row.business_name,
-        }),
+        subject: provisioned
+          ? 'Your Capucor portal is ready'
+          : 'We’ve received your signed proposal',
+        html: provisioned
+          ? renderProvisionedClientEmail({
+              firstName: row.first_name,
+              businessName: row.business_name,
+              loginUrl,
+            })
+          : renderSignedClientEmail({
+              firstName: row.first_name,
+              businessName: row.business_name,
+            }),
       });
 
       if (ownerEmail) {
         await resend.emails.send({
           from: siteConfig.email.senderWebsite,
           to: ownerEmail,
-          subject: `Proposal signed — ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
-          html: renderSignedOwnerEmail({
-            fullName,
-            businessName: row.business_name,
-            email: row.email,
-            refNumber: row.ref_number,
-            method: input.method,
-            signedAt: nowIso,
-            proposalUrl,
-          }),
+          subject: provisioned
+            ? `Provisioned — ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''} — set up billing`
+            : `Provisioning FAILED — ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
+          html: provisioned
+            ? renderProvisionedOwnerEmail({
+                fullName,
+                businessName: row.business_name,
+                email: row.email,
+                refNumber: row.ref_number,
+                signedAt: nowIso,
+                proposalUrl,
+              })
+            : renderProvisionFailedOwnerEmail({
+                fullName,
+                businessName: row.business_name,
+                email: row.email,
+                refNumber: row.ref_number,
+                signedAt: nowIso,
+                error: provision.error ?? 'unknown error',
+                proposalUrl,
+              }),
         });
       }
 
@@ -239,7 +300,9 @@ export async function POST(req: NextRequest) {
       }
     }
   } else {
-    console.log(`[PROPOSAL SIGNED] business=${row.business_name} email=${row.email} method=${input.method}`);
+    console.log(
+      `[PROPOSAL SIGNED] business=${row.business_name} email=${row.email} method=${input.method} provisioned=${provisioned}`,
+    );
   }
 
   return NextResponse.json({ ok: true });
@@ -273,12 +336,53 @@ function renderSignedClientEmail(d: { firstName: string; businessName: string })
 </html>`;
 }
 
-function renderSignedOwnerEmail(d: {
+// Client email when provisioning succeeded — the portal is live, here's how to
+// get in. The link points at the normal /login (their email now matches a
+// confirmed user), not a one-click magic link.
+function renderProvisionedClientEmail(d: {
+  firstName: string;
+  businessName: string;
+  loginUrl: string;
+}): string {
+  return `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+<body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;">
+      <p style="margin:0 0 24px;font-weight:700;font-size:18px;letter-spacing:-0.01em;color:#0f766e;">Capucor</p>
+      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Thanks, ${escapeHtml(d.firstName)} — your portal is ready</h1>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
+        We&rsquo;ve recorded your acceptance of the Capucor proposal for
+        <strong>${escapeHtml(d.businessName)}</strong> and set up your client portal. You can sign in
+        any time to see your plan, key dates and documents.
+      </p>
+      <a href="${d.loginUrl}" style="display:block;margin:24px 0 8px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:15px;padding:14px 20px;border-radius:10px;">
+        Sign in to your portal
+      </a>
+      <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;text-align:center;">
+        Use this email address to sign in — no password needed.
+      </p>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:#4b5563;">
+        Someone from our team will be in touch shortly to set up your onboarding and get your first
+        month underway. Questions in the meantime? Just reply to this email.
+      </p>
+    </div>
+    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
+      Capucor Business Solutions · Outsourced finance for growing SMEs
+    </p>
+  </div>
+</body>
+</html>`;
+}
+
+// Owner email when provisioning succeeded — the portal records exist; this is the
+// cue to set billing up by hand (Paysoft Flow has no API).
+function renderProvisionedOwnerEmail(d: {
   fullName: string;
   businessName: string;
   email: string;
   refNumber: string | null;
-  method: string;
   signedAt: string;
   proposalUrl: string;
 }): string {
@@ -289,7 +393,15 @@ function renderSignedOwnerEmail(d: {
 <body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:28px;">
-      <h1 style="margin:0 0 16px;font-size:18px;color:#111827;">Proposal signed</h1>
+      <h1 style="margin:0 0 8px;font-size:18px;color:#111827;">Proposal signed — portal provisioned</h1>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
+        ${escapeHtml(d.businessName)} has signed. The portal org, membership and subscription are
+        set up. To start billing:
+      </p>
+      <ol style="margin:0 0 20px;padding-left:18px;font-size:14px;line-height:1.7;color:#1f2937;">
+        <li>Create the Xero contact for ${escapeHtml(d.businessName)} and set up the recurring invoice.</li>
+        <li>Load the client&rsquo;s bank details into Paysoft Flow so the debit order can collect.</li>
+      </ol>
       <table style="width:100%;border-collapse:collapse;font-size:14px;color:#1f2937;">
         ${
           d.refNumber
@@ -299,13 +411,59 @@ function renderSignedOwnerEmail(d: {
         <tr><td style="padding:4px 0;color:#6b7280;">Business</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.businessName)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7280;">Signed by</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.fullName)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.email)}</td></tr>
-        <tr><td style="padding:4px 0;color:#6b7280;">Method</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.method)}</td></tr>
         <tr><td style="padding:4px 0;color:#6b7280;">When</td><td style="padding:4px 0;text-align:right;">${escapeHtml(when)}</td></tr>
       </table>
       <a href="${d.proposalUrl}" style="display:inline-block;margin-top:24px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;">
         View the signed proposal
       </a>
-      <p style="margin:14px 0 0;font-size:12px;color:#9ca3af;">The signature is shown on the proposal page.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+// Owner email when provisioning FAILED — the signature is saved but the portal
+// records were not created. Provision by hand and tell the client.
+function renderProvisionFailedOwnerEmail(d: {
+  fullName: string;
+  businessName: string;
+  email: string;
+  refNumber: string | null;
+  signedAt: string;
+  error: string;
+  proposalUrl: string;
+}): string {
+  const when = new Date(d.signedAt).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' });
+  return `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
+  <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+    <div style="background:#ffffff;border:1px solid #f5c2c7;border-radius:16px;padding:28px;">
+      <h1 style="margin:0 0 8px;font-size:18px;color:#b02a37;">Proposal signed — provisioning failed</h1>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
+        ${escapeHtml(d.businessName)} signed, and the signature is recorded, but the portal records
+        were not created automatically. The proposal is left as signed (not active). Please set the
+        client up by hand: create the org, membership and subscription, then the Xero contact and
+        Paysoft Flow mandate.
+      </p>
+      <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;">
+        Error: ${escapeHtml(d.error)}
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#1f2937;">
+        ${
+          d.refNumber
+            ? `<tr><td style="padding:4px 0;color:#6b7280;">Reference</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.refNumber)}</td></tr>`
+            : ''
+        }
+        <tr><td style="padding:4px 0;color:#6b7280;">Business</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.businessName)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">Signed by</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.fullName)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">Email</td><td style="padding:4px 0;text-align:right;">${escapeHtml(d.email)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280;">When</td><td style="padding:4px 0;text-align:right;">${escapeHtml(when)}</td></tr>
+      </table>
+      <a href="${d.proposalUrl}" style="display:inline-block;margin-top:24px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;">
+        View the signed proposal
+      </a>
     </div>
   </div>
 </body>

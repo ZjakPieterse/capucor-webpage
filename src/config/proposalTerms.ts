@@ -67,7 +67,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     heading: 'Debit-order authorisation',
     paragraphs: [
       'By signing this proposal you authorise Capucor Business Solutions to collect the agreed monthly fee, and any agreed adjustments, by debit order against your nominated bank account.',
-      'You will enter your banking details at the secure payment step before the first collection — we do not capture or store bank account details on this page. Collections run on the agreed day each month and you will always know the amount in advance.',
+      'We do not capture or store your bank account details on this website. We set up the debit order with you directly when your account is onboarded. Collections run on the agreed day each month, and you will know the amount in advance.',
       'You can cancel the debit-order authorisation in writing at any time. Cancelling the authorisation does not on its own cancel this agreement, and does not affect amounts already due.',
     ],
   },

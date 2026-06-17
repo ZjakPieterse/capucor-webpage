@@ -17,8 +17,9 @@
  *      an opaque token. Both go through the service-role admin client.
  *   5. Email the proposal link to the client + a reference copy to the owner.
  *
- * The interactive sign + payment step lives on /proposal/<token> and is a
- * Phase-2 stub until the payment provider is chosen.
+ * The client reviews and signs at /proposal/<token>. Signing is the debit-order
+ * mandate and triggers portal provisioning (PR9, in /api/proposals/sign) — there
+ * is no on-site payment step; collection is set up manually via Paysoft Flow.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
