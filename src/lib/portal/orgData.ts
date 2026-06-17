@@ -154,7 +154,7 @@ export async function getOrgProposals(
   const { data } = await db
     .from('proposals')
     .select(
-      'id, token, ref_number, version, supersedes_id, superseded_by_id, business_name, first_name, last_name, email, tier_slug, monthly_total_zar, status, sent_at, signed_at, created_at',
+      'id, token, ref_number, version, supersedes_id, superseded_by_id, business_name, first_name, last_name, email, tier_slug, monthly_total_zar, status, sent_at, signed_at, created_at, proposal_pdf_drive_id',
     )
     .or(filters.join(','))
     .order('created_at', { ascending: false })

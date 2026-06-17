@@ -31,6 +31,7 @@ import { SignProposalSchema, MAX_SIGNATURE_BYTES } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { provisionFromSignedProposal } from '@/lib/portal/provision';
+import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
 import { siteConfig } from '@/config/site';
 
 interface ProposalSignRow {
@@ -219,6 +220,12 @@ export async function POST(req: NextRequest) {
   });
   const provisioned = provision.ok;
 
+  // 9b. Archive the signed proposal as a PDF in the Shared Drive (PR10). Non-fatal
+  //     and independent of provisioning — the signed mandate is worth keeping even
+  //     if provisioning failed. No-ops silently until the Apps Script is wired.
+  const archive = await archiveSignedProposal(admin, row.id);
+  const pdfUrl = archive.ok ? (archive.fileUrl ?? null) : null;
+
   // 10. Emails — non-fatal. The signature is already saved. Content depends on
   //     whether provisioning succeeded: the client gets a portal-ready invite or
   //     a "we'll be in touch" fallback; the owner gets a billing-setup cue or a
@@ -269,6 +276,7 @@ export async function POST(req: NextRequest) {
                 refNumber: row.ref_number,
                 signedAt: nowIso,
                 proposalUrl,
+                pdfUrl,
               })
             : renderProvisionFailedOwnerEmail({
                 fullName,
@@ -385,6 +393,7 @@ function renderProvisionedOwnerEmail(d: {
   refNumber: string | null;
   signedAt: string;
   proposalUrl: string;
+  pdfUrl: string | null;
 }): string {
   const when = new Date(d.signedAt).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg' });
   return `<!doctype html>
@@ -416,6 +425,13 @@ function renderProvisionedOwnerEmail(d: {
       <a href="${d.proposalUrl}" style="display:inline-block;margin-top:24px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;">
         View the signed proposal
       </a>
+      <p style="margin:16px 0 0;font-size:13px;color:#6b7280;">
+        ${
+          d.pdfUrl
+            ? `Signed-proposal PDF archived: <a href="${d.pdfUrl}" style="color:#0f766e;">open in Drive</a>.`
+            : 'Signed-proposal PDF: not archived yet (it will be filed once Drive archival is set up).'
+        }
+      </p>
     </div>
   </div>
 </body>

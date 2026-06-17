@@ -38,6 +38,7 @@ export interface ProposalRow {
   sent_at: string | null;
   signed_at: string | null;
   created_at: string;
+  proposal_pdf_drive_id: string | null;
 }
 
 // Mirrors the proposals status CHECK (migrations 006 + 010).
@@ -272,7 +273,7 @@ export function ProposalsTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{dateZA(r.sent_at)}</td>
                   <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{dateZA(r.signed_at)}</td>
-                  <td className="px-3 py-2">
+                  <td className="whitespace-nowrap px-3 py-2">
                     <Link
                       href={`/proposal/${r.token}`}
                       className="text-primary underline underline-offset-2"
@@ -280,6 +281,16 @@ export function ProposalsTable({
                     >
                       View
                     </Link>
+                    {r.proposal_pdf_drive_id && (
+                      <Link
+                        href={`https://drive.google.com/file/d/${r.proposal_pdf_drive_id}/view`}
+                        className="ml-2 text-primary underline underline-offset-2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        PDF
+                      </Link>
+                    )}
                   </td>
                   {canManage && (
                     <td className="whitespace-nowrap px-3 py-2">

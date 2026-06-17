@@ -24,6 +24,13 @@ export const RESPONSIBILITIES_OURS: string[] = [
   'Act with reasonable care and skill, in line with the SAICA code we work under.',
 ];
 
+/** Footnotes shown under the fee total (proposal document + archived PDF). */
+export const FEES_NOTES: string[] = [
+  'Billed monthly in advance. Your first close runs in the following new month.',
+  'The figure above is the all-inclusive monthly price. VAT, where it applies, is shown on your Xero invoice, not here.',
+  'Processing for the 3 months before your start date is included. Older periods are considered catch-up work and will be billed separately.',
+];
+
 /** What the client does. */
 export const RESPONSIBILITIES_YOURS: string[] = [
   'Give us your bank statements, invoices and supporting documents in good time each cycle.',

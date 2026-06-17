@@ -15,6 +15,11 @@ vi.mock('@/lib/portal/provision', () => ({
   provisionFromSignedProposal: vi.fn(),
 }));
 
+// PR10 PDF archival is exercised in proposal-pdf.test.ts; mocked here.
+vi.mock('@/lib/portal/proposalPdf', () => ({
+  archiveSignedProposal: vi.fn(),
+}));
+
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 vi.mock('resend', () => ({
   Resend: class {
@@ -25,6 +30,7 @@ vi.mock('resend', () => ({
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { provisionFromSignedProposal } from '@/lib/portal/provision';
+import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
 import { POST } from '@/app/api/proposals/sign/route';
 
 // A real (tiny) 1×1 PNG data URL — passes the prefix regex and decodes small.
@@ -123,6 +129,12 @@ beforeEach(() => {
     orgId: 'org_1',
     userId: 'user_1',
     created: { org: true, membership: true, subscription: true },
+  });
+  // Default: PDF archival succeeds.
+  vi.mocked(archiveSignedProposal).mockResolvedValue({
+    ok: true,
+    fileId: 'file_1',
+    fileUrl: 'https://drive.google.com/file/d/file_1/view',
   });
   process.env.RESEND_API_KEY = 're_test';
   process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
@@ -319,6 +331,7 @@ describe('POST /api/proposals/sign', () => {
       tier_slug: 'pro',
     });
 
+    expect(archiveSignedProposal).toHaveBeenCalledTimes(1);
     expect(sendMock).toHaveBeenCalledTimes(2);
     const clientEmail = sendMock.mock.calls[0]![0];
     const ownerEmail = sendMock.mock.calls[1]![0];
@@ -326,6 +339,17 @@ describe('POST /api/proposals/sign', () => {
     expect(clientEmail.html).toContain('/login?next=/portal');
     expect(ownerEmail.subject).toMatch(/set up billing/i);
     expect(ownerEmail.html).toMatch(/Paysoft Flow/i);
+    // The archived PDF link is surfaced in the owner email.
+    expect(ownerEmail.html).toContain('https://drive.google.com/file/d/file_1/view');
+  });
+
+  it('20b. PDF archival failure — still 200, owner email notes the PDF is not archived', async () => {
+    vi.mocked(archiveSignedProposal).mockResolvedValueOnce({ ok: false, error: 'apps script down' });
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+    expect(res.status).toBe(200);
+
+    const ownerEmail = sendMock.mock.calls[1]![0];
+    expect(ownerEmail.html).toMatch(/not archived yet/i);
   });
 
   it('21. provisioning failed — still 200, fallback client email + owner failure alert', async () => {

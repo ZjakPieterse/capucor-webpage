@@ -52,6 +52,7 @@ cp .env.example .env.local
 | `RESEND_API_KEY` | Resend dashboard (optional — logs to console if absent) |
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
+| `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10). Apps Script web-app `/exec` URL + its shared secret; archival no-ops if unset. See `scripts/apps-script/README.md` |
 
 ## Dev Scripts
 

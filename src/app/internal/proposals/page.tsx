@@ -28,7 +28,7 @@ export default async function InternalProposalsPage() {
   const { data, error } = await admin
     .from('proposals')
     .select(
-      'id, token, ref_number, version, supersedes_id, superseded_by_id, business_name, first_name, last_name, email, tier_slug, monthly_total_zar, status, sent_at, signed_at, created_at',
+      'id, token, ref_number, version, supersedes_id, superseded_by_id, business_name, first_name, last_name, email, tier_slug, monthly_total_zar, status, sent_at, signed_at, created_at, proposal_pdf_drive_id',
     )
     .order('created_at', { ascending: false })
     .limit(200);
