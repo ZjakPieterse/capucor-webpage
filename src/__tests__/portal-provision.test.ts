@@ -225,7 +225,7 @@ describe('provisionFromSignedProposal', () => {
     expect(fake.tables.subscriptions).toHaveLength(0);
   });
 
-  it('3. idempotent re-run — reuses an existing org/membership/sub, creates no duplicates', async () => {
+  it('3. re-sign — reuses org/membership, OVERRIDES the subscription with the latest plan, no duplicates', async () => {
     const proposalRow: Row = { id: 'prop_1', status: 'signed', client_org_id: null };
     const fake = makeFakeAdmin(
       {
@@ -234,24 +234,26 @@ describe('provisionFromSignedProposal', () => {
           { id: 'org_1', name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'pat@example.com', status: 'active' },
         ],
         client_org_members: [{ id: 'm_1', client_org_id: 'org_1', user_id: 'user_existing', role: 'owner' }],
-        subscriptions: [{ id: 'sub_1', client_org_id: 'org_1', status: 'active', created_at: '2026-01-01' }],
+        // Existing plan is on the old tier — the new proposal must override it.
+        subscriptions: [{ id: 'sub_1', client_org_id: 'org_1', status: 'active', tier_slug: 'basic', created_at: '2026-01-01' }],
       },
       // createUser "fails" (already registered) → generateLink returns the existing id.
       { newUserId: null, existingUserId: 'user_existing' },
     );
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const res = await provisionFromSignedProposal(asClient(fake), signedProposal());
+    const res = await provisionFromSignedProposal(asClient(fake), signedProposal({ tier_slug: 'pro' }));
 
     expect(res.ok).toBe(true);
     expect(res.created).toEqual({ org: false, membership: false, subscription: false });
     expect(res.orgId).toBe('org_1');
     expect(res.userId).toBe('user_existing');
 
-    // No duplicates.
+    // No duplicates — and the single subscription now reflects the latest proposal.
     expect(fake.tables.client_orgs).toHaveLength(1);
     expect(fake.tables.client_org_members).toHaveLength(1);
     expect(fake.tables.subscriptions).toHaveLength(1);
+    expect(fake.tables.subscriptions[0]).toMatchObject({ tier_slug: 'pro', total_charge_zar: 1325 });
 
     // Still promoted to active + linked.
     expect(proposalRow.status).toBe('active');
@@ -304,12 +306,12 @@ describe('provisionFromSignedProposal', () => {
     expect(fake.tables.client_orgs).toHaveLength(0);
   });
 
-  it('7. does not merge a different business owned by the same email — creates a new org', async () => {
+  it('7. dedupe is by organisation name — a different business (same contact email) gets its own org', async () => {
     const proposalRow: Row = { id: 'prop_2', status: 'signed', client_org_id: null };
     const fake = makeFakeAdmin(
       {
         proposals: [proposalRow],
-        // Same contact email, DIFFERENT business name → must not be reused.
+        // Same contact email, DIFFERENT business name → a separate client.
         client_orgs: [
           { id: 'org_1', name: 'Pat Holdings', slug: 'pat-holdings', primary_contact_email: 'pat@example.com', status: 'active' },
         ],
@@ -326,6 +328,37 @@ describe('provisionFromSignedProposal', () => {
     expect(res.ok).toBe(true);
     expect(res.created?.org).toBe(true);
     expect(fake.tables.client_orgs).toHaveLength(2);
+    errorSpy.mockRestore();
+  });
+
+  it('8. same organisation name, DIFFERENT contact — reuses the one client, adds the new contact, overrides the plan', async () => {
+    const proposalRow: Row = { id: 'prop_2', status: 'signed', client_org_id: null };
+    const fake = makeFakeAdmin(
+      {
+        proposals: [proposalRow],
+        client_orgs: [
+          { id: 'org_1', name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'alice@example.com', status: 'active' },
+        ],
+        client_org_members: [{ id: 'm_1', client_org_id: 'org_1', user_id: 'user_alice', role: 'owner' }],
+        subscriptions: [{ id: 'sub_1', client_org_id: 'org_1', status: 'active', tier_slug: 'basic', created_at: '2026-01-01' }],
+      },
+      { newUserId: 'user_bob' },
+    );
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await provisionFromSignedProposal(
+      asClient(fake),
+      signedProposal({ id: 'prop_2', email: 'bob@example.com', first_name: 'Bob', business_name: 'Pat Trading Co', tier_slug: 'pro' }),
+    );
+
+    expect(res.ok).toBe(true);
+    // One client (no duplicate), the new contact added as a member, plan overridden.
+    expect(res.created).toEqual({ org: false, membership: true, subscription: false });
+    expect(fake.tables.client_orgs).toHaveLength(1);
+    expect(fake.tables.client_org_members).toHaveLength(2);
+    expect(fake.tables.client_org_members.some((m) => m.user_id === 'user_bob' && m.client_org_id === 'org_1')).toBe(true);
+    expect(fake.tables.subscriptions).toHaveLength(1);
+    expect(fake.tables.subscriptions[0]).toMatchObject({ tier_slug: 'pro' });
     errorSpy.mockRestore();
   });
 });

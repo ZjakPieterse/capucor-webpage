@@ -140,22 +140,23 @@ export async function getOrgMembers(
   return (data ?? []) as unknown as OrgMemberRow[];
 }
 
-// Proposals matched to an org by contact email (proposals have no client_org_id
-// FK — that link arrives with PR9 provisioning). `ilike` with no wildcards is a
-// case-insensitive exact match; emails come from our own DB so the or-filter is
-// safe.
+// Proposals for an org: matched by the client_org_id FK once a proposal has been
+// provisioned (PR9), OR — for proposals predating provisioning — by the org's
+// contact email(s). Matching on the FK means a client's proposals show no matter
+// which contact signed (one contact can be on several clients). `ilike` with no
+// wildcards is a case-insensitive exact match; the orgId is a uuid and emails
+// come from our own DB (normalised upstream), so the or-filter is safe.
 export async function getOrgProposals(
   db: SupabaseClient,
-  emails: string[],
+  { orgId, emails }: { orgId: string; emails: string[] },
 ): Promise<ProposalRow[]> {
-  if (emails.length === 0) return [];
-  const orFilter = emails.map((e) => `email.ilike.${e}`).join(',');
+  const filters = [`client_org_id.eq.${orgId}`, ...emails.map((e) => `email.ilike.${e}`)];
   const { data } = await db
     .from('proposals')
     .select(
       'id, token, ref_number, version, supersedes_id, superseded_by_id, business_name, first_name, last_name, email, tier_slug, monthly_total_zar, status, sent_at, signed_at, created_at',
     )
-    .or(orFilter)
+    .or(filters.join(','))
     .order('created_at', { ascending: false })
     .limit(100);
   return (data ?? []) as unknown as ProposalRow[];

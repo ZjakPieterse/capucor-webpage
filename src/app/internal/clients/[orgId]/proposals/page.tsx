@@ -16,17 +16,16 @@ export default async function ClientProposalsPage({
   const db = await createSupabaseServerClient();
 
   const org = await getOrgRecord(db, orgId);
-  // proposals have no client_org_id FK (PR9 provisioning) — match by the org's
-  // contact email. Read via the session client (RLS internal_select_proposals).
+  // Match by the client_org_id FK (PR9 provisioning) plus the org's contact
+  // email for any pre-provisioning proposals. Read via the session client (RLS
+  // internal_select_proposals).
   const emails = normaliseOrgEmails([org?.primary_contact_email]);
-  const rows = await getOrgProposals(db, emails);
+  const rows = await getOrgProposals(db, { orgId, emails });
 
   return (
     <div>
       <p className="mb-4 text-sm text-muted-foreground">
-        Proposals matched to{' '}
-        <span className="font-medium text-foreground">{org?.primary_contact_email ?? '—'}</span>.
-        View-only.
+        Proposals for this client. View-only.
       </p>
       {/* canManage=false — amend/resend stay on the proposals hub for admins. */}
       <ProposalsTable rows={rows} canManage={false} />

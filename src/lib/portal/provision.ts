@@ -134,13 +134,14 @@ async function findOrCreateOrg(
   const email = proposal.email.trim();
   const name = proposal.business_name.trim();
 
-  // 2. Reuse an org for the SAME client + business (case-insensitive on both),
-  //    so a second/amended proposal doesn't duplicate it — while never merging
-  //    two different businesses owned by one email.
+  // 2. A client is uniquely the ORGANISATION NAME (one contact can be on several
+  //    clients), so dedupe by name (case-insensitive) regardless of contact —
+  //    never create a second org for a business that already exists. The JS
+  //    re-check guards against `ilike` treating any %/_ in a name as a wildcard.
   const { data: existing } = await admin
     .from('client_orgs')
     .select('id, name')
-    .ilike('primary_contact_email', email);
+    .ilike('name', name);
   const match = (existing as { id: string; name: string }[] | null ?? []).find(
     (o) => o.name.trim().toLowerCase() === name.toLowerCase(),
   );
@@ -198,30 +199,19 @@ function addOneMonthIso(fromMs: number): string {
 }
 
 // A portal org needs a subscriptions row too, or /portal shows the "subscription
-// not ready" empty state (portal/page.tsx). Reuse the org's existing sub if any
-// (idempotent / no duplicate); otherwise insert one from the proposal's already
-// anti-tampered totals. No payment fields — collection is manual via Paysoft Flow.
-async function ensureSubscription(
+// not ready" empty state (portal/page.tsx). The most recent signed proposal is
+// the source of truth, so UPDATE the org's existing subscription in place to the
+// new plan (one current sub per org, no duplicate); insert one if none exists.
+// Totals come from the proposal's already anti-tampered figures. No payment
+// fields — collection is manual via Paysoft Flow.
+async function upsertSubscription(
   admin: SupabaseClient,
   orgId: string,
   proposal: ProposalForProvision,
 ): Promise<{ created: boolean }> {
-  const { data: existing } = await admin
-    .from('subscriptions')
-    .select('id')
-    .eq('client_org_id', orgId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (existing?.id) return { created: false };
-
-  const nowMs = Date.now();
-  const fullName = `${proposal.first_name} ${proposal.last_name}`.trim();
-
-  const { error } = await admin.from('subscriptions').insert({
-    client_org_id: orgId,
+  const plan = {
     email: proposal.email,
-    full_name: fullName,
+    full_name: `${proposal.first_name} ${proposal.last_name}`.trim(),
     business: proposal.business_name,
     services: proposal.services,
     brackets: proposal.brackets,
@@ -230,6 +220,30 @@ async function ensureSubscription(
     vat_zar: proposal.vat_zar,
     total_charge_zar: proposal.total_charge_zar,
     status: 'active',
+  };
+
+  const { data: existing } = await admin
+    .from('subscriptions')
+    .select('id')
+    .eq('client_org_id', orgId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing?.id) {
+    // Most recent signed proposal overrides the existing plan.
+    const { error } = await admin
+      .from('subscriptions')
+      .update(plan)
+      .eq('id', (existing as { id: string }).id);
+    if (error) throw error;
+    return { created: false };
+  }
+
+  const nowMs = Date.now();
+  const { error } = await admin.from('subscriptions').insert({
+    client_org_id: orgId,
+    ...plan,
     current_period_start: new Date(nowMs).toISOString(),
     current_period_end: addOneMonthIso(nowMs),
   });
@@ -260,7 +274,7 @@ export async function provisionFromSignedProposal(
     const userId = await findOrCreateAuthUser(admin, proposal.email);
     const org = await findOrCreateOrg(admin, proposal);
     const membership = await ensureMembership(admin, org.id, userId);
-    const subscription = await ensureSubscription(admin, org.id, proposal);
+    const subscription = await upsertSubscription(admin, org.id, proposal);
 
     // Promote the proposal to active + link the org, guarded so we only ever flip
     // a signed/active row. Zero rows (a concurrent flip) is still success.
