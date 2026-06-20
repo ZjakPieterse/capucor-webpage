@@ -32,7 +32,7 @@ import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { formatZAR } from '@/lib/utils';
 
-const PROPOSAL_TTL_DAYS = 30;
+const PROPOSAL_TTL_DAYS = 7;
 
 function titleCase(slug: string): string {
   return slug
@@ -298,6 +298,9 @@ function renderProposalEmail(d: ProposalEmailData): string {
       </a>
       <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-align:center;">
         Billed monthly in advance · cancel any time with 30 days&rsquo; notice
+      </p>
+      <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
+        This proposal link is valid for 7 days.
       </p>
     </div>
     <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">

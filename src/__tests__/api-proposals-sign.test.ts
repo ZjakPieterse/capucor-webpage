@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { makeJsonRequest } from './helpers/request';
 
+// Step A of email-bound signing: POST /api/proposals/sign no longer commits the
+// signature. It stashes a *pending* signature + a one-time confirm token and
+// emails a "Confirm & sign" link to the proposal's own address. The commit
+// (provision + portal emails) is Step B — see api-proposals-sign-confirm.test.ts.
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -9,13 +14,10 @@ vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: vi.fn(),
 }));
 
-// PR9 provisioning is exercised in its own suite (portal-provision.test.ts); here
-// it's mocked so the sign-route tests stay focused on the route's own behaviour.
+// These must NOT run in Step A — assert they stay untouched.
 vi.mock('@/lib/portal/provision', () => ({
   provisionFromSignedProposal: vi.fn(),
 }));
-
-// PR10 PDF archival is exercised in proposal-pdf.test.ts; mocked here.
 vi.mock('@/lib/portal/proposalPdf', () => ({
   archiveSignedProposal: vi.fn(),
 }));
@@ -40,7 +42,6 @@ const PNG =
 const FUTURE = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 const PAST = new Date(Date.now() - 1000).toISOString();
 
-// Mutable per-test state, read at call time by the from() closures below.
 let lookupResult: { data: Record<string, unknown> | null; error: unknown };
 let updateResult: { error: unknown };
 let updateRows: { id: string }[];
@@ -49,35 +50,20 @@ const updatePayloads: Record<string, unknown>[] = [];
 function viewedRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'prop_1',
+    ref_number: 'FT-2026-06-0001',
     first_name: 'Pat',
-    last_name: 'Patterson',
     business_name: 'Pat Trading Co',
     email: 'pat@example.com',
     status: 'viewed',
     expires_at: FUTURE,
-    // Priced selection — read by the route and handed to (mocked) provisioning.
-    services: ['accounting'],
-    brackets: { accounting: 0 },
-    tier_slug: 'pro',
-    addons: [],
-    monthly_total_zar: 1325,
-    vat_zar: 0,
-    total_charge_zar: 1325,
-    client_org_id: null,
     ...overrides,
   };
 }
 
-// Chainable update stub: supports both the status-guarded sign update
-// (.eq().in().select() → rows) and the awaited sent-at update (.eq() → result).
 interface UpdateBuilder {
   eq: () => UpdateBuilder;
   in: () => UpdateBuilder;
   select: () => Promise<{ data: { id: string }[] | null; error: unknown }>;
-  then: (
-    onFulfilled: (v: { error: unknown }) => unknown,
-    onRejected?: (e: unknown) => unknown,
-  ) => Promise<unknown>;
 }
 
 const proposalUpdate = vi.fn((payload: Record<string, unknown>) => {
@@ -89,8 +75,6 @@ const proposalUpdate = vi.fn((payload: Record<string, unknown>) => {
       data: updateResult.error ? null : updateRows,
       error: updateResult.error,
     }),
-    then: (onFulfilled, onRejected) =>
-      Promise.resolve(updateResult).then(onFulfilled, onRejected),
   };
   return builder;
 });
@@ -123,42 +107,44 @@ beforeEach(() => {
   updateRows = [{ id: 'prop_1' }];
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
-  // Default: provisioning succeeds. Individual tests override as needed.
-  vi.mocked(provisionFromSignedProposal).mockResolvedValue({
-    ok: true,
-    orgId: 'org_1',
-    userId: 'user_1',
-    created: { org: true, membership: true, subscription: true },
-  });
-  // Default: PDF archival succeeds.
-  vi.mocked(archiveSignedProposal).mockResolvedValue({
-    ok: true,
-    fileId: 'file_1',
-    fileUrl: 'https://drive.google.com/file/d/file_1/view',
-  });
   process.env.RESEND_API_KEY = 're_test';
   process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
   mountAdmin();
 });
 
-describe('POST /api/proposals/sign', () => {
-  it('1. happy path (typed) — flips to signed, records the signature, emails both', async () => {
+describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
+  it('1. happy path (typed) — stashes a pending signature + confirm token, emails the confirm link only', async () => {
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ ok: true });
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      pendingConfirmation: true,
+      maskedEmail: 'p***@example.com',
+    });
 
     const payload = updatePayloads[0]!;
     expect(payload).toMatchObject({
-      status: 'signed',
-      signature_name: 'Pat Patterson',
-      signature_method: 'typed',
-      signature_image: PNG,
-      signature_ip: '203.0.113.1',
+      pending_signature_name: 'Pat Patterson',
+      pending_signature_method: 'typed',
+      pending_signature_image: PNG,
+      pending_signature_ip: '203.0.113.1',
     });
-    expect(typeof payload.signed_at).toBe('string');
+    expect(typeof payload.sign_confirm_token).toBe('string');
+    expect(typeof payload.sign_confirm_expires_at).toBe('string');
+    // Nothing is committed in Step A.
+    expect(payload.status).toBeUndefined();
+    expect(payload.signature_name).toBeUndefined();
 
-    // Client + owner confirmation emails.
-    expect(sendMock).toHaveBeenCalledTimes(2);
+    // One email — the confirm link — to the proposal's own address.
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    const email = sendMock.mock.calls[0]![0];
+    expect(email.to).toBe('pat@example.com');
+    expect(email.subject).toMatch(/confirm your capucor signature/i);
+    expect(email.html).toContain('/proposal/confirm/');
+
+    // No provisioning or archival happens until confirmation.
+    expect(provisionFromSignedProposal).not.toHaveBeenCalled();
+    expect(archiveSignedProposal).not.toHaveBeenCalled();
   });
 
   it('2. happy path (drawn)', async () => {
@@ -166,7 +152,7 @@ describe('POST /api/proposals/sign', () => {
       makeJsonRequest('http://test/api/proposals/sign', { ...validBody, method: 'drawn' }),
     );
     expect(res.status).toBe(200);
-    expect(updatePayloads[0]!.signature_method).toBe('drawn');
+    expect(updatePayloads[0]!.pending_signature_method).toBe('drawn');
   });
 
   it('3. happy path (uploaded)', async () => {
@@ -174,7 +160,7 @@ describe('POST /api/proposals/sign', () => {
       makeJsonRequest('http://test/api/proposals/sign', { ...validBody, method: 'uploaded' }),
     );
     expect(res.status).toBe(200);
-    expect(updatePayloads[0]!.signature_method).toBe('uploaded');
+    expect(updatePayloads[0]!.pending_signature_method).toBe('uploaded');
   });
 
   it('4. honeypot — silently succeeds, no DB calls', async () => {
@@ -185,7 +171,7 @@ describe('POST /api/proposals/sign', () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
+    expect(await res.json()).toMatchObject({ ok: true });
     expect(createSupabaseAdminClient).not.toHaveBeenCalled();
   });
 
@@ -241,8 +227,6 @@ describe('POST /api/proposals/sign', () => {
   });
 
   it('11. oversized image — server byte guard returns 422 on imageDataUrl', async () => {
-    // ~540 KB decoded: passes the zod char cap (<750k chars) but exceeds the
-    // 512 KB decoded byte guard in the route.
     const big = 'data:image/png;base64,' + 'A'.repeat(720_000);
     const res = await POST(
       makeJsonRequest('http://test/api/proposals/sign', { ...validBody, imageDataUrl: big }),
@@ -289,27 +273,25 @@ describe('POST /api/proposals/sign', () => {
     errorSpy.mockRestore();
   });
 
-  it('17. update error — 500', async () => {
+  it('17. pending-write error — 500', async () => {
     updateResult = { error: new Error('update boom') };
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toMatch(/record your signature/i);
+    expect((await res.json()).error).toMatch(/signing confirmation/i);
     errorSpy.mockRestore();
   });
 
-  it('18. Resend throws — signature still saved, returns 200', async () => {
+  it('18. Resend throws — pending signature still saved, returns 200', async () => {
     sendMock.mockRejectedValueOnce(new Error('resend down'));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
-    expect(updatePayloads[0]!.status).toBe('signed');
+    expect(updatePayloads[0]!.pending_signature_name).toBe('Pat Patterson');
     errorSpy.mockRestore();
   });
 
-  it('19. lost race — status changed between read and write returns 409, no emails', async () => {
-    // The guarded update matches zero rows (e.g. a concurrent sign or the
-    // expiry cron got there first).
+  it('19. lost race — status changed between read and write returns 409, no email', async () => {
     updateRows = [];
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(409);
@@ -317,64 +299,13 @@ describe('POST /api/proposals/sign', () => {
     expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it('20. provisioned — calls provisioning, emails portal-ready client + billing-setup owner', async () => {
+  it('20. RESEND unset — still 200, logs the confirm URL instead of sending', async () => {
+    delete process.env.RESEND_API_KEY;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
-
-    // Provisioning ran with the priced selection from the row.
-    expect(provisionFromSignedProposal).toHaveBeenCalledTimes(1);
-    const provisionArg = vi.mocked(provisionFromSignedProposal).mock.calls[0]![1];
-    expect(provisionArg).toMatchObject({
-      id: 'prop_1',
-      email: 'pat@example.com',
-      status: 'signed',
-      tier_slug: 'pro',
-    });
-
-    expect(archiveSignedProposal).toHaveBeenCalledTimes(1);
-    expect(sendMock).toHaveBeenCalledTimes(2);
-    const clientEmail = sendMock.mock.calls[0]![0];
-    const ownerEmail = sendMock.mock.calls[1]![0];
-    expect(clientEmail.subject).toMatch(/portal is ready/i);
-    expect(clientEmail.html).toContain('/login?next=/portal');
-    expect(ownerEmail.subject).toMatch(/set up billing/i);
-    expect(ownerEmail.html).toMatch(/Paysoft Flow/i);
-    // The archived PDF link is surfaced in the owner email.
-    expect(ownerEmail.html).toContain('https://drive.google.com/file/d/file_1/view');
-  });
-
-  it('20b. PDF archival failure — still 200, owner email notes the PDF is not archived', async () => {
-    vi.mocked(archiveSignedProposal).mockResolvedValueOnce({ ok: false, error: 'apps script down' });
-    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
-    expect(res.status).toBe(200);
-
-    const ownerEmail = sendMock.mock.calls[1]![0];
-    expect(ownerEmail.html).toMatch(/not archived yet/i);
-  });
-
-  it('21. provisioning failed — still 200, fallback client email + owner failure alert', async () => {
-    vi.mocked(provisionFromSignedProposal).mockResolvedValueOnce({
-      ok: false,
-      error: 'auth user mint failed',
-    });
-    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
-    expect(res.status).toBe(200);
-
-    // Signature still saved as `signed`; the route never flips to active (that is
-    // provisioning's job, and it failed).
-    expect(updatePayloads[0]!.status).toBe('signed');
-
-    expect(sendMock).toHaveBeenCalledTimes(2);
-    const clientEmail = sendMock.mock.calls[0]![0];
-    const ownerEmail = sendMock.mock.calls[1]![0];
-    expect(clientEmail.subject).toMatch(/received your signed proposal/i);
-    expect(ownerEmail.subject).toMatch(/provisioning failed/i);
-    expect(ownerEmail.html).toContain('auth user mint failed');
-  });
-
-  it('22. provisioning runs only after the signature is recorded (not on lost race)', async () => {
-    updateRows = [];
-    await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
-    expect(provisionFromSignedProposal).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('/proposal/confirm/'));
+    logSpy.mockRestore();
   });
 });

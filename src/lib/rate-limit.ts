@@ -46,7 +46,7 @@ async function getKv(): Promise<RateLimitKV | null> {
   }
 }
 
-function checkBucket(bucket: Bucket | null, now: number): {
+function checkBucket(bucket: Bucket | null, now: number, limit: number): {
   next: Bucket;
   allowed: boolean;
   retryAfter: number;
@@ -58,7 +58,7 @@ function checkBucket(bucket: Bucket | null, now: number): {
       retryAfter: 0,
     };
   }
-  if (bucket.count >= LIMIT) {
+  if (bucket.count >= limit) {
     return {
       next: bucket,
       allowed: false,
@@ -72,10 +72,18 @@ function checkBucket(bucket: Bucket | null, now: number): {
   };
 }
 
-export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
+// `opts.key` namespaces the bucket so a different flow (e.g. proposal-page
+// views) gets its own counter instead of sharing the default sign/leads bucket;
+// `opts.limit` overrides the per-window cap for that bucket.
+export async function checkRateLimit(
+  ip: string,
+  opts?: { key?: string; limit?: number },
+): Promise<RateLimitResult> {
   const now = Date.now();
+  const limit = opts?.limit ?? LIMIT;
+  const ns = opts?.key ? `${opts.key}:` : '';
   const kv = await getKv();
-  const key = `rl:${ip}`;
+  const key = `rl:${ns}${ip}`;
 
   if (kv) {
     const raw = await kv.get(key);
@@ -89,7 +97,7 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
         bucket = null;
       }
     }
-    const { next, allowed, retryAfter } = checkBucket(bucket, now);
+    const { next, allowed, retryAfter } = checkBucket(bucket, now, limit);
 
     if (allowed) {
       const remainingSeconds = Math.max(1, Math.ceil((next.resetAt - now) / 1000));
@@ -106,7 +114,8 @@ export async function checkRateLimit(ip: string): Promise<RateLimitResult> {
   if (process.env.NODE_ENV === 'production') {
     console.warn('[RATE_LIMIT] RATE_LIMIT_KV unavailable; using per-isolate in-memory fallback');
   }
-  const { next, allowed, retryAfter } = checkBucket(memoryStore.get(ip) ?? null, now);
-  if (allowed) memoryStore.set(ip, next);
+  const memKey = `${ns}${ip}`;
+  const { next, allowed, retryAfter } = checkBucket(memoryStore.get(memKey) ?? null, now, limit);
+  if (allowed) memoryStore.set(memKey, next);
   return { allowed, retryAfter };
 }

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { ProposalSummary } from '@/components/pricing/ProposalSummary';
 import { ProposalSignForm } from '@/components/proposal/ProposalSignForm';
 import {
@@ -56,7 +58,7 @@ const SIGNED_STATUSES = new Set(['signed', 'paid', 'active']);
 
 type LoadResult =
   | { ok: true; row: ProposalRow }
-  | { ok: false; reason: 'invalid' | 'expired' | 'error' };
+  | { ok: false; reason: 'invalid' | 'expired' | 'error' | 'ratelimited' };
 
 // Token-gated lookup + freshness check + Ignition-style "viewed" tracking. Kept
 // out of the component body so its time/side-effect calls don't trip the
@@ -116,11 +118,42 @@ export default async function ProposalPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+
+  // View rate-limit (defense-in-depth). A separate, generous bucket so it never
+  // collides with the 10/10-min sign/leads bucket or throttles a normal re-read;
+  // it just caps abusive scraping of the token URL.
+  const h = await headers();
+  const ip =
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
+  const { allowed } = await checkRateLimit(ip, { key: 'pview', limit: 40 });
+  if (!allowed) {
+    return <ProposalUnavailable reason="ratelimited" />;
+  }
+
   const result = await loadProposal(token);
   if (!result.ok) {
     return <ProposalUnavailable reason={result.reason} />;
   }
   const row = result.row;
+
+  // Once signed, the public token view is intentionally minimal: a leaked link
+  // must not expose the full document, fees, or the signature image (those live
+  // in the client portal, the owner email, and the Drive archive). Just confirm
+  // acceptance and point to the portal.
+  if (SIGNED_STATUSES.has(row.status)) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-16 lg:py-24">
+        <SignedConfirmation row={row} />
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Questions? Reply to your proposal email or{' '}
+          <Link href="/#contact" className="text-primary underline underline-offset-2">
+            get in touch
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
 
   // Public pricing tables for the rich line-item labels — read as `anon` so the
   // proposal renders correctly even when the viewer is signed in.
@@ -223,15 +256,11 @@ export default async function ProposalPage({
             </p>
           </div>
 
-          {/* Sign & accept */}
-          {SIGNED_STATUSES.has(row.status) ? (
-            <SignedConfirmation row={row} />
-          ) : (
-            <ProposalSignForm
-              token={token}
-              defaultName={`${row.first_name} ${row.last_name}`.trim()}
-            />
-          )}
+          {/* Sign & accept (signed proposals are handled by the minimal view above). */}
+          <ProposalSignForm
+            token={token}
+            defaultName={`${row.first_name} ${row.last_name}`.trim()}
+          />
         </div>
       </div>
 
@@ -271,14 +300,6 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
         </div>
       </div>
 
-      {row.signature_image && (
-        <div className="mt-4 flex items-center justify-center overflow-hidden rounded-lg border border-input bg-white p-3">
-          {/* Stored signature image (a normalised PNG data URL). */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={row.signature_image} alt="Signature" className="max-h-28" />
-        </div>
-      )}
-
       {row.status === 'active' ? (
         <>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -304,7 +325,11 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
   );
 }
 
-function ProposalUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'error' }) {
+function ProposalUnavailable({
+  reason,
+}: {
+  reason: 'invalid' | 'expired' | 'error' | 'ratelimited';
+}) {
   const copy: Record<typeof reason, { title: string; body: string }> = {
     invalid: {
       title: 'Proposal not found',
@@ -313,6 +338,10 @@ function ProposalUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'erro
     expired: {
       title: 'Proposal expired',
       body: 'This proposal link is no longer valid. Configure a new plan and we’ll send you a fresh one.',
+    },
+    ratelimited: {
+      title: 'Please try again shortly',
+      body: 'This proposal was opened a lot in a short time. Wait a few minutes and refresh.',
     },
     error: {
       title: 'Something went wrong',

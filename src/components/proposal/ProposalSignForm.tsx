@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -41,13 +40,14 @@ export function ProposalSignForm({
   token: string;
   defaultName: string;
 }) {
-  const router = useRouter();
   const [method, setMethod] = useState<SignMethod>('typed');
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  // The masked address we emailed the "Confirm & sign" link to, e.g. j***@acme.com.
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   // Drawn signature
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -225,8 +225,8 @@ export function ProposalSignForm({
       if (!res.ok) {
         throw new Error(data.error ?? 'We could not record your signature. Please try again.');
       }
+      setSentTo(typeof data.maskedEmail === 'string' ? data.maskedEmail : null);
       setDone(true);
-      router.refresh();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
@@ -240,10 +240,16 @@ export function ProposalSignForm({
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Check className="h-6 w-6" />
         </div>
-        <p className="text-base font-semibold">Thanks — that&rsquo;s signed</p>
+        <p className="text-base font-semibold">Check your email to finish</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          We&rsquo;ve recorded your acceptance and emailed you a confirmation. Someone from the
-          Capucor team will be in touch shortly to start your onboarding.
+          We&rsquo;ve sent a confirmation link to{' '}
+          {sentTo ? (
+            <span className="font-medium text-foreground">{sentTo}</span>
+          ) : (
+            'the email address this proposal was sent to'
+          )}
+          . Open it and confirm to finalise your signature — this is how we check the signature came
+          from you. The link works once and expires in 30 minutes.
         </p>
       </div>
     );
@@ -414,7 +420,7 @@ export function ProposalSignForm({
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Recording your signature...
+                Sending confirmation...
               </>
             ) : (
               <>
