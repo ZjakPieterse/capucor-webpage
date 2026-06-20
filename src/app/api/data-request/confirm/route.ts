@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { DATA_REQUEST_SLA_DAYS } from '@/lib/consent';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/getClientIp';
 import { siteConfig } from '@/config/site';
 
 type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error' | 'rate_limited';
@@ -20,10 +21,7 @@ type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error' | 'rate
 export async function GET(req: NextRequest) {
   // Per-IP rate limit — same bucket as the submit endpoint, so the token
   // lookup can't be hammered.
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const ip = getClientIp(req.headers);
   const { allowed } = await checkRateLimit(ip);
   if (!allowed) {
     return htmlResponse('rate_limited');

@@ -5,6 +5,7 @@ import { Check } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/getClientIp';
 import { ProposalSummary } from '@/components/pricing/ProposalSummary';
 import { ProposalSignForm } from '@/components/proposal/ProposalSignForm';
 import {
@@ -123,8 +124,7 @@ export default async function ProposalPage({
   // collides with the 10/10-min sign/leads bucket or throttles a normal re-read;
   // it just caps abusive scraping of the token URL.
   const h = await headers();
-  const ip =
-    h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'unknown';
+  const ip = getClientIp(h);
   const { allowed } = await checkRateLimit(ip, { key: 'pview', limit: 40 });
   if (!allowed) {
     return <ProposalUnavailable reason="ratelimited" />;

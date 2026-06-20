@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LeadSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const ip = getClientIp(req.headers);
 
   const { allowed, retryAfter } = await checkRateLimit(ip);
   if (!allowed) {

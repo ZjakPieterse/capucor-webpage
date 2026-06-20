@@ -25,6 +25,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
@@ -43,10 +44,7 @@ function titleCase(slug: string): string {
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const ip = getClientIp(req.headers);
 
   const { allowed, retryAfter } = await checkRateLimit(ip);
   if (!allowed) {

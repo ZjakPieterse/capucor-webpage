@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { finalizeProposalSignature, type FinalizeSignRow } from '@/lib/portal/finalizeSign';
 
@@ -27,10 +28,7 @@ interface ConfirmRow extends FinalizeSignRow {
 }
 
 export async function POST(req: NextRequest) {
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const ip = getClientIp(req.headers);
 
   const { allowed, retryAfter } = await checkRateLimit(ip);
   if (!allowed) {

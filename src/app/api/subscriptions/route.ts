@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SubscriptionRequestSchema } from '@/lib/validations';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/getClientIp';
 import { initSubscriptionTransaction, getOrCreateCustomer } from '@/lib/paystack';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { monthlyTotal } from '@/lib/pricing';
@@ -29,10 +30,7 @@ import type { Bracket } from '@/types';
 
 export async function POST(req: NextRequest) {
   // 1. Rate limit
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    req.headers.get('x-real-ip') ??
-    'unknown';
+  const ip = getClientIp(req.headers);
 
   const rl = await checkRateLimit(ip);
   if (!rl.allowed) {
