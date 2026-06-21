@@ -28,6 +28,7 @@ export interface OrgSubscriptionRow {
   services: string[];
   monthly_total_zar: string | number;
   total_charge_zar: string | number;
+  current_period_start: string | null;
   current_period_end: string | null;
   created_at: string;
 }
@@ -87,13 +88,29 @@ export async function getOrgSubscription(
   const { data } = await db
     .from('subscriptions')
     .select(
-      'id, status, tier_slug, services, monthly_total_zar, total_charge_zar, current_period_end, created_at',
+      'id, status, tier_slug, services, monthly_total_zar, total_charge_zar, current_period_start, current_period_end, created_at',
     )
     .eq('client_org_id', orgId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
   return (data as unknown as OrgSubscriptionRow | null) ?? null;
+}
+
+// Which subscription charge to surface in the portal header. A brand-new sub's
+// first debit is current_period_start (the 1st of next month); once that date
+// has passed, the next charge is current_period_end. Kept here (not inline in the
+// page) so the "now" read stays out of the component render — see the React
+// Compiler purity rule — and so it stays unit-testable.
+export function resolveUpcomingPayment(
+  sub: Pick<OrgSubscriptionRow, 'current_period_start' | 'current_period_end'>,
+  now: Date = new Date(),
+): { label: string; date: string | null } {
+  const start = sub.current_period_start ? new Date(sub.current_period_start) : null;
+  if (start && start.getTime() > now.getTime()) {
+    return { label: 'First payment', date: sub.current_period_start };
+  }
+  return { label: 'Next payment', date: sub.current_period_end };
 }
 
 export async function getOrgInvoices(

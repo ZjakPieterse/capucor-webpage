@@ -1,17 +1,17 @@
 import { Receipt } from 'lucide-react';
 import { formatZAR } from '@/lib/utils';
+import { tierDisplayName } from '@/config/tiers';
 import { SubscriptionStatusBadge } from '@/components/portal/StatusBadge';
 import type { OrgSubscriptionRow, OrgInvoiceRow } from '@/lib/portal/orgData';
 
 // Read-only billing content (subscription summary + invoice history), shared by
 // the client billing page and the internal view-only client mirror. Page chrome
 // (back link, header, switcher) is supplied by the caller.
+//
+// `surface`: 'flat' (default) keeps the internal mirror's plain card look;
+// 'glass' opts the client portal into the glassy premium card system.
 
-const TIER_NAMES: Record<string, string> = {
-  basic: 'Basic',
-  pro: 'Pro',
-  premium: 'Premium',
-};
+type Surface = 'flat' | 'glass';
 
 type InvoiceStatus = OrgInvoiceRow['status'];
 
@@ -52,13 +52,26 @@ function formatMonthYear(iso: string | null): string {
 export function BillingView({
   sub,
   invoices,
+  surface = 'flat',
 }: {
   sub: OrgSubscriptionRow | null;
   invoices: OrgInvoiceRow[];
+  surface?: Surface;
 }) {
+  const glass = surface === 'glass';
+  const panel = glass
+    ? 'premium-glass rounded-xl border border-white/10 bg-card/80'
+    : 'rounded-xl border border-border bg-card';
+  const row = glass
+    ? 'premium-glass rounded-lg border border-white/10 bg-card/80'
+    : 'rounded-lg border border-border bg-card';
+  const dashed = glass
+    ? 'rounded-xl border border-dashed border-white/15 bg-card/40'
+    : 'rounded-xl border border-dashed border-border bg-card';
+
   if (!sub) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card px-4 py-10 text-center">
+      <div className={`${dashed} px-4 py-10 text-center`}>
         <p className="mx-auto max-w-md text-sm leading-relaxed text-muted-foreground">
           No subscription on file yet. Billing details and invoices appear here once the
           subscription is provisioned.
@@ -67,11 +80,11 @@ export function BillingView({
     );
   }
 
-  const tierName = TIER_NAMES[sub.tier_slug] ?? sub.tier_slug;
+  const tierName = tierDisplayName(sub.tier_slug);
 
   return (
     <>
-      <section className="mb-8 rounded-xl border border-border bg-card p-6">
+      <section className={`mb-8 p-6 ${panel}`}>
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -99,7 +112,8 @@ export function BillingView({
               Payment method
             </dt>
             <dd className="text-sm text-muted-foreground">
-              Managed via Paystack. Receipts are sent by email after each successful charge.
+              Collected by monthly debit order, set up from your signed agreement. A receipt is
+              emailed after each successful run.
             </dd>
           </div>
         </dl>
@@ -112,7 +126,7 @@ export function BillingView({
         </h2>
 
         {invoices.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-card px-4 py-10 text-center">
+          <div className={`${dashed} px-4 py-10 text-center`}>
             <p className="mx-auto max-w-md text-sm leading-relaxed text-muted-foreground">
               No invoices yet. Your first invoice lands at the end of your current billing cycle.
             </p>
@@ -122,7 +136,7 @@ export function BillingView({
             {invoices.map((inv) => (
               <li
                 key={inv.id}
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border border-border bg-card px-4 py-3 sm:px-5 sm:py-4"
+                className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-5 sm:py-4 ${row}`}
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium">
@@ -146,8 +160,8 @@ export function BillingView({
         )}
 
         <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-          PDF receipts and downloadable invoices will appear here once Paystack billing is live. In
-          the meantime, every successful charge sends a receipt to your account email.
+          Downloadable invoices and PDF receipts will appear here once billing runs begin. In the
+          meantime, every successful debit sends a receipt to your account email.
         </p>
       </section>
     </>

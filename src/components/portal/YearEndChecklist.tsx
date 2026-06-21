@@ -105,7 +105,7 @@ export function YearEndChecklist() {
   return (
     <div>
       {/* Progress */}
-      <div className="rounded-xl border border-border bg-card p-5 mb-6">
+      <div className="premium-glass mb-6 rounded-xl border border-white/10 bg-card/80 p-5">
         <div className="flex items-center justify-between gap-4 mb-3">
           <p className="text-sm font-semibold">
             {isClient ? (
@@ -147,7 +147,7 @@ export function YearEndChecklist() {
         {YEAR_END_CHECKLIST.map((section) => (
           <section
             key={section.id}
-            className="rounded-xl border border-border bg-card p-6"
+            className="premium-glass rounded-xl border border-white/10 bg-card/80 p-6"
           >
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
               {section.title}

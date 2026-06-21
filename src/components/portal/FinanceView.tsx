@@ -17,6 +17,11 @@ import type { OrgFinance, XeroSnapshot } from '@/lib/portal/orgData';
 // Read-only finance content (Xero snapshot tiles + connect prompt), shared by the
 // client finance page and the internal view-only client mirror. Page chrome is
 // supplied by the caller.
+//
+// `surface`: 'flat' (default) keeps the internal mirror's plain card look;
+// 'glass' opts the client portal into the glassy premium card system.
+
+type Surface = 'flat' | 'glass';
 
 type TileKind = 'zar' | 'months';
 
@@ -56,10 +61,24 @@ function formatLongDate(iso: string | null): string {
   });
 }
 
-export function FinanceView({ finance }: { finance: OrgFinance }) {
+export function FinanceView({
+  finance,
+  surface = 'flat',
+}: {
+  finance: OrgFinance;
+  surface?: Surface;
+}) {
   const { xeroConnected, snapshot, asOf } = finance;
   // Live only when Xero is connected *and* a snapshot has landed.
   const live = xeroConnected && snapshot != null;
+  const tileClass =
+    surface === 'glass'
+      ? 'premium-glass rounded-xl border border-white/10 bg-card/80'
+      : 'rounded-xl border border-border bg-card';
+  const prompt =
+    surface === 'glass'
+      ? 'premium-glass rounded-xl border border-primary/25 bg-primary/[0.04]'
+      : 'rounded-xl border border-primary/25 bg-primary/[0.04]';
 
   return (
     <>
@@ -68,7 +87,7 @@ export function FinanceView({ finance }: { finance: OrgFinance }) {
           Last updated {formatLongDate(asOf)}. Figures refresh once a day.
         </p>
       ) : (
-        <section className="mb-8 rounded-xl border border-primary/25 bg-primary/[0.04] p-6">
+        <section className={`mb-8 p-6 ${prompt}`}>
           <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
             <Link2 className="h-5 w-5 text-primary" />
           </div>
@@ -99,7 +118,7 @@ export function FinanceView({ finance }: { finance: OrgFinance }) {
           const value = live ? formatTile(snapshot?.[tile.key], tile.kind) : null;
           const Icon = tile.icon;
           return (
-            <div key={tile.key} className="rounded-xl border border-border bg-card p-5">
+            <div key={tile.key} className={`p-5 ${tileClass}`}>
               <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <Icon className="h-3.5 w-3.5 text-primary" />
                 {tile.label}

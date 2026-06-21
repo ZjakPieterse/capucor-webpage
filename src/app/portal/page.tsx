@@ -2,39 +2,41 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   ArrowRight,
-  CheckCircle2,
-  Calendar,
   CalendarClock,
+  CheckCircle2,
+  Circle,
   ClipboardList,
   FileText,
-  LineChart,
-  MessageSquare,
-  Building2,
-  ShoppingBag,
+  Layers,
   Lock,
+  MessageSquare,
+  Receipt,
+  ShoppingBag,
+  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SubscriptionStatusBadge } from '@/components/portal/StatusBadge';
 import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
+import { PortalFinanceSnapshot } from '@/components/portal/PortalFinanceSnapshot';
+import { PORTAL_CARD, PORTAL_PANEL } from '@/components/portal/portalCard';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { getPortalContext } from '@/lib/portal/portalContext';
-import { getOrgSubscription } from '@/lib/portal/orgData';
+import {
+  getOrgFinance,
+  getOrgRecord,
+  getOrgSubscription,
+  resolveUpcomingPayment,
+} from '@/lib/portal/orgData';
+import { upcomingKeyDates } from '@/config/keyDates';
 import { formatZAR } from '@/lib/utils';
+import { tierDisplayName } from '@/config/tiers';
 import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = {
   title: 'Client Portal',
   description: 'Your Capucor subscription, documents and compliance status.',
   robots: { index: false },
-};
-
-// Mirrors the `tiers` table — kept inline so the portal doesn't make a second
-// round trip just to resolve a display name.
-const TIER_NAMES: Record<string, string> = {
-  basic: 'Basic',
-  pro: 'Pro',
-  premium: 'Premium',
 };
 
 function formatLongDate(iso: string | null): string {
@@ -44,6 +46,19 @@ function formatLongDate(iso: string | null): string {
     month: 'long',
     year: 'numeric',
   });
+}
+
+function formatShortDate(d: Date): string {
+  return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+}
+
+function dueLabel(daysUntil: number): { text: string; cls: string } {
+  if (daysUntil <= 0)
+    return { text: 'Due today', cls: 'bg-destructive/15 text-destructive border-destructive/30' };
+  if (daysUntil === 1) return { text: 'Tomorrow', cls: 'bg-warning/15 text-warning border-warning/30' };
+  if (daysUntil <= 14)
+    return { text: `In ${daysUntil} days`, cls: 'bg-warning/15 text-warning border-warning/30' };
+  return { text: `In ${daysUntil} days`, cls: 'bg-muted text-muted-foreground border-border' };
 }
 
 export default async function PortalPage() {
@@ -59,7 +74,11 @@ export default async function PortalPage() {
   }
 
   const admin = createSupabaseAdminClient();
-  const sub = await getOrgSubscription(admin, activeOrg.id);
+  const [sub, org, finance] = await Promise.all([
+    getOrgSubscription(admin, activeOrg.id),
+    getOrgRecord(admin, activeOrg.id),
+    getOrgFinance(admin, activeOrg.id),
+  ]);
 
   if (!sub) {
     return (
@@ -70,214 +89,265 @@ export default async function PortalPage() {
     );
   }
 
-  const tierName = TIER_NAMES[sub.tier_slug] ?? sub.tier_slug;
+  const tierName = tierDisplayName(sub.tier_slug);
   const services = Array.isArray(sub.services) ? sub.services : [];
   const servicesDisplay = services.length ? services.join(', ') : '—';
 
+  const payment = resolveUpcomingPayment(sub);
+
+  // Setup checklist — auto-hides once a client is fully connected.
+  const setupSteps = [
+    { label: 'Account activated', done: true, href: null as string | null },
+    {
+      label: 'Connect your shared Drive folder',
+      done: Boolean(org?.drive_folder_url),
+      href: '/portal/documents',
+    },
+    {
+      label: 'Connect Xero for live finance',
+      done: Boolean(org?.xero_connected_at),
+      href: '/portal/finance',
+    },
+  ];
+  const setupComplete = setupSteps.every((s) => s.done);
+
+  const keyDates = upcomingKeyDates().slice(0, 3);
+
+  const quickActions: {
+    label: string;
+    icon: LucideIcon;
+    href: string;
+    external?: boolean;
+  }[] = [
+    { label: 'Billing', icon: Receipt, href: '/portal/billing' },
+    { label: 'Documents', icon: FileText, href: '/portal/documents' },
+    { label: 'Key dates', icon: CalendarClock, href: '/portal/dates' },
+    { label: 'Book a call', icon: MessageSquare, href: siteConfig.links.booking, external: true },
+  ];
+
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
-      <header className="mb-10">
+    <main className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
+      {/* Summary header */}
+      <section className={`${PORTAL_PANEL} mb-6 p-6 sm:p-8`}>
         <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
-          <SubscriptionStatusBadge status={sub.status} />
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              {activeOrg.display_name}
+            </h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">
+                <Layers className="h-3 w-3" />
+                {tierName}
+              </span>
+              <SubscriptionStatusBadge status={sub.status} />
+            </div>
+          </div>
+          <div className="sm:text-right">
+            <p className="flex items-baseline gap-1 font-mono text-2xl font-bold tracking-tight sm:justify-end">
+              {formatZAR(Number(sub.total_charge_zar))}
+              <span className="whitespace-nowrap text-sm font-medium text-muted-foreground">
+                /month
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {payment.label} · {formatLongDate(payment.date)}
+            </p>
+          </div>
         </div>
-      </header>
+      </section>
 
-      <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+      {/* Quick actions */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+          const inner = (
+            <>
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15">
+                <Icon className="h-4 w-4 text-primary" />
+              </span>
+              <span className="flex items-center gap-1 text-sm font-medium">
+                {action.label}
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+              </span>
+            </>
+          );
+          const cls = `${PORTAL_CARD} flex flex-col items-start gap-3 p-4`;
+          return action.external ? (
+            <a
+              key={action.label}
+              href={action.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cls}
+            >
+              {inner}
+            </a>
+          ) : (
+            <Link key={action.label} href={action.href} className={cls}>
+              {inner}
+            </Link>
+          );
+        })}
+      </div>
 
+      {/* Setup checklist (new clients only) */}
+      {!setupComplete && (
+        <section className={`${PORTAL_PANEL} mb-6 p-6`}>
+          <h2 className="mb-1 flex items-center gap-2 text-base font-semibold">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            Get your portal set up
+          </h2>
+          <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+            A couple of steps left to switch everything on. We do the work — just point us at the
+            right places.
+          </p>
+          <ul className="space-y-1">
+            {setupSteps.map((step) => (
+              <li key={step.label}>
+                {step.done ? (
+                  <div className="flex items-center gap-3 rounded-lg px-2.5 py-2">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="text-sm text-muted-foreground line-through">{step.label}</span>
+                  </div>
+                ) : (
+                  <Link
+                    href={step.href ?? '/portal'}
+                    className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-white/[0.04]"
+                  >
+                    <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm font-medium">{step.label}</span>
+                    <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground" />
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
         {/* Main column */}
         <div className="space-y-6">
+          {/* Upcoming key dates */}
+          <section className={`${PORTAL_PANEL} p-6`}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 text-base font-semibold">
+                <CalendarClock className="h-4 w-4 text-primary" />
+                Upcoming key dates
+              </h2>
+              <Link
+                href="/portal/dates"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
+              >
+                See all
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <ul className="divide-y divide-border">
+              {keyDates.map((d) => {
+                const badge = dueLabel(d.daysUntil);
+                return (
+                  <li
+                    key={d.id}
+                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {d.tag}
+                      </span>
+                      <span className="truncate text-sm font-medium">{d.label}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2.5">
+                      <span className="text-xs text-muted-foreground">{formatShortDate(d.due)}</span>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge.cls}`}
+                      >
+                        {badge.text}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
 
-          {/* Plan card */}
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-primary" />
-              Plan & services
+          {/* Finance snapshot */}
+          <PortalFinanceSnapshot finance={finance} />
+        </div>
+
+        {/* Right column */}
+        <aside className="space-y-6">
+          {/* Plan & services */}
+          <section className={`${PORTAL_PANEL} p-6`}>
+            <h2 className="mb-4 flex items-center gap-2 text-base font-semibold">
+              <Layers className="h-4 w-4 text-primary" />
+              Plan &amp; services
             </h2>
-            <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+            <dl className="space-y-4 text-sm">
               <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                <dt className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Tier
                 </dt>
                 <dd className="font-medium">{tierName}</dd>
               </div>
               <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                <dt className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Services
                 </dt>
                 <dd className="font-medium capitalize">{servicesDisplay}</dd>
               </div>
-              <div className="sm:col-span-2">
-                <Separator className="my-1" />
-              </div>
-              <div className="sm:col-span-2 flex items-baseline justify-between">
-                <dt className="text-sm font-semibold">Total monthly charge</dt>
-                <dd className="font-mono font-bold text-lg">
+              <Separator />
+              <div className="flex items-baseline justify-between">
+                <dt className="font-semibold">Total monthly</dt>
+                <dd className="font-mono text-base font-bold">
                   {formatZAR(Number(sub.total_charge_zar))}
                 </dd>
               </div>
             </dl>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button variant="outline" disabled className="gap-2">
+            <div className="mt-5 flex flex-col gap-2">
+              <Button variant="outline" size="sm" disabled className="justify-start">
                 Change tier or services
               </Button>
               <Button
                 variant="ghost"
+                size="sm"
                 disabled
-                className="gap-2 text-destructive hover:text-destructive"
+                className="justify-start text-destructive hover:text-destructive"
               >
                 Cancel with 30 days notice
               </Button>
             </div>
           </section>
 
-          {/* Documents */}
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-primary" />
-              Documents
+          {/* Explore */}
+          <section>
+            <h2 className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              Explore
             </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              Your monthly P&amp;L, balance sheet, VAT201 confirmations and IRP5s live in your shared Drive folder. Drop receipts and supporting documents into the same folder.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              className="gap-2"
-              render={<Link href="/portal/documents" />}
-            >
-              Open documents
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+            <div className="space-y-2.5">
+              <ExploreRow
+                href="/portal/shop"
+                icon={ShoppingBag}
+                title="Add-on services"
+                hint="Once-off jobs outside your plan"
+              />
+              <ExploreRow
+                href="/portal/year-end"
+                icon={ClipboardList}
+                title="Year-end planner"
+                hint="Prep checklist for your AFS"
+              />
+            </div>
           </section>
 
-          {/* Finance */}
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <LineChart className="h-4 w-4 text-primary" />
-              Finance
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              A daily snapshot of your numbers — cash, revenue, expenses and runway — pulled straight from Xero once your organisation is linked.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              className="gap-2"
-              render={<Link href="/portal/finance" />}
-            >
-              View finance
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </section>
-
-          {/* Key dates */}
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-primary" />
-              Key dates
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              The SARS and statutory deadlines on the horizon — PAYE, VAT, provisional tax and employer reconciliations. We handle the filing; this keeps you in the loop.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              className="gap-2"
-              render={<Link href="/portal/dates" />}
-            >
-              See key dates
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </section>
-
-          {/* Add-on services */}
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4 text-primary" />
-              Add-on services
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              Once-off jobs outside your monthly plan — tax returns, annual financial statements, CIPC filings and more. Billed separately, only when you need them.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              className="gap-2"
-              render={<Link href="/portal/shop" />}
-            >
-              Browse services
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </section>
-
-          {/* Year-end planner */}
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-base font-semibold mb-4 flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-primary" />
-              Year-end planner
-            </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              A prep checklist for your annual financial statements. Tick off what you&apos;ve gathered — the sooner it&apos;s complete, the sooner your AFS and tax return are done.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              className="gap-2"
-              render={<Link href="/portal/year-end" />}
-            >
-              Open planner
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </section>
-        </div>
-
-        {/* Right column */}
-        <aside className="space-y-6">
-          <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-              At a glance
-            </h2>
-            <dl className="space-y-4 text-sm">
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3" /> Next billing
-                </dt>
-                <dd className="font-medium">
-                  {formatLongDate(sub.current_period_end)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3 w-3" /> Subscription started
-                </dt>
-                <dd className="font-medium">
-                  {formatLongDate(sub.created_at)}
-                </dd>
-              </div>
-            </dl>
-            <Link
-              href="/portal/billing"
-              className="mt-5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              View billing history
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </section>
-
-          <section className="rounded-xl border border-primary/25 bg-primary/[0.04] p-6">
-            <h2 className="text-base font-semibold mb-2 flex items-center gap-2">
+          {/* Accountant */}
+          <section className={`${PORTAL_PANEL} p-6`}>
+            <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
               <MessageSquare className="h-4 w-4 text-primary" />
-              Need to speak to your accountant?
+              Speak to your accountant
             </h2>
-            <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+            <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
               Your assigned accountant responds within one business day.
             </p>
             <Button
@@ -285,11 +355,7 @@ export default async function PortalPage() {
               size="sm"
               nativeButton={false}
               render={
-                <a
-                  href={siteConfig.links.booking}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
+                <a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />
               }
             >
               Book a 15-minute call
@@ -301,6 +367,31 @@ export default async function PortalPage() {
   );
 }
 
+function ExploreRow({
+  href,
+  icon: Icon,
+  title,
+  hint,
+}: {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <Link href={href} className={`${PORTAL_CARD} flex items-center gap-3 p-4`}>
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15">
+        <Icon className="h-4 w-4 text-primary" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="truncate text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+    </Link>
+  );
+}
+
 interface EmptyStateProps {
   title: string;
   body: string;
@@ -308,24 +399,16 @@ interface EmptyStateProps {
 
 function PortalEmptyState({ title, body }: EmptyStateProps) {
   return (
-    <main className="max-w-2xl mx-auto px-6 py-16 lg:py-24 text-center">
-      <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 mb-5">
+    <main className="mx-auto max-w-2xl px-6 py-16 text-center lg:py-24">
+      <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/15">
         <Lock className="h-5 w-5 text-primary" />
       </div>
-      <h1 className="text-3xl font-bold tracking-tight mb-3">{title}</h1>
-      <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-        {body}
-      </p>
+      <h1 className="mb-3 text-3xl font-bold tracking-tight">{title}</h1>
+      <p className="mb-8 text-sm leading-relaxed text-muted-foreground">{body}</p>
       <div className="flex flex-col items-center gap-3">
         <Button
           nativeButton={false}
-          render={
-            <a
-              href={siteConfig.links.booking}
-              target="_blank"
-              rel="noopener noreferrer"
-            />
-          }
+          render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
         >
           Book a 15-minute call
         </Button>

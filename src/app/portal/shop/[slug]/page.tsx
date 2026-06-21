@@ -53,8 +53,8 @@ export default async function PortalShopProductPage({
         All add-on services
       </Link>
 
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="border-b border-border bg-primary/[0.04] p-6 sm:p-8">
+      <div className="premium-glass overflow-hidden rounded-2xl border border-white/10 bg-card/80">
+        <div className="border-b border-white/10 bg-primary/[0.04] p-6 sm:p-8">
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 mb-4">
             <Icon className="h-5 w-5 text-primary" />
           </span>

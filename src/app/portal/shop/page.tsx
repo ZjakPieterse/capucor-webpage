@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
+import { ArrowRight, Info, ShoppingBag } from 'lucide-react';
 import { getPortalContext } from '@/lib/portal/portalContext';
-import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
+import { PortalPageHeader } from '@/components/portal/PortalPageHeader';
+import { PORTAL_CARD } from '@/components/portal/portalCard';
 import { formatZAR } from '@/lib/utils';
 import { SHOP_PRODUCTS } from '@/config/shopProducts';
 
@@ -16,22 +17,14 @@ export default async function PortalShopPage() {
   const { orgs, activeOrg } = await getPortalContext();
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-12 lg:py-16">
-      <Link
-        href="/portal"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground mb-6 transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Back to portal
-      </Link>
-
-      <header className="mb-8">
-        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
-        <h1 className="text-3xl font-bold tracking-tight">Add-on services</h1>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-prose">
-          Once-off jobs that sit outside your monthly plan — billed separately, only when you need them.
-        </p>
-      </header>
+    <main className="mx-auto max-w-4xl px-6 py-12 lg:py-16">
+      <PortalPageHeader
+        title="Add-on services"
+        icon={ShoppingBag}
+        orgs={orgs}
+        activeOrg={activeOrg}
+        description="Once-off jobs that sit outside your monthly plan — billed separately, only when you need them."
+      />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {SHOP_PRODUCTS.map((product) => {
@@ -40,7 +33,7 @@ export default async function PortalShopPage() {
             <Link
               key={product.slug}
               href={`/portal/shop/${product.slug}`}
-              className="service-card group rounded-xl border border-border bg-card p-6 flex flex-col"
+              className={`group flex flex-col p-6 ${PORTAL_CARD}`}
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 mb-4">
                 <Icon className="h-5 w-5 text-primary" />

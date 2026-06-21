@@ -5,10 +5,28 @@ import { siteConfig } from '@/config/site';
 // Read-only documents content (shared Drive folder link, or a "not ready" state),
 // shared by the client documents page and the internal view-only client mirror.
 // Page chrome is supplied by the caller.
-export function DocumentsView({ folderUrl }: { folderUrl: string | null }) {
+//
+// `surface`: 'flat' (default) keeps the internal mirror's plain card look;
+// 'glass' opts the client portal into the glassy premium card system.
+export function DocumentsView({
+  folderUrl,
+  surface = 'flat',
+}: {
+  folderUrl: string | null;
+  surface?: 'flat' | 'glass';
+}) {
+  const panel =
+    surface === 'glass'
+      ? 'premium-glass rounded-xl border border-white/10 bg-card/80'
+      : 'rounded-xl border border-border bg-card';
+  const dashed =
+    surface === 'glass'
+      ? 'rounded-xl border border-dashed border-white/15 bg-card/40'
+      : 'rounded-xl border border-dashed border-border bg-card';
+
   if (folderUrl) {
     return (
-      <section className="rounded-xl border border-border bg-card p-6 lg:p-8">
+      <section className={`p-6 lg:p-8 ${panel}`}>
         <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
           <FolderOpen className="h-5 w-5 text-primary" />
         </div>
@@ -31,7 +49,7 @@ export function DocumentsView({ folderUrl }: { folderUrl: string | null }) {
   }
 
   return (
-    <section className="rounded-xl border border-dashed border-border bg-card p-6 text-center lg:p-8">
+    <section className={`p-6 text-center lg:p-8 ${dashed}`}>
       <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted">
         <Lock className="h-5 w-5 text-muted-foreground" />
       </div>

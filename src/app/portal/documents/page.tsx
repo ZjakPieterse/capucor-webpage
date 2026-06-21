@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { FileText, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { getPortalContext } from '@/lib/portal/portalContext';
 import { getOrgRecord } from '@/lib/portal/orgData';
-import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
+import { PortalPageHeader } from '@/components/portal/PortalPageHeader';
 import { DocumentsView } from '@/components/portal/DocumentsView';
 
 export const metadata: Metadata = {
@@ -25,21 +25,9 @@ export default async function PortalDocumentsPage() {
   const org = await getOrgRecord(admin, activeOrg.id);
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 lg:py-16">
-      <Link
-        href="/portal"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground mb-6 transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Back to portal
-      </Link>
-
-      <header className="mb-8">
-        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
-        <h1 className="text-3xl font-bold tracking-tight">Documents</h1>
-      </header>
-
-      <DocumentsView folderUrl={org?.drive_folder_url ?? null} />
+    <main className="mx-auto max-w-3xl px-6 py-12 lg:py-16">
+      <PortalPageHeader title="Documents" icon={FileText} orgs={orgs} activeOrg={activeOrg} />
+      <DocumentsView folderUrl={org?.drive_folder_url ?? null} surface="glass" />
     </main>
   );
 }
