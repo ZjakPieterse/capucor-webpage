@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Building2 } from 'lucide-react';
+import { Building2, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SignOutButton } from '@/components/portal/SignOutButton';
 import type { InternalUser } from '@/lib/auth/requireInternal';
@@ -46,6 +46,13 @@ export function InternalNav({ user }: { user: InternalUser }) {
           })}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
+          <Link
+            href="/portal"
+            className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="hidden sm:inline">Your portal</span>
+          </Link>
           <span className="hidden text-muted-foreground sm:inline">
             {user.email} ({user.role})
           </span>
