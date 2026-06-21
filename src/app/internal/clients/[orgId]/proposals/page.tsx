@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getOrgProposals, getOrgRecord } from '@/lib/portal/orgData';
 import { normaliseOrgEmails } from '@/lib/internal/clientProposals';
 import { ProposalsTable } from '@/components/internal/ProposalsTable';
+import { PORTAL_PANEL } from '@/components/portal/portalCard';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Client proposals' };
@@ -23,12 +24,12 @@ export default async function ClientProposalsPage({
   const rows = await getOrgProposals(db, { orgId, emails });
 
   return (
-    <div>
+    <section className={`${PORTAL_PANEL} p-6`}>
       <p className="mb-4 text-sm text-muted-foreground">
         Proposals for this client. View-only.
       </p>
       {/* canManage=false — amend/resend stay on the proposals hub for admins. */}
       <ProposalsTable rows={rows} canManage={false} />
-    </div>
+    </section>
   );
 }

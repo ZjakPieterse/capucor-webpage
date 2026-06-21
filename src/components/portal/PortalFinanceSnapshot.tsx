@@ -19,7 +19,13 @@ function formatZ(value: number | undefined): string | null {
   return formatZAR(value);
 }
 
-export function PortalFinanceSnapshot({ finance }: { finance: OrgFinance }) {
+export function PortalFinanceSnapshot({
+  finance,
+  href = '/portal/finance',
+}: {
+  finance: OrgFinance;
+  href?: string;
+}) {
   const { xeroConnected, snapshot } = finance;
   const live = xeroConnected && snapshot != null;
 
@@ -31,7 +37,7 @@ export function PortalFinanceSnapshot({ finance }: { finance: OrgFinance }) {
           Finance snapshot
         </h2>
         <Link
-          href="/portal/finance"
+          href={href}
           className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
         >
           View finance

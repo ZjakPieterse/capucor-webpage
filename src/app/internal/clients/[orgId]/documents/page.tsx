@@ -15,5 +15,5 @@ export default async function ClientDocumentsPage({
   const db = await createSupabaseServerClient();
   const org = await getOrgRecord(db, orgId);
 
-  return <DocumentsView folderUrl={org?.drive_folder_url ?? null} />;
+  return <DocumentsView folderUrl={org?.drive_folder_url ?? null} surface="glass" />;
 }

@@ -17,5 +17,5 @@ export default async function ClientBillingPage({
   const sub = await getOrgSubscription(db, orgId);
   const invoices = sub ? await getOrgInvoices(db, orgId) : [];
 
-  return <BillingView sub={sub} invoices={invoices} />;
+  return <BillingView sub={sub} invoices={invoices} surface="glass" />;
 }

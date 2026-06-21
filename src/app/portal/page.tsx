@@ -16,9 +16,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { SubscriptionStatusBadge } from '@/components/portal/StatusBadge';
 import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
 import { PortalFinanceSnapshot } from '@/components/portal/PortalFinanceSnapshot';
+import { PortalSummaryHeader } from '@/components/portal/PortalSummaryHeader';
+import { PortalQuickActions, type PortalQuickAction } from '@/components/portal/PortalQuickActions';
+import { PortalKeyDatesWidget } from '@/components/portal/PortalKeyDatesWidget';
 import { PORTAL_CARD, PORTAL_PANEL } from '@/components/portal/portalCard';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { getPortalContext } from '@/lib/portal/portalContext';
@@ -38,28 +40,6 @@ export const metadata: Metadata = {
   description: 'Your Capucor subscription, documents and compliance status.',
   robots: { index: false },
 };
-
-function formatLongDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-ZA', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-function formatShortDate(d: Date): string {
-  return d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
-}
-
-function dueLabel(daysUntil: number): { text: string; cls: string } {
-  if (daysUntil <= 0)
-    return { text: 'Due today', cls: 'bg-destructive/15 text-destructive border-destructive/30' };
-  if (daysUntil === 1) return { text: 'Tomorrow', cls: 'bg-warning/15 text-warning border-warning/30' };
-  if (daysUntil <= 14)
-    return { text: `In ${daysUntil} days`, cls: 'bg-warning/15 text-warning border-warning/30' };
-  return { text: `In ${daysUntil} days`, cls: 'bg-muted text-muted-foreground border-border' };
-}
 
 export default async function PortalPage() {
   const { orgs, activeOrg } = await getPortalContext();
@@ -113,12 +93,7 @@ export default async function PortalPage() {
 
   const keyDates = upcomingKeyDates().slice(0, 3);
 
-  const quickActions: {
-    label: string;
-    icon: LucideIcon;
-    href: string;
-    external?: boolean;
-  }[] = [
+  const quickActions: PortalQuickAction[] = [
     { label: 'Billing', icon: Receipt, href: '/portal/billing' },
     { label: 'Documents', icon: FileText, href: '/portal/documents' },
     { label: 'Key dates', icon: CalendarClock, href: '/portal/dates' },
@@ -128,68 +103,18 @@ export default async function PortalPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
       {/* Summary header */}
-      <section className={`${PORTAL_PANEL} mb-6 p-6 sm:p-8`}>
-        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {activeOrg.display_name}
-            </h1>
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">
-                <Layers className="h-3 w-3" />
-                {tierName}
-              </span>
-              <SubscriptionStatusBadge status={sub.status} />
-            </div>
-          </div>
-          <div className="sm:text-right">
-            <p className="flex items-baseline gap-1 font-mono text-2xl font-bold tracking-tight sm:justify-end">
-              {formatZAR(Number(sub.total_charge_zar))}
-              <span className="whitespace-nowrap text-sm font-medium text-muted-foreground">
-                /month
-              </span>
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {payment.label} · {formatLongDate(payment.date)}
-            </p>
-          </div>
-        </div>
-      </section>
+      <PortalSummaryHeader
+        className="mb-6"
+        orgLabel={<PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />}
+        heading={activeOrg.display_name}
+        tierName={tierName}
+        status={sub.status}
+        monthlyZar={Number(sub.total_charge_zar)}
+        payment={payment}
+      />
 
       {/* Quick actions */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {quickActions.map((action) => {
-          const Icon = action.icon;
-          const inner = (
-            <>
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15">
-                <Icon className="h-4 w-4 text-primary" />
-              </span>
-              <span className="flex items-center gap-1 text-sm font-medium">
-                {action.label}
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              </span>
-            </>
-          );
-          const cls = `${PORTAL_CARD} flex flex-col items-start gap-3 p-4`;
-          return action.external ? (
-            <a
-              key={action.label}
-              href={action.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cls}
-            >
-              {inner}
-            </a>
-          ) : (
-            <Link key={action.label} href={action.href} className={cls}>
-              {inner}
-            </Link>
-          );
-        })}
-      </div>
+      <PortalQuickActions actions={quickActions} className="mb-6" />
 
       {/* Setup checklist (new clients only) */}
       {!setupComplete && (
@@ -230,47 +155,7 @@ export default async function PortalPage() {
         {/* Main column */}
         <div className="space-y-6">
           {/* Upcoming key dates */}
-          <section className={`${PORTAL_PANEL} p-6`}>
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 text-base font-semibold">
-                <CalendarClock className="h-4 w-4 text-primary" />
-                Upcoming key dates
-              </h2>
-              <Link
-                href="/portal/dates"
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
-              >
-                See all
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </div>
-            <ul className="divide-y divide-border">
-              {keyDates.map((d) => {
-                const badge = dueLabel(d.daysUntil);
-                return (
-                  <li
-                    key={d.id}
-                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 py-3 first:pt-0 last:pb-0"
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="inline-flex shrink-0 items-center rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        {d.tag}
-                      </span>
-                      <span className="truncate text-sm font-medium">{d.label}</span>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2.5">
-                      <span className="text-xs text-muted-foreground">{formatShortDate(d.due)}</span>
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${badge.cls}`}
-                      >
-                        {badge.text}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+          <PortalKeyDatesWidget dates={keyDates} seeAllHref="/portal/dates" />
 
           {/* Finance snapshot */}
           <PortalFinanceSnapshot finance={finance} />

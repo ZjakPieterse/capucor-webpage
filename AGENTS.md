@@ -233,9 +233,24 @@ UI work so the front end stays visually consistent. Canonical examples are cited
   bg-card/80`; add your own padding.
 - Sub-pages share [`PortalPageHeader`](src/components/portal/PortalPageHeader.tsx) (icon-led
   title + back link + org label). The portal hub is `app/portal/page.tsx`.
-- Components shared with the `/internal` view-only mirror (`BillingView`, `FinanceView`,
-  `DocumentsView`) take a `surface` prop: `'flat'` (default) keeps the internal page's plain
-  cards; the portal passes `'glass'`. Don't glassify those components unconditionally.
+- **The hub's header building blocks are extracted as presentational components reused by the
+  `/internal` view-only client mirror so the two can't drift:**
+  [`PortalSummaryHeader`](src/components/portal/PortalSummaryHeader.tsx) (tier + subscription-status
+  badges + monthly + first/next payment — pass `heading`/`orgLabel` on the portal; omit both on
+  the mirror, where the org name/status already sit in the layout header),
+  [`PortalQuickActions`](src/components/portal/PortalQuickActions.tsx) (icon-tile link row — the
+  page supplies the per-audience `href`s), and
+  [`PortalKeyDatesWidget`](src/components/portal/PortalKeyDatesWidget.tsx) (the shared SARS
+  calendar; `seeAllHref` is optional — the mirror has no dates tab).
+  [`PortalFinanceSnapshot`](src/components/portal/PortalFinanceSnapshot.tsx) takes an optional
+  `href` (default `/portal/finance`) so the mirror points at its own finance tab. The **page**
+  fetches the data and picks the Supabase client (portal → admin; mirror → session/RLS); these
+  components stay purely presentational.
+- The shared views `BillingView` / `FinanceView` / `DocumentsView` take a `surface` prop:
+  `'glass'` is the premium glassy look, `'flat'` the legacy plain cards. **Both the client portal
+  and the `/internal` mirror now pass `'glass'`** (the mirror was brought to visual parity in the
+  Session-6 pass; its Proposals tab is wrapped in a `PORTAL_PANEL`). The prop defaults to `'flat'`
+  and is kept for safety/flexibility — don't remove it or glassify those components unconditionally.
 
 ### Hover / interaction states — read before adding any `:hover`
 

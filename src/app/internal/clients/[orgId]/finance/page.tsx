@@ -15,5 +15,5 @@ export default async function ClientFinancePage({
   const db = await createSupabaseServerClient();
   const finance = await getOrgFinance(db, orgId);
 
-  return <FinanceView finance={finance} />;
+  return <FinanceView finance={finance} surface="glass" />;
 }
