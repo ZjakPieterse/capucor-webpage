@@ -6,10 +6,9 @@ import { SignOutButton } from '@/components/portal/SignOutButton';
 
 // The /internal staff hub (PR13b). One gate (requireInternal → the
 // public.internal_users allowlist, migration 011) + the shared nav live here, so
-// every /internal page inherits them. The hub still renders inside the marketing
-// Navbar/Footer from the root layout — giving it its own chrome needs the
-// route-group refactor that PR11 deferred, so that stays out of scope. The hub is
-// utilitarian by design: it opts out of the public premium-section /
+// every /internal page inherits them. Since PR11 stripped the marketing chrome
+// out of the root layout, /internal stands alone with just this gate + InternalNav.
+// The hub is utilitarian by design: it opts out of the public premium-section /
 // SectionDivider rhythm.
 export const dynamic = 'force-dynamic';
 

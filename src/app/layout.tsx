@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { geistSans, geistMono } from '@/lib/fonts';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
 import { siteConfig } from '@/config/site';
 import './globals.css';
 
@@ -45,6 +43,10 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+// Bare shell: <html> + fonts + globals + metadata only. Marketing chrome (Navbar/
+// Footer) moved to app/(site)/layout.tsx so /proposal, /portal and /internal can
+// render standalone with their own layouts (PR11). Every group inherits the fonts,
+// globals.css and metadata from here.
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -55,9 +57,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="min-h-screen flex flex-col bg-background text-foreground antialiased">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

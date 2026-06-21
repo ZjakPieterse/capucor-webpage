@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { SignOutButton } from '@/components/portal/SignOutButton';
 import { SubscriptionStatusBadge } from '@/components/portal/StatusBadge';
 import { PortalOrgLabel } from '@/components/portal/PortalOrgLabel';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -77,15 +76,12 @@ export default async function PortalPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 lg:py-16">
-      <header className="mb-10 flex items-start justify-between gap-4">
-        <div>
-          <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
-          <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
-            <SubscriptionStatusBadge status={sub.status} />
-          </div>
+      <header className="mb-10">
+        <PortalOrgLabel orgs={orgs} activeOrg={activeOrg} />
+        <div className="flex flex-wrap items-baseline gap-3">
+          <h1 className="text-3xl font-bold tracking-tight">Your subscription</h1>
+          <SubscriptionStatusBadge status={sub.status} />
         </div>
-        <SignOutButton className="shrink-0" />
       </header>
 
       <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
@@ -333,7 +329,6 @@ function PortalEmptyState({ title, body }: EmptyStateProps) {
         >
           Book a 15-minute call
         </Button>
-        <SignOutButton />
       </div>
     </main>
   );

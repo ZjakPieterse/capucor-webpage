@@ -138,7 +138,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
 
     <!-- Header -->
     <div style="border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:6px;">
-      <p style="margin:0;font-size:18px;font-weight:700;color:#0f766e;">Capucor</p>
+      <img src="https://capucor.app/brand/logo-light.png" alt="Capucor Business Solutions" style="height:38px;width:auto;display:block;" />
       <p style="${LABEL}margin-top:12px;">Proposal &amp; engagement</p>
       <h1 style="margin:2px 0 4px;font-size:22px;color:#111827;">For ${escapeHtml(d.businessName)}</h1>
       <p style="margin:0;font-size:13px;color:#6b7280;">Prepared for ${escapeHtml(fullName)}, by Capucor Business Solutions</p>

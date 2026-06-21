@@ -1,3 +1,5 @@
+import Image from 'next/image';
+import Link from 'next/link';
 import { Check, X, RefreshCw } from 'lucide-react';
 import type { FairUsageLine } from '@/lib/schedule';
 import { FEES_NOTES, type TermsBlock } from '@/config/proposalTerms';
@@ -37,7 +39,16 @@ export function DocumentHeader({
     <div className="border-b border-border bg-primary/[0.04] p-6 sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-base font-bold tracking-tight text-primary">Capucor</p>
+          <Link href="/" className="inline-flex items-center transition-opacity hover:opacity-80">
+            <Image
+              src="/brand/logo-dark.png"
+              alt="Capucor Business Solutions"
+              height={40}
+              width={200}
+              className="h-8 w-auto"
+              style={{ width: 'auto' }}
+            />
+          </Link>
           <p className="mt-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Proposal &amp; engagement
           </p>
