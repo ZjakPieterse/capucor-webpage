@@ -42,7 +42,14 @@ export function OrgSwitcher({
       <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <Select value={activeId} onValueChange={handleChange} disabled={isPending}>
         <SelectTrigger aria-label="Switch business" className="min-w-[12rem]">
-          <SelectValue />
+          {/* base-ui Select.Value renders the RAW value (here the org id, a uuid)
+              unless given a formatter — map the active id back to its display name,
+              otherwise the trigger shows a uuid while the dropdown list is correct. */}
+          <SelectValue>
+            {(value: string | null) =>
+              orgs.find((o) => o.id === value)?.display_name ?? ''
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {orgs.map((o) => (
