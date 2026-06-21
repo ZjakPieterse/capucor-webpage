@@ -55,7 +55,18 @@ describe('renderProposalDocumentHtml', () => {
 
   it('renders gracefully without a signature image', () => {
     const html = renderProposalDocumentHtml(sampleData({ signatureImage: null }));
-    expect(html).not.toContain('data:image/png');
+    // The signature image is absent, but the header logo is always an inline
+    // data: URL (the Apps Script PDF converter can't fetch remote images), so
+    // assert specifically that the signature PNG isn't embedded.
+    expect(html).not.toContain(PNG);
     expect(html).toContain('Accepted and signed');
+  });
+
+  it('embeds the Capucor logo inline (data URL) so the PDF converter can render it', () => {
+    const html = renderProposalDocumentHtml(sampleData());
+    expect(html).toContain('data:image/png;base64,');
+    expect(html).toContain('alt="Capucor Business Solutions"');
+    // never a remote logo URL — the converter only renders inline images
+    expect(html).not.toContain('https://capucor.app/brand/');
   });
 });
