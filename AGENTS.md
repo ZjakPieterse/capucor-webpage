@@ -221,6 +221,22 @@ UI work so the front end stays visually consistent. Canonical examples are cited
   double up with extra inline `.premium-divider` markers inside a section that already has
   a divider above or below.
 
+### Client portal surfaces
+
+- **The client portal does not use the marketing `premium-section` / `SectionDivider`
+  rhythm.** It is a card-based app surface, not a scroll of marketing sections. Pages set
+  their own `max-w-* mx-auto px-6 py-12 lg:py-16` container.
+- **Use the shared card constants in `components/portal/portalCard.ts`, not ad-hoc classes:**
+  `PORTAL_CARD` (`.premium-card` — the glassy surface *with* the `@media all` hover lift) for
+  clickable cards/tiles/link rows, and `PORTAL_PANEL` (`.premium-glass` — same surface, no
+  lift) for static information panels. Both already include `rounded-xl border border-white/10
+  bg-card/80`; add your own padding.
+- Sub-pages share [`PortalPageHeader`](src/components/portal/PortalPageHeader.tsx) (icon-led
+  title + back link + org label). The portal hub is `app/portal/page.tsx`.
+- Components shared with the `/internal` view-only mirror (`BillingView`, `FinanceView`,
+  `DocumentsView`) take a `surface` prop: `'flat'` (default) keeps the internal page's plain
+  cards; the portal passes `'glass'`. Don't glassify those components unconditionally.
+
 ### Hover / interaction states — read before adding any `:hover`
 
 - **Hover styling lives as named CSS classes in `globals.css`, not Tailwind `hover:`
