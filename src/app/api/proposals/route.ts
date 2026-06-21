@@ -31,7 +31,7 @@ import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
-import { formatZAR } from '@/lib/utils';
+import { formatZAR, firstOfNextMonth } from '@/lib/utils';
 
 const PROPOSAL_TTL_DAYS = 7;
 
@@ -253,6 +253,13 @@ interface ProposalEmailData {
 // Hand-rolled, inline-styled HTML so it renders in any email client without a
 // build step or extra dependency. Keep it simple and table-free where possible.
 function renderProposalEmail(d: ProposalEmailData): string {
+  // Billing starts on the 1st of the next calendar month (see firstOfNextMonth),
+  // matching the subscription created at signing. Show that first-debit date.
+  const firstDebitDate = firstOfNextMonth().toLocaleDateString('en-ZA', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
   const rows = d.lineItems
     .map(
       (li) => `
@@ -290,6 +297,9 @@ function renderProposalEmail(d: ProposalEmailData): string {
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
         <tr><td style="padding:8px 0;color:#111827;font-size:16px;font-weight:700;">Total monthly charge</td><td style="padding:8px 0;text-align:right;color:#111827;font-size:16px;font-weight:700;">${formatZAR(d.totalChargeZAR)}</td></tr>
       </table>
+      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">
+        Your first debit order will be on <strong>${firstDebitDate}</strong>.
+      </p>
 
       <a href="${d.proposalUrl}" style="display:block;margin:28px 0 8px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:15px;padding:14px 20px;border-radius:10px;">
         View &amp; sign your proposal

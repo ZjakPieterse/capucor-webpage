@@ -18,6 +18,7 @@ import {
 } from '@/components/proposal/ProposalSections';
 import { Button } from '@/components/ui/button';
 import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
+import { firstOfNextMonth } from '@/lib/utils';
 import {
   PROPOSAL_TERMS,
   INLINE_TERM_IDS,
@@ -177,6 +178,14 @@ export default async function ProposalPage({
   const inlineIds = INLINE_TERM_IDS as readonly string[];
   const inlineTerms = PROPOSAL_TERMS.filter((b) => inlineIds.includes(b.id));
 
+  // Billing starts on the 1st of the next calendar month (see firstOfNextMonth);
+  // show that first-debit date so the client knows when collection begins.
+  const firstDebitDate = firstOfNextMonth().toLocaleDateString('en-ZA', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
   return (
     <div className="mx-auto max-w-2xl px-6 py-12 lg:py-20">
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -218,6 +227,10 @@ export default async function ProposalPage({
               monthlyZAR={Number(row.monthly_total_zar)}
             />
             <FeesNotes />
+            <p className="mt-3 text-xs text-muted-foreground">
+              First debit order:{' '}
+              <span className="font-medium text-foreground">{firstDebitDate}</span>
+            </p>
           </div>
 
           <FeeChangesSection fairUsage={fairUsage} />

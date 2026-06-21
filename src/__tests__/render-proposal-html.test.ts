@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
 import type { FairUsageLine } from '@/lib/schedule';
-import { formatZAR } from '@/lib/utils';
+import { formatZAR, firstOfNextMonth } from '@/lib/utils';
 
 const PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -51,6 +51,17 @@ describe('renderProposalDocumentHtml', () => {
     expect(html).toContain('Pat Patterson'); // signature name
     expect(html).toContain('203.0.113.1'); // signature IP
     expect(html).toContain(PNG); // signature image embedded
+  });
+
+  it('states the first debit order date (1st of next month)', () => {
+    const html = renderProposalDocumentHtml(sampleData());
+    const expected = firstOfNextMonth().toLocaleDateString('en-ZA', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    expect(html).toContain('First debit order:');
+    expect(html).toContain(expected);
   });
 
   it('renders gracefully without a signature image', () => {

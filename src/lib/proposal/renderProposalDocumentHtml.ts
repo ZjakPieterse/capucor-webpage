@@ -18,7 +18,7 @@ import {
   RESPONSIBILITIES_YOURS,
 } from '@/config/proposalTerms';
 import { CAPUCOR_LOGO_LIGHT_DATA_URL } from '@/lib/proposal/capucorLogo';
-import { formatZAR } from '@/lib/utils';
+import { formatZAR, firstOfNextMonth } from '@/lib/utils';
 
 export interface ProposalDocumentData {
   businessName: string;
@@ -180,6 +180,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       </tr>
     </table>
     <ul style="margin:8px 0 0;padding-left:18px;">${FEES_NOTES.map((n) => `<li style="${LI}color:#6b7280;">${escapeHtml(n)}</li>`).join('')}</ul>
+    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First debit order:</strong> ${dateZA(firstOfNextMonth().toISOString())}</p>
 
     <!-- Fee fairness -->
     <p style="${LABEL}">How your fee stays fair</p>

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { firstOfNextMonth } from '@/lib/utils';
 
 /**
  * PR9 — provision-on-sign.
@@ -196,12 +197,6 @@ async function ensureMembership(
 
 // ── Subscription ─────────────────────────────────────────────────────────────
 
-function addOneMonthIso(fromMs: number): string {
-  const d = new Date(fromMs);
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString();
-}
-
 // A portal org needs a subscriptions row too, or /portal shows the "subscription
 // not ready" empty state (portal/page.tsx). The most recent signed proposal is
 // the source of truth, so UPDATE the org's existing subscription in place to the
@@ -244,12 +239,15 @@ async function upsertSubscription(
     return { created: false };
   }
 
-  const nowMs = Date.now();
+  // Subscriptions always start on the 1st of the next calendar month (aligned to
+  // the billing cycle), not the signing date. The proposal/PDF/email show this
+  // same first-debit date, computed the same way.
+  const periodStart = firstOfNextMonth();
   const { error } = await admin.from('subscriptions').insert({
     client_org_id: orgId,
     ...plan,
-    current_period_start: new Date(nowMs).toISOString(),
-    current_period_end: addOneMonthIso(nowMs),
+    current_period_start: periodStart.toISOString(),
+    current_period_end: firstOfNextMonth(periodStart).toISOString(),
   });
   if (error) throw error;
   return { created: true };

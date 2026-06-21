@@ -4,6 +4,7 @@ import {
   provisionFromSignedProposal,
   type ProposalForProvision,
 } from '@/lib/portal/provision';
+import { firstOfNextMonth } from '@/lib/utils';
 
 // ── A small in-memory fake of the service-role Supabase client, supporting just
 //    the query shapes provision.ts uses (select/insert/update + eq/ilike/in +
@@ -201,6 +202,14 @@ describe('provisionFromSignedProposal', () => {
       vat_zar: 0,
       total_charge_zar: 1325,
     });
+
+    // Billing starts on the 1st of next month (not the signing date), and the
+    // period ends on the 1st of the month after.
+    const sub = fake.tables.subscriptions[0]!;
+    const expectedStart = firstOfNextMonth();
+    expect(sub.current_period_start).toBe(expectedStart.toISOString());
+    expect(sub.current_period_end).toBe(firstOfNextMonth(expectedStart).toISOString());
+    expect(new Date(sub.current_period_start as string).getUTCDate()).toBe(1);
 
     // Proposal promoted + linked.
     expect(proposalRow.status).toBe('active');
