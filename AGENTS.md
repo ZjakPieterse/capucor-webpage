@@ -152,6 +152,23 @@ src/
 └── types/            # TypeScript interfaces
 ```
 
+### App Router layouts (route-group topology, PR11)
+
+The root `app/layout.tsx` is a **bare shell** — `<html>` + fonts + `globals.css` + the default
+metadata only, no chrome. Chrome is applied per area by nested layouts:
+
+- **`app/(site)/layout.tsx`** — marketing chrome (Navbar + Footer). **All public pages live in the
+  `(site)` route group** (home, services, pricing, privacy, terms, resources, login, onboarding).
+  Route groups don't change the URL, so **a new public/marketing page goes in `app/(site)/`, not
+  `app/`.**
+- **`app/proposal/layout.tsx`** — bare, no chrome (the standalone signing document).
+- **`app/portal/layout.tsx`** — slim app bar (logo, "Back to website", sign-out). Pages gate auth
+  themselves via `requireSession()`.
+- **`app/internal/layout.tsx`** — `requireInternal` gate + `InternalNav`.
+
+Root `not-found.tsx` / `error.tsx` stay at `app/` root and render bare (the global 404 has no
+marketing chrome by design).
+
 ## Project Tracker
 
 `../AUDIT-PORTAL-TASKS.md` (at the workspace root, one level above this repo) is the living
