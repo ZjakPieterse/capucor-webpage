@@ -11,6 +11,7 @@ function sampleData(overrides: Record<string, unknown> = {}) {
     businessName: 'Pat Trading Co',
     firstName: 'Pat',
     lastName: 'Patterson',
+    tierName: 'Pro',
     refNumber: 'FT-2026-06-0042',
     version: 1,
     sentAt: '2026-06-01T00:00:00.000Z',
@@ -51,6 +52,15 @@ describe('renderProposalDocumentHtml', () => {
     expect(html).toContain('Pat Patterson'); // signature name
     expect(html).toContain('203.0.113.1'); // signature IP
     expect(html).toContain(PNG); // signature image embedded
+  });
+
+  it('surfaces the chosen package name in the header and the fees section', () => {
+    const html = renderProposalDocumentHtml(sampleData());
+    expect(html).toContain('Pro package'); // header badge near the top
+    expect(html).toContain('Package: Pro'); // fees section line
+
+    // The header badge sits above the fees line.
+    expect(html.indexOf('Pro package')).toBeLessThan(html.indexOf('Package: Pro'));
   });
 
   it('states the first debit order date (1st of next month)', () => {

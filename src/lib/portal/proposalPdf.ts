@@ -7,6 +7,7 @@ import {
   outOfScopeItems,
 } from '@/lib/schedule';
 import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
+import { tierDisplayName } from '@/config/tiers';
 import type { Bracket, BracketValue, Service } from '@/types';
 
 /**
@@ -112,6 +113,7 @@ export async function archiveSignedProposal(
       businessName: row.business_name,
       firstName: row.first_name,
       lastName: row.last_name,
+      tierName: tierDisplayName(row.tier_slug),
       refNumber: row.ref_number,
       version: row.version,
       sentAt: row.sent_at,

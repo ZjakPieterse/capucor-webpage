@@ -109,6 +109,31 @@ export const TIER_CUMULATIVE_LABELS: Record<string, string> = {
   premium: 'Everything in Pro, plus:',
 };
 
+// Canonical display names for the three package slugs. The Supabase `tiers`
+// table carries its own `name`, but the proposal PDF and emails are rendered
+// without a DB read, so this is the single source for showing the chosen
+// package by name there. Keep it in step with the `tiers.name` column.
+export const TIER_DISPLAY_NAMES: Record<string, string> = {
+  basic: 'Basic',
+  pro: 'Pro',
+  premium: 'Premium',
+};
+
+/**
+ * Human display name for a tier slug (e.g. `pro` → `Pro`), with a title-cased
+ * fallback for any slug not in the map. Use wherever a proposal surface needs
+ * to show the package by name rather than its slug.
+ */
+export function tierDisplayName(slug: string): string {
+  return (
+    TIER_DISPLAY_NAMES[slug] ??
+    slug
+      .split(/[-_]/)
+      .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
+      .join(' ')
+  );
+}
+
 export const PACKAGE_COMMON_ITEMS = [
   { text: 'Dedicated Finance Team', tooltip: 'A named team that knows your business.' },
   { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },

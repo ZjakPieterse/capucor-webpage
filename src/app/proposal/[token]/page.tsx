@@ -18,6 +18,7 @@ import {
 } from '@/components/proposal/ProposalSections';
 import { Button } from '@/components/ui/button';
 import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
+import { tierDisplayName } from '@/config/tiers';
 import { firstOfNextMonth } from '@/lib/utils';
 import {
   PROPOSAL_TERMS,
@@ -169,6 +170,9 @@ export default async function ProposalPage({
   const brackets = (bracketsRes.data ?? []) as Bracket[];
   const tiers = (tiersRes.data ?? []) as Tier[];
   const selectedBrackets = row.brackets as Record<string, BracketValue>;
+  // Prefer the live DB name; fall back to the canonical config map.
+  const tierName =
+    tiers.find((t) => t.slug === row.tier_slug)?.name ?? tierDisplayName(row.tier_slug);
 
   // Derived schedule + terms (config-driven; see lib/schedule.ts).
   const inclusions = cumulativeInclusions(row.services, row.tier_slug);
@@ -193,6 +197,7 @@ export default async function ProposalPage({
           businessName={row.business_name}
           firstName={row.first_name}
           lastName={row.last_name}
+          tierName={tierName}
           refNumber={row.ref_number}
           sentAt={row.sent_at}
           expiresAt={row.expires_at}

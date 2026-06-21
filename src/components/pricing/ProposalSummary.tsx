@@ -1,5 +1,6 @@
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
+import { tierDisplayName } from '@/config/tiers';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 interface ProposalSummaryProps {
@@ -32,6 +33,7 @@ export function ProposalSummary({
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
+  const tierName = tier?.name ?? tierDisplayName(tierSlug);
   const lineItems = [
     ...buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
     ...buildAddonLineItems(selectedAddons),
@@ -44,9 +46,16 @@ export function ProposalSummary({
 
   return (
     <div className={cn('rounded-2xl border border-primary/25 bg-primary/[0.04] p-5', className)}>
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-primary">
-        Your subscription
-      </p>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
+          Your subscription
+        </p>
+        {tierName && (
+          <span className="shrink-0 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+            {tierName} package
+          </span>
+        )}
+      </div>
 
       <ul className="mb-4 space-y-2">
         {lineItems.map((item) => (
@@ -65,11 +74,9 @@ export function ProposalSummary({
           <span className="font-semibold">Total monthly charge</span>
           <span className="font-mono text-lg font-bold">{formatZAR(monthly)}</span>
         </div>
-        {tier && (
-          <p className="pt-1 text-[11px] text-muted-foreground">
-            {tier.name} tier · billed monthly in advance · cancel any time with 30 days notice
-          </p>
-        )}
+        <p className="pt-1 text-[11px] text-muted-foreground">
+          Billed monthly in advance · cancel any time with 30 days notice
+        </p>
       </div>
     </div>
   );

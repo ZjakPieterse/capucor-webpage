@@ -31,16 +31,10 @@ import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
+import { tierDisplayName } from '@/config/tiers';
 import { formatZAR, firstOfNextMonth } from '@/lib/utils';
 
 const PROPOSAL_TTL_DAYS = 7;
-
-function titleCase(slug: string): string {
-  return slug
-    .split(/[-_]/)
-    .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
-    .join(' ');
-}
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
@@ -182,7 +176,7 @@ export async function POST(req: NextRequest) {
   // 7. Email the proposal link to the client + a reference copy to the owner.
   //    Non-fatal — the proposal row is already persisted.
   const proposalUrl = `${siteConfig.url}/proposal/${token}`;
-  const tierName = titleCase(input.tierSlug);
+  const tierName = tierDisplayName(input.tierSlug);
   const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 

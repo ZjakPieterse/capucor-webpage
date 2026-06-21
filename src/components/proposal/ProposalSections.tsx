@@ -22,6 +22,7 @@ export function DocumentHeader({
   businessName,
   firstName,
   lastName,
+  tierName,
   refNumber,
   sentAt,
   expiresAt,
@@ -30,6 +31,7 @@ export function DocumentHeader({
   businessName: string;
   firstName: string;
   lastName: string;
+  tierName?: string | null;
   refNumber: string | null;
   sentAt: string | null;
   expiresAt: string | null;
@@ -56,6 +58,11 @@ export function DocumentHeader({
           <p className="mt-2 text-sm text-muted-foreground">
             Prepared for {firstName} {lastName}, by Capucor Business Solutions
           </p>
+          {tierName && (
+            <p className="mt-3 inline-flex items-center rounded-md border border-primary/20 bg-primary/[0.06] px-2.5 py-1 text-xs font-semibold text-primary">
+              {tierName} package
+            </p>
+          )}
         </div>
         {refNumber && (
           <div className="shrink-0 rounded-lg border border-border bg-card px-3 py-2 text-right">

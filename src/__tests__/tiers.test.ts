@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   TIER_HIGHLIGHTS,
   TIER_CUMULATIVE_LABELS,
+  TIER_DISPLAY_NAMES,
   PACKAGE_COMMON_ITEMS,
+  tierDisplayName,
   type TierHighlightItem,
 } from '@/config/tiers';
 
@@ -61,6 +63,26 @@ describe('TIER_CUMULATIVE_LABELS', () => {
 
   it('uses the approved "Your compliance foundation:" label for basic', () => {
     expect(TIER_CUMULATIVE_LABELS.basic).toBe('Your compliance foundation:');
+  });
+});
+
+// ─── display names ──────────────────────────────────────────────────────────
+
+describe('tierDisplayName', () => {
+  it('maps each known slug to its display name', () => {
+    expect(tierDisplayName('basic')).toBe('Basic');
+    expect(tierDisplayName('pro')).toBe('Pro');
+    expect(tierDisplayName('premium')).toBe('Premium');
+  });
+
+  it('matches the TIER_DISPLAY_NAMES map for known slugs', () => {
+    for (const [slug, name] of Object.entries(TIER_DISPLAY_NAMES)) {
+      expect(tierDisplayName(slug)).toBe(name);
+    }
+  });
+
+  it('title-cases an unknown slug as a fallback', () => {
+    expect(tierDisplayName('enterprise-plus')).toBe('Enterprise Plus');
   });
 });
 

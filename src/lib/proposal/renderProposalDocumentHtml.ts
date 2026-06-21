@@ -24,6 +24,7 @@ export interface ProposalDocumentData {
   businessName: string;
   firstName: string;
   lastName: string;
+  tierName: string;
   refNumber: string | null;
   version: number;
   sentAt: string | null;
@@ -152,6 +153,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       <p style="${LABEL}margin-top:12px;">Proposal &amp; engagement</p>
       <h1 style="margin:2px 0 4px;font-size:22px;color:#111827;">For ${escapeHtml(d.businessName)}</h1>
       <p style="margin:0;font-size:13px;color:#6b7280;">Prepared for ${escapeHtml(fullName)}, by Capucor Business Solutions</p>
+      <p style="margin:10px 0 0;"><span style="display:inline-block;background:${SIG_BG};border:1px solid ${SIG_BORDER};border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;color:${BRAND_NAVY};">${escapeHtml(d.tierName)} package</span></p>
       <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
         ${d.refNumber ? `Reference ${escapeHtml(d.refNumber)}${d.version > 1 ? ` · Revision ${d.version}` : ''} &nbsp;·&nbsp; ` : ''}
         ${d.sentAt ? `Prepared ${dateZA(d.sentAt)}` : ''}${d.signedAt ? ` &nbsp;·&nbsp; Signed ${dateZA(d.signedAt)}` : ''}
@@ -172,6 +174,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
 
     <!-- Fees -->
     <p style="${LABEL}">Your fees</p>
+    <p style="${SUBHEAD}">Package: ${escapeHtml(d.tierName)}</p>
     <table style="width:100%;border-collapse:collapse;">
       ${feeRows}
       <tr>
