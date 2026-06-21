@@ -128,9 +128,10 @@ export async function POST(req: NextRequest) {
         ``,
         `Once confirmed, we will respond within ${DATA_REQUEST_SLA_DAYS} days.`,
         ``,
-        `If you did not make this request, you can safely ignore this email — no action will be taken without confirmation.`,
+        `If you did not make this request, you can safely ignore this email. No action will be taken without confirmation.`,
         ``,
-        `— Capucor Business Solutions`,
+        `Thanks,`,
+        `Capucor Business Solutions`,
       ].join('\n');
 
       await resend.emails.send({

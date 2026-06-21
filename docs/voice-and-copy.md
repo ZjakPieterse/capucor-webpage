@@ -42,8 +42,14 @@ Never use em dashes as a connective shortcut at the end of a clause:
 - ❌ "Tax structuring, cash-flow timing, B-BBEE certificates — included."
 - ✅ "Tax structuring, cash-flow timing, B-BBEE certificates: all included."
 
-One deliberate em dash per section is acceptable for rhythm ("no callback — just a number").
-Multiple em dashes in the same paragraph or section is not.
+**Em dashes are banned outright in outbound emails, proposal documents, and PDF renders.**
+There is no "one per section" allowance in those surfaces: rewrite the sentence (split on a
+period, or use a colon to introduce a list) so no prose em dash survives. The only em dash that
+may stay in a proposal/PDF is a non-prose data placeholder — an empty-value glyph (`'—'` for a
+missing date) or the separator inside a fair-usage bracket label.
+
+In marketing prose (the public site), one deliberate em dash per section is acceptable for rhythm
+("no callback — just a number"); multiple em dashes in the same paragraph or section is not.
 
 ### Triple-always parallel structure
 - ❌ "Your numbers are always current, your filings are always on time, and your accountant is always ahead."

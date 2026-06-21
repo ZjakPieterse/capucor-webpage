@@ -76,10 +76,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 // ── Bookkeeping ──────────────────────────────────────────────────────────────
 export function BookkeepingDashboard() {
   const rows = [
-    { who: 'Cape Town Bank — Cheque', amount: '−R 12,450', tag: 'Suppliers', status: 'Matched' },
+    { who: 'Cape Town Bank · Cheque', amount: '−R 12,450', tag: 'Suppliers', status: 'Matched' },
     { who: 'Sage Pay payout', amount: '+R 38,200', tag: 'Revenue', status: 'Matched' },
     { who: 'Takealot Express', amount: '−R 1,985', tag: 'Logistics', status: 'Categorised' },
-    { who: 'FNB card — Engen', amount: '−R 845', tag: 'Vehicle', status: 'Categorised' },
+    { who: 'FNB card · Engen', amount: '−R 845', tag: 'Vehicle', status: 'Categorised' },
   ];
   return (
     <Shell>
@@ -232,7 +232,7 @@ export function PayrollDashboard() {
             <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
               Sample payslip
             </div>
-            <div className="text-sm font-semibold mt-0.5">P. Naidoo — Sales Manager</div>
+            <div className="text-sm font-semibold mt-0.5">P. Naidoo, Sales Manager</div>
           </div>
           <div className="text-right">
             <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Net pay</div>

@@ -97,7 +97,7 @@ export default async function PortalShopProductPage({
           <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/[0.03] p-5">
             <p className="text-sm font-semibold">Request this service</p>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Online checkout is coming. For now, send the request and your accountant confirms scope, timing and the final quote before any work starts — no charge until you say go.
+              Online checkout is coming. For now, send the request and your accountant confirms scope, timing and the final quote before any work starts. No charge until you say go.
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <Button

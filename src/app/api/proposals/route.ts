@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
         await resend.emails.send({
           from: siteConfig.email.senderWebsite,
           to: ownerEmail,
-          subject: `New proposal — ${input.businessName}${refNumber ? ` (${refNumber})` : ''}`,
+          subject: `New proposal: ${input.businessName}${refNumber ? ` (${refNumber})` : ''}`,
           text: [
             `A new proposal was generated from the pricing calculator.`,
             ``,
@@ -282,7 +282,7 @@ function renderProposalEmail(d: ProposalEmailData): string {
       <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#4b5563;">
         Thanks for configuring a plan for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
         of your ${escapeHtml(d.tierName)} subscription. Open your proposal to review the full details and
-        sign electronically — there&rsquo;s no payment required to get started.
+        sign electronically. There&rsquo;s no payment required to get started.
       </p>
 
       <table style="width:100%;border-collapse:collapse;margin:0 0 8px;">

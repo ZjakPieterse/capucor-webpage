@@ -167,8 +167,8 @@ export async function finalizeProposalSignature(
           from: siteConfig.email.senderWebsite,
           to: ownerEmail,
           subject: provisioned
-            ? `Provisioned — ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''} — set up billing`
-            : `Provisioning FAILED — ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
+            ? `Provisioned: ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}, set up billing`
+            : `Provisioning FAILED: ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
           html: provisioned
             ? renderProvisionedOwnerEmail({
                 fullName,

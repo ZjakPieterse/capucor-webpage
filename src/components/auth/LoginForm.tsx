@@ -80,7 +80,7 @@ export function LoginForm({ next }: LoginFormProps) {
         <h2 className="text-base font-semibold">Check your email</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           We sent a sign-in link to{' '}
-          <span className="font-medium text-foreground">{otpSubmitted}</span>. Click it on this device to open the portal — no password needed.
+          <span className="font-medium text-foreground">{otpSubmitted}</span>. Click it on this device to open the portal. No password needed.
         </p>
       </div>
     );

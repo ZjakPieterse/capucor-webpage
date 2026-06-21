@@ -22,7 +22,7 @@ export default async function PortalYearEndPage() {
         icon={ClipboardList}
         orgs={orgs}
         activeOrg={activeOrg}
-        description="Everything we need to close your year and prepare your annual financial statements. Tick items off as you gather them — the faster this is complete, the sooner your AFS and tax return are done."
+        description="Everything we need to close your year and prepare your annual financial statements. Tick items off as you gather them. The faster this is complete, the sooner your AFS and tax return are done."
       />
 
       <YearEndChecklist />
@@ -33,7 +33,7 @@ export default async function PortalYearEndPage() {
           Not sure about something?
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-          You don&rsquo;t need every item before we start — get going with what you have and we&rsquo;ll chase the rest together. If anything on the list is unclear for your business, ask.
+          You don&rsquo;t need every item before we start. Get going with what you have and we&rsquo;ll chase the rest together. If anything on the list is unclear for your business, ask.
         </p>
         <Button
           variant="outline"

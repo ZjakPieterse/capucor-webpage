@@ -138,7 +138,7 @@ export function YearEndChecklist() {
           />
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Progress is saved on this device. It is a prep aid — your accountant still does the final close.
+          Progress is saved on this device. It is a prep aid. Your accountant still does the final close.
         </p>
       </div>
 

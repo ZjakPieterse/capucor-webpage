@@ -49,7 +49,7 @@ export function renderSignConfirmEmail(d: {
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">One more step to sign, ${escapeHtml(d.firstName)}</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
         We received a signature for the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>.
-        To finalise it, confirm from this email — this is how we check the signature came from you.
+        To finalise it, confirm from this email. That&rsquo;s how we check the signature came from you.
       </p>
       <a href="${d.confirmUrl}" style="display:block;margin:24px 0 8px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:15px;padding:14px 20px;border-radius:10px;">
         Confirm &amp; sign
@@ -58,7 +58,7 @@ export function renderSignConfirmEmail(d: {
         This link works once and expires in 30 minutes.
       </p>
       <p style="margin:0;font-size:13px;line-height:1.6;color:#6b7280;">
-        If you didn&rsquo;t request this, ignore this email — nothing is signed until you confirm.
+        If you didn&rsquo;t request this, ignore this email. Nothing is signed until you confirm.
       </p>
     </div>
     <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
@@ -93,7 +93,7 @@ export function renderProvisionedClientEmail(d: {
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;">
       <p style="margin:0 0 24px;font-weight:700;font-size:18px;letter-spacing:-0.01em;color:#0f766e;">Capucor</p>
-      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Thanks, ${escapeHtml(d.firstName)} — your portal is ready</h1>
+      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Your portal is ready, ${escapeHtml(d.firstName)}</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
         We&rsquo;ve recorded your acceptance of the Capucor proposal for
         <strong>${escapeHtml(d.businessName)}</strong> and set up your client portal. You can sign in
@@ -103,7 +103,7 @@ export function renderProvisionedClientEmail(d: {
         Sign in to your portal
       </a>
       <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;text-align:center;">
-        Use this email address to sign in — no password needed.
+        Use this email address to sign in. No password needed.
       </p>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
         Someone from our team will be in touch shortly to set up your onboarding and get your first
@@ -132,7 +132,7 @@ export function renderSignedClientEmail(d: {
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;">
       <p style="margin:0 0 24px;font-weight:700;font-size:18px;letter-spacing:-0.01em;color:#0f766e;">Capucor</p>
-      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Thanks, ${escapeHtml(d.firstName)} — that&rsquo;s signed</h1>
+      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">That&rsquo;s signed, ${escapeHtml(d.firstName)}</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
         We&rsquo;ve recorded your acceptance of the Capucor proposal for
         <strong>${escapeHtml(d.businessName)}</strong>. There&rsquo;s nothing more you need to do right now.
@@ -169,7 +169,7 @@ export function renderProvisionedOwnerEmail(d: {
 <body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:28px;">
-      <h1 style="margin:0 0 8px;font-size:18px;color:#111827;">Proposal signed — portal provisioned</h1>
+      <h1 style="margin:0 0 8px;font-size:18px;color:#111827;">Proposal signed, portal provisioned</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
         ${escapeHtml(d.businessName)} has signed. The portal org, membership and subscription are
         set up. To start billing:
@@ -224,7 +224,7 @@ export function renderProvisionFailedOwnerEmail(d: {
 <body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
     <div style="background:#ffffff;border:1px solid #f5c2c7;border-radius:16px;padding:28px;">
-      <h1 style="margin:0 0 8px;font-size:18px;color:#b02a37;">Proposal signed — provisioning failed</h1>
+      <h1 style="margin:0 0 8px;font-size:18px;color:#b02a37;">Proposal signed, but provisioning failed</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
         ${escapeHtml(d.businessName)} signed, and the signature is recorded, but the portal records
         were not created automatically. The proposal is left as signed (not active). Please set the

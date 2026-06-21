@@ -9,7 +9,7 @@ import {
 import { PrintButton } from './PrintButton';
 
 const PAGE_DESCRIPTION =
-  'A one-page guide to the recurring SARS, CIPC and payroll deadlines South African small businesses need to meet — PAYE, VAT, provisional tax, EMP501, CIPC annual returns and more.';
+  'A one-page guide to the recurring SARS, CIPC and payroll deadlines South African small businesses need to meet: PAYE, VAT, provisional tax, EMP501, CIPC annual returns and more.';
 
 export const metadata: Metadata = {
   title: 'SARS, CIPC & payroll compliance calendar for SA SMEs',

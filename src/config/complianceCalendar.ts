@@ -45,7 +45,7 @@ export const COMPLIANCE_CALENDAR: CalendarGroup[] = [
           'Submit the EMP201 and pay PAYE, UIF and SDL by the 7th of the following month. If the 7th falls on a weekend or public holiday, pay by the last business day before it.',
       },
       {
-        name: 'VAT (VAT201) — monthly vendors',
+        name: 'VAT (VAT201): monthly vendors',
         who: 'Category C vendors',
         when: 'By the 25th / last business day',
         detail:
@@ -57,7 +57,7 @@ export const COMPLIANCE_CALENDAR: CalendarGroup[] = [
     cadence: 'Every two months',
     items: [
       {
-        name: 'VAT (VAT201) — most vendors',
+        name: 'VAT (VAT201): most vendors',
         who: 'Category A & B vendors',
         when: 'By the 25th / last business day',
         detail:

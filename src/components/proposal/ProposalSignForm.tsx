@@ -248,7 +248,7 @@ export function ProposalSignForm({
           ) : (
             'the email address this proposal was sent to'
           )}
-          . Open it and confirm to finalise your signature — this is how we check the signature came
+          . Open it and confirm to finalise your signature. That&rsquo;s how we check the signature came
           from you. The link works once and expires in 30 minutes.
         </p>
       </div>

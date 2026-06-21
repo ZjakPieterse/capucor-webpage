@@ -70,8 +70,8 @@ export function LeadMagnetSignup() {
     return (
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-5">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Thanks{name.trim() ? `, ${name.trim().split(' ')[0]}` : ''}. Here&apos;s your calendar —
-          open it below, then use &ldquo;Print or save as PDF&rdquo; to keep a copy.
+          Thanks{name.trim() ? `, ${name.trim().split(' ')[0]}` : ''}. Here&apos;s your calendar.
+          Open it below, then use &ldquo;Print or save as PDF&rdquo; to keep a copy.
         </p>
         <Link
           href={DOWNLOAD_HREF}

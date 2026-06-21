@@ -11,7 +11,7 @@ const CONTACT_EMAIL = 'info@capucor.com';
 export const metadata: Metadata = {
   title: 'Engagement terms',
   description:
-    'The full terms of engagement that apply to a signed Capucor proposal — fees, fair usage, responsibilities, debit-order authorisation, and more.',
+    'The full terms of engagement that apply to a signed Capucor proposal: fees, fair usage, responsibilities, debit-order authorisation, and more.',
   robots: { index: true, follow: true },
 };
 

@@ -36,7 +36,7 @@ export const RESPONSIBILITIES_YOURS: string[] = [
   'Give us your bank statements, invoices and supporting documents in good time each cycle.',
   'Make sure the information you give us is complete and accurate, and tell us when things change.',
   'Approve returns and reports before we submit or file them where we ask you to.',
-  'Keep your own copies of your records — we work mainly in the cloud (Xero), and the originals stay yours.',
+  'Keep your own copies of your records. We work mainly in the cloud (Xero), and the originals stay yours.',
 ];
 
 /**
@@ -82,7 +82,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     id: 'confidentiality',
     heading: 'Confidentiality and POPIA',
     paragraphs: [
-      'We keep your information confidential and process it in line with POPIA. We only share it with the parties needed to do your work — for example SARS, CIPC or your software providers — or where the law requires it.',
+      'We keep your information confidential and process it in line with POPIA. We only share it with the parties needed to do your work, for example SARS, CIPC or your software providers, or where the law requires it.',
       'We may use trusted sub-processors (such as Xero and our hosting and email providers) under the same confidentiality terms.',
     ],
   },

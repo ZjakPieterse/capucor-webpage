@@ -43,7 +43,7 @@ export default async function PortalKeyDatesPage() {
         icon={CalendarClock}
         orgs={orgs}
         activeOrg={activeOrg}
-        description="The standard SARS and statutory deadlines on the horizon. Your assigned accountant manages every submission — this list is here so nothing catches you by surprise."
+        description="The standard SARS and statutory deadlines on the horizon. Your assigned accountant manages every submission. This list is here so nothing catches you by surprise."
       />
 
       <ul className="space-y-3">

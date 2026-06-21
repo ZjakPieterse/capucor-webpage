@@ -154,7 +154,7 @@ function htmlResponse(outcome: Outcome): Response {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>${title} — Capucor</title>
+  <title>${title} | Capucor</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #0b0b0c; color: #f4f4f5; margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 2rem; }
     main { max-width: 32rem; text-align: center; }

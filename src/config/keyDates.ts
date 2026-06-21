@@ -98,7 +98,7 @@ export const KEY_DATES: KeyDate[] = [
   },
   {
     id: 'irp6-p1',
-    label: 'Provisional tax — 1st period',
+    label: 'Provisional tax: 1st period',
     tag: 'IRP6',
     cadence: 'Annually',
     detail:
@@ -107,7 +107,7 @@ export const KEY_DATES: KeyDate[] = [
   },
   {
     id: 'irp6-p2',
-    label: 'Provisional tax — 2nd period',
+    label: 'Provisional tax: 2nd period',
     tag: 'IRP6',
     cadence: 'Annually',
     detail:
@@ -116,7 +116,7 @@ export const KEY_DATES: KeyDate[] = [
   },
   {
     id: 'emp501-interim',
-    label: 'Employer recon — interim',
+    label: 'Employer recon: interim',
     tag: 'EMP501',
     cadence: 'Annually',
     detail:
@@ -125,7 +125,7 @@ export const KEY_DATES: KeyDate[] = [
   },
   {
     id: 'emp501-annual',
-    label: 'Employer recon — annual',
+    label: 'Employer recon: annual',
     tag: 'EMP501',
     cadence: 'Annually',
     detail:

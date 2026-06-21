@@ -33,7 +33,7 @@ export function DocumentsView({
         <h2 className="mb-2 text-lg font-semibold">Your shared Drive folder</h2>
         <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
           Your monthly P&amp;L, balance sheet, VAT201 confirmations, IRP5s and supporting source
-          documents live here. Drop receipts and bank statements into the same folder — your
+          documents live here. Drop receipts and bank statements into the same folder, and your
           accountant picks them up at the next close.
         </p>
         <Button

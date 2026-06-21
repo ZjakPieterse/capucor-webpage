@@ -23,7 +23,7 @@ export default async function PortalShopPage() {
         icon={ShoppingBag}
         orgs={orgs}
         activeOrg={activeOrg}
-        description="Once-off jobs that sit outside your monthly plan — billed separately, only when you need them."
+        description="Once-off jobs that sit outside your monthly plan. We bill them separately, only when you need them."
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -58,7 +58,7 @@ export default async function PortalShopPage() {
 
       <p className="mt-8 flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-        Online checkout is on the way. For now, open any service and request it — your accountant confirms scope and timing before any work starts.
+        Online checkout is on the way. For now, open any service and request it. Your accountant confirms scope and timing before any work starts.
       </p>
     </main>
   );

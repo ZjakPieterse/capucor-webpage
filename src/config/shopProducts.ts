@@ -108,7 +108,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     priceZAR: 1500,
     summary: 'A once-off review of where your business stands with SARS and CIPC.',
     description:
-      'A structured review of your tax, payroll and statutory status — what is registered, what is outstanding and what is at risk — with a short written action list.',
+      'A structured review of your tax, payroll and statutory status: what is registered, what is outstanding and what is at risk, with a short written action list.',
     includes: [
       'SARS profile review (income tax, VAT, PAYE)',
       'CIPC standing and outstanding returns',

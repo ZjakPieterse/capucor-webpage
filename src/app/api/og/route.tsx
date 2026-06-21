@@ -10,7 +10,7 @@ export function GET(req: NextRequest) {
 
   const title =
     page === 'pricing'
-      ? 'Transparent Pricing — Capucor Business Solutions'
+      ? 'Transparent Pricing | Capucor Business Solutions'
       : 'Outsourced Finance for Growing SMEs';
 
   const subtitle =

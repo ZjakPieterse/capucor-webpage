@@ -69,7 +69,7 @@ export function PortalFinanceSnapshot({
             <Link2 className="h-4 w-4 text-primary" />
           </span>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Connect Xero and this fills with a daily read-only snapshot — cash, revenue, expenses,
+            Connect Xero and this fills with a daily read-only snapshot: cash, revenue, expenses,
             debtors, creditors and runway. We only ever read; we never post to your ledger.
           </p>
         </div>

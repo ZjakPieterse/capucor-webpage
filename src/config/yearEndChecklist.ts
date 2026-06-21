@@ -41,7 +41,7 @@ export const YEAR_END_CHECKLIST: ChecklistSection[] = [
       {
         id: 'deposits-advances',
         label: 'Customer deposits and advances identified',
-        hint: 'Money received for work not yet done is not income this year — flag it.',
+        hint: 'Money received for work not yet done is not income this year. Flag it.',
       },
       { id: 'bad-debts', label: 'List of bad debts to write off' },
       { id: 'other-income', label: 'Other income noted (interest, rebates, grants)' },

@@ -64,7 +64,7 @@ export default async function PortalPage() {
     return (
       <PortalEmptyState
         title="Your subscription is being set up"
-        body="Your account is connected, but the subscription record isn't ready yet. Refresh in a few minutes — if it still looks empty, book a call and we'll sort it out."
+        body="Your account is connected, but the subscription record isn't ready yet. Refresh in a few minutes. If it still looks empty, book a call and we'll sort it out."
       />
     );
   }
@@ -124,7 +124,7 @@ export default async function PortalPage() {
             Get your portal set up
           </h2>
           <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-            A couple of steps left to switch everything on. We do the work — just point us at the
+            A couple of steps left to switch everything on. We do the work. Just point us at the
             right places.
           </p>
           <ul className="space-y-1">

@@ -93,7 +93,7 @@ export function FinanceView({
           </div>
           <h2 className="mb-2 text-lg font-semibold">Connect Xero to switch this on</h2>
           <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted-foreground">
-            Once your Xero organisation is linked, these tiles fill with a read-only daily snapshot —
+            Once your Xero organisation is linked, these tiles fill with a read-only daily snapshot:
             cash position, revenue and expenses for the month, debtors, creditors and runway. We only
             ever read; we never post to your ledger.
           </p>
@@ -141,7 +141,7 @@ export function FinanceView({
       <p className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
         <Banknote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
         Read-only access, scoped to reports, transactions and contacts. You stay in control of your
-        Xero — disconnect any time.
+        Xero, and you can disconnect any time.
       </p>
     </>
   );
