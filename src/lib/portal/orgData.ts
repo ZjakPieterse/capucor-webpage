@@ -8,7 +8,10 @@ import type { ProposalRow } from '@/components/internal/ProposalsTable';
 
 export interface OrgRecord {
   id: string;
-  name: string;
+  // Human name (portal/proposals + future Karbon/Xero/Drive naming). legal_name
+  // is the registered name, admin-set, null until filled in. See migration 014.
+  display_name: string;
+  legal_name: string | null;
   slug: string;
   status: string;
   primary_contact_email: string;
@@ -70,7 +73,7 @@ export async function getOrgRecord(
   const { data } = await db
     .from('client_orgs')
     .select(
-      'id, name, slug, status, primary_contact_email, business_reg_no, drive_folder_url, xero_connected_at, created_at',
+      'id, display_name, legal_name, slug, status, primary_contact_email, business_reg_no, drive_folder_url, xero_connected_at, created_at',
     )
     .eq('id', orgId)
     .maybeSingle();
@@ -166,7 +169,7 @@ export async function getOrgProposals(
 
 export interface ClientOrgListRow {
   id: string;
-  name: string;
+  display_name: string;
   slug: string;
   status: string;
   primary_contact_email: string;
@@ -176,8 +179,8 @@ export interface ClientOrgListRow {
 export async function getAllClientOrgs(db: SupabaseClient): Promise<ClientOrgListRow[]> {
   const { data } = await db
     .from('client_orgs')
-    .select('id, name, slug, status, primary_contact_email, created_at')
-    .order('name', { ascending: true });
+    .select('id, display_name, slug, status, primary_contact_email, created_at')
+    .order('display_name', { ascending: true });
   return (data ?? []) as unknown as ClientOrgListRow[];
 }
 

@@ -19,7 +19,7 @@ export function PortalOrgLabel({
 
   return (
     <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-      {activeOrg.name}
+      {activeOrg.display_name}
     </p>
   );
 }

@@ -9,7 +9,7 @@ export const ACTIVE_ORG_COOKIE = 'capucor_active_org';
 
 export interface OrgSummary {
   id: string;
-  name: string;
+  display_name: string;
   slug: string;
   status: string;
   primary_contact_email: string;

@@ -186,7 +186,7 @@ describe('provisionFromSignedProposal', () => {
     expect(fake.tables.subscriptions).toHaveLength(1);
 
     const org = fake.tables.client_orgs[0]!;
-    expect(org).toMatchObject({ name: 'Pat Trading Co', primary_contact_email: 'pat@example.com', status: 'active' });
+    expect(org).toMatchObject({ display_name: 'Pat Trading Co', primary_contact_email: 'pat@example.com', status: 'active' });
     expect(typeof org.slug).toBe('string');
 
     expect(fake.tables.client_org_members[0]).toMatchObject({
@@ -231,7 +231,7 @@ describe('provisionFromSignedProposal', () => {
       {
         proposals: [proposalRow],
         client_orgs: [
-          { id: 'org_1', name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'pat@example.com', status: 'active' },
+          { id: 'org_1', display_name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'pat@example.com', status: 'active' },
         ],
         client_org_members: [{ id: 'm_1', client_org_id: 'org_1', user_id: 'user_existing', role: 'owner' }],
         // Existing plan is on the old tier — the new proposal must override it.
@@ -313,7 +313,7 @@ describe('provisionFromSignedProposal', () => {
         proposals: [proposalRow],
         // Same contact email, DIFFERENT business name → a separate client.
         client_orgs: [
-          { id: 'org_1', name: 'Pat Holdings', slug: 'pat-holdings', primary_contact_email: 'pat@example.com', status: 'active' },
+          { id: 'org_1', display_name: 'Pat Holdings', slug: 'pat-holdings', primary_contact_email: 'pat@example.com', status: 'active' },
         ],
       },
       { newUserId: 'user_new' },
@@ -337,7 +337,7 @@ describe('provisionFromSignedProposal', () => {
       {
         proposals: [proposalRow],
         client_orgs: [
-          { id: 'org_1', name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'alice@example.com', status: 'active' },
+          { id: 'org_1', display_name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'alice@example.com', status: 'active' },
         ],
         client_org_members: [{ id: 'm_1', client_org_id: 'org_1', user_id: 'user_alice', role: 'owner' }],
         subscriptions: [{ id: 'sub_1', client_org_id: 'org_1', status: 'active', tier_slug: 'basic', created_at: '2026-01-01' }],

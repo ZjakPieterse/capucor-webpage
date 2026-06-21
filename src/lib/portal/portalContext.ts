@@ -31,9 +31,9 @@ export async function getUserOrgs(userId: string): Promise<OrgSummary[]> {
 
   const { data: orgs } = await admin
     .from('client_orgs')
-    .select('id, name, slug, status, primary_contact_email')
+    .select('id, display_name, slug, status, primary_contact_email')
     .in('id', ids)
-    .order('name', { ascending: true });
+    .order('display_name', { ascending: true });
 
   return (orgs ?? []) as unknown as OrgSummary[];
 }

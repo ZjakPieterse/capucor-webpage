@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 import { Building2, CreditCard, Users } from 'lucide-react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { requireInternal } from '@/lib/auth/requireInternal';
 import { getOrgMembers, getOrgRecord, getOrgSubscription } from '@/lib/portal/orgData';
 import { SubscriptionStatusBadge } from '@/components/portal/StatusBadge';
+import { OrgNamesEditor } from '@/components/internal/OrgNamesEditor';
 import { formatZAR } from '@/lib/utils';
 
 const TIER_NAMES: Record<string, string> = {
@@ -28,6 +30,11 @@ export default async function ClientOverviewPage({
   const { orgId } = await params;
   const db = await createSupabaseServerClient();
 
+  // The /internal layout already gated access; re-read the role here (as the
+  // amend page does) to decide whether to show the admin-only names editor.
+  const internal = await requireInternal(`/internal/clients/${orgId}`);
+  const isAdmin = internal?.role === 'admin';
+
   const [org, sub, members] = await Promise.all([
     getOrgRecord(db, orgId),
     getOrgSubscription(db, orgId),
@@ -44,6 +51,8 @@ export default async function ClientOverviewPage({
           Organisation
         </h2>
         <dl className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
+          <Field label="Display name" value={org.display_name} />
+          <Field label="Legal name" value={org.legal_name ?? '—'} />
           <Field label="Reference / slug" value={org.slug} />
           <Field label="Status" value={org.status} className="capitalize" />
           <Field label="Registration no." value={org.business_reg_no ?? '—'} />
@@ -54,6 +63,14 @@ export default async function ClientOverviewPage({
             value={org.xero_connected_at ? `Connected ${formatLongDate(org.xero_connected_at)}` : 'Not connected'}
           />
         </dl>
+
+        {isAdmin && (
+          <OrgNamesEditor
+            orgId={org.id}
+            displayName={org.display_name}
+            legalName={org.legal_name}
+          />
+        )}
       </section>
 
       <section className="rounded-xl border border-border bg-card p-6">

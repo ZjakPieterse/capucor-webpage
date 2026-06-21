@@ -25,7 +25,7 @@ export default async function InternalClientsPage() {
     const sub = subs.get(o.id);
     return {
       id: o.id,
-      name: o.name,
+      name: o.display_name,
       primary_contact_email: o.primary_contact_email,
       status: o.status,
       tierSlug: sub?.tier_slug ?? null,

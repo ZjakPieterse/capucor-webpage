@@ -39,7 +39,7 @@ export default async function ClientViewLayout({
           Client · view-only
         </p>
         <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">{org.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{org.display_name}</h1>
           <span className="rounded-full border border-border px-2 py-0.5 text-xs capitalize text-muted-foreground">
             {org.status}
           </span>

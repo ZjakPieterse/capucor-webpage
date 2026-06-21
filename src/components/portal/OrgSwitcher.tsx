@@ -47,7 +47,7 @@ export function OrgSwitcher({
         <SelectContent>
           {orgs.map((o) => (
             <SelectItem key={o.id} value={o.id}>
-              {o.name}
+              {o.display_name}
             </SelectItem>
           ))}
         </SelectContent>

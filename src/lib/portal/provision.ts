@@ -132,18 +132,22 @@ async function findOrCreateOrg(
   }
 
   const email = proposal.email.trim();
+  // The proposal captures one business name; that becomes the org's DISPLAY NAME
+  // (the human name shown in the portal/proposals and — once wired — used to name
+  // the org in Karbon/Xero/Google Drive). legal_name is admin-set later and is
+  // never touched here. See migration 014.
   const name = proposal.business_name.trim();
 
   // 2. A client is uniquely the ORGANISATION NAME (one contact can be on several
-  //    clients), so dedupe by name (case-insensitive) regardless of contact —
-  //    never create a second org for a business that already exists. The JS
-  //    re-check guards against `ilike` treating any %/_ in a name as a wildcard.
+  //    clients), so dedupe by display_name (case-insensitive) regardless of
+  //    contact — never create a second org for a business that already exists. The
+  //    JS re-check guards against `ilike` treating any %/_ in a name as a wildcard.
   const { data: existing } = await admin
     .from('client_orgs')
-    .select('id, name')
-    .ilike('name', name);
-  const match = (existing as { id: string; name: string }[] | null ?? []).find(
-    (o) => o.name.trim().toLowerCase() === name.toLowerCase(),
+    .select('id, display_name')
+    .ilike('display_name', name);
+  const match = (existing as { id: string; display_name: string }[] | null ?? []).find(
+    (o) => o.display_name.trim().toLowerCase() === name.toLowerCase(),
   );
   if (match?.id) return { id: match.id, created: false };
 
@@ -152,7 +156,7 @@ async function findOrCreateOrg(
   const { data: inserted, error } = await admin
     .from('client_orgs')
     .insert({
-      name,
+      display_name: name,
       slug,
       primary_contact_email: email,
       status: 'active',
