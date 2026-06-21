@@ -21,7 +21,7 @@ Capucor Business Solutions public website and client portal. South African outso
 | Database & Auth | Supabase (PostgreSQL) |
 | Forms | React Hook Form + Zod |
 | Email | Resend |
-| Payments | Paystack (Phase 2 — wiring in progress) |
+| Payments | Subscriptions: Paysoft Flow debit orders (Xero-integrated, manual — no API). Shop one-offs: PayFast. Legacy Paystack stubs remain but are superseded — see "Payments status" below. |
 | Deployment | Cloudflare Workers via opennextjs-cloudflare |
 | Testing | Vitest |
 
@@ -288,18 +288,30 @@ user-visible copy.
   write `You&apos;ll`. Applies only to literal JSX text; apostrophes inside JS string
   literals (e.g. an array rendered via `{item.body}`) are fine as-is.
 
-## Phase 2 Pending Items
+## Payments status (billing model changed — read before touching payment code)
 
-The following are intentional stubs awaiting Paystack integration:
+The original plan wired **Paystack** for both subscriptions and shop checkout. The **2026-06-17
+billing decision** (documented in `../AUDIT-PORTAL-TASKS.md`) changed that:
 
-- `src/app/api/subscriptions/route.ts` — pricing math + Supabase insert
-- `src/app/api/webhooks/paystack/route.ts` — webhook **event handling** only (no-op cases).
-  Signature verification is real: HMAC-SHA512 over the raw body, failing closed when
-  `PAYSTACK_SECRET_KEY` is unset — set that Cloudflare secret before Paystack goes live
-- `src/app/client-portal/page.tsx` — real auth + subscription fetch
-- `src/app/onboarding/page.tsx` — real transaction verification
+- **Subscriptions** are collected via **Paysoft Flow** (Xero-integrated bulk debit orders). It has
+  **no developer API**, so provisioning is **manual** in Xero/Paysoft Flow — the signed proposal is
+  the debit-order mandate and **no banking details are captured on the site**. Portal access is
+  minted at signing by provision-on-sign (PR9, live), not by a payment webhook.
+- **Shop one-offs** will use **PayFast** (signed redirect + an ITN webhook validated by MD5
+  signature + a server postback) — not yet wired in code.
 
-All TODOs are inline-documented in each file.
+The following **Paystack stubs still live in the tree but are superseded** by the above; they are
+**not** the live billing path. Remove or repurpose them when the PayFast shop path lands:
+
+- `src/app/api/subscriptions/route.ts` — Paystack-shaped pricing-math + insert stub (returns a
+  deterministic stub response). Superseded: subscriptions are provisioned on sign, not here.
+- `src/app/api/webhooks/paystack/route.ts` — Paystack webhook **event handling** stub (no-op
+  cases). Its signature verification (`lib/paystack.ts`, HMAC-SHA512 over the raw body, failing
+  closed when `PAYSTACK_SECRET_KEY` is unset) is real but unused — the shop will need the **PayFast
+  ITN/MD5** scheme instead, which does not carry over.
+
+TODOs are inline-documented in each file. (The client portal and `/onboarding` are **live**, not
+stubs — provision-on-sign and the auth flow shipped.)
 
 ## Pending Content: Client Testimonials / Social Proof
 
