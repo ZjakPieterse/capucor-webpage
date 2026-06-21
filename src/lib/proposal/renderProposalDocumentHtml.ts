@@ -64,6 +64,15 @@ const SUBHEAD = 'margin:14px 0 6px;font-size:13px;font-weight:600;color:#111827;
 const PARA = 'margin:0 0 8px;font-size:13px;line-height:1.6;color:#374151;';
 const LI = 'margin:0 0 5px;font-size:13px;line-height:1.5;color:#374151;';
 
+// Brand accent colours (mirror the globals.css --brand-* tokens), tuned for the
+// PDF's white background: navy for accent lines + headings — legible on white and
+// the colour of the logo wordmark — with a light navy tint for the signature box.
+// The site's bright cyan primary is built for the dark web theme and washes out on
+// white, so it isn't used here. Neutral greys (text/borders) stay as-is.
+const BRAND_NAVY = '#1e3a8a';
+const SIG_BG = '#eff6ff';
+const SIG_BORDER = '#c7d7f5';
+
 function list(items: string[]): string {
   if (items.length === 0) return '';
   return `<ul style="margin:0 0 8px;padding-left:18px;">${items
@@ -114,8 +123,8 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
   ).join('');
 
   const signatureBlock = `
-    <div style="margin-top:8px;border:1px solid #b9e0db;background:#f0fbf9;border-radius:10px;padding:16px;">
-      <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#0f766e;">Accepted and signed</p>
+    <div style="margin-top:8px;border:1px solid ${SIG_BORDER};background:${SIG_BG};border-radius:10px;padding:16px;">
+      <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:${BRAND_NAVY};">Accepted and signed</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;color:#374151;">
         <tr><td style="padding:3px 0;color:#6b7280;width:120px;">Signed by</td><td style="padding:3px 0;">${escapeHtml(d.signatureName ?? fullName)}</td></tr>
         <tr><td style="padding:3px 0;color:#6b7280;">Date</td><td style="padding:3px 0;">${dateZA(d.signedAt)}</td></tr>
@@ -138,7 +147,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
   <div style="max-width:680px;margin:0 auto;padding:28px;">
 
     <!-- Header -->
-    <div style="border-bottom:2px solid #0f766e;padding-bottom:14px;margin-bottom:6px;">
+    <div style="border-bottom:2px solid ${BRAND_NAVY};padding-bottom:14px;margin-bottom:6px;">
       <img src="${CAPUCOR_LOGO_LIGHT_DATA_URL}" alt="Capucor Business Solutions" style="height:38px;width:auto;display:block;" />
       <p style="${LABEL}margin-top:12px;">Proposal &amp; engagement</p>
       <h1 style="margin:2px 0 4px;font-size:22px;color:#111827;">For ${escapeHtml(d.businessName)}</h1>
