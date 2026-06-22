@@ -10,13 +10,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { CLIENT_TYPES, CLIENT_TYPE_LABELS, clientTypeLabel } from '@/config/clientTypes';
 
 export interface ClientRow {
   id: string;
   name: string;
   primary_contact_email: string;
   status: string; // org status: active / paused / cancelled
-  tierSlug: string | null;
+  clientType: string; // CRM category (migration 016)
+  tierSlug: string | null; // plan label / tier of the latest subscription, if any
   subStatus: string | null; // latest subscription status, if any
   created_at: string;
 }
@@ -29,12 +31,14 @@ type SortKey = 'name' | 'newest';
 export function ClientsTable({ rows }: { rows: ClientRow[] }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('all');
+  const [type, setType] = useState<string>('all');
   const [sort, setSort] = useState<SortKey>('name');
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const result = rows.filter((r) => {
       if (status !== 'all' && r.status !== status) return false;
+      if (type !== 'all' && r.clientType !== type) return false;
       if (q) {
         const haystack = `${r.name} ${r.primary_contact_email}`.toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -51,7 +55,7 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
           return a.name.localeCompare(b.name);
       }
     });
-  }, [rows, search, status, sort]);
+  }, [rows, search, status, type, sort]);
 
   return (
     <div>
@@ -79,6 +83,24 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
           </SelectContent>
         </Select>
 
+        <Select value={type} onValueChange={(v) => setType(String(v))}>
+          <SelectTrigger aria-label="Filter by type" className="min-w-[8.5rem]">
+            {/* Formatter child: render the label, not the raw stored value (e.g.
+                'ad_hoc' → 'Ad-hoc') — see base-ui Select.Value raw-value behaviour. */}
+            <SelectValue placeholder="Type">
+              {(value) => (String(value) === 'all' ? 'All types' : clientTypeLabel(String(value)))}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            {CLIENT_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {CLIENT_TYPE_LABELS[t]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
           <SelectTrigger aria-label="Sort clients" className="min-w-[8.5rem]">
             <SelectValue placeholder="Sort" />
@@ -101,6 +123,7 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
               <th className="px-3 py-2 font-medium">Business</th>
               <th className="px-3 py-2 font-medium">Contact</th>
               <th className="px-3 py-2 font-medium">Status</th>
+              <th className="px-3 py-2 font-medium">Type</th>
               <th className="px-3 py-2 font-medium">Tier</th>
               <th className="px-3 py-2 font-medium">Subscription</th>
               <th className="px-3 py-2 font-medium">View</th>
@@ -116,6 +139,7 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
                     {r.status}
                   </span>
                 </td>
+                <td className="px-3 py-2 text-muted-foreground">{clientTypeLabel(r.clientType)}</td>
                 <td className="px-3 py-2 capitalize">{r.tierSlug ?? '—'}</td>
                 <td className="px-3 py-2 capitalize text-muted-foreground">
                   {r.subStatus ? r.subStatus.replace(/_/g, ' ') : 'None'}
@@ -132,7 +156,7 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
                   {rows.length === 0 ? 'No clients yet.' : 'No clients match your filters.'}
                 </td>
               </tr>

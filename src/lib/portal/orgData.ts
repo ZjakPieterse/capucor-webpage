@@ -28,12 +28,20 @@ export interface OrgRecord {
   uif_no: string | null;
   coida_no: string | null;
   primary_contact_name: string | null;
+  // CRM master-data (migration 016). client_type defaults to 'subscription';
+  // notes are internal-only (rendered only in the internal Organisation card,
+  // never in the client portal).
+  client_type: string;
+  notes: string | null;
 }
 
 export interface OrgSubscriptionRow {
   id: string;
   status: string;
   tier_slug: string;
+  // Free-text label for a manually-recorded/legacy plan (migration 016); null for
+  // calculator-driven subs, which derive their name from tier_slug.
+  plan_label: string | null;
   services: string[];
   monthly_total_zar: string | number;
   total_charge_zar: string | number;
@@ -83,7 +91,7 @@ export async function getOrgRecord(
   const { data } = await db
     .from('client_orgs')
     .select(
-      'id, display_name, legal_name, slug, status, primary_contact_email, business_reg_no, drive_folder_url, xero_connected_at, created_at, address, income_tax_no, vat_no, paye_no, uif_no, coida_no, primary_contact_name',
+      'id, display_name, legal_name, slug, status, primary_contact_email, business_reg_no, drive_folder_url, xero_connected_at, created_at, address, income_tax_no, vat_no, paye_no, uif_no, coida_no, primary_contact_name, client_type, notes',
     )
     .eq('id', orgId)
     .maybeSingle();
@@ -97,7 +105,7 @@ export async function getOrgSubscription(
   const { data } = await db
     .from('subscriptions')
     .select(
-      'id, status, tier_slug, services, monthly_total_zar, total_charge_zar, current_period_start, current_period_end, created_at',
+      'id, status, tier_slug, plan_label, services, monthly_total_zar, total_charge_zar, current_period_start, current_period_end, created_at',
     )
     .eq('client_org_id', orgId)
     .order('created_at', { ascending: false })
@@ -198,6 +206,7 @@ export interface ClientOrgListRow {
   display_name: string;
   slug: string;
   status: string;
+  client_type: string;
   primary_contact_email: string;
   created_at: string;
 }
@@ -205,7 +214,7 @@ export interface ClientOrgListRow {
 export async function getAllClientOrgs(db: SupabaseClient): Promise<ClientOrgListRow[]> {
   const { data } = await db
     .from('client_orgs')
-    .select('id, display_name, slug, status, primary_contact_email, created_at')
+    .select('id, display_name, slug, status, client_type, primary_contact_email, created_at')
     .order('display_name', { ascending: true });
   return (data ?? []) as unknown as ClientOrgListRow[];
 }
@@ -214,6 +223,7 @@ export interface OrgSubscriptionSummary {
   client_org_id: string;
   status: string;
   tier_slug: string;
+  plan_label: string | null;
   created_at: string;
 }
 
@@ -228,7 +238,7 @@ export async function getSubscriptionsByOrg(
 
   const { data } = await db
     .from('subscriptions')
-    .select('client_org_id, status, tier_slug, created_at')
+    .select('client_org_id, status, tier_slug, plan_label, created_at')
     .in('client_org_id', orgIds)
     .order('created_at', { ascending: false });
 

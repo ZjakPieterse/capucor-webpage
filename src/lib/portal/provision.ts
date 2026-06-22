@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { firstOfNextMonth } from '@/lib/utils';
+import { findFreeSlug, slugify } from './orgSlug';
 
 /**
  * PR9 — provision-on-sign.
@@ -82,36 +83,8 @@ async function findOrCreateAuthUser(
 }
 
 // ── Org ──────────────────────────────────────────────────────────────────────
-
-function slugify(name: string): string {
-  const base = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 48);
-  return base || 'client';
-}
-
-function randomSuffix(): string {
-  return Math.random().toString(36).slice(2, 6);
-}
-
-// client_orgs.slug is unique (004). Probe the base slug, then append a short
-// random suffix on collision.
-async function findFreeSlug(admin: SupabaseClient, base: string): Promise<string> {
-  let candidate = base;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const { data } = await admin
-      .from('client_orgs')
-      .select('id')
-      .eq('slug', candidate)
-      .maybeSingle();
-    if (!data) return candidate;
-    candidate = `${base}-${randomSuffix()}`;
-  }
-  return `${base}-${randomSuffix()}${randomSuffix()}`;
-}
+// slugify + findFreeSlug live in ./orgSlug (shared with the admin "Add client"
+// create flow) so both paths mint unique slugs identically.
 
 interface OrgResult {
   id: string;

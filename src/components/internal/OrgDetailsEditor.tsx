@@ -6,9 +6,21 @@ import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  CLIENT_TYPES,
+  CLIENT_TYPE_LABELS,
+  clientTypeLabel,
+  type ClientType,
+} from '@/config/clientTypes';
 import type { OrgRecord } from '@/lib/portal/orgData';
 import type { OrgDetailsInput } from '@/lib/validations';
 import { updateOrgDetailsAction } from '@/app/internal/clients/[orgId]/actions';
+
+// Native <select> styled to match the Input primitive (avoids the base-ui
+// Select.Value raw-value quirk for a small, fixed option set).
+const SELECT_CLASS =
+  'h-8 w-full min-w-0 rounded-lg border border-input bg-input/30 px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50';
 
 // The Organisation card on the internal client view (read + edit in one place).
 // Read mode shows the compliance master-data; an admin (canEdit) gets an "Edit
@@ -30,6 +42,8 @@ function toForm(org: OrgRecord): OrgDetailsInput {
     coidaNo: org.coida_no ?? '',
     primaryContactName: org.primary_contact_name ?? '',
     primaryContactEmail: org.primary_contact_email,
+    clientType: org.client_type as ClientType,
+    notes: org.notes ?? '',
   };
 }
 
@@ -38,6 +52,7 @@ function readRows(org: OrgRecord): Array<[string, string]> {
   const dash = (v: string | null) => (v && v.trim() ? v : '—');
   return [
     ['Display name', org.display_name],
+    ['Client type', clientTypeLabel(org.client_type)],
     ['Legal name', dash(org.legal_name)],
     ['Registration no.', dash(org.business_reg_no)],
     ['Income tax no.', dash(org.income_tax_no)],
@@ -48,6 +63,7 @@ function readRows(org: OrgRecord): Array<[string, string]> {
     ['Primary contact name', dash(org.primary_contact_name)],
     ['Primary contact email', org.primary_contact_email],
     ['Address', dash(org.address)],
+    ['Notes', dash(org.notes)],
   ];
 }
 
@@ -64,7 +80,7 @@ export function OrgDetailsEditor({ org, canEdit }: { org: OrgRecord; canEdit: bo
     setEditing(true);
   }
 
-  function set<K extends keyof OrgDetailsInput>(key: K, value: string) {
+  function set<K extends keyof OrgDetailsInput>(key: K, value: OrgDetailsInput[K]) {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
@@ -200,6 +216,39 @@ export function OrgDetailsEditor({ org, canEdit }: { org: OrgRecord; canEdit: bo
           disabled={isPending}
           className="sm:col-span-2"
         />
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-1.5 sm:max-w-xs">
+          <Label htmlFor="org-client-type">Client type</Label>
+          <select
+            id="org-client-type"
+            value={form.clientType}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, clientType: e.target.value as ClientType }))
+            }
+            disabled={isPending}
+            className={SELECT_CLASS}
+          >
+            {CLIENT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {CLIENT_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="org-notes">Notes</Label>
+          <Textarea
+            id="org-notes"
+            value={form.notes ?? ''}
+            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+            disabled={isPending}
+            rows={3}
+            placeholder="Internal notes about this client…"
+          />
+          <p className="text-xs text-muted-foreground">Internal only — never shown to the client.</p>
+        </div>
       </div>
 
       {error && <p className="text-xs text-destructive">{error}</p>}

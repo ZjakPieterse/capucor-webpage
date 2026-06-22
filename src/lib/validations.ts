@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CLIENT_TYPES } from '@/config/clientTypes';
 
 // Calculator state snapshot persisted with a lead. The shape mirrors what the
 // pricing calculator writes when a visitor submits a quote/signup/enterprise
@@ -232,9 +233,43 @@ export const OrgDetailsSchema = z.object({
     .optional()
     .or(z.literal('')),
   primaryContactEmail: z.string().email('Enter a valid contact email address.'),
+  // CRM master-data (migration 016). clientType is required (the column is NOT
+  // NULL); notes are optional internal free text.
+  clientType: z.enum(CLIENT_TYPES),
+  notes: z.string().max(2000, 'Notes are too long.').optional().or(z.literal('')),
 });
 
 export type OrgDetailsInput = z.infer<typeof OrgDetailsSchema>;
+
+// ── Manual / legacy subscription (admin "Add client" billing block) ──────
+//
+// A legacy client may be on a plan the live calculator can't express. The create
+// form optionally records a free-text plan label + monthly figure + status, and
+// createClientAction inserts it as a subscriptions row (services/brackets empty,
+// tier_slug 'custom', plan_label set). monthlyZar arrives already converted to a
+// number by the form; vat_zar stays 0 (tax handled in Xero — no VAT on the site).
+export const ManualSubscriptionSchema = z.object({
+  planLabel: z.string().min(1, 'Enter a plan label.').max(80, 'Plan label is too long.'),
+  monthlyZar: z
+    .number()
+    .positive('Enter a monthly amount greater than zero.')
+    .max(10_000_000, 'Monthly amount looks too large.'),
+  status: z.enum(['active', 'past_due', 'cancelled']),
+});
+
+export type ManualSubscriptionInput = z.infer<typeof ManualSubscriptionSchema>;
+
+// ── Create client (admin "Add client" flow) ─────────────────────────────
+//
+// Contract between CreateClientForm and createClientAction. Reuses every
+// OrgDetailsSchema field (display name + contact email required, the rest
+// optional) and adds an optional manual subscription. No payment/banking data —
+// internal record only.
+export const CreateClientSchema = OrgDetailsSchema.extend({
+  subscription: ManualSubscriptionSchema.optional(),
+});
+
+export type CreateClientInput = z.infer<typeof CreateClientSchema>;
 
 // ── Paystack webhook payload (stub, mirrors Paystack event envelope) ────
 //

@@ -80,7 +80,10 @@ export function BillingView({
     );
   }
 
-  const tierName = tierDisplayName(sub.tier_slug);
+  // A manually-recorded/legacy plan (migration 016) carries its own free-text
+  // label and isn't one of the calculator tiers, so show it as-is; calculator
+  // subs render "<Tier> tier" as before.
+  const planName = sub.plan_label ?? `${tierDisplayName(sub.tier_slug)} tier`;
 
   return (
     <>
@@ -90,7 +93,7 @@ export function BillingView({
             <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Current subscription
             </h2>
-            <p className="text-base font-semibold">{tierName} tier</p>
+            <p className="text-base font-semibold">{planName}</p>
           </div>
           <SubscriptionStatusBadge status={sub.status} />
         </div>

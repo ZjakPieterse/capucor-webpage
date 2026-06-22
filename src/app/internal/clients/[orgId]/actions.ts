@@ -51,6 +51,8 @@ export async function updateOrgDetailsAction(
       coida_no: clean(d.coidaNo),
       primary_contact_name: clean(d.primaryContactName),
       primary_contact_email: d.primaryContactEmail.trim(),
+      client_type: d.clientType,
+      notes: clean(d.notes),
     })
     .eq('id', orgId);
 

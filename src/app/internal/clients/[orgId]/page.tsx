@@ -93,7 +93,7 @@ export default async function ClientOverviewPage({
       {/* Billing summary (org name/status/email already sit in the layout header) */}
       {sub ? (
         <PortalSummaryHeader
-          tierName={tierDisplayName(sub.tier_slug)}
+          tierName={sub.plan_label ?? tierDisplayName(sub.tier_slug)}
           status={sub.status}
           monthlyZar={Number(sub.total_charge_zar)}
           payment={resolveUpcomingPayment(sub)}
