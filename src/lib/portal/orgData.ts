@@ -178,25 +178,54 @@ export async function getOrgMembers(
 }
 
 // Proposals for an org: matched by the client_org_id FK once a proposal has been
-// provisioned (PR9), OR — for proposals predating provisioning — by the org's
-// contact email(s). Matching on the FK means a client's proposals show no matter
+// provisioned (PR9), OR — for proposals predating provisioning that aren't yet
+// linked to ANY org (client_org_id IS NULL) — by the org's contact email(s).
+// Gating the email fallback on a null FK is load-bearing: without it a proposal
+// already linked to a DIFFERENT client that happens to share this org's contact
+// email would leak in (the bug that made the "Latest proposal" card show another
+// client's proposal). Matching on the FK means a client's proposals show no matter
 // which contact signed (one contact can be on several clients). `ilike` with no
-// wildcards is a case-insensitive exact match; the orgId is a uuid and emails
-// come from our own DB (normalised upstream), so the or-filter is safe.
+// wildcards is a case-insensitive exact match; the orgId is a uuid and emails come
+// from our own DB (normalised upstream — commas/parens stripped), so the embedded
+// or-filter is safe.
 export async function getOrgProposals(
   db: SupabaseClient,
   { orgId, emails }: { orgId: string; emails: string[] },
 ): Promise<ProposalRow[]> {
-  const filters = [`client_org_id.eq.${orgId}`, ...emails.map((e) => `email.ilike.${e}`)];
+  const emailOr = emails.map((e) => `email.ilike.${e}`).join(',');
+  const orFilter = emails.length
+    ? `client_org_id.eq.${orgId},and(client_org_id.is.null,or(${emailOr}))`
+    : `client_org_id.eq.${orgId}`;
   const { data } = await db
     .from('proposals')
     .select(
       'id, token, ref_number, version, supersedes_id, superseded_by_id, business_name, first_name, last_name, email, tier_slug, monthly_total_zar, status, sent_at, signed_at, created_at, proposal_pdf_drive_id',
     )
-    .or(filters.join(','))
+    .or(orFilter)
     .order('created_at', { ascending: false })
     .limit(100);
   return (data ?? []) as unknown as ProposalRow[];
+}
+
+// Resolve client_org_members.user_id → a human label (email, or full_name when
+// set) for the internal Access card. Identity lives in auth.users, which only the
+// service-role admin client can read — so this MUST be passed the admin client
+// (mirrors the auth.admin usage in ./provision.ts). Returns a map; ids that fail
+// to resolve are simply absent, so callers fall back to the raw id.
+export async function getMemberEmails(
+  admin: SupabaseClient,
+  userIds: string[],
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  await Promise.all(
+    userIds.map(async (id) => {
+      const { data } = await admin.auth.admin.getUserById(id);
+      const u = data?.user;
+      const label = (u?.user_metadata?.full_name as string | undefined)?.trim() || u?.email;
+      if (label) map.set(id, label);
+    }),
+  );
+  return map;
 }
 
 // ── Internal clients list ────────────────────────────────────────────────────

@@ -16,8 +16,10 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { requireInternal } from '@/lib/auth/requireInternal';
 import {
+  getMemberEmails,
   getOrgFinance,
   getOrgMembers,
   getOrgProposals,
@@ -78,6 +80,14 @@ export default async function ClientOverviewPage({
     getOrgProposals(db, { orgId, emails }),
   ]);
 
+  // Resolve member ids → email/name labels for the Access card. Identity lives in
+  // auth.users, so this one read uses the service-role admin client (RLS/session
+  // can't see auth.users); the rest of the page stays on the session client.
+  const memberEmails = await getMemberEmails(
+    createSupabaseAdminClient(),
+    members.map((m) => m.user_id),
+  );
+
   const keyDates = upcomingKeyDates().slice(0, 3);
   const latestProposal = proposals[0] ?? null;
 
@@ -134,8 +144,8 @@ export default async function ClientOverviewPage({
               <ul className="space-y-2 text-sm">
                 {members.map((m) => (
                   <li key={m.user_id} className="flex items-center justify-between gap-4">
-                    <span className="truncate font-mono text-xs text-muted-foreground">
-                      {m.user_id}
+                    <span className="truncate text-sm text-muted-foreground">
+                      {memberEmails.get(m.user_id) ?? m.user_id}
                     </span>
                     <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs capitalize">
                       {m.role}
