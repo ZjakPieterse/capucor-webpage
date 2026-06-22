@@ -19,6 +19,15 @@ export interface OrgRecord {
   drive_folder_url: string | null;
   xero_connected_at: string | null;
   created_at: string;
+  // Compliance master-data, admin-set on the internal client card (migration
+  // 015). All null until an admin fills them in.
+  address: string | null;
+  income_tax_no: string | null;
+  vat_no: string | null;
+  paye_no: string | null;
+  uif_no: string | null;
+  coida_no: string | null;
+  primary_contact_name: string | null;
 }
 
 export interface OrgSubscriptionRow {
@@ -74,7 +83,7 @@ export async function getOrgRecord(
   const { data } = await db
     .from('client_orgs')
     .select(
-      'id, display_name, legal_name, slug, status, primary_contact_email, business_reg_no, drive_folder_url, xero_connected_at, created_at',
+      'id, display_name, legal_name, slug, status, primary_contact_email, business_reg_no, drive_folder_url, xero_connected_at, created_at, address, income_tax_no, vat_no, paye_no, uif_no, coida_no, primary_contact_name',
     )
     .eq('id', orgId)
     .maybeSingle();

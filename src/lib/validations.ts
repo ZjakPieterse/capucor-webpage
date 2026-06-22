@@ -193,6 +193,49 @@ export const SignProposalSchema = z.object({
 
 export type SignProposalInput = z.infer<typeof SignProposalSchema>;
 
+// ── Org compliance details (internal client card, admin-only) ───────────
+//
+// Contract between the OrgDetailsEditor form and updateOrgDetailsAction. The
+// internal Organisation card holds a client's compliance master-data; an admin
+// edits it. Light format checks (per the field's nature): the SARS reference
+// numbers must be 10 digits IF filled, the contact email must be valid; the
+// rest are lenient, length-bounded free text. Display name + contact email are
+// required (both columns are NOT NULL). Empty optionals become null on write.
+
+const sarsRef = (label: string) =>
+  z
+    .string()
+    .regex(/^\d{10}$/, `${label} must be 10 digits.`)
+    .optional()
+    .or(z.literal(''));
+
+export const OrgDetailsSchema = z.object({
+  displayName: z
+    .string()
+    .min(1, 'Display name is required.')
+    .max(120, 'Display name is too long.'),
+  legalName: z.string().max(120, 'Legal name is too long.').optional().or(z.literal('')),
+  registrationNo: z
+    .string()
+    .max(40, 'Registration number is too long.')
+    .optional()
+    .or(z.literal('')),
+  address: z.string().max(255, 'Address is too long.').optional().or(z.literal('')),
+  incomeTaxNo: sarsRef('Income tax number'),
+  vatNo: sarsRef('VAT number'),
+  payeNo: sarsRef('PAYE number'),
+  uifNo: z.string().max(40, 'UIF number is too long.').optional().or(z.literal('')),
+  coidaNo: z.string().max(40, 'COIDA number is too long.').optional().or(z.literal('')),
+  primaryContactName: z
+    .string()
+    .max(120, 'Contact name is too long.')
+    .optional()
+    .or(z.literal('')),
+  primaryContactEmail: z.string().email('Enter a valid contact email address.'),
+});
+
+export type OrgDetailsInput = z.infer<typeof OrgDetailsSchema>;
+
 // ── Paystack webhook payload (stub, mirrors Paystack event envelope) ────
 //
 // Paystack webhooks deliver POST bodies of the shape:

@@ -26,7 +26,7 @@ import {
   resolveUpcomingPayment,
 } from '@/lib/portal/orgData';
 import { normaliseOrgEmails } from '@/lib/internal/clientProposals';
-import { OrgNamesEditor } from '@/components/internal/OrgNamesEditor';
+import { OrgDetailsEditor } from '@/components/internal/OrgDetailsEditor';
 import { PortalSummaryHeader } from '@/components/portal/PortalSummaryHeader';
 import { PortalQuickActions, type PortalQuickAction } from '@/components/portal/PortalQuickActions';
 import { PortalKeyDatesWidget } from '@/components/portal/PortalKeyDatesWidget';
@@ -41,7 +41,7 @@ import { formatZAR } from '@/lib/utils';
 // parity pass). Mirrors the client hub's glassy card system and surfaces almost
 // everything the client sees, PLUS the proposal info staff need. Strictly
 // read-only — no "act as", no client mutations; the one allowed edit is the
-// admin-only OrgNamesEditor. Reads run on the SESSION client so RLS `is_internal`
+// admin-only OrgDetailsEditor. Reads run on the SESSION client so RLS `is_internal`
 // authorises them.
 
 function formatLongDate(iso: string | null): string {
@@ -116,31 +116,7 @@ export default async function ClientOverviewPage({
               <Building2 className="h-4 w-4 text-primary" />
               Organisation
             </h2>
-            <dl className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
-              <Field label="Display name" value={org.display_name} />
-              <Field label="Legal name" value={org.legal_name ?? '—'} />
-              <Field label="Reference / slug" value={org.slug} />
-              <Field label="Status" value={org.status} className="capitalize" />
-              <Field label="Registration no." value={org.business_reg_no ?? '—'} />
-              <Field label="Primary contact" value={org.primary_contact_email} />
-              <Field label="Created" value={formatLongDate(org.created_at)} />
-              <Field
-                label="Xero"
-                value={
-                  org.xero_connected_at
-                    ? `Connected ${formatLongDate(org.xero_connected_at)}`
-                    : 'Not connected'
-                }
-              />
-            </dl>
-
-            {isAdmin && (
-              <OrgNamesEditor
-                orgId={org.id}
-                displayName={org.display_name}
-                legalName={org.legal_name}
-              />
-            )}
+            <OrgDetailsEditor org={org} canEdit={isAdmin} />
           </section>
 
           {/* Finance snapshot */}
