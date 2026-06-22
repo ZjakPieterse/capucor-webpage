@@ -40,7 +40,6 @@ function readRows(org: OrgRecord): Array<[string, string]> {
     ['Display name', org.display_name],
     ['Legal name', dash(org.legal_name)],
     ['Registration no.', dash(org.business_reg_no)],
-    ['Address', dash(org.address)],
     ['Income tax no.', dash(org.income_tax_no)],
     ['VAT no.', dash(org.vat_no)],
     ['PAYE no.', dash(org.paye_no)],
@@ -48,6 +47,7 @@ function readRows(org: OrgRecord): Array<[string, string]> {
     ['COIDA no.', dash(org.coida_no)],
     ['Primary contact name', dash(org.primary_contact_name)],
     ['Primary contact email', org.primary_contact_email],
+    ['Address', dash(org.address)],
   ];
 }
 
@@ -139,14 +139,6 @@ export function OrgDetailsEditor({ org, canEdit }: { org: OrgRecord; canEdit: bo
           disabled={isPending}
         />
         <EditField
-          id="org-address"
-          label="Address"
-          value={form.address ?? ''}
-          onChange={(v) => set('address', v)}
-          disabled={isPending}
-          className="sm:col-span-2"
-        />
-        <EditField
           id="org-income-tax-no"
           label="Income tax no."
           value={form.incomeTaxNo ?? ''}
@@ -199,6 +191,14 @@ export function OrgDetailsEditor({ org, canEdit }: { org: OrgRecord; canEdit: bo
           value={form.primaryContactEmail}
           onChange={(v) => set('primaryContactEmail', v)}
           disabled={isPending}
+        />
+        <EditField
+          id="org-address"
+          label="Address"
+          value={form.address ?? ''}
+          onChange={(v) => set('address', v)}
+          disabled={isPending}
+          className="sm:col-span-2"
         />
       </div>
 
