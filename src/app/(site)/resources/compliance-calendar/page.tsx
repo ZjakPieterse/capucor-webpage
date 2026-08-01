@@ -14,15 +14,15 @@ const PAGE_DESCRIPTION =
 export const metadata: Metadata = {
   title: 'SARS, CIPC & payroll compliance calendar for SA SMEs',
   description: PAGE_DESCRIPTION,
-  alternates: { canonical: `${siteConfig.url}/resources/compliance-calendar` },
+  alternates: { canonical: `${siteConfig.marketingUrl}/resources/compliance-calendar` },
   openGraph: {
     type: 'article',
     locale: 'en_ZA',
-    url: `${siteConfig.url}/resources/compliance-calendar`,
+    url: `${siteConfig.marketingUrl}/resources/compliance-calendar`,
     title: 'SARS, CIPC & payroll compliance calendar for SA SMEs',
     description: PAGE_DESCRIPTION,
     siteName: siteConfig.name,
-    images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],
+    images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
 

@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   // 6. Send confirmation email to the requester + notify the owner.
   //    Failures here are non-fatal — the row is already persisted, and the
   //    owner can manually follow up using the dashboard if mail breaks.
-  const confirmUrl = `${siteConfig.url}/api/data-request/confirm?token=${encodeURIComponent(token)}`;
+  const confirmUrl = `${siteConfig.marketingUrl}/api/data-request/confirm?token=${encodeURIComponent(token)}`;
   const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 

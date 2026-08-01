@@ -22,15 +22,15 @@ export function generateMetadata(): Metadata {
   return {
     title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },
     description: siteConfig.description,
-    alternates: { canonical: siteConfig.url },
+    alternates: { canonical: siteConfig.marketingUrl },
     openGraph: {
       type: 'website',
       locale: 'en_ZA',
-      url: siteConfig.url,
+      url: siteConfig.marketingUrl,
       title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },
       description: siteConfig.description,
       siteName: siteConfig.name,
-      images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],
+      images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
     },
   };
 }
@@ -82,7 +82,7 @@ export default async function HomePage() {
             '@context': 'https://schema.org',
             '@type': 'AccountingService',
             name: 'Capucor Business Solutions',
-            url: siteConfig.url,
+            url: siteConfig.marketingUrl,
             description: siteConfig.description,
             areaServed: 'ZA',
             sameAs: [

@@ -10,14 +10,14 @@ export const metadata: Metadata = {
   title: 'Outsourced Accounting for SMEs',
   description:
     'Annual financial statements, tax returns, and CIPC compliance for South African SMEs. Done properly, on time.',
-  alternates: { canonical: `${siteConfig.url}/accounting` },
+  alternates: { canonical: `${siteConfig.marketingUrl}/accounting` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
-    url: `${siteConfig.url}/accounting`,
+    url: `${siteConfig.marketingUrl}/accounting`,
     description:
       'Annual financial statements, tax returns, and CIPC compliance for South African SMEs. Done properly, on time.',
-    images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],
+    images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
 

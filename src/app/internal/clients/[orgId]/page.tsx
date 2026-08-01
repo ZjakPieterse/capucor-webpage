@@ -34,7 +34,7 @@ import { PortalQuickActions, type PortalQuickAction } from '@/components/portal/
 import { PortalKeyDatesWidget } from '@/components/portal/PortalKeyDatesWidget';
 import { PortalFinanceSnapshot } from '@/components/portal/PortalFinanceSnapshot';
 import { PORTAL_PANEL } from '@/components/portal/portalCard';
-import type { ProposalRow } from '@/components/internal/ProposalsTable';
+import type { ProposalRow } from '@/types';
 import { upcomingKeyDates } from '@/config/keyDates';
 import { tierDisplayName } from '@/config/tiers';
 import { formatZAR } from '@/lib/utils';

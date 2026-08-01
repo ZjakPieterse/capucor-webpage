@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
 
   // 7. Email the proposal link to the client + a reference copy to the owner.
   //    Non-fatal — the proposal row is already persisted.
-  const proposalUrl = `${siteConfig.url}/proposal/${token}`;
+  const proposalUrl = `${siteConfig.marketingUrl}/proposal/${token}`;
   const tierName = tierDisplayName(input.tierSlug);
   const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;

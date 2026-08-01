@@ -15,31 +15,16 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn, formatZAR } from '@/lib/utils';
 import { isReviewDue } from '@/lib/internal/proposalReview';
+import type { ProposalRow } from '@/types';
+
+// Re-exported for the existing `import { ProposalsTable, type ProposalRow }`
+// call sites. The type itself now lives in @/types — see the note there.
+export type { ProposalRow };
 
 // Mirrors the resend route's RESENDABLE guard — a fresh link only makes sense
 // while the proposal is still open or has lapsed. Other statuses (signed/etc.)
 // are amended instead.
 const RESENDABLE = new Set(['sent', 'viewed', 'expired']);
-
-export interface ProposalRow {
-  id: string;
-  token: string;
-  ref_number: string | null;
-  version: number;
-  supersedes_id: string | null;
-  superseded_by_id: string | null;
-  business_name: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  tier_slug: string;
-  monthly_total_zar: number;
-  status: string;
-  sent_at: string | null;
-  signed_at: string | null;
-  created_at: string;
-  proposal_pdf_drive_id: string | null;
-}
 
 // Mirrors the proposals status CHECK (migrations 006 + 010).
 const STATUS_OPTIONS = [

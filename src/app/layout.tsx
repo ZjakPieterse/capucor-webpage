@@ -4,7 +4,7 @@ import { siteConfig } from '@/config/site';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(siteConfig.marketingUrl),
   title: {
     default: 'Capucor Business Solutions | Outsourced Finance for SMEs',
     template: '%s | Capucor Business Solutions',
@@ -18,11 +18,11 @@ export const metadata: Metadata = {
     'Xero partner',
     'SAICA',
   ],
-  authors: [{ name: 'Capucor Business Solutions', url: siteConfig.url }],
+  authors: [{ name: 'Capucor Business Solutions', url: siteConfig.marketingUrl }],
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
-    url: siteConfig.url,
+    url: siteConfig.marketingUrl,
     title: {
       default: 'Capucor Business Solutions | Outsourced Finance for SMEs',
       template: '%s | Capucor Business Solutions',

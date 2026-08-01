@@ -8,14 +8,14 @@ export const metadata: Metadata = {
   title: 'Pricing Calculator',
   description:
     'Build your exact subscription. Transparent, fixed monthly pricing for accounting, bookkeeping, and payroll.',
-  alternates: { canonical: `${siteConfig.url}/pricing` },
+  alternates: { canonical: `${siteConfig.marketingUrl}/pricing` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
-    url: `${siteConfig.url}/pricing`,
+    url: `${siteConfig.marketingUrl}/pricing`,
     description:
       'Build your exact subscription. Transparent, fixed monthly pricing for accounting, bookkeeping, and payroll.',
-    images: [{ url: `${siteConfig.url}/api/og?page=pricing`, width: 1200, height: 630 }],
+    images: [{ url: `${siteConfig.marketingUrl}/api/og?page=pricing`, width: 1200, height: 630 }],
   },
 };
 

@@ -28,5 +28,5 @@ jobs:
           fi
           response=$(curl --silent --show-error --fail-with-body \
             --max-time 60 \
-            "https://capucor.app/api/cron/expire-proposals?secret=$REVALIDATE_SECRET")
+            "https://capucor.com/api/cron/expire-proposals?secret=$REVALIDATE_SECRET")
           echo "$response"

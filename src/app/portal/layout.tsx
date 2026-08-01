@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { SignOutButton } from '@/components/portal/SignOutButton';
 import { getInternalUser } from '@/lib/auth/getInternalUser';
+import { siteConfig } from '@/config/site';
 
 // Minimal app shell for the client portal — a slim top bar instead of the
 // marketing Navbar/Footer. No auth logic here: every /portal page resolves the
@@ -41,13 +42,15 @@ export default async function PortalLayout({ children }: { children: React.React
                 <span className="hidden sm:inline">Staff area</span>
               </Link>
             )}
-            <Link
-              href="/"
+            {/* Crosses to the marketing domain — must be absolute. The
+                "Staff area" link above stays relative: /internal is same-origin. */}
+            <a
+              href={siteConfig.marketingUrl}
               className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to website</span>
-            </Link>
+            </a>
             <SignOutButton />
           </div>
         </div>

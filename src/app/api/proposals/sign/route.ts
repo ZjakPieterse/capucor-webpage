@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
   // 9. Email the confirm link to the proposal's OWN address only (never anything
   //    the submitter supplies). Clicking it is what finalises the signature.
   //    Non-fatal: the pending signature is already saved; in dev we log the URL.
-  const confirmUrl = `${siteConfig.url}/proposal/confirm/${confirmToken}`;
+  const confirmUrl = `${siteConfig.marketingUrl}/proposal/confirm/${confirmToken}`;
   const resendKey = process.env.RESEND_API_KEY;
 
   if (resendKey) {

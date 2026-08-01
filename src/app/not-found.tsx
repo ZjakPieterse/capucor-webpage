@@ -19,8 +19,15 @@ export default function NotFound() {
         The page you wanted doesn&rsquo;t exist or has moved. We&rsquo;re accountants &mdash; we appreciate when things are properly categorised. Help us out:
       </p>
 
+      {/* Absolute marketing URLs: this 404 is the app-root one, so it also
+          renders on capucor.app, where a relative /pricing would only 301
+          back to capucor.com anyway. */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <Button nativeButton={false} render={<Link href="/" />} className="gap-2">
+        <Button
+          nativeButton={false}
+          render={<Link href={siteConfig.marketingUrl} />}
+          className="gap-2"
+        >
           Back to home
           <ArrowRight className="h-4 w-4" />
         </Button>
@@ -28,7 +35,7 @@ export default function NotFound() {
           nativeButton={false}
           variant="outline"
           className="gap-2"
-          render={<Link href="/pricing" />}
+          render={<Link href={`${siteConfig.marketingUrl}/pricing`} />}
         >
           Build your subscription
         </Button>

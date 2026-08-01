@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Check, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { siteConfig } from '@/config/site';
 
 // The confirm page renders read-only; the actual signature commit happens on
 // this button's POST so an email link-scanner that prefetches the GET can't
@@ -45,7 +46,7 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
           Your acceptance is recorded and your client portal is ready. Someone from the Capucor team
           will be in touch shortly to set up your onboarding.
         </p>
-        <Button nativeButton={false} className="mt-5" render={<Link href="/login?next=/portal" />}>
+        <Button nativeButton={false} className="mt-5" render={<Link href={`${siteConfig.appUrl}/login?next=/portal`} />}>
           Sign in to your portal
         </Button>
       </div>

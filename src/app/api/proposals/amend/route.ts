@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
   if (supErr) console.error('[PROPOSALS/AMEND] supersede update error:', supErr);
 
   // 5. Email the client the new link.
-  const proposalUrl = `${siteConfig.url}/proposal/${token}`;
+  const proposalUrl = `${siteConfig.marketingUrl}/proposal/${token}`;
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
     try {

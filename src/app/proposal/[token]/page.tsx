@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
 import { tierDisplayName } from '@/config/tiers';
+import { siteConfig } from '@/config/site';
 import { firstOfNextMonth } from '@/lib/utils';
 import {
   PROPOSAL_TERMS,
@@ -328,7 +329,7 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
           <Button
             nativeButton={false}
             className="mt-5"
-            render={<Link href="/login?next=/portal" />}
+            render={<Link href={`${siteConfig.appUrl}/login?next=/portal`} />}
           >
             Sign in to your portal
           </Button>

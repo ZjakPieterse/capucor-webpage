@@ -52,6 +52,7 @@ cp .env.example .env.local
 | `RESEND_API_KEY` | Resend dashboard (optional — logs to console if absent) |
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
+| `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. See "Domain seam" below |
 | `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10). Apps Script web-app `/exec` URL + its shared secret; archival no-ops if unset. See `scripts/apps-script/README.md` |
 
 ## Dev Scripts
@@ -94,7 +95,56 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   `POST /api/revalidate?secret=<REVALIDATE_SECRET>` (GET also works for browser use). Do not add
   `revalidate` to `/proposal/[token]` (it mutates status on view) or any portal page (per-user).
 - Prod smoke-check: `curl -sD- -o /dev/null https://capucor.app/login | grep -i content-security-policy`
-  should show the Supabase host in `connect-src`.
+  should show the Supabase host in `connect-src`. (`/login` is on capucor.app — see the domain
+  seam below.)
+
+## Domain seam — capucor.com vs capucor.app
+
+Two domains, two jobs. **One Worker serves both**; the separation is enforced by the host-based
+redirect table in `next.config.ts`, not by infrastructure.
+
+| Domain | Owns | Indexable |
+|--------|------|-----------|
+| **capucor.com** | Marketing + the whole sales funnel: `/`, service pages, `/pricing`, `/privacy`, `/terms/*`, `/resources/*`, **and `/proposal/*`** (the signing document) | Yes — all canonicals, sitemap, OG |
+| **capucor.app** | **Capucor OS**: `/login`, `/onboarding`, `/portal/*`, `/internal/*` | No — `X-Robots-Tag: noindex` on every response |
+
+Rules that keep this working:
+
+- **`siteConfig.url` no longer exists.** Use `siteConfig.marketingUrl` or `siteConfig.appUrl`
+  (`src/config/site.ts`, overridable via `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL`).
+  Almost everything is `marketingUrl`; `appUrl` is for auth/portal links only. The one live
+  example is the portal invite in `lib/portal/finalizeSign.ts`.
+- **Auth must stay on capucor.app.** A Supabase session cookie set on one eTLD+1 is unreachable
+  from the other — the two domains can never share a login. That is why `/login` and
+  `/onboarding` live in the **`app/(app)/`** route group with their own slim shell, not in
+  `app/(site)/`. Route groups don't change URLs, so `/login/callback` is unmoved and the Supabase
+  redirect allowlist (`https://capucor.app/**`) needs no change.
+- **A new public/marketing page needs a line in `MARKETING_PATHS`** in `next.config.ts`, or it
+  will also answer on capucor.app. The list is explicit on purpose — a negative-lookahead
+  catch-all would redirect `/_next/static/*` and `/brand/*` off the app domain and strip the CSS
+  and logo from every portal page. Forgetting an entry fails gracefully; the `noindex` header
+  stops it being indexed as duplicate content.
+- **Never add an `/api/*` host redirect.** The API is genuinely dual-host: `/pricing` on
+  capucor.com posts to `/api/proposals`, while `/internal/proposals/[id]/amend` on capucor.app
+  posts to `/api/proposals/amend`.
+- **Links that cross domains must be absolute** (`siteConfig.appUrl` / `siteConfig.marketingUrl`) —
+  the Navbar's Client Portal CTA, the portal's "Back to website", the proposal page's
+  "Sign in to your portal". Links within one domain stay relative so client-side nav still works.
+
+Verify the table after any change to it — build, then `npx wrangler dev --port 8787 --local` and
+fake the host:
+
+```bash
+curl -sI -H "Host: capucor.app" http://localhost:8787/pricing   # 308 → https://capucor.com/pricing
+curl -sI -H "Host: capucor.com" http://localhost:8787/portal    # 308 → https://capucor.app/portal
+curl -sI -H "Host: capucor.app" http://localhost:8787/brand/logo-dark.png  # 200 — never redirected
+curl -sI -H "Host: capucor.app" http://localhost:8787/api/proposals        # never redirected
+```
+
+Cloudflare-side: all four hostnames (both apexes + both `www`s) are bound to the single
+`capucor-web` Worker. ⚠️ **Never delete the capucor.com zone or its MX / SPF / `resend._domainkey`
+DKIM / DMARC records** — capucor.com is the verified Resend *sender* domain, and removing them
+kills every transactional email while the site keeps looking fine.
 
 ## Database (Supabase)
 
@@ -158,9 +208,12 @@ The root `app/layout.tsx` is a **bare shell** — `<html>` + fonts + `globals.cs
 metadata only, no chrome. Chrome is applied per area by nested layouts:
 
 - **`app/(site)/layout.tsx`** — marketing chrome (Navbar + Footer). **All public pages live in the
-  `(site)` route group** (home, services, pricing, privacy, terms, resources, login, onboarding).
+  `(site)` route group** (home, services, pricing, privacy, terms, resources).
   Route groups don't change the URL, so **a new public/marketing page goes in `app/(site)/`, not
   `app/`.**
+- **`app/(app)/layout.tsx`** — slim shell (logo header only) for the Capucor OS entry points that
+  sit outside `/portal` and `/internal`: `/login` (+ `/login/callback`) and `/onboarding`. These
+  are served from capucor.app, so they must not wear marketing chrome — see the domain seam above.
 - **`app/proposal/layout.tsx`** — bare, no chrome (the standalone signing document).
 - **`app/portal/layout.tsx`** — slim app bar (logo, "Back to website", sign-out). Pages gate auth
   themselves via `requireSession()`.

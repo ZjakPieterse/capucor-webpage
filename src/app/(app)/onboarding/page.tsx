@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: 'Welcome',
   description: 'Your subscription is active. Book your handover call to get started.',
   robots: { index: false, follow: false },
-  alternates: { canonical: `${siteConfig.url}/onboarding` },
+  alternates: { canonical: `${siteConfig.marketingUrl}/onboarding` },
 };
 
 const NEXT_STEPS = [

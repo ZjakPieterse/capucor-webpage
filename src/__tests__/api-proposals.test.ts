@@ -94,7 +94,7 @@ describe('POST /api/proposals', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
-    expect(body.proposalUrl).toMatch(new RegExp(`^${siteConfig.url}/proposal/.+`));
+    expect(body.proposalUrl).toMatch(new RegExp(`^${siteConfig.marketingUrl}/proposal/.+`));
 
     // Lead captured
     const leadPayload = leadInsert.mock.calls[0]![0] as Record<string, unknown>;

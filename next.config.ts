@@ -61,6 +61,90 @@ const SECURITY_HEADERS = [
   { key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
 ];
 
+// ---------------------------------------------------------------------------
+// Domain seam — capucor.com (marketing) vs capucor.app (Capucor OS)
+// ---------------------------------------------------------------------------
+// One Worker serves both hostnames; these redirects are what actually separate
+// them. Host matching uses `has: [{ type: "host" }]`, which keeps this in the
+// Next routing layer — deliberately avoiding a middleware.ts, since OpenNext
+// bundling is the fragile part of this stack (see AGENTS.md deploy rules).
+const MARKETING_ORIGIN = "https://capucor.com";
+const APP_ORIGIN = "https://capucor.app";
+
+const MARKETING_HOST = "capucor.com";
+const APP_HOST = "capucor.app";
+
+// Paths Capucor OS owns. Reached on capucor.com → bounce to capucor.app.
+// Auth is here because a session cookie set on one eTLD+1 can never be read
+// from the other, so login has to live on the domain that needs the session.
+const APP_PATHS = [
+  "/portal",
+  "/portal/:path*",
+  "/internal",
+  "/internal/:path*",
+  "/login",
+  "/login/:path*",
+  "/onboarding",
+];
+
+// Paths the marketing site owns. Reached on capucor.app → bounce to capucor.com.
+//
+// This list is explicit ON PURPOSE — do not "simplify" it into a catch-all with
+// a negative lookahead like /:path((?!portal|internal|api|_next).*). That
+// pattern fails catastrophically the moment the exclusion list misses something:
+// redirecting /_next/static/* or /brand/logo-dark.png off capucor.app strips the
+// CSS and logo from every portal page. This list fails gracefully instead — a
+// new public page nobody adds here just stays reachable on both hosts, and the
+// X-Robots-Tag below stops it being indexed there.
+//
+// ⚠️ Adding a new public/marketing page? Add its path here too.
+const MARKETING_PATHS = [
+  "/",
+  "/pricing",
+  "/accounting",
+  "/bookkeeping",
+  "/payroll",
+  "/privacy",
+  "/terms/engagement",
+  "/resources/:path*",
+  "/proposal/:path*",
+];
+
+// Note there is deliberately NO /api/* rule in either direction. A 301 on a
+// POST downgrades it to GET and drops the body, and the API is genuinely
+// dual-host today: /pricing on capucor.com posts to /api/proposals, while
+// /internal/proposals/[id]/amend on capucor.app posts to /api/proposals/amend.
+const hostRedirects = [
+  // www → apex, both zones. First, so the apex rules below see a clean host.
+  {
+    source: "/:path*",
+    has: [{ type: "host" as const, value: `www.${MARKETING_HOST}` }],
+    destination: `${MARKETING_ORIGIN}/:path*`,
+    permanent: true,
+  },
+  {
+    source: "/:path*",
+    has: [{ type: "host" as const, value: `www.${APP_HOST}` }],
+    destination: `${APP_ORIGIN}/:path*`,
+    permanent: true,
+  },
+  // Capucor OS paths asked for on the marketing domain.
+  ...APP_PATHS.map((source) => ({
+    source,
+    has: [{ type: "host" as const, value: MARKETING_HOST }],
+    destination: `${APP_ORIGIN}${source}`,
+    permanent: true,
+  })),
+  // Marketing paths asked for on the app domain. Keeps every proposal link in
+  // an already-sent email working — they were minted against capucor.app.
+  ...MARKETING_PATHS.map((source) => ({
+    source,
+    has: [{ type: "host" as const, value: APP_HOST }],
+    destination: `${MARKETING_ORIGIN}${source === "/" ? "" : source}`,
+    permanent: true,
+  })),
+];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -68,13 +152,26 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: SECURITY_HEADERS,
       },
+      // Capucor OS is an application, not a publication. Header rules are
+      // additive, so this layers on top of SECURITY_HEADERS rather than
+      // replacing it. Belt-and-braces with the redirects above: anything on
+      // capucor.app that ISN'T redirected to the marketing domain (a page
+      // missing from MARKETING_PATHS, the workers.dev URL) still can't be
+      // indexed as duplicate content.
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: APP_HOST }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
     ];
   },
   async redirects() {
     return [
+      ...hostRedirects,
       {
+        // Absolute, so the legacy path resolves to the portal from either host.
         source: "/client-portal",
-        destination: "/portal",
+        destination: `${APP_ORIGIN}/portal`,
         permanent: true,
       },
     ];

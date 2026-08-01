@@ -134,3 +134,30 @@ export interface LeadPayload {
   consent_given: true;
   website?: string;
 }
+
+// A row of the `proposals` table as read by the internal surfaces and by
+// getOrgProposals() in lib/portal/orgData.ts.
+//
+// Lives here rather than next to the table that renders it: orgData.ts is
+// shared by the client portal AND the /internal mirror, and importing this type
+// from components/internal/ProposalsTable dragged an internal React component
+// into the portal's module graph. Types belong to the data, not to one view.
+export interface ProposalRow {
+  id: string;
+  token: string;
+  ref_number: string | null;
+  version: number;
+  supersedes_id: string | null;
+  superseded_by_id: string | null;
+  business_name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  tier_slug: string;
+  monthly_total_zar: number;
+  status: string;
+  sent_at: string | null;
+  signed_at: string | null;
+  created_at: string;
+  proposal_pdf_drive_id: string | null;
+}

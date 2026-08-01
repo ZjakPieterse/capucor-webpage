@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ProposalRow } from '@/components/internal/ProposalsTable';
+import type { ProposalRow } from '@/types';
 
 // Org-scoped read helpers shared by the client portal (passed the admin client —
 // unchanged behaviour) and the internal view-only mirror (passed the session

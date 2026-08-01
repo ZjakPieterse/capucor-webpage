@@ -10,14 +10,14 @@ export const metadata: Metadata = {
   title: 'Bookkeeping for SA SMEs',
   description:
     'Real-time bookkeeping for South African SMEs. Monthly reconciliations, management accounts, and Xero included.',
-  alternates: { canonical: `${siteConfig.url}/bookkeeping` },
+  alternates: { canonical: `${siteConfig.marketingUrl}/bookkeeping` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
-    url: `${siteConfig.url}/bookkeeping`,
+    url: `${siteConfig.marketingUrl}/bookkeeping`,
     description:
       'Real-time bookkeeping for South African SMEs. Monthly reconciliations, management accounts, and Xero included.',
-    images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],
+    images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
 

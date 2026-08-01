@@ -10,14 +10,14 @@ export const metadata: Metadata = {
   title: 'Payroll for SA Businesses',
   description:
     'Accurate, compliant payroll for South African staff teams of any size. PAYE, UIF, and IRP5s handled.',
-  alternates: { canonical: `${siteConfig.url}/payroll` },
+  alternates: { canonical: `${siteConfig.marketingUrl}/payroll` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
-    url: `${siteConfig.url}/payroll`,
+    url: `${siteConfig.marketingUrl}/payroll`,
     description:
       'Accurate, compliant payroll for South African staff teams of any size. PAYE, UIF, and IRP5s handled.',
-    images: [{ url: `${siteConfig.url}/api/og`, width: 1200, height: 630 }],
+    images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
 

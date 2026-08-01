@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not re-send the proposal.' }, { status: 500 });
   }
 
-  const proposalUrl = `${siteConfig.url}/proposal/${token}`;
+  const proposalUrl = `${siteConfig.marketingUrl}/proposal/${token}`;
   const resendKey = process.env.RESEND_API_KEY;
   if (resendKey) {
     try {

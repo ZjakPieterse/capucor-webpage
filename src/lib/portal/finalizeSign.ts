@@ -130,8 +130,11 @@ export async function finalizeProposalSignature(
 
   // 4. Emails — non-fatal. The signature is already saved.
   const fullName = `${row.first_name} ${row.last_name}`.trim();
-  const proposalUrl = `${siteConfig.url}/proposal/${row.token}`;
-  const loginUrl = `${siteConfig.url}/login?next=/portal`;
+  const proposalUrl = `${siteConfig.marketingUrl}/proposal/${row.token}`;
+  // The portal invite is the one link that crosses to Capucor OS — auth lives
+  // on capucor.app, so this must NOT use marketingUrl (capucor.com/login 301s
+  // here anyway, but sending clients through a redirect is needless).
+  const loginUrl = `${siteConfig.appUrl}/login?next=/portal`;
   const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 

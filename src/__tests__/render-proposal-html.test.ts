@@ -87,7 +87,10 @@ describe('renderProposalDocumentHtml', () => {
     const html = renderProposalDocumentHtml(sampleData());
     expect(html).toContain('data:image/png;base64,');
     expect(html).toContain('alt="Capucor Business Solutions"');
-    // never a remote logo URL — the converter only renders inline images
-    expect(html).not.toContain('https://capucor.app/brand/');
+    // Never a remote image URL — the converter only renders inline data: images.
+    // Deliberately domain-agnostic: this used to assert against a hardcoded
+    // https://capucor.app/brand/ prefix, which would have gone silently green
+    // the moment the site moved to capucor.com. Match any remote <img> instead.
+    expect(html).not.toMatch(/<img[^>]+src=["']https?:\/\//i);
   });
 });

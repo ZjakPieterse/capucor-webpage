@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = {
   title: 'Sign in',
@@ -50,7 +51,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <main className="min-h-[calc(100vh-12rem)] flex items-center justify-center px-6 py-12 lg:py-16">
+    <div className="min-h-[calc(100vh-12rem)] flex items-center justify-center px-6 py-12 lg:py-16">
       <div className="w-full max-w-md">
         <header className="text-center mb-8">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
@@ -74,7 +75,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Not a client yet?{' '}
           <a
-            href="/pricing"
+            href={`${siteConfig.marketingUrl}/pricing`}
             className="underline underline-offset-2 hover:text-foreground"
           >
             Build your subscription
@@ -82,6 +83,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           .
         </p>
       </div>
-    </main>
+    </div>
   );
 }
