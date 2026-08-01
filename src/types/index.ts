@@ -72,13 +72,6 @@ export interface PricingState {
 }
 
 // ── Subscription / activation ────────────────────────────────────────────
-export interface BusinessDetails {
-  legalName: string;
-  cipcNumber?: string;
-  vatNumber?: string;
-  sector: string;
-}
-
 export type SubscriptionStatus =
   | 'pending_payment'
   | 'active'
@@ -99,20 +92,6 @@ export interface SubscriptionSummary {
   nextBillingDate: string | null;   // ISO date
   endAt: string | null;             // ISO date when cancelling/cancelled
   createdAt: string;                // ISO datetime
-}
-
-export interface SubscriptionRequestPayload {
-  // Calculator config
-  services: string[];
-  brackets: Record<string, number>;   // never enterprise in self-serve flow
-  tierSlug: string;
-  // Account + business
-  email: string;
-  fullName: string;
-  business: BusinessDetails;
-  consentGiven: true;
-  // Honeypot
-  website?: string;
 }
 
 export interface LeadPayload {

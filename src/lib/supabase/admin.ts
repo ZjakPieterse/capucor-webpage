@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Service-role Supabase client for server-only writes (portal mutations,
-// Paystack webhook, Karbon sync, Xero sync). Bypasses RLS — never import
+// provision-on-sign, Karbon sync, Xero sync). Bypasses RLS — never import
 // from any module that ships to the browser.
 
 export function createSupabaseAdminClient(): SupabaseClient {

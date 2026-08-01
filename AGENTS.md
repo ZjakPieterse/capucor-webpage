@@ -21,7 +21,7 @@ Capucor Business Solutions public website and client portal. South African outso
 | Database & Auth | Supabase (PostgreSQL) |
 | Forms | React Hook Form + Zod |
 | Email | Resend |
-| Payments | Subscriptions: Paysoft Flow debit orders (Xero-integrated, manual — no API). Shop one-offs: PayFast. Legacy Paystack stubs remain but are superseded — see "Payments status" below. |
+| Payments | Subscriptions: Paysoft Flow debit orders (Xero-integrated, manual — no API). Shop one-offs: PayFast (not yet wired) — see "Payments status" below. |
 | Deployment | Cloudflare Workers via opennextjs-cloudflare |
 | Testing | Vitest |
 
@@ -175,7 +175,7 @@ loss, not an error:
 - **`createSupabaseServerClient()` (`server.ts`) — for per-user/auth reads.** Cookie-bound; adopts
   the visitor's session role. Use for auth, the client portal, and lead/data-request inserts.
 - **`createSupabaseAdminClient()` (`admin.ts`) — for privileged writes.** Service-role; bypasses
-  RLS. Server-only mutations (Paystack webhook, Karbon/Xero sync, portal writes). Never import
+  RLS. Server-only mutations (provision-on-sign, Karbon/Xero sync, portal writes). Never import
   into browser code.
 
 ⚠️ **The public pricing tables only grant `select to anon`** (see `001_schema.sql`; no
@@ -384,18 +384,18 @@ billing decision** (documented in `../AUDIT-PORTAL-TASKS.md`) changed that:
 - **Shop one-offs** will use **PayFast** (signed redirect + an ITN webhook validated by MD5
   signature + a server postback) — not yet wired in code.
 
-The following **Paystack stubs still live in the tree but are superseded** by the above; they are
-**not** the live billing path. Remove or repurpose them when the PayFast shop path lands:
+**The Paystack stubs were deleted on 2026-08-01** (Phase 0 of the Capucor OS split). Removed:
+`api/subscriptions/route.ts`, `api/webhooks/paystack/route.ts`, `lib/paystack.ts`, their schemas
+and tests, and the `PAYSTACK_SECRET_KEY` env var. None of it carried over — the shop needs the
+**PayFast ITN/MD5** scheme, not Paystack's HMAC-SHA512, and subscriptions are provisioned on sign
+rather than by a payment webhook. `lib/security.ts` (`timingSafeEqual`) stayed; it is used by
+`/api/revalidate` and both cron routes.
 
-- `src/app/api/subscriptions/route.ts` — Paystack-shaped pricing-math + insert stub (returns a
-  deterministic stub response). Superseded: subscriptions are provisioned on sign, not here.
-- `src/app/api/webhooks/paystack/route.ts` — Paystack webhook **event handling** stub (no-op
-  cases). Its signature verification (`lib/paystack.ts`, HMAC-SHA512 over the raw body, failing
-  closed when `PAYSTACK_SECRET_KEY` is unset) is real but unused — the shop will need the **PayFast
-  ITN/MD5** scheme instead, which does not carry over.
+**When the PayFast shop path lands it starts from scratch:** a signed redirect plus an ITN webhook
+validated by MD5 signature and a server postback.
 
-TODOs are inline-documented in each file. (The client portal and `/onboarding` are **live**, not
-stubs — provision-on-sign and the auth flow shipped.)
+(The client portal and `/onboarding` are **live**, not stubs — provision-on-sign and the auth flow
+shipped.)
 
 ## Pending Content: Client Testimonials / Social Proof
 

@@ -4,7 +4,7 @@
  * Interim, dependency-free catalogue — same pattern as src/config/keyDates.ts.
  * The `shop_products` table already exists (migration 004) but is unseeded;
  * keeping the catalogue static means the shop renders with zero DB action.
- * When Paystack checkout lands (B4/B5) we swap this for a seeded DB read so
+ * When PayFast checkout lands (B4/B5) we swap this for a seeded DB read so
  * `shop_orders.product_id` has a real FK target.
  *
  * Prices are once-off starter placeholders — confirm the SKUs + amounts

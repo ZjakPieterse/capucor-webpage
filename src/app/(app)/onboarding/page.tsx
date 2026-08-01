@@ -128,7 +128,7 @@ export default async function OnboardingPage() {
         <Button
           variant="ghost"
           nativeButton={false}
-          render={<Link href="/" />}
+          render={<Link href={siteConfig.marketingUrl} />}
         >
           Back to home
         </Button>

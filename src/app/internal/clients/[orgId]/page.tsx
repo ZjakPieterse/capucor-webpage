@@ -37,6 +37,7 @@ import { PORTAL_PANEL } from '@/components/portal/portalCard';
 import type { ProposalRow } from '@/types';
 import { upcomingKeyDates } from '@/config/keyDates';
 import { tierDisplayName } from '@/config/tiers';
+import { siteConfig } from '@/config/site';
 import { formatZAR } from '@/lib/utils';
 
 // View-only staff mirror of a single client's portal Overview (PR13d → Session 6
@@ -243,8 +244,9 @@ function ProposalSummary({ proposal }: { proposal: ProposalRow }) {
       </dl>
       <div className="flex flex-wrap items-center gap-4 pt-1">
         <Link
-          href={`/proposal/${proposal.token}`}
+          href={`${siteConfig.marketingUrl}/proposal/${proposal.token}`}
           target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-sm text-primary underline underline-offset-2"
         >
           View proposal

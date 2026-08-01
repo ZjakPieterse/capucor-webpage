@@ -15,7 +15,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn, formatZAR } from '@/lib/utils';
 import { isReviewDue } from '@/lib/internal/proposalReview';
+import { siteConfig } from '@/config/site';
 import type { ProposalRow } from '@/types';
+
+// The signing document lives on the marketing domain, so every /proposal link
+// from this staff table (served on capucor.app) must be absolute. A relative
+// href would resolve to capucor.app and only reach the document via the 308 in
+// the next.config.ts redirect table. See "Domain seam" in AGENTS.md.
+const proposalUrl = (token: string) => `${siteConfig.marketingUrl}/proposal/${token}`;
 
 // Re-exported for the existing `import { ProposalsTable, type ProposalRow }`
 // call sites. The type itself now lives in @/types — see the note there.
@@ -212,8 +219,9 @@ export function ProposalsTable({
                           <span className="block">
                             Superseded by{' '}
                             <Link
-                              href={`/proposal/${newer.token}`}
+                              href={proposalUrl(newer.token)}
                               target="_blank"
+                              rel="noopener noreferrer"
                               className="underline underline-offset-2"
                             >
                               {newer.ref_number ?? '—'}
@@ -224,8 +232,9 @@ export function ProposalsTable({
                           <span className="block">
                             Replaces{' '}
                             <Link
-                              href={`/proposal/${older.token}`}
+                              href={proposalUrl(older.token)}
                               target="_blank"
+                              rel="noopener noreferrer"
                               className="underline underline-offset-2"
                             >
                               {older.ref_number ?? '—'}
@@ -260,9 +269,10 @@ export function ProposalsTable({
                   <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">{dateZA(r.signed_at)}</td>
                   <td className="whitespace-nowrap px-3 py-2">
                     <Link
-                      href={`/proposal/${r.token}`}
+                      href={proposalUrl(r.token)}
                       className="text-primary underline underline-offset-2"
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       View
                     </Link>
