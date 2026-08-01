@@ -9,8 +9,6 @@ import { ProblemCards } from '@/components/landing/ProblemCards';
 import { ServicePillars } from '@/components/landing/ServicePillars';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { PackagesTeaser } from '@/components/landing/PackagesTeaser';
-// Parked 2026-06-15 — Tech Stack section removed from the live page; decide keep vs delete ~2026-06-29.
-// import { TechStackShowcase } from '@/components/landing/TechStackShowcase';
 import { ContactSection } from '@/components/landing/ContactSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
@@ -110,11 +108,9 @@ export default async function HomePage() {
         {/* 6. Testimonials / social proof — placeholder between Services and Packages. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
         {/* 7. Packages */}
         <PackagesTeaser services={services} tiers={tiers} />
-        {/* 8. Tech stack — parked 2026-06-15 (trust cards moved into ServicePillars). Decide keep vs delete ~2026-06-29. */}
-        {/* <TechStackShowcase /> */}
-        {/* 9. Contact + lead capture (replaced the homepage FAQ). */}
+        {/* 8. Contact + lead capture (replaced the homepage FAQ). */}
         <ContactSection />
-        {/* 10. Final CTA */}
+        {/* 9. Final CTA */}
         <FinalCTA />
       </PageCursorGlow>
     </>

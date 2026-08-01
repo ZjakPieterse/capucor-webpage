@@ -208,7 +208,7 @@ UI work so the front end stays visually consistent. Canonical examples are cited
 
 - Standard content sections use `className="premium-section py-14 lg:py-20"`. Hero and the
   final CTA run heavier (`py-20`/`24`/`28`/`36`); match a neighbouring section rather than
-  inventing new spacing. Examples: `ProblemCards`, `ServicePillars`, `TechStackShowcase`,
+  inventing new spacing. Examples: `ProblemCards`, `ServicePillars`,
   `PackagesTeaser`, `ContactSection`.
 - `.premium-section` (in `globals.css`) is a primitive: it sets `position: relative` and
   paints a faint dual radial-gradient backdrop via `::before`. Use `.premium-section-muted`
@@ -348,6 +348,6 @@ stubs — provision-on-sign and the auth flow shipped.)
 
 The slot reserved for **real client testimonials / social proof** sits between the **What we do** (`ServicePillars`) and **Packages** (`PackagesTeaser`) sections. Its previous occupant — the "A Month with Capucor" four-week timeline (`OutcomeStories.tsx`) — was removed.
 
-- Placement: `src/app/page.tsx`, between `ServicePillars` and `PackagesTeaser` (look for the placeholder HTML comment). The homepage FAQ was retired and its `FaqAccordion` + `config/faq.ts` removed; rebuild fresh if a FAQ section is wanted later.
+- Placement: `src/app/(site)/page.tsx`, between `ServicePillars` and `PackagesTeaser` (look for the placeholder HTML comment). The homepage FAQ was retired and its `FaqAccordion` + `config/faq.ts` removed; rebuild fresh if a FAQ section is wanted later.
 - Blocker: testimonials still need to be collected from clients. Once 3–5 quotes (name, role, company, quote, ideally a headshot) are in hand, build a new `Testimonials.tsx` landing component and slot it in.
 - Do not ship the old four-week timeline visual back — it was scrapped intentionally. Build fresh around the real quotes.
