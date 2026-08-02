@@ -71,28 +71,10 @@ export interface PricingState {
   selectedAddons: string[];
 }
 
-// ── Subscription / activation ────────────────────────────────────────────
-export type SubscriptionStatus =
-  | 'pending_payment'
-  | 'active'
-  | 'cancelling'      // notice given, still active until end_at
-  | 'cancelled'
-  | 'past_due';
-
-export interface SubscriptionSummary {
-  id: string;
-  status: SubscriptionStatus;
-  tierSlug: string;
-  tierName: string;
-  monthlyTotalZAR: number;       // final all-in monthly price (services + add-ons)
-  vatZAR: number;                // always 0 — VAT handled in Xero, not on-site
-  totalChargeZAR: number;        // equals monthlyTotalZAR
-  services: string[];            // slugs
-  brackets: Record<string, BracketValue>;
-  nextBillingDate: string | null;   // ISO date
-  endAt: string | null;             // ISO date when cancelling/cancelled
-  createdAt: string;                // ISO datetime
-}
+// SubscriptionStatus / SubscriptionSummary moved to capucor-os in Phase 3 of the
+// OS split — they described the portal's billing view, which lives on
+// capucor.app now. Marketing writes the `subscriptions` row at signing
+// (lib/portal/provision.ts) but never reads one back.
 
 export interface LeadPayload {
   source:
@@ -114,29 +96,7 @@ export interface LeadPayload {
   website?: string;
 }
 
-// A row of the `proposals` table as read by the internal surfaces and by
-// getOrgProposals() in lib/portal/orgData.ts.
-//
-// Lives here rather than next to the table that renders it: orgData.ts is
-// shared by the client portal AND the /internal mirror, and importing this type
-// from components/internal/ProposalsTable dragged an internal React component
-// into the portal's module graph. Types belong to the data, not to one view.
-export interface ProposalRow {
-  id: string;
-  token: string;
-  ref_number: string | null;
-  version: number;
-  supersedes_id: string | null;
-  superseded_by_id: string | null;
-  business_name: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  tier_slug: string;
-  monthly_total_zar: number;
-  status: string;
-  sent_at: string | null;
-  signed_at: string | null;
-  created_at: string;
-  proposal_pdf_drive_id: string | null;
-}
+// The shared ProposalRow moved to capucor-os in Phase 3 — it described the row
+// as read by the /internal surfaces and orgData.ts, both of which live there
+// now. app/proposal/[token]/page.tsx keeps its own narrower local interface of
+// the same name for the columns the signing document actually renders.

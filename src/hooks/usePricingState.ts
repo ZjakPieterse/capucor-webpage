@@ -17,10 +17,13 @@ const DEFAULT_STATE: PricingState = {
 };
 
 // Serializable selection used to pre-populate the calculator from an existing
-// proposal (PR13c amend flow). Crosses the server→client boundary, so it's
-// plain arrays/objects — the Set is rebuilt here. `brackets` may carry
-// 'not_required' for services the proposal opted out of, so Back-to-step-1
-// shows every service already answered.
+// proposal. Crosses the server→client boundary, so it's plain arrays/objects —
+// the Set is rebuilt here. `brackets` may carry 'not_required' for services the
+// proposal opted out of, so Back-to-step-1 shows every service already answered.
+//
+// Its original caller was the staff amend page, which moved to capucor-os in
+// Phase 3 of the OS split. Nothing seeds the calculator today; the hook is kept
+// because it is the supported way to do so and costs nothing dormant.
 export interface PricingSeed {
   services: string[];
   brackets: Record<string, BracketValue>;
@@ -68,8 +71,8 @@ export function clearPricingDraft() {
 }
 
 export function usePricingState(seed?: PricingSeed) {
-  // Lazy initialiser: when seeded (amend flow) the calculator starts from the
-  // proposal's selection; otherwise every visit starts blank (see below).
+  // Lazy initialiser: when seeded the calculator starts from that selection;
+  // otherwise every visit starts blank (see below).
   const [state, setState] = useState<PricingState>(() =>
     seed ? seededState(seed) : DEFAULT_STATE
   );
@@ -80,7 +83,7 @@ export function usePricingState(seed?: PricingSeed) {
   const [completed, setCompleted] = useState(false);
 
   // Every visit to /pricing starts blank: the hook never reads the stored
-  // draft on init (it starts from DEFAULT_STATE, or the amend seed), and the
+  // draft on init (it starts from DEFAULT_STATE, or the seed), and the
   // first persist overwrites any prior draft. Continue/Back within the page
   // don't unmount this hook, so in-session step state still flows; only fresh
   // navigation or refresh resets it.

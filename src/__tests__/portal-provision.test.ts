@@ -37,6 +37,10 @@ function makeFakeAdmin(
   let idCounter = 1;
   const nextId = (prefix: string) => `${prefix}_${idCounter++}`;
 
+  // Every insert/update payload, in order, with the exact columns it wrote.
+  // Backs the schema-seam assertions at the foot of this file.
+  const writes: { table: string; op: 'insert' | 'update'; columns: string[] }[] = [];
+
   const createUser = vi.fn(async () => {
     if (opts.authFail) return { data: { user: null }, error: { message: 'createUser boom' } };
     if (opts.newUserId === null) {
@@ -78,11 +82,13 @@ function makeFakeAdmin(
         if (opts.failInsertOn === table) {
           return { data: null, error: { message: `insert failed on ${table}` } };
         }
+        writes.push({ table, op: 'insert', columns: Object.keys(state.payload ?? {}) });
         const row: Row = { id: nextId(table), created_at: new Date().toISOString(), ...state.payload };
         rows.push(row);
         return { data: state.returnSelect ? row : null, error: null };
       }
       // update
+      writes.push({ table, op: 'update', columns: Object.keys(state.payload ?? {}) });
       const matched = applyFilters();
       for (const r of matched) Object.assign(r, state.payload);
       return { data: matched, error: null };
@@ -136,6 +142,7 @@ function makeFakeAdmin(
     auth: { admin: { createUser, generateLink } },
     from,
     tables,
+    writes,
     createUser,
     generateLink,
   };
@@ -368,6 +375,148 @@ describe('provisionFromSignedProposal', () => {
     expect(fake.tables.client_org_members.some((m) => m.user_id === 'user_bob' && m.client_org_id === 'org_1')).toBe(true);
     expect(fake.tables.subscriptions).toHaveLength(1);
     expect(fake.tables.subscriptions[0]).toMatchObject({ tier_slug: 'pro' });
+    errorSpy.mockRestore();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHEMA SEAM (Phase 3 of the OS split)
+//
+// The schema is owned by the capucor-os repo — `supabase/migrations/` lives
+// there and nowhere else. This file is capucor.com's only writer into those
+// tables, and a rename or drop on the OS side produces NO compile error and NO
+// failing test anywhere else. The symptom in production is a client who signs
+// and silently never gets portal access.
+//
+// So: pin the exact column set written to each table. These are not style
+// assertions — each list is a contract with a migration in the other repo.
+//
+// ⚠️ IF ONE OF THESE GOES RED, DO NOT JUST UPDATE THE LIST. Work out which
+// migration in capucor-os moved underneath this code, and confirm the column
+// still exists with the same name and type before changing anything here. See
+// the header comment on src/lib/portal/provision.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const EXPECTED_WRITES = {
+  client_orgs_insert: ['display_name', 'slug', 'primary_contact_email', 'status'],
+  client_org_members_insert: ['client_org_id', 'user_id', 'role'],
+  // upsertSubscription's `plan` object — used verbatim for the UPDATE, and
+  // spread with the two period columns for the INSERT.
+  subscriptions_plan: [
+    'email',
+    'full_name',
+    'business',
+    'services',
+    'brackets',
+    'tier_slug',
+    'monthly_total_zar',
+    'vat_zar',
+    'total_charge_zar',
+    'status',
+  ],
+  proposals_update: ['status', 'client_org_id'],
+} as const;
+
+function writeFor(
+  fake: FakeAdmin,
+  table: string,
+  op: 'insert' | 'update',
+): string[] {
+  const hit = fake.writes.find((w) => w.table === table && w.op === op);
+  if (!hit) throw new Error(`provision.ts never ran an ${op} on ${table}`);
+  return hit.columns;
+}
+
+describe('provisionFromSignedProposal — schema seam (columns written)', () => {
+  it('9. first-time provision writes exactly the expected columns to every table', async () => {
+    const proposalRow: Row = { id: 'prop_1', status: 'signed', client_org_id: null };
+    const fake = makeFakeAdmin({ proposals: [proposalRow] }, { newUserId: 'user_new' });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await provisionFromSignedProposal(asClient(fake), signedProposal());
+    expect(res.ok).toBe(true);
+
+    // client_orgs — legal_name is deliberately NOT set here (admin-set later,
+    // migration 014). Adding it to this insert is a behaviour change.
+    expect(writeFor(fake, 'client_orgs', 'insert').sort()).toEqual(
+      [...EXPECTED_WRITES.client_orgs_insert].sort(),
+    );
+
+    // client_org_members — NOT "memberships". The plan doc uses the shorter
+    // name loosely; the table is client_org_members (migration 004).
+    expect(writeFor(fake, 'client_org_members', 'insert').sort()).toEqual(
+      [...EXPECTED_WRITES.client_org_members_insert].sort(),
+    );
+
+    // subscriptions insert = client_org_id + the plan + the two period columns.
+    // No payment columns: collection is manual via Paysoft Flow, and the dead
+    // paystack_* columns from the superseded billing model must stay unwritten.
+    expect(writeFor(fake, 'subscriptions', 'insert').sort()).toEqual(
+      [
+        'client_org_id',
+        ...EXPECTED_WRITES.subscriptions_plan,
+        'current_period_start',
+        'current_period_end',
+      ].sort(),
+    );
+    expect(writeFor(fake, 'subscriptions', 'insert')).not.toContain('vat_zar_rate');
+    expect(
+      writeFor(fake, 'subscriptions', 'insert').filter((c) => c.startsWith('paystack')),
+    ).toEqual([]);
+
+    // proposals — the promotion. Only ever these two columns.
+    expect(writeFor(fake, 'proposals', 'update').sort()).toEqual(
+      [...EXPECTED_WRITES.proposals_update].sort(),
+    );
+
+    errorSpy.mockRestore();
+  });
+
+  it('10. re-sign updates subscriptions with exactly the plan columns (no period reset)', async () => {
+    const proposalRow: Row = { id: 'prop_1', status: 'signed', client_org_id: null };
+    const fake = makeFakeAdmin(
+      {
+        proposals: [proposalRow],
+        client_orgs: [
+          { id: 'org_1', display_name: 'Pat Trading Co', slug: 'pat-trading-co', primary_contact_email: 'pat@example.com', status: 'active' },
+        ],
+        client_org_members: [{ id: 'm_1', client_org_id: 'org_1', user_id: 'user_existing', role: 'owner' }],
+        subscriptions: [{ id: 'sub_1', client_org_id: 'org_1', status: 'active', tier_slug: 'basic', created_at: '2026-01-01' }],
+      },
+      { newUserId: null, existingUserId: 'user_existing' },
+    );
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await provisionFromSignedProposal(asClient(fake), signedProposal({ tier_slug: 'pro' }));
+    expect(res.ok).toBe(true);
+
+    // The UPDATE path writes the plan and nothing else — re-signing must not
+    // move an existing subscriber's billing period.
+    const cols = writeFor(fake, 'subscriptions', 'update');
+    expect(cols.sort()).toEqual([...EXPECTED_WRITES.subscriptions_plan].sort());
+    expect(cols).not.toContain('current_period_start');
+    expect(cols).not.toContain('current_period_end');
+    expect(cols).not.toContain('client_org_id');
+
+    errorSpy.mockRestore();
+  });
+
+  it('11. the tables provision.ts touches are exactly the four documented ones', async () => {
+    const proposalRow: Row = { id: 'prop_1', status: 'signed', client_org_id: null };
+    const fake = makeFakeAdmin({ proposals: [proposalRow] }, { newUserId: 'user_new' });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await provisionFromSignedProposal(asClient(fake), signedProposal());
+
+    // A new table appearing here means the schema seam widened — the header
+    // comment on provision.ts and capucor-os/AGENTS.md both need updating.
+    expect([...new Set(fake.writes.map((w) => w.table))].sort()).toEqual([
+      'client_org_members',
+      'client_orgs',
+      'proposals',
+      'subscriptions',
+    ]);
+
     errorSpy.mockRestore();
   });
 });

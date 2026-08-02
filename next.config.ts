@@ -1,23 +1,23 @@
 import type { NextConfig } from "next";
 
-// Supabase URL is read at build time and added to connect-src so the
-// browser client (login, future portal queries) is permitted to call out.
-// Falls back to 'self' only if the env var is missing — safer than a wide
-// wildcard, but the build should always have it set.
+// Supabase URL is added to connect-src. Since Phase 3 of the OS split this repo
+// has NO browser Supabase client — every query runs server-side (API routes,
+// server components, lib/). The directive is kept because it costs nothing and
+// keeps the header honest about the origin this app talks to; login moved to
+// ../capucor-os along with the browser client.
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
-// Fail the build loudly in CI when the public Supabase env never reached
-// `next build`. A missing URL silently breaks login on the deployed site:
-// the CSP connect-src drops to bare 'self' and the browser Supabase client
-// throws "Your project's URL and API key are required". A red build is far
-// better than a green deploy of a broken site. Gated on CI so local dev and
-// `preview:cf` (which may run without the env) are unaffected — GitHub
-// Actions sets CI=true automatically.
+// Fail the build loudly in CI when the Supabase env never reached `next build`.
+// The funnel (proposals, signing, leads, provision-on-sign) is entirely
+// Supabase-backed, so a build without it deploys a site whose every form 500s.
+// A red build is far better than a green deploy of a broken site. Gated on CI
+// so local dev and `preview:cf` (which may run without the env) are unaffected
+// — GitHub Actions sets CI=true automatically.
 if (process.env.CI && !SUPABASE_URL) {
   throw new Error(
     "NEXT_PUBLIC_SUPABASE_URL is empty during a CI build. Refusing to build a " +
-      "production bundle without the Supabase env — login would be broken on " +
-      "the deployed site. Check the CI env wiring / repository secrets.",
+      "production bundle without the Supabase env — the proposal funnel would " +
+      "be broken on the deployed site. Check the CI env wiring / secrets.",
   );
 }
 
@@ -64,19 +64,26 @@ const SECURITY_HEADERS = [
 // ---------------------------------------------------------------------------
 // Domain seam — capucor.com (marketing) vs capucor.app (Capucor OS)
 // ---------------------------------------------------------------------------
-// One Worker serves both hostnames; these redirects are what actually separate
-// them. Host matching uses `has: [{ type: "host" }]`, which keeps this in the
-// Next routing layer — deliberately avoiding a middleware.ts, since OpenNext
-// bundling is the fragile part of this stack (see AGENTS.md deploy rules).
+// SINCE PHASE 3 OF THE OS SPLIT, THIS WORKER SERVES capucor.com AND www ONLY.
+// capucor.app is a separate repo (../capucor-os) on its own Worker, and it owns
+// the mirror-image half of this table — the capucor.app→capucor.com rules that
+// used to live here. Do not re-add them; they would be dead code on a hostname
+// this Worker never sees, and editing them here would not affect capucor.app.
+//
+// What remains is one-directional: someone asks capucor.com for an OS path, we
+// send them across. Host matching uses `has: [{ type: "host" }]`, which keeps
+// this in the Next routing layer — deliberately avoiding a middleware.ts, since
+// OpenNext bundling is the fragile part of this stack (see AGENTS.md).
 const MARKETING_ORIGIN = "https://capucor.com";
 const APP_ORIGIN = "https://capucor.app";
 
 const MARKETING_HOST = "capucor.com";
-const APP_HOST = "capucor.app";
 
 // Paths Capucor OS owns. Reached on capucor.com → bounce to capucor.app.
 // Auth is here because a session cookie set on one eTLD+1 can never be read
 // from the other, so login has to live on the domain that needs the session.
+// These paths no longer exist in this repo at all — the redirect is the only
+// thing standing between an old bookmark and a 404.
 const APP_PATHS = [
   "/portal",
   "/portal/:path*",
@@ -87,45 +94,16 @@ const APP_PATHS = [
   "/onboarding",
 ];
 
-// Paths the marketing site owns. Reached on capucor.app → bounce to capucor.com.
-//
-// This list is explicit ON PURPOSE — do not "simplify" it into a catch-all with
-// a negative lookahead like /:path((?!portal|internal|api|_next).*). That
-// pattern fails catastrophically the moment the exclusion list misses something:
-// redirecting /_next/static/* or /brand/logo-dark.png off capucor.app strips the
-// CSS and logo from every portal page. This list fails gracefully instead — a
-// new public page nobody adds here just stays reachable on both hosts, and the
-// X-Robots-Tag below stops it being indexed there.
-//
-// ⚠️ Adding a new public/marketing page? Add its path here too.
-const MARKETING_PATHS = [
-  "/",
-  "/pricing",
-  "/accounting",
-  "/bookkeeping",
-  "/payroll",
-  "/privacy",
-  "/terms/engagement",
-  "/resources/:path*",
-  "/proposal/:path*",
-];
-
-// Note there is deliberately NO /api/* rule in either direction. A 301 on a
-// POST downgrades it to GET and drops the body, and the API is genuinely
-// dual-host today: /pricing on capucor.com posts to /api/proposals, while
-// /internal/proposals/[id]/amend on capucor.app posts to /api/proposals/amend.
+// Note there is deliberately NO /api/* rule. A 301 on a POST downgrades it to
+// GET and drops the body. This repo's API is now single-host (capucor.com), so
+// there is nothing to route — but a blanket /api/* redirect would still be a
+// trap for anyone who adds one later.
 const hostRedirects = [
-  // www → apex, both zones. First, so the apex rules below see a clean host.
+  // www → apex. First, so the apex rules below see a clean host.
   {
     source: "/:path*",
     has: [{ type: "host" as const, value: `www.${MARKETING_HOST}` }],
     destination: `${MARKETING_ORIGIN}/:path*`,
-    permanent: true,
-  },
-  {
-    source: "/:path*",
-    has: [{ type: "host" as const, value: `www.${APP_HOST}` }],
-    destination: `${APP_ORIGIN}/:path*`,
     permanent: true,
   },
   // Capucor OS paths asked for on the marketing domain.
@@ -133,14 +111,6 @@ const hostRedirects = [
     source,
     has: [{ type: "host" as const, value: MARKETING_HOST }],
     destination: `${APP_ORIGIN}${source}`,
-    permanent: true,
-  })),
-  // Marketing paths asked for on the app domain. Keeps every proposal link in
-  // an already-sent email working — they were minted against capucor.app.
-  ...MARKETING_PATHS.map((source) => ({
-    source,
-    has: [{ type: "host" as const, value: APP_HOST }],
-    destination: `${MARKETING_ORIGIN}${source === "/" ? "" : source}`,
     permanent: true,
   })),
 ];
@@ -152,24 +122,17 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: SECURITY_HEADERS,
       },
-      // Capucor OS is an application, not a publication. Header rules are
-      // additive, so this layers on top of SECURITY_HEADERS rather than
-      // replacing it. Belt-and-braces with the redirects above: anything on
-      // capucor.app that ISN'T redirected to the marketing domain (a page
-      // missing from MARKETING_PATHS, the workers.dev URL) still can't be
-      // indexed as duplicate content.
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: APP_HOST }],
-        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
-      },
+      // The capucor.app noindex rule moved to ../capucor-os in Phase 3 — this
+      // Worker no longer answers on that hostname, so a rule here could never
+      // fire. capucor.com is the indexable domain by design.
     ];
   },
   async redirects() {
     return [
       ...hostRedirects,
       {
-        // Absolute, so the legacy path resolves to the portal from either host.
+        // Legacy public path. Absolute, because the portal it points at is on
+        // the other domain and in the other repo.
         source: "/client-portal",
         destination: `${APP_ORIGIN}/portal`,
         permanent: true,

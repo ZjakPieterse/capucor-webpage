@@ -50,25 +50,29 @@ jobs:
       - name: Build (Cloudflare)
         run: npm run build:cf
 
-      # Hard gate before deploy: prove the Supabase URL was actually inlined
-      # into the client bundle. Catches any path where the env failed to reach
-      # `next build` (silent broken-login deploy). Derives the host from the
-      # env so it stays project-agnostic. A failure here is red → no deploy.
-      - name: Assert Supabase env was inlined into the build
+      # Hard gate before deploy: prove the Supabase env actually reached the
+      # build. A missing value ships a site whose every funnel form 500s.
+      #
+      # This used to additionally grep .open-next/assets/_next/static for the
+      # Supabase host, proving the URL was inlined into the CLIENT bundle. That
+      # assertion was removed in Phase 3 of the OS split and must not be
+      # restored here: this repo no longer has a browser Supabase client (it
+      # went to capucor-os with /login), so every Supabase call is server-side
+      # and the host is correctly absent from the client bundle. The grep would
+      # now fail 100% of the time. The bundle-inlining gate still exists, armed
+      # and meaningful, in the capucor-os repo — that is where login lives.
+      - name: Assert Supabase env reached the build
         run: |
           set -euo pipefail
           if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ]; then
             echo "::error::NEXT_PUBLIC_SUPABASE_URL is empty in the CI env — the secret is not wired up. Refusing to deploy."
             exit 1
           fi
-          host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
-          host="${host%%/*}"
-          if grep -rqF "$host" .open-next/assets/_next/static; then
-            echo "✓ Supabase host inlined into the client bundle."
-          else
-            echo "::error::Supabase URL did not get inlined into the client bundle — login would be broken on the deployed site. Refusing to deploy."
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty in the CI env — provision-on-sign would fail at signing. Refusing to deploy."
             exit 1
           fi
+          echo "✓ Supabase env present for the build."
 
       - name: Deploy (Cloudflare)
         if: github.event_name == 'push'
@@ -76,23 +80,29 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      # Post-deploy proof: the live /login must advertise the Supabase URL in
-      # its CSP connect-src. Retries to absorb edge propagation. Red if the
-      # deployed site is broken, even though the upload itself succeeded.
-      - name: Smoke test deployed /login CSP
+      # Post-deploy proof that THIS Worker is serving. Retries to absorb edge
+      # propagation. Red if the deployed site is broken even though the upload
+      # itself succeeded.
+      #
+      # Targets capucor.com/pricing — the funnel's entry point, and a
+      # Supabase-backed page. It used to hit capucor.app/login, but since Phase
+      # 3 of the OS split that hostname is a DIFFERENT Worker from a different
+      # repo: the check was reporting capucor-os's health and said nothing about
+      # this deploy. Do not point it back across the seam.
+      - name: Smoke test deployed /pricing CSP
         if: github.event_name == 'push'
         run: |
           set -euo pipefail
           host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
           host="${host%%/*}"
           for attempt in 1 2 3 4 5 6; do
-            csp="$(curl -fsS -D - -o /dev/null https://capucor.app/login | grep -i '^content-security-policy:' || true)"
+            csp="$(curl -fsS -D - -o /dev/null https://capucor.com/pricing | grep -i '^content-security-policy:' || true)"
             if echo "$csp" | grep -qF "$host"; then
-              echo "✓ Deployed /login CSP includes the Supabase host."
+              echo "✓ Deployed /pricing CSP includes the Supabase host."
               exit 0
             fi
             echo "Attempt $attempt: CSP missing Supabase host, retrying in 10s..."
             sleep 10
           done
-          echo "::error::Deployed /login CSP never advertised the Supabase URL — login is broken in production. Roll back."
+          echo "::error::Deployed capucor.com/pricing never advertised the Supabase URL — the marketing deploy is broken. Roll back."
           exit 1

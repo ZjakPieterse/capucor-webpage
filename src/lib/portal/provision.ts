@@ -3,6 +3,41 @@ import { firstOfNextMonth } from '@/lib/utils';
 import { findFreeSlug, slugify } from './orgSlug';
 
 /**
+ * ⚠️ SCHEMA SEAM — READ BEFORE CHANGING ANY TABLE THIS FILE TOUCHES.
+ *
+ * ► The schema is owned by the **capucor-os** repo. `supabase/migrations/` lives
+ *   there and only there (capucor-web's copy was deleted in Phase 3 of the OS
+ *   split). This file is the one place where **capucor.com writes to tables
+ *   another repo owns**.
+ *
+ * ► It runs on capucor.com, at signing — not on capucor.app. Deleting the OS
+ *   half of this repo did not move provisioning; a client signs on the marketing
+ *   domain, and this is what gives them portal access on capucor.app.
+ *
+ * ► Tables written here (exact names — `client_org_members`, NOT "memberships"):
+ *       client_orgs          insert + select   display_name, slug,
+ *                                              primary_contact_email, status
+ *       client_org_members   insert + select   client_org_id, user_id, role
+ *       subscriptions        insert + update   see upsertSubscription's `plan`
+ *                                              + current_period_start/_end
+ *       proposals            update            status, client_org_id
+ *   plus `auth.users` via admin.auth.admin.createUser / generateLink.
+ *
+ * ► THE FAILURE MODE THIS COMMENT EXISTS TO PREVENT: rename or drop one of those
+ *   columns in a capucor-os migration and NOTHING here breaks at build time —
+ *   no compile error, no failing test in either repo. The symptom is a paying
+ *   client who signs and never gets portal access, discovered whenever someone
+ *   notices. `src/__tests__/portal-provision.test.ts` pins the exact column set
+ *   written to each table so that a rename lands as a RED TEST instead. If you
+ *   are changing this file's writes, change that test deliberately — do not
+ *   "fix" it to match new behaviour without checking the migration it implies.
+ *
+ * ► When one of those four tables is genuinely reshaped, the right fix is to
+ *   move this logic into a Postgres function owned by capucor-os's migrations
+ *   (`provision_from_signed_proposal(proposal_id)`) and call it from here via a
+ *   single RPC. Do not pre-empt that; it is the right fix at the wrong time
+ *   until a reshape actually happens.
+ *
  * PR9 — provision-on-sign.
  *
  * When a proposal is signed (= the debit-order mandate is authorised; there is

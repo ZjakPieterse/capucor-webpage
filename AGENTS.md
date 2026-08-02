@@ -10,7 +10,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Capucor Web — Project Reference
 
-Capucor Business Solutions public website and client portal. South African outsourced accounting firm targeting modern SMEs. Deployed to Cloudflare Workers via OpenNext.
+Capucor Business Solutions public website and sales funnel — capucor.com. South African outsourced
+accounting firm targeting modern SMEs. Deployed to Cloudflare Workers via OpenNext.
+
+**This repo is marketing only.** The client portal, `/internal` and login are **Capucor OS**, a
+separate repo and Worker on capucor.app — see [`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md)
+and the "Domain seam" section below.
 
 ## Tech Stack
 
@@ -93,68 +98,112 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   via the OpenNext KV incremental cache (`open-next.config.ts` + the `NEXT_INC_CACHE_KV` binding
   in `wrangler.jsonc`). After editing pricing in Supabase, refresh them immediately with
   `POST /api/revalidate?secret=<REVALIDATE_SECRET>` (GET also works for browser use). Do not add
-  `revalidate` to `/proposal/[token]` (it mutates status on view) or any portal page (per-user).
-- Prod smoke-check: `curl -sD- -o /dev/null https://capucor.app/login | grep -i content-security-policy`
-  should show the Supabase host in `connect-src`. (`/login` is on capucor.app — see the domain
-  seam below.)
+  `revalidate` to `/proposal/[token]` — it mutates status on view.
+- Prod smoke-check: `curl -sD- -o /dev/null https://capucor.com/pricing | grep -i content-security-policy`
+  should show the Supabase host in `connect-src`. CI runs this same check post-deploy. **Don't
+  point it at capucor.app** — that is a different Worker from a different repo, so it would report
+  capucor-os's health, not this deploy's.
 
 ## Domain seam — capucor.com vs capucor.app
 
-Two domains, two jobs. **One Worker serves both**; the separation is enforced by the host-based
-redirect table in `next.config.ts`, not by infrastructure.
+**Two domains, two repos, two Cloudflare Workers.** This repo is capucor.com only.
 
-| Domain | Owns | Indexable |
-|--------|------|-----------|
-| **capucor.com** | Marketing + the whole sales funnel: `/`, service pages, `/pricing`, `/privacy`, `/terms/*`, `/resources/*`, **and `/proposal/*`** (the signing document) | Yes — all canonicals, sitemap, OG |
-| **capucor.app** | **Capucor OS**: `/login`, `/onboarding`, `/portal/*`, `/internal/*` | No — `X-Robots-Tag: noindex` on every response |
+| Domain | Repo | Worker | Owns |
+|--------|------|--------|------|
+| **capucor.com** + www | **this one** (`capucor-webpage`) | `capucor-web` | Marketing + the whole sales funnel: `/`, service pages, `/pricing`, `/privacy`, `/terms/*`, `/resources/*`, **and `/proposal/*`** (the signing document). Indexable — all canonicals, sitemap, OG |
+| **capucor.app** + www | [`../capucor-os`](../capucor-os/AGENTS.md) | `capucor-os` | **Capucor OS**: `/login`, `/onboarding`, `/portal/*`, `/internal/*`. `noindex` on every response |
 
-Rules that keep this working:
+> **Working on the portal, `/internal`, login, or anything a signed-in user sees?
+> Wrong repo — go to [`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md).** None of that code is
+> here any more. It was deleted in **Phase 3 of the OS split (2026-08-02)**, after capucor.app had
+> been served by its own Worker since Phase 1c. Git history keeps it if you need to look something
+> up.
 
-- **`siteConfig.url` no longer exists.** Use `siteConfig.marketingUrl` or `siteConfig.appUrl`
+### What is left of the seam in this repo
+
+The redirect table in `next.config.ts` is now **one-directional and half its former size**: someone
+asks capucor.com for an OS path, we bounce them to capucor.app. That is all.
+
+- **`APP_PATHS`** — `/portal`, `/internal`, `/login`, `/onboarding` (+ sub-paths). These routes do
+  not exist here at all; the redirect is the only thing between an old bookmark and a 404.
+- **`www.capucor.com` → apex.**
+- **`/client-portal`** — a legacy public path, absolute to capucor.app.
+
+**The capucor.app→capucor.com half now lives in the other repo, and so does the `noindex` header
+rule.** `MARKETING_PATHS` is gone from here. Do not re-add either: this Worker never answers on
+capucor.app, so a rule here could not fire, and editing it here would not change capucor.app's
+behaviour. ⚠️ **Adding a new public page no longer needs a `MARKETING_PATHS` entry** — but
+`/proposal/:path*` **does** still need to stay in *capucor-os*'s table, because proposal links in
+already-sent emails were minted against capucor.app.
+
+### Rules that still hold
+
+- **`siteConfig.url` does not exist.** Use `siteConfig.marketingUrl` or `siteConfig.appUrl`
   (`src/config/site.ts`, overridable via `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL`).
-  Almost everything is `marketingUrl`; `appUrl` is for auth/portal links only. The one live
-  example is the portal invite in `lib/portal/finalizeSign.ts`.
-- **Auth must stay on capucor.app.** A Supabase session cookie set on one eTLD+1 is unreachable
-  from the other — the two domains can never share a login. That is why `/login` and
-  `/onboarding` live in the **`app/(app)/`** route group with their own slim shell, not in
-  `app/(site)/`. Route groups don't change URLs, so `/login/callback` is unmoved and the Supabase
-  redirect allowlist (`https://capucor.app/**`) needs no change.
-- **A new public/marketing page needs a line in `MARKETING_PATHS`** in `next.config.ts`, or it
-  will also answer on capucor.app. The list is explicit on purpose — a negative-lookahead
-  catch-all would redirect `/_next/static/*` and `/brand/*` off the app domain and strip the CSS
-  and logo from every portal page. Forgetting an entry fails gracefully; the `noindex` header
-  stops it being indexed as duplicate content.
-- **Never add an `/api/*` host redirect.** The API is genuinely dual-host: `/pricing` on
-  capucor.com posts to `/api/proposals`, while `/internal/proposals/[id]/amend` on capucor.app
-  posts to `/api/proposals/amend`.
-- **Links that cross domains must be absolute** (`siteConfig.appUrl` / `siteConfig.marketingUrl`) —
-  the Navbar's Client Portal CTA, the portal's "Back to website", the proposal page's
-  "Sign in to your portal". Links within one domain stay relative so client-side nav still works.
+  **Both URLs are still needed here.** `appUrl` has three live consumers: the Navbar's Client
+  Portal CTA, the proposal page's "Sign in to your portal" link, and the portal invite in
+  `lib/portal/finalizeSign.ts`.
+- **Links that cross domains must be absolute.** Everything pointing at capucor.app is now a
+  cross-repo link — it can never be a relative route.
+- **Auth lives on capucor.app because a Supabase session cookie set on one eTLD+1 is unreachable
+  from the other.** The two domains can never share a login. That constraint is why the split fell
+  the way it did, and it does not change.
+- **Never add an `/api/*` host redirect.** A 301 on a POST downgrades it to GET and drops the body.
+  This repo's API is single-host now, so there is nothing to route — but the trap is still there
+  for anyone who adds a rule later.
+- **The funnel stays here in full**, including `/proposal/*`, `/api/proposals/sign*`, and
+  **provision-on-sign**. A client signs on capucor.com; the write that gives them portal access on
+  capucor.app happens in *this* repo — see the schema seam below.
 
-Verify the table after any change to it — build, then `npx wrangler dev --port 8787 --local` and
-fake the host:
+`wrangler dev` **does not run on the Windows dev box** (wrangler 4.84 dies with
+`std::terminate()` on a bundle that deploys fine), so the old local host-faking recipe is
+unavailable. Verify the table with `curl -sI` against the deployed Worker instead:
 
 ```bash
-curl -sI -H "Host: capucor.app" http://localhost:8787/pricing   # 308 → https://capucor.com/pricing
-curl -sI -H "Host: capucor.com" http://localhost:8787/portal    # 308 → https://capucor.app/portal
-curl -sI -H "Host: capucor.app" http://localhost:8787/brand/logo-dark.png  # 200 — never redirected
-curl -sI -H "Host: capucor.app" http://localhost:8787/api/proposals        # never redirected
+curl -sI https://capucor.com/portal      # 308 → https://capucor.app/portal
+curl -sI https://capucor.com/login       # 308 → https://capucor.app/login
+curl -sI https://www.capucor.com/pricing # 308 → https://capucor.com/pricing
+curl -sI https://capucor.com/pricing     # 200 — never redirected
 ```
 
-Cloudflare-side: all four hostnames (both apexes + both `www`s) are bound to the single
-`capucor-web` Worker. ⚠️ **Never delete the capucor.com zone or its MX / SPF / `resend._domainkey`
-DKIM / DMARC records** — capucor.com is the verified Resend *sender* domain, and removing them
-kills every transactional email while the site keeps looking fine.
+### ⚠️ Schema seam — the one thing that can break silently
+
+`supabase/migrations/` **lives in `../capucor-os` and nowhere else** (this repo's copy was deleted
+in Phase 3). But marketing still *writes* to those tables:
+[`src/lib/portal/provision.ts`](src/lib/portal/provision.ts) runs at signing and writes
+`client_orgs`, `client_org_members`, `subscriptions` and `proposals`, and mints the auth user.
+
+A rename or reshape of any of those in a capucor-os migration produces **no compile error and no
+failing test in either repo** — the symptom is a paying client who signs and never gets portal
+access. `src/__tests__/portal-provision.test.ts` pins the exact column set written to each table so
+a rename lands as a red test. **If that test goes red, find the migration that moved before you
+touch the list.** Read the header comment on `provision.ts` first.
+
+### Cloudflare
+
+capucor.com + www are bound to the `capucor-web` Worker; capucor.app + www to `capucor-os`. The
+bindings are managed in the dashboard, not in `wrangler.jsonc` (which declares no `routes`), so a
+deploy from either repo cannot claim the other's hostname.
+
+⚠️ **Never delete the capucor.com zone or its MX / SPF / `resend._domainkey` DKIM / DMARC
+records** — capucor.com is the verified Resend *sender* domain. Removing them silently kills every
+transactional email from **both** apps while the sites keep looking fine. This is still true even
+though capucor.com no longer serves any signed-in surface.
 
 ## Database (Supabase)
 
-Migrations live in `supabase/migrations/`. Apply them via the Supabase dashboard SQL editor or the Supabase CLI:
+Both apps share **one Supabase project**, but ⚠️ **this repo does not own the schema.**
 
-```bash
-supabase db push     # Push local migrations to remote project
-```
+**`supabase/migrations/` lives in [`../capucor-os`](../capucor-os/AGENTS.md) and nowhere else** —
+this repo's copy was deleted in Phase 3 of the OS split. Write new migrations there, and apply them
+via the Supabase dashboard SQL editor or `supabase db push` from that repo.
 
-After any schema change, regenerate TypeScript types:
+That matters here because marketing still **writes** to OS-owned tables at signing
+(`lib/portal/provision.ts` → `client_orgs`, `client_org_members`, `subscriptions`, `proposals`).
+See the **Schema seam** warning under "Domain seam" before changing any of them — a rename over
+there breaks provisioning here with no compile error.
+
+Regenerate TypeScript types after a schema change:
 
 ```bash
 # Replace YOUR_PROJECT_REF with your Supabase project reference ID
@@ -172,17 +221,24 @@ loss, not an error:
   `anon` role. Use for the public pricing config (`services`, `brackets`, `tiers`) and
   `testimonials` — on the pricing calculator, homepage packages teaser, proposal view, and
   server-side price math.
-- **`createSupabaseServerClient()` (`server.ts`) — for per-user/auth reads.** Cookie-bound; adopts
-  the visitor's session role. Use for auth, the client portal, and lead/data-request inserts.
+- **`createSupabaseServerClient()` (`server.ts`) — for per-user reads.** Cookie-bound; adopts the
+  visitor's session role. Used here for lead / data-request inserts.
 - **`createSupabaseAdminClient()` (`admin.ts`) — for privileged writes.** Service-role; bypasses
-  RLS. Server-only mutations (provision-on-sign, Karbon/Xero sync, portal writes). Never import
-  into browser code.
+  RLS. Server-only mutations — provision-on-sign, the signing flow, the crons. Never import into
+  browser code.
 
-⚠️ **The public pricing tables only grant `select to anon`** (see `001_schema.sql`; no
-`to authenticated` policy). Reading them via the cookie-bound server client means a **signed-in**
-visitor runs as `authenticated`, matches no policy, and silently gets **zero rows** (no error) —
-which renders the calculator unavailable for logged-in users only. Always read public data with
-`createSupabaseAnonClient`.
+**There is no browser client in this repo.** `supabase/client.ts` went to capucor-os with `/login`
+in Phase 3; every Supabase call here is server-side. Don't add one back for a marketing feature —
+if a public page needs data, fetch it in a server component.
+
+⚠️ **The public pricing tables only grant `select to anon`** (migration `001_schema.sql`, now in
+capucor-os; no `to authenticated` policy). Reading them via the cookie-bound server client means a
+**signed-in** visitor runs as `authenticated`, matches no policy, and silently gets **zero rows**
+(no error) — which renders the calculator unavailable for logged-in users only. Always read public
+data with `createSupabaseAnonClient`. Since Phase 3 there is no way to be signed in *on
+capucor.com* — the session cookie belongs to capucor.app — so this trap is now much harder to
+trip here. Keep the rule anyway: it costs nothing, and the same policies bite for real in
+capucor-os, where signed-in staff read exactly these tables.
 
 ## Project Structure
 
@@ -192,13 +248,17 @@ src/
 ├── components/
 │   ├── landing/      # Homepage sections (Hero, ProblemCards, etc.)
 │   ├── pricing/      # Multi-step pricing calculator
+│   ├── proposal/     # Signing document (sign form, confirm button)
 │   ├── ui/           # shadcn + custom UI primitives
 │   ├── layout/       # Navbar, Footer
-│   ├── portal/       # Client portal components
 │   └── services/     # Service page components
-├── config/           # siteConfig, tier config
+├── config/           # siteConfig, tier config, proposal terms, compliance calendar
 ├── hooks/            # usePricingState, useCursorGlow
 ├── lib/              # utils, pricing logic, Supabase clients, validations
+│   ├── portal/       # ⚠️ NAME IS HISTORICAL — this is the SIGNING half, not a portal:
+│   │                 #   finalizeSign, provision, proposalPdf, signEmails, orgSlug.
+│   │                 #   The actual portal is in ../capucor-os.
+│   └── proposal/     # Proposal document rendering (HTML → PDF, inlined logo)
 └── types/            # TypeScript interfaces
 ```
 
@@ -211,16 +271,14 @@ metadata only, no chrome. Chrome is applied per area by nested layouts:
   `(site)` route group** (home, services, pricing, privacy, terms, resources).
   Route groups don't change the URL, so **a new public/marketing page goes in `app/(site)/`, not
   `app/`.**
-- **`app/(app)/layout.tsx`** — slim shell (logo header only) for the Capucor OS entry points that
-  sit outside `/portal` and `/internal`: `/login` (+ `/login/callback`) and `/onboarding`. These
-  are served from capucor.app, so they must not wear marketing chrome — see the domain seam above.
 - **`app/proposal/layout.tsx`** — bare, no chrome (the standalone signing document).
-- **`app/portal/layout.tsx`** — slim app bar (logo, "Back to website", sign-out). Pages gate auth
-  themselves via `requireSession()`.
-- **`app/internal/layout.tsx`** — `requireInternal` gate + `InternalNav`.
 
 Root `not-found.tsx` / `error.tsx` stay at `app/` root and render bare (the global 404 has no
 marketing chrome by design).
+
+The `app/(app)/`, `app/portal/` and `app/internal/` layouts were deleted in Phase 3 — they belong
+to [`../capucor-os`](../capucor-os/AGENTS.md) now. Two route groups remain here, `(site)` and the
+bare `proposal/`.
 
 ## Project Tracker
 
@@ -274,36 +332,19 @@ UI work so the front end stays visually consistent. Canonical examples are cited
   double up with extra inline `.premium-divider` markers inside a section that already has
   a divider above or below.
 
-### Client portal surfaces
+### Client portal surfaces — moved out
 
-- **The client portal does not use the marketing `premium-section` / `SectionDivider`
-  rhythm.** It is a card-based app surface, not a scroll of marketing sections. Pages set
-  their own `max-w-* mx-auto px-6 py-12 lg:py-16` container.
-- **Use the shared card constants in `components/portal/portalCard.ts`, not ad-hoc classes:**
-  `PORTAL_CARD` (`.premium-card` — the glassy surface *with* the `@media all` hover lift) for
-  clickable cards/tiles/link rows, and `PORTAL_PANEL` (`.premium-glass` — same surface, no
-  lift) for static information panels. Both already include `rounded-xl border border-white/10
-  bg-card/80`; add your own padding.
-- Sub-pages share [`PortalPageHeader`](src/components/portal/PortalPageHeader.tsx) (icon-led
-  title + back link + org label). The portal hub is `app/portal/page.tsx`.
-- **The hub's header building blocks are extracted as presentational components reused by the
-  `/internal` view-only client mirror so the two can't drift:**
-  [`PortalSummaryHeader`](src/components/portal/PortalSummaryHeader.tsx) (tier + subscription-status
-  badges + monthly + first/next payment — pass `heading`/`orgLabel` on the portal; omit both on
-  the mirror, where the org name/status already sit in the layout header),
-  [`PortalQuickActions`](src/components/portal/PortalQuickActions.tsx) (icon-tile link row — the
-  page supplies the per-audience `href`s), and
-  [`PortalKeyDatesWidget`](src/components/portal/PortalKeyDatesWidget.tsx) (the shared SARS
-  calendar; `seeAllHref` is optional — the mirror has no dates tab).
-  [`PortalFinanceSnapshot`](src/components/portal/PortalFinanceSnapshot.tsx) takes an optional
-  `href` (default `/portal/finance`) so the mirror points at its own finance tab. The **page**
-  fetches the data and picks the Supabase client (portal → admin; mirror → session/RLS); these
-  components stay purely presentational.
-- The shared views `BillingView` / `FinanceView` / `DocumentsView` take a `surface` prop:
-  `'glass'` is the premium glassy look, `'flat'` the legacy plain cards. **Both the client portal
-  and the `/internal` mirror now pass `'glass'`** (the mirror was brought to visual parity in the
-  Session-6 pass; its Proposals tab is wrapped in a `PORTAL_PANEL`). The prop defaults to `'flat'`
-  and is kept for safety/flexibility — don't remove it or glassify those components unconditionally.
+The portal's design rules (card-based surface, `PORTAL_CARD` / `PORTAL_PANEL`, the shared header
+components) left with the code in Phase 3. They now live in
+[`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md).
+
+**Everything below this line is marketing design guidance and still applies here.** The one portal
+rule worth remembering on this side: the app surface deliberately does *not* use the
+`premium-section` / `SectionDivider` rhythm — so don't reach for capucor-os as a precedent when
+building a marketing section, or vice versa.
+
+The exception is `/proposal/*`, which is neither: it's a standalone document with its own bare
+layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
 
 ### Hover / interaction states — read before adding any `:hover`
 
@@ -394,8 +435,9 @@ rather than by a payment webhook. `lib/security.ts` (`timingSafeEqual`) stayed; 
 **When the PayFast shop path lands it starts from scratch:** a signed redirect plus an ITN webhook
 validated by MD5 signature and a server postback.
 
-(The client portal and `/onboarding` are **live**, not stubs — provision-on-sign and the auth flow
-shipped.)
+(The client portal and `/onboarding` are **live**, not stubs — they run in
+[`../capucor-os`](../capucor-os/AGENTS.md) on capucor.app. **Provision-on-sign stays in this
+repo**: `lib/portal/provision.ts` runs when a client signs on capucor.com.)
 
 ## Pending Content: Client Testimonials / Social Proof
 

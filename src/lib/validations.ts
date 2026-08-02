@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { CLIENT_TYPES } from '@/config/clientTypes';
 
 // Calculator state snapshot persisted with a lead. The shape mirrors what the
 // pricing calculator writes when a visitor submits a quote/signup/enterprise
@@ -78,37 +77,9 @@ export const ProposalRequestSchema = z.object({
 
 export type ProposalRequestInput = z.infer<typeof ProposalRequestSchema>;
 
-// ── Proposal amend / resend (staff-side, internal-admin gated) ───────────
-//
-// Used by the internal "living document" endpoints. These are not public:
-// /api/proposals/amend and /api/proposals/resend are gated by
-// requireInternalApi({ admin: true }) — the public.internal_users allowlist —
-// so they carry no honeypot. (They do NOT use ?secret=; only the cron and
-// revalidate routes do.)
-
-export const ResendProposalSchema = z.object({
-  proposalId: z.string().uuid('Invalid proposal id'),
-});
-
-export type ResendProposalInput = z.infer<typeof ResendProposalSchema>;
-
-// Amend changes the priced selection (and optionally the contact). The route
-// recomputes pricing server-side, supersedes the original, and issues a new
-// revision with a fresh token + reference for re-signing.
-export const AmendProposalSchema = z.object({
-  proposalId: z.string().uuid('Invalid proposal id'),
-  services: z.array(z.string().min(1)).min(1, 'Select at least one service'),
-  brackets: z.record(z.string(), z.number().int().nonnegative()),
-  tierSlug: z.string().min(1, 'Choose a package'),
-  addons: z.array(z.string().min(1)).max(5).optional().default([]),
-  // Optional contact overrides — default to the original proposal's contact.
-  firstName: z.string().min(1).max(80).optional(),
-  lastName: z.string().min(1).max(80).optional(),
-  businessName: z.string().min(2).max(120).optional(),
-  email: z.string().email('Enter a valid email address').optional(),
-});
-
-export type AmendProposalInput = z.infer<typeof AmendProposalSchema>;
+// Proposal amend / resend moved to capucor-os with the /internal surface in
+// Phase 3 of the OS split (AmendProposalSchema + ResendProposalSchema, alongside
+// /api/proposals/{amend,resend}). Staff amend and resend on capucor.app now.
 
 // ── Proposal e-signature (PR7 — /proposal/<token> sign step) ─────────────
 //
@@ -149,82 +120,9 @@ export const SignProposalSchema = z.object({
 
 export type SignProposalInput = z.infer<typeof SignProposalSchema>;
 
-// ── Org compliance details (internal client card, admin-only) ───────────
-//
-// Contract between the OrgDetailsEditor form and updateOrgDetailsAction. The
-// internal Organisation card holds a client's compliance master-data; an admin
-// edits it. Light format checks (per the field's nature): the SARS reference
-// numbers must be 10 digits IF filled, the contact email must be valid; the
-// rest are lenient, length-bounded free text. Display name + contact email are
-// required (both columns are NOT NULL). Empty optionals become null on write.
-
-const sarsRef = (label: string) =>
-  z
-    .string()
-    .regex(/^\d{10}$/, `${label} must be 10 digits.`)
-    .optional()
-    .or(z.literal(''));
-
-export const OrgDetailsSchema = z.object({
-  displayName: z
-    .string()
-    .min(1, 'Display name is required.')
-    .max(120, 'Display name is too long.'),
-  legalName: z.string().max(120, 'Legal name is too long.').optional().or(z.literal('')),
-  registrationNo: z
-    .string()
-    .max(40, 'Registration number is too long.')
-    .optional()
-    .or(z.literal('')),
-  address: z.string().max(255, 'Address is too long.').optional().or(z.literal('')),
-  incomeTaxNo: sarsRef('Income tax number'),
-  vatNo: sarsRef('VAT number'),
-  payeNo: sarsRef('PAYE number'),
-  uifNo: z.string().max(40, 'UIF number is too long.').optional().or(z.literal('')),
-  coidaNo: z.string().max(40, 'COIDA number is too long.').optional().or(z.literal('')),
-  primaryContactName: z
-    .string()
-    .max(120, 'Contact name is too long.')
-    .optional()
-    .or(z.literal('')),
-  primaryContactEmail: z.string().email('Enter a valid contact email address.'),
-  // CRM master-data (migration 016). clientType is required (the column is NOT
-  // NULL); notes are optional internal free text.
-  clientType: z.enum(CLIENT_TYPES),
-  notes: z.string().max(2000, 'Notes are too long.').optional().or(z.literal('')),
-});
-
-export type OrgDetailsInput = z.infer<typeof OrgDetailsSchema>;
-
-// ── Manual / legacy subscription (admin "Add client" billing block) ──────
-//
-// A legacy client may be on a plan the live calculator can't express. The create
-// form optionally records a free-text plan label + monthly figure + status, and
-// createClientAction inserts it as a subscriptions row (services/brackets empty,
-// tier_slug 'custom', plan_label set). monthlyZar arrives already converted to a
-// number by the form; vat_zar stays 0 (tax handled in Xero — no VAT on the site).
-export const ManualSubscriptionSchema = z.object({
-  planLabel: z.string().min(1, 'Enter a plan label.').max(80, 'Plan label is too long.'),
-  monthlyZar: z
-    .number()
-    .positive('Enter a monthly amount greater than zero.')
-    .max(10_000_000, 'Monthly amount looks too large.'),
-  status: z.enum(['active', 'past_due', 'cancelled']),
-});
-
-export type ManualSubscriptionInput = z.infer<typeof ManualSubscriptionSchema>;
-
-// ── Create client (admin "Add client" flow) ─────────────────────────────
-//
-// Contract between CreateClientForm and createClientAction. Reuses every
-// OrgDetailsSchema field (display name + contact email required, the rest
-// optional) and adds an optional manual subscription. No payment/banking data —
-// internal record only.
-export const CreateClientSchema = OrgDetailsSchema.extend({
-  subscription: ManualSubscriptionSchema.optional(),
-});
-
-export type CreateClientInput = z.infer<typeof CreateClientSchema>;
+// The staff client-record schemas (OrgDetailsSchema, ManualSubscriptionSchema,
+// CreateClientSchema) moved to capucor-os with /internal in Phase 3. They only
+// ever backed the "Add client" and Organisation-card forms on capucor.app.
 
 // ── POPIA data-subject request (P1) ─────────────────────────────────────
 //

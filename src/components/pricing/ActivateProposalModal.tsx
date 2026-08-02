@@ -17,9 +17,8 @@ import { Label } from '@/components/ui/label';
 import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
 import { ProposalSummary } from './ProposalSummary';
 import { z } from 'zod';
-import { AmendProposalSchema, ProposalRequestSchema } from '@/lib/validations';
+import { ProposalRequestSchema } from '@/lib/validations';
 import { clearPricingDraft } from '@/hooks/usePricingState';
-import type { AmendContext } from './PricingCalculator';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 const FormSchema = z.object({
@@ -44,12 +43,6 @@ interface ActivateProposalModalProps {
   selectedAddons?: string[];
   /** Called after a proposal is successfully sent — marks the flow complete. */
   onSuccess: () => void;
-  /**
-   * When set, the modal runs in amend mode (PR13c, admin-only): contact is
-   * pre-filled, the POPIA consent step is dropped (consent carries over from
-   * the original), and submit issues a new revision via /api/proposals/amend.
-   */
-  amend?: AmendContext;
 }
 
 export function ActivateProposalModal({
@@ -63,9 +56,7 @@ export function ActivateProposalModal({
   selectedTier,
   selectedAddons = [],
   onSuccess,
-  amend,
 }: ActivateProposalModalProps) {
-  const isAmend = !!amend;
   const [serverError, setServerError] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
@@ -77,9 +68,13 @@ export function ActivateProposalModal({
     if (typeof value === 'number') integerBrackets[slug] = value;
   }
 
-  const defaultContact: FormValues = amend
-    ? { ...amend.contact, website: '' }
-    : { firstName: '', lastName: '', businessName: '', email: '', website: '' };
+  const defaultContact: FormValues = {
+    firstName: '',
+    lastName: '',
+    businessName: '',
+    email: '',
+    website: '',
+  };
 
   const {
     register,
@@ -106,9 +101,7 @@ export function ActivateProposalModal({
   }
 
   async function onSubmit(values: FormValues) {
-    // Amend is a staff re-issue: consent was captured on the original and the
-    // amend route copies it forward, so there's no consent step here.
-    if (!isAmend && !consentGiven) {
+    if (!consentGiven) {
       setConsentError('You must consent before continuing.');
       return;
     }
@@ -117,41 +110,6 @@ export function ActivateProposalModal({
 
     if (!selectedTier) {
       setServerError('Please choose a package before continuing.');
-      return;
-    }
-
-    if (isAmend && amend) {
-      const payload = {
-        proposalId: amend.proposalId,
-        services: activeServiceSlugs,
-        brackets: integerBrackets,
-        tierSlug: selectedTier,
-        addons: selectedAddons,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        businessName: values.businessName,
-        email: values.email,
-      };
-      const parsed = AmendProposalSchema.safeParse(payload);
-      if (!parsed.success) {
-        setServerError(parsed.error.issues[0]?.message ?? 'Please check the details and try again.');
-        return;
-      }
-      try {
-        const res = await fetch('/api/proposals/amend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(parsed.data),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Could not send the updated proposal. Please try again.');
-
-        clearPricingDraft();
-        setSentTo(values.email);
-        onSuccess();
-      } catch (err) {
-        setServerError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      }
       return;
     }
 
@@ -201,30 +159,18 @@ export function ActivateProposalModal({
             </div>
             <DialogHeader>
               <DialogTitle className="text-center text-lg">
-                {isAmend ? 'Updated proposal sent' : 'Your proposal is on its way'}
+                Your proposal is on its way
               </DialogTitle>
               <DialogDescription className="text-center">
-                {isAmend ? (
-                  <>
-                    We&rsquo;ve emailed the updated proposal to{' '}
-                    <span className="font-medium text-foreground">{sentTo}</span>. It replaces the
-                    earlier version, with a fresh link to review and sign.
-                  </>
-                ) : (
-                  <>
-                    We&rsquo;ve emailed your proposal to{' '}
-                    <span className="font-medium text-foreground">{sentTo}</span>. Open it to review
-                    the details and sign electronically. No payment needed yet. A copy has gone to
-                    the Capucor team for reference.
-                  </>
-                )}
+                We&rsquo;ve emailed your proposal to{' '}
+                <span className="font-medium text-foreground">{sentTo}</span>. Open it to review the
+                details and sign electronically. No payment needed yet. A copy has gone to the
+                Capucor team for reference.
               </DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <FileSignature className="h-3.5 w-3.5 text-primary" />
-              {isAmend
-                ? 'The earlier version is now marked superseded'
-                : 'Look out for “Your Capucor proposal” in your inbox'}
+              Look out for “Your Capucor proposal” in your inbox
             </div>
             <Button className="mt-6 w-full" onClick={() => handleOpenChange(false)}>
               Done
@@ -233,13 +179,10 @@ export function ActivateProposalModal({
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             <DialogHeader>
-              <DialogTitle className="text-lg">
-                {isAmend ? 'Send the updated proposal' : 'Get your proposal'}
-              </DialogTitle>
+              <DialogTitle className="text-lg">Get your proposal</DialogTitle>
               <DialogDescription>
-                {isAmend
-                  ? 'Check the contact details, then send the revised proposal. It supersedes the earlier version and the client gets a fresh link to sign.'
-                  : 'Tell us where to send it. We’ll email you a proposal to review and sign. No payment required to get started.'}
+                Tell us where to send it. We’ll email you a proposal to review and sign. No payment
+                required to get started.
               </DialogDescription>
             </DialogHeader>
 
@@ -310,29 +253,25 @@ export function ActivateProposalModal({
               )}
             </div>
 
-            {/* Honeypot — public flow only; amend is a gated staff action. */}
-            {!isAmend && (
-              <input
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden
-                className="hidden"
-                {...register('website')}
-              />
-            )}
+            {/* Honeypot */}
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden
+              className="hidden"
+              {...register('website')}
+            />
 
-            {!isAmend && (
-              <ConsentCheckbox
-                id="proposal-consent"
-                checked={consentGiven}
-                onCheckedChange={(val) => {
-                  setConsentGiven(val);
-                  if (val) setConsentError('');
-                }}
-                error={consentError}
-              />
-            )}
+            <ConsentCheckbox
+              id="proposal-consent"
+              checked={consentGiven}
+              onCheckedChange={(val) => {
+                setConsentGiven(val);
+                if (val) setConsentError('');
+              }}
+              error={consentError}
+            />
 
             {serverError && (
               <p className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
@@ -349,11 +288,11 @@ export function ActivateProposalModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isAmend ? 'Sending the update...' : 'Sending your proposal...'}
+                    Sending your proposal...
                   </>
                 ) : (
                   <>
-                    {isAmend ? 'Send updated proposal' : 'Email me my proposal'}
+                    Email me my proposal
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -362,9 +301,7 @@ export function ActivateProposalModal({
 
             <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
               <Check className="h-3 w-3 text-primary" />
-              {isAmend
-                ? 'The client reviews and signs the new version · the old one is superseded'
-                : 'Review and sign at your own pace · cancel any time with 30 days notice'}
+              Review and sign at your own pace · cancel any time with 30 days notice
             </p>
           </form>
         )}

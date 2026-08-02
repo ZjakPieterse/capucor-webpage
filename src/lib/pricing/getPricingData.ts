@@ -1,12 +1,14 @@
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import type { PricingData, Testimonial } from '@/types';
 
-// Shared pricing-config fetch for the public /pricing calculator and the
-// internal amend calculator (PR13c). The config (services/brackets/tiers) is
-// always read as the `anon` role — a session-bound client returns zero rows for
-// signed-in visitors because these tables only grant `select to anon` (see
-// anon.ts / AGENTS.md). Keep this the single source so both surfaces stay in
-// lockstep.
+// Pricing-config fetch for the public /pricing calculator and the homepage
+// packages teaser. The config (services/brackets/tiers) is always read as the
+// `anon` role — a session-bound client returns zero rows for signed-in visitors
+// because these tables only grant `select to anon` (see anon.ts / AGENTS.md).
+// Keep this the single source so every public surface stays in lockstep.
+//
+// capucor-os has its own leaner equivalent for the staff amend form (Phase 1b);
+// the anon-client rule is the part that must hold in both.
 
 export type PricingResult = {
   pricing: PricingData;

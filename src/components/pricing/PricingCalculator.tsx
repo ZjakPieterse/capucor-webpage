@@ -15,28 +15,15 @@ import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
 import type { PricingData, Testimonial } from '@/types';
 
-/**
- * Amend context (PR13c). When present, the calculator runs in amend mode: it's
- * seeded from an existing proposal and the Activate modal sends to
- * /api/proposals/amend (issuing a new revision) with the contact pre-filled.
- */
-export interface AmendContext {
-  proposalId: string;
-  contact: {
-    firstName: string;
-    lastName: string;
-    businessName: string;
-    email: string;
-  };
-}
-
+// Amend mode was removed in Phase 3 of the OS split. Staff amend a proposal on
+// capucor.app now, through a plain form in the capucor-os repo — this calculator
+// is once again public-only, and `seed` is the sole remaining pre-population
+// hook. Do not re-add an amend branch here; the staff surface lives elsewhere.
 interface PricingCalculatorProps {
   data: PricingData;
   testimonials?: Testimonial[];
-  /** Pre-populates the calculator (amend flow). Public callers omit this. */
+  /** Pre-populates the calculator. Public callers omit this. */
   seed?: PricingSeed;
-  /** Routes submit through the amend flow. Public callers omit this. */
-  amend?: AmendContext;
 }
 
 const TRUST_ITEMS = [
@@ -82,7 +69,7 @@ function BottomCTA() {
   );
 }
 
-function PricingCalculatorInner({ data, testimonials = [], seed, amend }: PricingCalculatorProps) {
+function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalculatorProps) {
   const { services, brackets, tiers } = data;
   const spotlightTestimonial = testimonials[0] ?? null;
 
@@ -237,14 +224,13 @@ function PricingCalculatorInner({ data, testimonials = [], seed, amend }: Pricin
         selectedTier={state.selectedTier}
         selectedAddons={state.selectedAddons}
         onSuccess={markCompleted}
-        amend={amend}
       />
     </>
   );
 }
 
 // Wrap in Suspense for useSearchParams
-export function PricingCalculator({ data, testimonials, seed, amend }: PricingCalculatorProps) {
+export function PricingCalculator({ data, testimonials, seed }: PricingCalculatorProps) {
   return (
     <Suspense
       fallback={
@@ -261,7 +247,7 @@ export function PricingCalculator({ data, testimonials, seed, amend }: PricingCa
         </div>
       }
     >
-      <PricingCalculatorInner data={data} testimonials={testimonials} seed={seed} amend={amend} />
+      <PricingCalculatorInner data={data} testimonials={testimonials} seed={seed} />
     </Suspense>
   );
 }
