@@ -106,3 +106,41 @@ jobs:
           done
           echo "::error::Deployed capucor.com/pricing never advertised the Supabase URL — the marketing deploy is broken. Roll back."
           exit 1
+
+      # Post-deploy proof that the Worker's RUNTIME SECRETS are actually set.
+      #
+      # This is a different question from "does a page render", and the one that
+      # has actually bitten: capucor-os ran for two entire phases with NO
+      # Cloudflare secrets while every check stayed green, because anonymous
+      # traffic returns early and never reaches the code that needs them. Worse,
+      # several failures here are silent by design — PDF archival no-ops and
+      # Resend falls back to console logging — so nothing looks wrong until a
+      # client asks where their email went.
+      #
+      # GitHub Actions secrets are BUILD-time. Worker secrets are separate and
+      # are set by hand; nothing in CI sets them. This step is what notices.
+      - name: Verify deployed runtime secrets
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            body="$(curl -sS -o /tmp/health.json -w '%{http_code}' https://capucor.com/api/health || echo 000)"
+            if [ "$body" = "200" ]; then
+              echo "✓ capucor-web: every required runtime secret is present on the Worker."
+              cat /tmp/health.json
+              exit 0
+            fi
+            if [ "$body" = "503" ]; then
+              echo "::error::capucor-web is deployed but MISSING runtime secrets:"
+              cat /tmp/health.json
+              echo ""
+              echo "Set them on the Worker (Cloudflare dashboard → Workers & Pages → capucor-web"
+              echo "→ Settings → Variables and Secrets, or 'wrangler secret put NAME')."
+              echo "See RUNTIME_VARS in src/lib/env.ts for what each one breaks."
+              exit 1
+            fi
+            echo "Attempt $attempt: /api/health returned $body, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::capucor-web/api/health never responded after the deploy."
+          exit 1
