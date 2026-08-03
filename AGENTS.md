@@ -285,7 +285,8 @@ bare `proposal/`.
 
 ## Project Tracker
 
-`../AUDIT-PORTAL-TASKS.md` (at the workspace root, one level above this repo) is the living
+`../capucor-docs/operations/audit-portal-tasks.md` (in the private `capucor-docs` repo, a sibling
+of this one) is the living
 tracker for the audit + client-portal plan. When you start or finish any tracked item, update
 its checkbox and the "Last reviewed" date, and keep the `## Changelog` at the foot of that file
 current. It lives outside this git repo by design (it is not pushed to GitHub).
@@ -419,7 +420,7 @@ user-visible copy.
 ## Payments status (billing model changed — read before touching payment code)
 
 The original plan wired **Paystack** for both subscriptions and shop checkout. The **2026-06-17
-billing decision** (documented in `../AUDIT-PORTAL-TASKS.md`) changed that:
+billing decision** (documented in `../capucor-docs/operations/audit-portal-tasks.md`) changed that:
 
 - **Subscriptions** are collected via **Paysoft Flow** (Xero-integrated bulk debit orders). It has
   **no developer API**, so provisioning is **manual** in Xero/Paysoft Flow — the signed proposal is
