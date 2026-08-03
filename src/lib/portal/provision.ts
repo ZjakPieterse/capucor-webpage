@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 import { firstOfNextMonth } from '@/lib/utils';
 import { findFreeSlug, slugify } from './orgSlug';
 
@@ -92,7 +93,7 @@ export interface ProvisionResult {
 // possible; they sign in later via the normal /login flow (their email already
 // matches a confirmed user, so the magic-link/Google sign-in just works).
 async function findOrCreateAuthUser(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   email: string,
 ): Promise<string> {
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
@@ -127,7 +128,7 @@ interface OrgResult {
 }
 
 async function findOrCreateOrg(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   proposal: ProposalForProvision,
 ): Promise<OrgResult> {
   // 1. Already linked by a prior provision run.
@@ -179,7 +180,7 @@ async function findOrCreateOrg(
 // ── Membership ───────────────────────────────────────────────────────────────
 
 async function ensureMembership(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   orgId: string,
   userId: string,
 ): Promise<{ created: boolean }> {
@@ -211,8 +212,29 @@ async function ensureMembership(
 // new plan (one current sub per org, no duplicate); insert one if none exists.
 // Totals come from the proposal's already anti-tampered figures. No payment
 // fields — collection is manual via Paysoft Flow.
+// `subscriptions.{monthly_total_zar,vat_zar,total_charge_zar}` are numeric(10,2),
+// but ProposalForProvision declares them `number | string` — defensively, since
+// a caller can construct one by hand. Postgres would coerce a numeric string
+// silently, so this never visibly broke; it just meant the amount written onto a
+// live billing record was whatever turned up, unchecked. Surfaced 2026-08-03 the
+// moment the Database generic reached this file.
+//
+// Throwing is the right failure here, not clamping to 0 or skipping the field:
+// provisioning is guarded, so any throw leaves the proposal `signed` rather than
+// half-provisioned, and a human gets a "provisioning failed" alert. A wrong
+// amount on a debit-order mandate is far worse than a failed provision.
+function toAmount(value: number | string, field: string): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) {
+    throw new Error(
+      `provision: ${field} is not a valid amount (received ${JSON.stringify(value)})`,
+    );
+  }
+  return n;
+}
+
 async function upsertSubscription(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   orgId: string,
   proposal: ProposalForProvision,
 ): Promise<{ created: boolean }> {
@@ -223,9 +245,9 @@ async function upsertSubscription(
     services: proposal.services,
     brackets: proposal.brackets,
     tier_slug: proposal.tier_slug,
-    monthly_total_zar: proposal.monthly_total_zar,
-    vat_zar: proposal.vat_zar,
-    total_charge_zar: proposal.total_charge_zar,
+    monthly_total_zar: toAmount(proposal.monthly_total_zar, 'monthly_total_zar'),
+    vat_zar: toAmount(proposal.vat_zar, 'vat_zar'),
+    total_charge_zar: toAmount(proposal.total_charge_zar, 'total_charge_zar'),
     status: 'active',
   };
 
@@ -264,7 +286,7 @@ async function upsertSubscription(
 // ── Orchestrator ─────────────────────────────────────────────────────────────
 
 export async function provisionFromSignedProposal(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   proposal: ProposalForProvision,
 ): Promise<ProvisionResult> {
   // Already promoted + linked → nothing to do.

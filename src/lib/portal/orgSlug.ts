@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 
 // client_orgs.slug is unique (migration 004). Used here by provision-on-sign
 // (PR9, provision.ts), which still runs on capucor.com when a client signs.
@@ -25,7 +26,7 @@ function randomSuffix(): string {
 }
 
 // Probe the base slug, then append a short random suffix on collision.
-export async function findFreeSlug(admin: SupabaseClient, base: string): Promise<string> {
+export async function findFreeSlug(admin: SupabaseClient<Database>, base: string): Promise<string> {
   let candidate = base;
   for (let attempt = 0; attempt < 5; attempt++) {
     const { data } = await admin

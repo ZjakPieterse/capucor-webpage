@@ -1,10 +1,11 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 
 // Service-role Supabase client for server-only writes (portal mutations,
 // provision-on-sign, Karbon sync, Xero sync). Bypasses RLS — never import
 // from any module that ships to the browser.
 
-export function createSupabaseAdminClient(): SupabaseClient {
+export function createSupabaseAdminClient(): SupabaseClient<Database> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -21,7 +22,7 @@ export function createSupabaseAdminClient(): SupabaseClient {
     );
   }
 
-  return createClient(url, serviceRoleKey, {
+  return createClient<Database>(url, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

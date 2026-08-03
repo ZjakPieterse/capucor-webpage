@@ -15,6 +15,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 import {
   monthlyTotal,
   buildLineItems,
@@ -57,7 +58,7 @@ function titleCase(slug: string): string {
 }
 
 export async function priceProposalSelection(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   input: ProposalSelectionInput,
 ): Promise<PriceResult> {
   let bracketRows: BracketRow[];

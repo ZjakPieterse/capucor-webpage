@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 
 // Cookieless anon Supabase client for reading PUBLIC data (pricing config —
 // services, brackets, tiers — and testimonials) from the
@@ -10,7 +11,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 // signed in. Never use this for per-user/authenticated data — use the cookie-
 // bound server client (server.ts) or the service-role client (admin.ts) there.
 
-export function createSupabaseAnonClient(): SupabaseClient {
+export function createSupabaseAnonClient(): SupabaseClient<Database> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -20,7 +21,7 @@ export function createSupabaseAnonClient(): SupabaseClient {
     );
   }
 
-  return createClient(url, anonKey, {
+  return createClient<Database>(url, anonKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

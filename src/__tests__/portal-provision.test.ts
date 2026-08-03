@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 import {
   provisionFromSignedProposal,
   type ProposalForProvision,
@@ -150,7 +151,7 @@ function makeFakeAdmin(
 }
 
 type FakeAdmin = ReturnType<typeof makeFakeAdmin>;
-const asClient = (f: FakeAdmin) => f as unknown as SupabaseClient;
+const asClient = (f: FakeAdmin) => f as unknown as SupabaseClient<Database>;
 
 function signedProposal(overrides: Partial<ProposalForProvision> = {}): ProposalForProvision {
   return {

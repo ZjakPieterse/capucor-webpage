@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import {
@@ -64,7 +65,7 @@ export function driveFileUrl(fileId: string): string {
 }
 
 export async function archiveSignedProposal(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   proposalId: string,
 ): Promise<ArchiveResult> {
   const url = process.env.APPS_SCRIPT_PDF_URL;

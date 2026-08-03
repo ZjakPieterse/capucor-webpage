@@ -11,6 +11,7 @@
 // signature" and "legally signed".
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 import { provisionFromSignedProposal } from '@/lib/portal/provision';
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
 import {
@@ -57,7 +58,7 @@ export interface FinalizeResult {
 }
 
 export async function finalizeProposalSignature(
-  admin: SupabaseClient,
+  admin: SupabaseClient<Database>,
   row: FinalizeSignRow,
 ): Promise<FinalizeResult> {
   if (

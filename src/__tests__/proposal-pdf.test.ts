@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/db';
 
 // Anon client + pricing are stubbed; we exercise the archival orchestration
 // (skip / POST / store), not the document content (covered separately).
@@ -72,7 +73,7 @@ function makeAdmin(row: Record<string, unknown> | null, { updateError = null }: 
   return admin;
 }
 
-const asClient = (a: ReturnType<typeof makeAdmin>) => a as unknown as SupabaseClient;
+const asClient = (a: ReturnType<typeof makeAdmin>) => a as unknown as SupabaseClient<Database>;
 
 let fetchMock: ReturnType<typeof vi.fn>;
 
