@@ -32,7 +32,10 @@ and the "Domain seam" section below.
 
 ## Prerequisites
 
-- Node.js 20 (see `.nvmrc`)
+- Node.js 24 (see `.nvmrc`; CI pins the same). Was Node 20 until 2026-08-03 — that reached end of
+  life on 30 April 2026, and the mismatch against the dev box's Node 24 / npm 11 was what made
+  regenerating `package-lock.json` locally unsafe. Both ends now match. Keep `.nvmrc` and
+  `.github/workflows/ci.yml` in step.
 - A Supabase project
 - A Cloudflare account with Workers enabled (for deploy)
 
