@@ -99,7 +99,22 @@ const APP_PATHS = [
 // there is nothing to route — but a blanket /api/* redirect would still be a
 // trap for anyone who adds one later.
 const hostRedirects = [
-  // www → apex. First, so the apex rules below see a clean host.
+  // www → apex, ROOT ONLY.
+  //
+  // ⚠️ This rule must come before the catch-all below and must NOT be merged
+  // into it. With `source: "/:path*"` and an ABSOLUTE destination, Next does
+  // not substitute `:path*` when the path is empty — it emits the literal
+  // string, so https://www.capucor.com/ 308'd to "https://capucor.com/:path*",
+  // which is a 404. That shipped live and broke the bare www front door for
+  // anyone who typed it without a path; every www URL WITH a path worked, which
+  // is why it went unnoticed. Found 2026-08-03. See redirects.test.ts.
+  {
+    source: "/",
+    has: [{ type: "host" as const, value: `www.${MARKETING_HOST}` }],
+    destination: MARKETING_ORIGIN,
+    permanent: true,
+  },
+  // www → apex, everything else.
   {
     source: "/:path*",
     has: [{ type: "host" as const, value: `www.${MARKETING_HOST}` }],

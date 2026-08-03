@@ -8,6 +8,14 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  // Workers Logs. OFF by default, which meant a failed proposal email, a failed
+  // sign, or a failed provision-on-sign left no trace anywhere — and this Worker
+  // owns the whole revenue funnel. head_sampling_rate 1 keeps every request at
+  // current traffic levels; turn it down if volume ever makes that expensive.
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
   "kv_namespaces": [
     { "binding": "RATE_LIMIT_KV", "id": "ffcfa7b24bec47c3a8df2390a28786ca" },
     // OpenNext incremental cache (ISR for / and /pricing). Binding name is
