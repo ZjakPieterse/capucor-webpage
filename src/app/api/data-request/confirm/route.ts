@@ -83,8 +83,11 @@ export async function GET(req: NextRequest) {
       const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
       if (ownerEmail) {
         await sendEmail({
+          sourceType: 'data_request',
+          sourceId: String(row.id),
           eventType: 'data_request.confirmed_owner',
           idempotencyKey: `capucor_web_data_request_confirmed_owner_${String(row.id)}`,
+          adminClient: supabase,
           message: {
             from: siteConfig.email.senderWebsite,
             to: ownerEmail,

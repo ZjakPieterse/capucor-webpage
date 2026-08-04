@@ -11,6 +11,11 @@ vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: vi.fn(),
 }));
 
+const { sendEmailMock } = vi.hoisted(() => ({ sendEmailMock: vi.fn() }));
+vi.mock('@/lib/email/sendEmail', () => ({
+  sendEmail: sendEmailMock,
+}));
+
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { GET } from '@/app/api/data-request/confirm/route';
@@ -78,7 +83,14 @@ beforeEach(() => {
   lookupResult = { data: pendingRow(), error: null };
   updateRows = [{ id: 'dr_1' }];
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
-  delete process.env.RESEND_API_KEY; // skip the owner notification branch
+  delete process.env.OWNER_NOTIFICATION_EMAIL;
+  sendEmailMock.mockResolvedValue({
+    deliveryStatus: 'accepted',
+    deliveryId: 'delivery_1',
+    providerId: 'email_1',
+    errorCode: null,
+    errorMessage: null,
+  });
   mountAdmin();
 });
 
@@ -139,5 +151,20 @@ describe('GET /api/data-request/confirm', () => {
     expect(res.status).toBe(400);
     expect(await res.text()).toContain('Link expired');
     expect(updatePayloads[0]).toMatchObject({ status: 'expired' });
+  });
+
+  it('8. owner notification uses the durable data-request event identity', async () => {
+    process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
+    const res = await GET(makeConfirmRequest(TOKEN));
+
+    expect(res.status).toBe(200);
+    expect(sendEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceType: 'data_request',
+        sourceId: 'dr_1',
+        eventType: 'data_request.confirmed_owner',
+        idempotencyKey: 'capucor_web_data_request_confirmed_owner_dr_1',
+      }),
+    );
   });
 });

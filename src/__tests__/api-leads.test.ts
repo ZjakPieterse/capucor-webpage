@@ -11,17 +11,9 @@ vi.mock('@/lib/supabase/server', () => ({
   createSupabaseServerClient: vi.fn(),
 }));
 
-const { resendSendMock } = vi.hoisted(() => ({
-  resendSendMock: vi.fn(async () => ({
-    data: { id: 'email_test' },
-    error: null,
-    headers: null,
-  })),
-}));
-vi.mock('resend', () => ({
-  Resend: vi.fn(function (this: { emails: { send: typeof resendSendMock } }) {
-    this.emails = { send: resendSendMock };
-  }),
+const { sendEmailMock } = vi.hoisted(() => ({ sendEmailMock: vi.fn() }));
+vi.mock('@/lib/email/sendEmail', () => ({
+  sendEmail: sendEmailMock,
 }));
 
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -51,6 +43,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.RESEND_API_KEY;
   delete process.env.OWNER_NOTIFICATION_EMAIL;
+  sendEmailMock.mockResolvedValue({
+    deliveryStatus: 'accepted',
+    deliveryId: 'delivery_1',
+    providerId: 'email_test',
+    errorCode: null,
+    errorMessage: null,
+  });
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   mountSupabase();
 });
@@ -157,24 +156,31 @@ describe('POST /api/leads', () => {
     expect(res.status).toBe(200);
     expect(insertSpy).toHaveBeenCalledTimes(1);
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[LEAD] source=signup'));
-    expect(resendSendMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).not.toHaveBeenCalled();
     logSpy.mockRestore();
   });
 
   it('10. resend throws — lead still saved, 200 returned', async () => {
     process.env.RESEND_API_KEY = 'test_key';
     process.env.OWNER_NOTIFICATION_EMAIL = 'owner@example.com';
-    resendSendMock.mockRejectedValueOnce(new Error('resend fail'));
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'transport_error',
+      errorMessage: 'resend fail',
+    });
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
     expect(insertSpy).toHaveBeenCalledTimes(1);
-    expect(resendSendMock).toHaveBeenCalledTimes(1);
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[EMAIL] delivery pending:',
-      expect.objectContaining({ errorCode: 'transport_error' }),
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceType: 'lead',
+        sourceId: expect.any(String),
+        eventType: 'lead.owner_notification',
+      }),
     );
-    errorSpy.mockRestore();
   });
 });

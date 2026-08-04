@@ -24,11 +24,9 @@ vi.mock('@/lib/portal/proposalPdf', () => ({
   archiveSignedProposal: vi.fn(),
 }));
 
-const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
-vi.mock('resend', () => ({
-  Resend: class {
-    emails = { send: sendMock };
-  },
+const { sendEmailMock } = vi.hoisted(() => ({ sendEmailMock: vi.fn() }));
+vi.mock('@/lib/email/sendEmail', () => ({
+  sendEmail: sendEmailMock,
 }));
 
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -58,6 +56,8 @@ function viewedRow(overrides: Record<string, unknown> = {}) {
     email: 'pat@example.com',
     status: 'viewed',
     expires_at: FUTURE,
+    sign_confirm_token: null,
+    sign_confirm_expires_at: null,
     ...overrides,
   };
 }
@@ -65,6 +65,7 @@ function viewedRow(overrides: Record<string, unknown> = {}) {
 interface UpdateBuilder {
   eq: () => UpdateBuilder;
   in: () => UpdateBuilder;
+  is: () => UpdateBuilder;
   select: () => Promise<{ data: { id: string }[] | null; error: unknown }>;
 }
 
@@ -73,6 +74,7 @@ const proposalUpdate = vi.fn((payload: Record<string, unknown>) => {
   const builder: UpdateBuilder = {
     eq: () => builder,
     in: () => builder,
+    is: () => builder,
     select: async () => ({
       data: updateResult.error ? null : updateRows,
       error: updateResult.error,
@@ -110,7 +112,13 @@ beforeEach(() => {
   updateResult = { error: null };
   updateRows = [{ id: 'prop_1' }];
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
-  sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+  sendEmailMock.mockResolvedValue({
+    deliveryStatus: 'accepted',
+    deliveryId: 'delivery_1',
+    providerId: 'email_1',
+    errorCode: null,
+    errorMessage: null,
+  });
   process.env.RESEND_API_KEY = 're_test';
   process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
   mountAdmin();
@@ -141,8 +149,14 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     expect(payload.signature_name).toBeUndefined();
 
     // One email — the confirm link — to the proposal's own address.
-    expect(sendMock).toHaveBeenCalledTimes(1);
-    const email = sendMock.mock.calls[0]![0];
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    const sendInput = sendEmailMock.mock.calls[0]![0];
+    expect(sendInput).toMatchObject({
+      sourceType: 'proposal',
+      sourceId: 'prop_1',
+      eventType: 'proposal.sign_confirmation_client',
+    });
+    const email = sendInput.message;
     expect(email.to).toBe('pat@example.com');
     expect(email.subject).toMatch(/confirm your capucor signature/i);
     expect(email.html).toContain('/proposal/confirm/');
@@ -307,7 +321,13 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
   });
 
   it('18. Resend throws — pending signature still saved, returns 200', async () => {
-    sendMock.mockRejectedValueOnce(new Error('resend down'));
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'transport_error',
+      errorMessage: 'resend down',
+    });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
@@ -317,14 +337,12 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
   });
 
   it('18b. Resend returns an error — pending signature remains retryable and response is pending', async () => {
-    sendMock.mockResolvedValueOnce({
-      data: null,
-      error: {
-        name: 'rate_limit_exceeded',
-        message: 'slow down',
-        statusCode: 429,
-      },
-      headers: null,
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'rate_limit_exceeded',
+      errorMessage: 'slow down',
     });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
@@ -341,17 +359,49 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(409);
     expect((await res.json()).error).toMatch(/already been signed/i);
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).not.toHaveBeenCalled();
   });
 
   it('20. RESEND unset — still 200, logs the confirm URL instead of sending', async () => {
     delete process.env.RESEND_API_KEY;
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'missing_api_key',
+      errorMessage: 'RESEND_API_KEY is not configured.',
+    });
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ deliveryStatus: 'pending' });
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledOnce();
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('/proposal/confirm/'));
     logSpy.mockRestore();
+  });
+
+  it('repeated requests reuse the active confirmation cycle and stable delivery event', async () => {
+    const existingToken = 'existing-confirmation-token-kept-valid';
+    lookupResult = {
+      data: viewedRow({
+        sign_confirm_token: existingToken,
+        sign_confirm_expires_at: FUTURE,
+      }),
+      error: null,
+    };
+
+    const first = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+    const second = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect(updatePayloads).toHaveLength(2);
+    expect(updatePayloads[0]!.sign_confirm_token).toBeUndefined();
+    expect(updatePayloads[1]!.sign_confirm_token).toBeUndefined();
+    const firstInput = sendEmailMock.mock.calls[0]![0];
+    const secondInput = sendEmailMock.mock.calls[1]![0];
+    expect(firstInput.idempotencyKey).toBe(secondInput.idempotencyKey);
+    expect(firstInput.idempotencyKey).not.toContain(existingToken);
+    expect(firstInput.message.html).toContain(`/proposal/confirm/${existingToken}`);
   });
 });

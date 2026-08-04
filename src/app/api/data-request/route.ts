@@ -60,12 +60,14 @@ export async function POST(req: NextRequest) {
   const { email, request_type } = parsed.data;
 
   // 5. Insert + generate token
+  const dataRequestId = crypto.randomUUID();
   const token = generateDataRequestToken();
   const tokenExpiresAt = new Date(Date.now() + DATA_REQUEST_TOKEN_TTL_HOURS * 60 * 60 * 1000).toISOString();
 
   try {
     const supabase = await createSupabaseServerClient();
     const { error: dbError } = await supabase.from('data_requests').insert({
+      id: dataRequestId,
       email,
       request_type,
       status: 'pending_confirmation',
@@ -110,8 +112,10 @@ export async function POST(req: NextRequest) {
   ].join('\n');
 
   const requesterDelivery = await sendEmail({
+    sourceType: 'data_request',
+    sourceId: dataRequestId,
     eventType: 'data_request.confirmation_client',
-    idempotencyKey: `capucor_web_data_request_confirm_client_${token}`,
+    idempotencyKey: `capucor_web_data_request_confirm_client_${dataRequestId}`,
     message: {
       from: siteConfig.email.senderPrivacy,
       replyTo: siteConfig.email.replyTo,
@@ -124,8 +128,10 @@ export async function POST(req: NextRequest) {
 
   if (ownerEmail) {
     await sendEmail({
+      sourceType: 'data_request',
+      sourceId: dataRequestId,
       eventType: 'data_request.pending_owner',
-      idempotencyKey: `capucor_web_data_request_pending_owner_${token}`,
+      idempotencyKey: `capucor_web_data_request_pending_owner_${dataRequestId}`,
       message: {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,
@@ -141,7 +147,7 @@ export async function POST(req: NextRequest) {
           ``,
           deliveryStatus === 'accepted'
             ? `The provider accepted the requester's confirmation email. You will be notified again once they confirm.`
-            : `The provider did not accept the requester's confirmation email. Manual follow-up is required until durable retry is available.`,
+            : `The requester's confirmation email is pending and retained for retry. Check the delivery queue if it remains pending.`,
         ].join('\n'),
       },
     });

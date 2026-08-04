@@ -124,6 +124,7 @@ export async function POST(req: NextRequest) {
 
   // Human-readable reference (FT-YYYY-MM-NNNN) assigned by the DB trigger on
   // insert — read it back for the emails.
+  let proposalId: string | null = null;
   let refNumber: string | null = null;
   try {
     const { data: propRow, error: propErr } = await admin
@@ -150,11 +151,13 @@ export async function POST(req: NextRequest) {
         sent_at: nowIso,
         expires_at: expiresAt,
       })
-      .select('ref_number')
+      .select('id, ref_number')
       .single();
 
     if (propErr) throw propErr;
+    proposalId = (propRow?.id as string) ?? null;
     refNumber = (propRow?.ref_number as string) ?? null;
+    if (!proposalId) throw new Error('Proposal insert did not return an id.');
   } catch (err) {
     console.error('[PROPOSALS] proposal insert error:', err);
     return NextResponse.json({ error: 'Could not generate your proposal. Please try again.' }, { status: 500 });
@@ -167,8 +170,11 @@ export async function POST(req: NextRequest) {
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 
   const clientDelivery = await sendEmail({
+    sourceType: 'proposal',
+    sourceId: proposalId,
     eventType: 'proposal.created_client',
-    idempotencyKey: `capucor_web_proposal_created_client_${token}`,
+    idempotencyKey: `capucor_web_proposal_created_client_${proposalId}`,
+    adminClient: admin,
     message: {
       from: siteConfig.email.sender,
       replyTo: siteConfig.email.replyTo,
@@ -189,8 +195,11 @@ export async function POST(req: NextRequest) {
 
   if (ownerEmail) {
     await sendEmail({
+      sourceType: 'proposal',
+      sourceId: proposalId,
       eventType: 'proposal.created_owner',
-      idempotencyKey: `capucor_web_proposal_created_owner_${token}`,
+      idempotencyKey: `capucor_web_proposal_created_owner_${proposalId}`,
+      adminClient: admin,
       message: {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,

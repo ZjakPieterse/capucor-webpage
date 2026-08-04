@@ -75,6 +75,8 @@ export async function POST(req: NextRequest) {
 
   if (ownerEmail) {
     const delivery = await sendEmail({
+      sourceType: 'lead',
+      sourceId: leadId,
       eventType: 'lead.owner_notification',
       idempotencyKey: `capucor_web_lead_owner_${leadId}`,
       message: {

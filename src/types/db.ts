@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_events: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_kind: string
+          client_org_id: string | null
+          created_at: string
+          detail: Json | null
+          entity_id: string | null
+          id: string
+          occurred_at: string
+          subject_id: string | null
+          subject_table: string
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_kind?: string
+          client_org_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          entity_id?: string | null
+          id?: string
+          occurred_at?: string
+          subject_id?: string | null
+          subject_table: string
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_kind?: string
+          client_org_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          entity_id?: string | null
+          id?: string
+          occurred_at?: string
+          subject_id?: string | null
+          subject_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brackets: {
         Row: {
           active: boolean
@@ -174,6 +231,59 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          active: boolean
+          client_org_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_primary: boolean
+          notes: string | null
+          phone: string | null
+          receives_requests: boolean
+          role_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          client_org_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          phone?: string | null
+          receives_requests?: boolean
+          role_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          client_org_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          phone?: string | null
+          receives_requests?: boolean
+          role_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_requests: {
         Row: {
           confirmed_at: string | null
@@ -224,6 +334,274 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      email_deliveries: {
+        Row: {
+          accepted_at: string | null
+          attempt_count: number
+          created_at: string
+          event_type: string
+          failed_at: string | null
+          id: string
+          idempotency_key: string
+          last_attempt_at: string | null
+          last_error_code: string | null
+          last_error_message: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
+          next_attempt_at: string
+          provider_id: string | null
+          recipient: string
+          source_id: string
+          source_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          attempt_count?: number
+          created_at?: string
+          event_type: string
+          failed_at?: string | null
+          id?: string
+          idempotency_key: string
+          last_attempt_at?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          next_attempt_at?: string
+          provider_id?: string | null
+          recipient: string
+          source_id: string
+          source_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          attempt_count?: number
+          created_at?: string
+          event_type?: string
+          failed_at?: string | null
+          id?: string
+          idempotency_key?: string
+          last_attempt_at?: string | null
+          last_error_code?: string | null
+          last_error_message?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          next_attempt_at?: string
+          provider_id?: string | null
+          recipient?: string
+          source_id?: string
+          source_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      entities: {
+        Row: {
+          cipc_ar_required: boolean
+          client_org_id: string
+          coida_no: string | null
+          coida_registered: boolean
+          created_at: string
+          display_name: string
+          drive_folder_id: string | null
+          drive_folder_url: string | null
+          entity_type: string
+          financial_year_end_day: number | null
+          financial_year_end_month: number | null
+          id: string
+          income_tax_no: string | null
+          incorporation_date: string | null
+          is_primary: boolean
+          legal_name: string | null
+          notes: string | null
+          paye_no: string | null
+          payroll_registered: boolean
+          provisional_taxpayer: boolean
+          registration_no: string | null
+          status: string
+          uif_no: string | null
+          updated_at: string
+          vat_category: string | null
+          vat_no: string | null
+          vat_registered: boolean
+        }
+        Insert: {
+          cipc_ar_required?: boolean
+          client_org_id: string
+          coida_no?: string | null
+          coida_registered?: boolean
+          created_at?: string
+          display_name: string
+          drive_folder_id?: string | null
+          drive_folder_url?: string | null
+          entity_type?: string
+          financial_year_end_day?: number | null
+          financial_year_end_month?: number | null
+          id?: string
+          income_tax_no?: string | null
+          incorporation_date?: string | null
+          is_primary?: boolean
+          legal_name?: string | null
+          notes?: string | null
+          paye_no?: string | null
+          payroll_registered?: boolean
+          provisional_taxpayer?: boolean
+          registration_no?: string | null
+          status?: string
+          uif_no?: string | null
+          updated_at?: string
+          vat_category?: string | null
+          vat_no?: string | null
+          vat_registered?: boolean
+        }
+        Update: {
+          cipc_ar_required?: boolean
+          client_org_id?: string
+          coida_no?: string | null
+          coida_registered?: boolean
+          created_at?: string
+          display_name?: string
+          drive_folder_id?: string | null
+          drive_folder_url?: string | null
+          entity_type?: string
+          financial_year_end_day?: number | null
+          financial_year_end_month?: number | null
+          id?: string
+          income_tax_no?: string | null
+          incorporation_date?: string | null
+          is_primary?: boolean
+          legal_name?: string | null
+          notes?: string | null
+          paye_no?: string | null
+          payroll_registered?: boolean
+          provisional_taxpayer?: boolean
+          registration_no?: string | null
+          status?: string
+          uif_no?: string | null
+          updated_at?: string
+          vat_category?: string | null
+          vat_no?: string | null
+          vat_registered?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entities_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_contacts: {
+        Row: {
+          client_org_id: string
+          contact_id: string
+          created_at: string
+          entity_id: string
+          id: string
+          relationship: string
+        }
+        Insert: {
+          client_org_id: string
+          contact_id: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          relationship?: string
+        }
+        Update: {
+          client_org_id?: string
+          contact_id?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entity_contacts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_accounts: {
+        Row: {
+          account_kind: string
+          account_last4: string | null
+          active: boolean
+          active_from: string | null
+          active_to: string | null
+          client_org_id: string
+          created_at: string
+          entity_id: string
+          id: string
+          institution: string
+          label: string
+          notes: string | null
+          requires_statement: boolean
+          statement_cadence: string
+          updated_at: string
+        }
+        Insert: {
+          account_kind?: string
+          account_last4?: string | null
+          active?: boolean
+          active_from?: string | null
+          active_to?: string | null
+          client_org_id: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          institution: string
+          label: string
+          notes?: string | null
+          requires_statement?: boolean
+          statement_cadence?: string
+          updated_at?: string
+        }
+        Update: {
+          account_kind?: string
+          account_last4?: string | null
+          active?: boolean
+          active_from?: string | null
+          active_to?: string | null
+          client_org_id?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          institution?: string
+          label?: string
+          notes?: string | null
+          requires_statement?: boolean
+          statement_cadence?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_accounts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       internal_users: {
         Row: {
@@ -407,6 +785,136 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_services: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          name: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      proposal_fulfilment: {
+        Row: {
+          client_email_accepted_at: string | null
+          client_email_attempt_count: number
+          client_email_delivery_id: string | null
+          client_email_status: string
+          completed_at: string | null
+          created_at: string
+          last_error_code: string | null
+          last_error_message: string | null
+          last_error_stage: string | null
+          lease_expires_at: string | null
+          lease_token: string | null
+          next_attempt_at: string
+          owner_email_accepted_at: string | null
+          owner_email_attempt_count: number
+          owner_email_delivery_id: string | null
+          owner_email_status: string
+          pdf_attempt_count: number
+          pdf_completed_at: string | null
+          pdf_status: string
+          portal_attempt_count: number
+          portal_completed_at: string | null
+          portal_status: string
+          proposal_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_email_accepted_at?: string | null
+          client_email_attempt_count?: number
+          client_email_delivery_id?: string | null
+          client_email_status?: string
+          completed_at?: string | null
+          created_at?: string
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_error_stage?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          next_attempt_at?: string
+          owner_email_accepted_at?: string | null
+          owner_email_attempt_count?: number
+          owner_email_delivery_id?: string | null
+          owner_email_status?: string
+          pdf_attempt_count?: number
+          pdf_completed_at?: string | null
+          pdf_status?: string
+          portal_attempt_count?: number
+          portal_completed_at?: string | null
+          portal_status?: string
+          proposal_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_email_accepted_at?: string | null
+          client_email_attempt_count?: number
+          client_email_delivery_id?: string | null
+          client_email_status?: string
+          completed_at?: string | null
+          created_at?: string
+          last_error_code?: string | null
+          last_error_message?: string | null
+          last_error_stage?: string | null
+          lease_expires_at?: string | null
+          lease_token?: string | null
+          next_attempt_at?: string
+          owner_email_accepted_at?: string | null
+          owner_email_attempt_count?: number
+          owner_email_delivery_id?: string | null
+          owner_email_status?: string
+          pdf_attempt_count?: number
+          pdf_completed_at?: string | null
+          pdf_status?: string
+          portal_attempt_count?: number
+          portal_completed_at?: string | null
+          portal_status?: string
+          proposal_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_fulfilment_client_email_delivery_id_fkey"
+            columns: ["client_email_delivery_id"]
+            isOneToOne: false
+            referencedRelation: "email_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_fulfilment_owner_email_delivery_id_fkey"
+            columns: ["owner_email_delivery_id"]
+            isOneToOne: false
+            referencedRelation: "email_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_fulfilment_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: true
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_ref_counters: {
         Row: {
           last_seq: number
@@ -589,6 +1097,63 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "proposals"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_assignments: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          ended_on: string | null
+          entity_id: string
+          frequency: string
+          id: string
+          notes: string | null
+          service_code: string
+          started_on: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          ended_on?: string | null
+          entity_id: string
+          frequency?: string
+          id?: string
+          notes?: string | null
+          service_code: string
+          started_on?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          ended_on?: string | null
+          entity_id?: string
+          frequency?: string
+          id?: string
+          notes?: string | null
+          service_code?: string
+          started_on?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_assignments_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_assignments_service_code_fkey"
+            columns: ["service_code"]
+            isOneToOne: false
+            referencedRelation: "practice_services"
+            referencedColumns: ["code"]
           },
         ]
       }

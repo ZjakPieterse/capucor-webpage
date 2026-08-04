@@ -11,17 +11,9 @@ vi.mock('@/lib/supabase/server', () => ({
   createSupabaseServerClient: vi.fn(),
 }));
 
-const { resendSendMock } = vi.hoisted(() => ({
-  resendSendMock: vi.fn(async () => ({
-    data: { id: 'email_test' },
-    error: null,
-    headers: null,
-  })),
-}));
-vi.mock('resend', () => ({
-  Resend: vi.fn(function (this: { emails: { send: typeof resendSendMock } }) {
-    this.emails = { send: resendSendMock };
-  }),
+const { sendEmailMock } = vi.hoisted(() => ({ sendEmailMock: vi.fn() }));
+vi.mock('@/lib/email/sendEmail', () => ({
+  sendEmail: sendEmailMock,
 }));
 
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -49,6 +41,13 @@ beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.RESEND_API_KEY;
   delete process.env.OWNER_NOTIFICATION_EMAIL;
+  sendEmailMock.mockResolvedValue({
+    deliveryStatus: 'pending',
+    deliveryId: 'delivery_1',
+    providerId: null,
+    errorCode: 'missing_api_key',
+    errorMessage: 'RESEND_API_KEY is not configured.',
+  });
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   mountSupabase();
 });
@@ -163,25 +162,32 @@ describe('POST /api/data-request', () => {
     expect(res.status).toBe(200);
     expect(insertSpy).toHaveBeenCalledTimes(1);
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[DATA_REQUEST] type=access'));
-    expect(resendSendMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
     logSpy.mockRestore();
   });
 
   it('10. resend throws — row still saved, 200 returned', async () => {
     process.env.RESEND_API_KEY = 'test_key';
     process.env.OWNER_NOTIFICATION_EMAIL = 'owner@example.com';
-    resendSendMock.mockRejectedValueOnce(new Error('resend fail'));
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'transport_error',
+      errorMessage: 'resend fail',
+    });
     const res = await POST(makeJsonRequest('http://test/api/data-request', validBody));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, deliveryStatus: 'pending' });
     expect(insertSpy).toHaveBeenCalledTimes(1);
-    expect(resendSendMock).toHaveBeenCalled();
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[EMAIL] delivery pending:',
-      expect.objectContaining({ errorCode: 'transport_error' }),
-    );
-    errorSpy.mockRestore();
+    expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    const requesterCall = sendEmailMock.mock.calls[0]![0];
+    expect(requesterCall).toMatchObject({
+      sourceType: 'data_request',
+      sourceId: expect.any(String),
+      eventType: 'data_request.confirmation_client',
+    });
+    expect(requesterCall.idempotencyKey).not.toContain(insertSpy.mock.calls[0]![0].token);
   });
 
   it('11. delete request — sends deletion-flavoured email subject', async () => {
@@ -194,7 +200,7 @@ describe('POST /api/data-request', () => {
       }),
     );
     expect(res.status).toBe(200);
-    const subjects = resendSendMock.mock.calls.map((c) => (c as unknown as [{ subject: string }])[0].subject);
+    const subjects = sendEmailMock.mock.calls.map((c) => c[0].message.subject as string);
     expect(subjects.some((s) => /deletion/i.test(s))).toBe(true);
     expect(subjects.some((s) => /Data delete request/.test(s))).toBe(true);
   });

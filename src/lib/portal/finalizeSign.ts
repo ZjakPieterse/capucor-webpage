@@ -136,10 +136,13 @@ export async function finalizeProposalSignature(
   const loginUrl = `${siteConfig.appUrl}/login?next=/portal`;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
   const clientDelivery = await sendEmail({
+    sourceType: 'proposal',
+    sourceId: row.id,
     eventType: provisioned ? 'proposal.portal_ready_client' : 'proposal.signed_client',
     idempotencyKey: provisioned
       ? `capucor_web_proposal_portal_ready_client_${row.id}`
       : `capucor_web_proposal_signed_client_${row.id}`,
+    adminClient: admin,
     message: {
       from: siteConfig.email.sender,
       replyTo: siteConfig.email.replyTo,
@@ -162,10 +165,13 @@ export async function finalizeProposalSignature(
 
   if (ownerEmail) {
     await sendEmail({
+      sourceType: 'proposal',
+      sourceId: row.id,
       eventType: provisioned ? 'proposal.provisioned_owner' : 'proposal.provision_failed_owner',
       idempotencyKey: provisioned
         ? `capucor_web_proposal_provisioned_owner_${row.id}`
         : `capucor_web_proposal_provision_failed_owner_${row.id}`,
+      adminClient: admin,
       message: {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,

@@ -12,11 +12,9 @@ vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: vi.fn(),
 }));
 
-const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
-vi.mock('resend', () => ({
-  Resend: class {
-    emails = { send: sendMock };
-  },
+const { sendEmailMock } = vi.hoisted(() => ({ sendEmailMock: vi.fn() }));
+vi.mock('@/lib/email/sendEmail', () => ({
+  sendEmail: sendEmailMock,
 }));
 
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -61,8 +59,8 @@ let leadResult: { data: { id: string } | null; error: unknown } = {
   error: null,
 };
 // The route reads the trigger-assigned ref_number back via .select().single().
-let proposalResult: { data: { ref_number: string } | null; error: unknown } = {
-  data: { ref_number: 'FT-2026-06-0001' },
+let proposalResult: { data: { id: string; ref_number: string } | null; error: unknown } = {
+  data: { id: '11111111-1111-4111-8111-111111111111', ref_number: 'FT-2026-06-0001' },
   error: null,
 };
 
@@ -108,9 +106,18 @@ beforeEach(() => {
   bracketRows = PRO_BRACKETS;
   bracketError = null;
   leadResult = { data: { id: 'lead_1' }, error: null };
-  proposalResult = { data: { ref_number: 'FT-2026-06-0001' }, error: null };
+  proposalResult = {
+    data: { id: '11111111-1111-4111-8111-111111111111', ref_number: 'FT-2026-06-0001' },
+    error: null,
+  };
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
-  sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+  sendEmailMock.mockResolvedValue({
+    deliveryStatus: 'accepted',
+    deliveryId: 'delivery_1',
+    providerId: 'email_1',
+    errorCode: null,
+    errorMessage: null,
+  });
   process.env.RESEND_API_KEY = 're_test';
   process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
   mountAdmin();
@@ -146,10 +153,14 @@ describe('POST /api/proposals', () => {
     expect(typeof propPayload.token).toBe('string');
 
     // Two emails attempted (client + owner)
-    expect(sendMock).toHaveBeenCalledTimes(2);
-    expect(sendMock.mock.calls[0]![1]).toEqual({
-      idempotencyKey: `capucor_web_proposal_created_client_${String(propPayload.token)}`,
+    expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    expect(sendEmailMock.mock.calls[0]![0]).toMatchObject({
+      sourceType: 'proposal',
+      sourceId: '11111111-1111-4111-8111-111111111111',
+      eventType: 'proposal.created_client',
+      idempotencyKey: 'capucor_web_proposal_created_client_11111111-1111-4111-8111-111111111111',
     });
+    expect(sendEmailMock.mock.calls[0]![0].idempotencyKey).not.toContain(String(propPayload.token));
   });
 
   it('2. tamper — server ignores client-supplied prices and recomputes', async () => {
@@ -329,14 +340,12 @@ describe('POST /api/proposals', () => {
   });
 
   it('17. returned provider error — proposal persists and response reports pending', async () => {
-    sendMock.mockResolvedValueOnce({
-      data: null,
-      error: {
-        name: 'validation_error',
-        message: 'recipient rejected',
-        statusCode: 422,
-      },
-      headers: null,
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'validation_error',
+      errorMessage: 'recipient rejected',
     });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -348,7 +357,7 @@ describe('POST /api/proposals', () => {
     });
     expect(proposalInsert).toHaveBeenCalledOnce();
     // The owner copy is independent and is still attempted after client rejection.
-    expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(sendEmailMock).toHaveBeenCalledTimes(2);
     errorSpy.mockRestore();
   });
 });

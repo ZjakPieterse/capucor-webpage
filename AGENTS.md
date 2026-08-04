@@ -204,9 +204,17 @@ Do not construct `Resend` or call `resend.emails.send()` anywhere else. The adap
 stable business-event idempotency key, bounds the provider call, checks both returned errors and
 thrown failures, and returns `accepted` only with a provider message id. `accepted` means the
 provider accepted the API request, not that the recipient opened or even received it. Never log a
-link token or idempotency key, and never write a sent timestamp from a `pending` result. Until the
-PH-03/PH-04 durable-delivery work lands, `pending` remains observable to the caller but is not an
-automatic retry queue.
+link token or idempotency key, and never write a sent timestamp from a `pending` result.
+
+The adapter persists one `email_deliveries` row **before** calling Resend, claims it with a
+60-second lease, and passes the same globally unique key to the provider. Returned errors, thrown
+transport failures, timeouts and missing provider configuration become `retry_scheduled`; repeated
+or concurrent requests load the existing event instead of creating another provider message. A
+stale processing lease is reclaimable with the same provider key. Callers must supply a UUID source
+(`lead`, `data_request` or `proposal`) and a dotted event type; store no subject, body, snippet,
+recipient link token or other message content in the operational table. Scheduled reconciliation
+is owned by PH-05; until that lands, the durable pending row is observable but not automatically
+drained.
 
 ## Database (Supabase)
 
@@ -214,7 +222,9 @@ Both apps share **one Supabase project**, but ⚠️ **this repo does not own th
 
 **`supabase/migrations/` lives in [`../capucor-os`](../capucor-os/AGENTS.md) and nowhere else** —
 this repo's copy was deleted in Phase 3 of the OS split. Write new migrations there, and apply them
-via the Supabase dashboard SQL editor or `supabase db push` from that repo.
+using the canonical OS migration workflow. **Do not use `supabase db push` yet:** the live remote
+migration ledger does not contain the historical migrations. Apply only the intended file through
+the dashboard SQL editor or `supabase db query --linked --file ...`, then run the OS `db:check`.
 
 That matters here because marketing still **writes** to OS-owned tables at signing
 (`lib/portal/provision.ts` → `client_orgs`, `client_org_members`, `subscriptions`, `proposals`).
@@ -228,7 +238,8 @@ Regenerate TypeScript types after a schema change:
 npm run db:types
 ```
 
-Generated types land in `src/types/db.ts` (gitignored — regenerate after pulling schema changes).
+Generated types land in `src/types/db.ts` and are tracked. Regenerate and commit them after schema
+changes; CI rejects drift from the live schema.
 
 ### Supabase clients — pick the right one (load-bearing)
 

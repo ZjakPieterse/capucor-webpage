@@ -4,7 +4,7 @@
  * The signer types/draws/uploads a signature at /proposal/<token>; the client
  * normalises it to a PNG data URL and posts it here. We do NOT commit the
  * signature on this request. Instead we stash it as a *pending* signature, mint
- * a one-time `sign_confirm_token`, and email a "Confirm & sign" link to the
+ * a `sign_confirm_token`, and email a "Confirm & sign" link to the
  * proposal's own address. Only someone with access to that inbox can finalise
  * (Step B = POST /api/proposals/sign/confirm), which binds the legally-binding
  * act of signing to the real recipient — a forwarded /proposal/<token> link is
@@ -16,8 +16,8 @@
  *   3. Validate body with SignProposalSchema + a decoded byte-size check.
  *   4. Look up the proposal by its opaque token (service-role admin client; no
  *      anon RLS). Guard on status — only `sent`/`viewed` can be signed.
- *   5. Stash the pending signature + a fresh confirm token (30-min expiry);
- *      status stays `viewed`. Nothing is committed yet.
+ *   5. Stash the pending signature and reuse any still-valid confirmation
+ *      cycle (otherwise mint a 30-minute token); status stays `viewed`.
  *   6. Email the confirm link to the proposal address (or log it in dev).
  *
  * The actual commit (record signature → provision → archive → emails) lives in
@@ -46,6 +46,8 @@ interface ProposalSignRow {
   email: string;
   status: string;
   expires_at: string | null;
+  sign_confirm_token: string | null;
+  sign_confirm_expires_at: string | null;
 }
 
 // Decoded byte length of a base64 data URL, computed from the string length so
@@ -102,7 +104,9 @@ export async function POST(req: NextRequest) {
   try {
     const { data, error } = await admin
       .from('proposals')
-      .select('id, ref_number, first_name, business_name, email, status, expires_at')
+      .select(
+        'id, ref_number, first_name, business_name, email, status, expires_at, sign_confirm_token, sign_confirm_expires_at',
+      )
       .eq('token', input.token)
       .maybeSingle();
 
@@ -132,22 +136,37 @@ export async function POST(req: NextRequest) {
   //    filter repeats the guard so we never overwrite a proposal that was signed
   //    between the read and this write. Status stays `viewed` — nothing is
   //    committed until the recipient confirms from their inbox.
-  const confirmToken = generateOpaqueToken();
-  const confirmExpiresAt = new Date(Date.now() + CONFIRM_TTL_MINUTES * 60 * 1000).toISOString();
+  const reuseConfirmation =
+    !!row.sign_confirm_token &&
+    !!row.sign_confirm_expires_at &&
+    new Date(row.sign_confirm_expires_at).getTime() > Date.now();
+  const confirmToken = reuseConfirmation ? row.sign_confirm_token! : generateOpaqueToken();
+  const confirmExpiresAt = reuseConfirmation
+    ? row.sign_confirm_expires_at!
+    : new Date(Date.now() + CONFIRM_TTL_MINUTES * 60 * 1000).toISOString();
   try {
-    const { data: updated, error } = await admin
+    let update = admin
       .from('proposals')
       .update({
         pending_signature_name: input.signatureName,
         pending_signature_method: input.method,
         pending_signature_image: input.imageDataUrl,
         pending_signature_ip: ip === 'unknown' ? null : ip,
-        sign_confirm_token: confirmToken,
-        sign_confirm_expires_at: confirmExpiresAt,
+        ...(reuseConfirmation
+          ? {}
+          : {
+              sign_confirm_token: confirmToken,
+              sign_confirm_expires_at: confirmExpiresAt,
+            }),
       })
       .eq('id', row.id)
-      .in('status', ['sent', 'viewed'])
-      .select('id');
+      .in('status', ['sent', 'viewed']);
+
+    update = row.sign_confirm_token
+      ? update.eq('sign_confirm_token', row.sign_confirm_token)
+      : update.is('sign_confirm_token', null);
+
+    const { data: updated, error } = await update.select('id');
 
     if (error) throw error;
     if (!updated || updated.length === 0) {
@@ -163,8 +182,11 @@ export async function POST(req: NextRequest) {
   //    Non-fatal: the pending signature is already saved; in dev we log the URL.
   const confirmUrl = `${siteConfig.marketingUrl}/proposal/confirm/${confirmToken}`;
   const delivery = await sendEmail({
+    sourceType: 'proposal',
+    sourceId: row.id,
     eventType: 'proposal.sign_confirmation_client',
-    idempotencyKey: `capucor_web_sign_confirm_client_${confirmToken}`,
+    idempotencyKey: `capucor_web_sign_confirm_client_${row.id}_${new Date(confirmExpiresAt).getTime()}`,
+    adminClient: admin,
     message: {
       from: siteConfig.email.sender,
       replyTo: siteConfig.email.replyTo,

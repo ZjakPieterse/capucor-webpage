@@ -23,11 +23,9 @@ vi.mock('@/lib/portal/proposalPdf', () => ({
   archiveSignedProposal: vi.fn(),
 }));
 
-const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
-vi.mock('resend', () => ({
-  Resend: class {
-    emails = { send: sendMock };
-  },
+const { sendEmailMock } = vi.hoisted(() => ({ sendEmailMock: vi.fn() }));
+vi.mock('@/lib/email/sendEmail', () => ({
+  sendEmail: sendEmailMock,
 }));
 
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -119,7 +117,13 @@ beforeEach(() => {
   updateResult = { error: null };
   updateRows = [{ id: 'prop_1' }];
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
-  sendMock.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+  sendEmailMock.mockResolvedValue({
+    deliveryStatus: 'accepted',
+    deliveryId: 'delivery_1',
+    providerId: 'email_1',
+    errorCode: null,
+    errorMessage: null,
+  });
   vi.mocked(provisionFromSignedProposal).mockResolvedValue({
     ok: true,
     orgId: 'org_1',
@@ -167,9 +171,16 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     });
     expect(archiveSignedProposal).toHaveBeenCalledTimes(1);
 
-    expect(sendMock).toHaveBeenCalledTimes(2);
-    const clientEmail = sendMock.mock.calls[0]![0];
-    const ownerEmail = sendMock.mock.calls[1]![0];
+    expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    const clientInput = sendEmailMock.mock.calls[0]![0];
+    const ownerInput = sendEmailMock.mock.calls[1]![0];
+    expect(clientInput).toMatchObject({
+      sourceType: 'proposal',
+      sourceId: 'prop_1',
+      eventType: 'proposal.portal_ready_client',
+    });
+    const clientEmail = clientInput.message;
+    const ownerEmail = ownerInput.message;
     expect(clientEmail.subject).toMatch(/portal is ready/i);
     expect(clientEmail.html).toContain('/login?next=/portal');
     // Fraud-alert / signed-on line for the genuine recipient.
@@ -190,22 +201,20 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     expect(await res.json()).toMatchObject({ ok: true, provisioned: false });
 
     expect(updatePayloads[0]!.status).toBe('signed');
-    const clientEmail = sendMock.mock.calls[0]![0];
-    const ownerEmail = sendMock.mock.calls[1]![0];
+    const clientEmail = sendEmailMock.mock.calls[0]![0].message;
+    const ownerEmail = sendEmailMock.mock.calls[1]![0].message;
     expect(clientEmail.subject).toMatch(/received your signed proposal/i);
     expect(ownerEmail.subject).toMatch(/provisioning failed/i);
     expect(ownerEmail.html).toContain('auth user mint failed');
   });
 
   it('2b. returned client-email error — signature stays committed but no sent timestamp is written', async () => {
-    sendMock.mockResolvedValueOnce({
-      data: null,
-      error: {
-        name: 'validation_error',
-        message: 'recipient rejected',
-        statusCode: 422,
-      },
-      headers: null,
+    sendEmailMock.mockResolvedValueOnce({
+      deliveryStatus: 'pending',
+      deliveryId: 'delivery_1',
+      providerId: null,
+      errorCode: 'validation_error',
+      errorMessage: 'recipient rejected',
     });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -219,7 +228,7 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     expect(updatePayloads[0]!.status).toBe('signed');
     expect(updatePayloads.some((item) => 'signed_email_sent_at' in item)).toBe(false);
     // The owner alert is independent and still attempted.
-    expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(sendEmailMock).toHaveBeenCalledTimes(2);
     errorSpy.mockRestore();
   });
 
@@ -263,7 +272,7 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign/confirm', validBody));
     expect(res.status).toBe(409);
     expect(provisionFromSignedProposal).not.toHaveBeenCalled();
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).not.toHaveBeenCalled();
   });
 
   it('8. no pending signature — 409, nothing committed', async () => {
