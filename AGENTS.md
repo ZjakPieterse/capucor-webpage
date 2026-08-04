@@ -95,6 +95,10 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   recover with **`wrangler rollback`**.
 - **The build is pinned to webpack** (`next build --webpack`), not Turbopack — OpenNext-for-
   Cloudflare cannot bundle a Turbopack build into a working worker.
+- **The coupled runtime is pinned exact:** Next.js / `eslint-config-next` **16.3.0**,
+  `@opennextjs/cloudflare` **1.20.2** and Wrangler **4.86.0**. Move them together and verify a full
+  `build:cf`; a caret on OpenNext previously allowed a clean install to select an adapter whose
+  Next peer range the app did not satisfy.
 - **No edge-runtime routes.** Cloudflare Workers are already edge; do not add
   `export const runtime = 'edge'` (it breaks the OpenNext bundle — e.g. `/api/og` had it removed).
 - **ISR caching:** `/` and `/pricing` are cached for 1 hour (`export const revalidate = 3600`)
