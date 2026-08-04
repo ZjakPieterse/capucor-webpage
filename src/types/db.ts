@@ -1499,6 +1499,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_proposal_fulfilment_stage: {
+        Args: {
+          p_lease_expires_at: string
+          p_lease_token: string
+          p_proposal_id: string
+        }
+        Returns: {
+          attempt_count: number
+          proposal_id: string
+          stage: string
+        }[]
+      }
+      commit_proposal_signature: {
+        Args: {
+          p_confirm_token: string
+          p_proposal_id: string
+          p_signed_at: string
+        }
+        Returns: {
+          proposal_id: string
+        }[]
+      }
       create_proposal_amendment: {
         Args: {
           p_addons: Json
@@ -1529,10 +1551,38 @@ export type Database = {
           reused: boolean
         }[]
       }
+      finish_proposal_fulfilment_stage: {
+        Args: {
+          p_delivery_id?: string
+          p_error_code?: string
+          p_error_message?: string
+          p_finished_at: string
+          p_lease_token: string
+          p_next_attempt_at?: string
+          p_outcome: string
+          p_proposal_id: string
+          p_stage: string
+        }
+        Returns: boolean
+      }
       is_internal: { Args: { uid: string }; Returns: boolean }
       is_internal_admin: { Args: { uid: string }; Returns: boolean }
       is_org_member: { Args: { org_id: string }; Returns: boolean }
       next_proposal_ref: { Args: never; Returns: string }
+      provision_from_signed_proposal: {
+        Args: { p_org_slug: string; p_proposal_id: string; p_user_id: string }
+        Returns: {
+          already_provisioned: boolean
+          membership_created: boolean
+          membership_id: string
+          org_created: boolean
+          org_id: string
+          proposal_id: string
+          subscription_created: boolean
+          subscription_id: string
+          user_id: string
+        }[]
+      }
       start_proposal_resend: {
         Args: {
           p_expires_at: string
@@ -1552,6 +1602,10 @@ export type Database = {
           proposal_token: string
           reused: boolean
         }[]
+      }
+      sync_proposal_fulfilment_email: {
+        Args: { p_delivery_id: string }
+        Returns: boolean
       }
     }
     Enums: {

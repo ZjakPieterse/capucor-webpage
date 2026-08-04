@@ -16,6 +16,7 @@ function sampleData(overrides: Record<string, unknown> = {}) {
     version: 1,
     sentAt: '2026-06-01T00:00:00.000Z',
     expiresAt: '2026-07-01T00:00:00.000Z',
+    firstDebitFrom: '2026-06-01T00:00:00.000Z',
     signedAt: '2026-06-17T00:00:00.000Z',
     signatureName: 'Pat Patterson',
     signatureMethod: 'typed',
@@ -60,12 +61,16 @@ describe('renderProposalDocumentHtml', () => {
     expect(html).toContain('Package: Pro'); // fees section line
 
     // The header badge sits above the fees line.
-    expect(html.indexOf('Pro package')).toBeLessThan(html.indexOf('Package: Pro'));
+    expect(html.indexOf('Pro package')).toBeLessThan(
+      html.indexOf('Package: Pro'),
+    );
   });
 
-  it('states the first debit order date (1st of next month)', () => {
+  it('states the stable first debit order date from the proposal timestamp', () => {
     const html = renderProposalDocumentHtml(sampleData());
-    const expected = firstOfNextMonth().toLocaleDateString('en-ZA', {
+    const expected = firstOfNextMonth(
+      new Date('2026-06-01T00:00:00.000Z'),
+    ).toLocaleDateString('en-ZA', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -75,7 +80,9 @@ describe('renderProposalDocumentHtml', () => {
   });
 
   it('renders gracefully without a signature image', () => {
-    const html = renderProposalDocumentHtml(sampleData({ signatureImage: null }));
+    const html = renderProposalDocumentHtml(
+      sampleData({ signatureImage: null }),
+    );
     // The signature image is absent, but the header logo is always an inline
     // data: URL (the Apps Script PDF converter can't fetch remote images), so
     // assert specifically that the signature PNG isn't embedded.

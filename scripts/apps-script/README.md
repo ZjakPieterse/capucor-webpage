@@ -9,6 +9,8 @@ The site never talks to Drive directly — the script runs as its owner and alre
 so there is **no service account or key on the site**. The only shared state is a secret string.
 
 [`archive-proposal.gs`](./archive-proposal.gs) is the source; paste it into the Apps Script project.
+It serialises filename lookup + creation with `LockService`, so a retry after an ambiguous timeout
+returns the existing file instead of creating a second legal PDF.
 
 ## One-time setup
 
@@ -35,25 +37,29 @@ so there is **no service account or key on the site**. The only shared state is 
    - `APPS_SCRIPT_PDF_URL` = the `/exec` URL
    - `APPS_SCRIPT_PDF_SECRET` = the same value as `SHARED_SECRET`
 
-   Until both are set, the site silently skips archival (signing/provisioning still work).
+   Until both are set, signing remains legally committed but the durable fulfilment record keeps
+   the PDF and downstream email stages pending for operator-visible retry.
 
 ## Request / response contract
 
 The site POSTs JSON:
 
 ```json
-{ "secret": "…", "refNumber": "FT-2026-06-0042", "businessName": "Pat Trading Co",
+{ "secret": "…", "proposalId": "11111111-1111-4111-8111-111111111111",
+  "refNumber": "FT-2026-06-0042", "businessName": "Pat Trading Co",
   "filename": "FT-2026-06-0042 - Pat Trading Co - signed proposal.pdf", "html": "<!doctype html>…" }
 ```
 
 The script replies:
 
 ```json
-{ "ok": true, "fileId": "1AbC…", "fileUrl": "https://drive.google.com/file/d/1AbC…/view" }
+{ "ok": true, "fileId": "1AbC…", "fileUrl": "https://drive.google.com/file/d/1AbC…/view",
+  "reused": false }
 ```
 
 On any problem it replies `{ "ok": false, "error": "…" }` and the site leaves the proposal
-un-archived (the owner email flags it); a later sign or backfill can retry.
+un-archived; the fulfilment reconciliation Action retries it with bounded backoff and makes a
+permanent failure visible in `/internal/operations`.
 
 ## Re-deploying after editing the script
 

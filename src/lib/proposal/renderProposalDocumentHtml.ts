@@ -29,6 +29,8 @@ export interface ProposalDocumentData {
   version: number;
   sentAt: string | null;
   expiresAt: string | null;
+  /** Stable proposal timestamp used to calculate the first debit month. */
+  firstDebitFrom: string | null;
   signedAt: string | null;
   signatureName: string | null;
   signatureMethod: string | null;
@@ -61,7 +63,8 @@ function dateZA(iso: string | null): string {
 
 const LABEL =
   'margin:24px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6b7280;';
-const SUBHEAD = 'margin:14px 0 6px;font-size:13px;font-weight:600;color:#111827;';
+const SUBHEAD =
+  'margin:14px 0 6px;font-size:13px;font-weight:600;color:#111827;';
 const PARA = 'margin:0 0 8px;font-size:13px;line-height:1.6;color:#374151;';
 const LI = 'margin:0 0 5px;font-size:13px;line-height:1.5;color:#374151;';
 
@@ -89,7 +92,9 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       (li) =>
         `<tr>
           <td style="padding:6px 0;border-bottom:1px solid #eef0f2;font-size:13px;color:#374151;">${escapeHtml(li.name)}${
-            li.label ? ` <span style="color:#6b7280;">· ${escapeHtml(li.label)}</span>` : ''
+            li.label
+              ? ` <span style="color:#6b7280;">· ${escapeHtml(li.label)}</span>`
+              : ''
           }</td>
           <td style="padding:6px 0;border-bottom:1px solid #eef0f2;font-size:13px;color:#374151;text-align:right;white-space:nowrap;">${formatZAR(li.price)}</td>
         </tr>`,
@@ -183,7 +188,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       </tr>
     </table>
     <ul style="margin:8px 0 0;padding-left:18px;">${FEES_NOTES.map((n) => `<li style="${LI}color:#6b7280;">${escapeHtml(n)}</li>`).join('')}</ul>
-    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First debit order:</strong> ${dateZA(firstOfNextMonth().toISOString())}</p>
+    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First debit order:</strong> ${dateZA(firstOfNextMonth(d.firstDebitFrom ? new Date(d.firstDebitFrom) : undefined).toISOString())}</p>
 
     <!-- Fee fairness -->
     <p style="${LABEL}">How your fee stays fair</p>

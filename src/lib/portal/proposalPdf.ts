@@ -2,14 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { priceProposalSelection } from '@/lib/proposalPricing';
-import {
-  cumulativeInclusions,
-  buildFairUsage,
-  outOfScopeItems,
-} from '@/lib/schedule';
-import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
-import { tierDisplayName } from '@/config/tiers';
-import type { Bracket, BracketValue, Service } from '@/types';
+import { buildSignedProposalPdfPayload } from '@/lib/portal/proposalPdfPayload';
+import type { Bracket, Service } from '@/types';
 
 /**
  * PR10 — archive a SIGNED proposal as a PDF in the firm's Shared Drive.
@@ -56,6 +50,8 @@ export interface ArchiveResult {
   error?: string;
 }
 
+export const PDF_ARCHIVE_TIMEOUT_MS = 8_000;
+
 const PDF_COLUMNS =
   'id, ref_number, version, first_name, last_name, business_name, services, brackets, tier_slug, addons, total_charge_zar, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image, signature_ip, proposal_pdf_drive_id';
 
@@ -71,7 +67,9 @@ export async function archiveSignedProposal(
   const url = process.env.APPS_SCRIPT_PDF_URL;
   const secret = process.env.APPS_SCRIPT_PDF_SECRET;
   if (!url || !secret) {
-    console.log('[PROPOSAL PDF] APPS_SCRIPT_PDF_* not set — skipping archival.');
+    console.log(
+      '[PROPOSAL PDF] APPS_SCRIPT_PDF_* not set — skipping archival.',
+    );
     return { ok: false, skipped: true };
   }
 
@@ -95,8 +93,16 @@ export async function archiveSignedProposal(
     // Public pricing config via the anon client (RLS rule for public tables).
     const anon = createSupabaseAnonClient();
     const [servicesRes, bracketsRes] = await Promise.all([
-      anon.from('services').select('*').eq('active', true).order('display_order'),
-      anon.from('brackets').select('*').eq('active', true).order('display_order'),
+      anon
+        .from('services')
+        .select('*')
+        .eq('active', true)
+        .order('display_order'),
+      anon
+        .from('brackets')
+        .select('*')
+        .eq('active', true)
+        .order('display_order'),
     ]);
     const services = (servicesRes.data ?? []) as Service[];
     const brackets = (bracketsRes.data ?? []) as Bracket[];
@@ -109,29 +115,14 @@ export async function archiveSignedProposal(
     });
     if (!priced.ok) return { ok: false, error: priced.error };
 
-    const selectedBrackets = row.brackets as Record<string, BracketValue>;
-    const html = renderProposalDocumentHtml({
-      businessName: row.business_name,
-      firstName: row.first_name,
-      lastName: row.last_name,
-      tierName: tierDisplayName(row.tier_slug),
-      refNumber: row.ref_number,
-      version: row.version,
-      sentAt: row.sent_at,
-      expiresAt: row.expires_at,
-      signedAt: row.signed_at,
-      signatureName: row.signature_name,
-      signatureMethod: row.signature_method,
-      signatureImage: row.signature_image,
-      signatureIp: row.signature_ip,
-      inclusions: cumulativeInclusions(row.services, row.tier_slug),
-      fairUsage: buildFairUsage(row.services, selectedBrackets, brackets),
-      outOfScope: outOfScopeItems(row.services, services),
-      lineItems: priced.data.lineItems,
-      totalChargeZAR: priced.data.totalChargeZAR,
-    });
-
-    const filename = `${row.ref_number ?? 'proposal'} - ${row.business_name} - signed proposal.pdf`;
+    const { html, filename } = buildSignedProposalPdfPayload(
+      row,
+      { services, brackets },
+      {
+        lineItems: priced.data.lineItems,
+        totalChargeZAR: priced.data.totalChargeZAR,
+      },
+    );
 
     // POST to the Apps Script web app. The shared secret travels in the body —
     // Apps Script doPost can't read request headers.
@@ -140,18 +131,28 @@ export async function archiveSignedProposal(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         secret,
+        proposalId: row.id,
         refNumber: row.ref_number,
         businessName: row.business_name,
         filename,
         html,
       }),
+      signal: AbortSignal.timeout(PDF_ARCHIVE_TIMEOUT_MS),
     });
     if (!res.ok) {
       return { ok: false, error: `Apps Script responded ${res.status}` };
     }
-    const out = (await res.json()) as { ok?: boolean; fileId?: string; fileUrl?: string; error?: string };
+    const out = (await res.json()) as {
+      ok?: boolean;
+      fileId?: string;
+      fileUrl?: string;
+      error?: string;
+    };
     if (!out.ok || !out.fileId) {
-      return { ok: false, error: out.error ?? 'Apps Script did not return a file id.' };
+      return {
+        ok: false,
+        error: out.error ?? 'Apps Script did not return a file id.',
+      };
     }
 
     const { error: updErr } = await admin
@@ -160,13 +161,23 @@ export async function archiveSignedProposal(
       .eq('id', row.id);
     if (updErr) {
       // The PDF exists; we just couldn't record its id. Surface as a soft failure.
-      console.error('[PROPOSAL PDF] stored file but failed to save id:', updErr);
+      console.error(
+        '[PROPOSAL PDF] stored file but failed to save id:',
+        updErr,
+      );
       return { ok: false, error: 'Saved the PDF but could not record its id.' };
     }
 
-    return { ok: true, fileId: out.fileId, fileUrl: out.fileUrl ?? driveFileUrl(out.fileId) };
+    return {
+      ok: true,
+      fileId: out.fileId,
+      fileUrl: out.fileUrl ?? driveFileUrl(out.fileId),
+    };
   } catch (err) {
     console.error('[PROPOSAL PDF] archival error:', err);
-    return { ok: false, error: err instanceof Error ? err.message : 'PDF archival failed.' };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'PDF archival failed.',
+    };
   }
 }

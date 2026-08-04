@@ -14,7 +14,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { finalizeProposalSignature, type FinalizeSignRow } from '@/lib/portal/finalizeSign';
+import {
+  finalizeProposalSignature,
+  type FinalizeSignRow,
+} from '@/lib/portal/finalizeSign';
 
 const PENDING_COLUMNS =
   'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, ' +
@@ -42,13 +45,21 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid request body.' },
+      { status: 400 },
+    );
   }
 
   const ctoken =
-    body && typeof body === 'object' && 'ctoken' in body ? String((body as Record<string, unknown>).ctoken ?? '') : '';
+    body && typeof body === 'object' && 'ctoken' in body
+      ? String((body as Record<string, unknown>).ctoken ?? '')
+      : '';
   if (ctoken.length < 16) {
-    return NextResponse.json({ error: 'This confirmation link is invalid.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'This confirmation link is invalid.' },
+      { status: 400 },
+    );
   }
 
   const admin = createSupabaseAdminClient();
@@ -67,7 +78,8 @@ export async function POST(req: NextRequest) {
       // Already used (cleared on commit), never issued, or wrong token.
       return NextResponse.json(
         {
-          error: 'This confirmation link is no longer valid. It may already have been used.',
+          error:
+            'This confirmation link is no longer valid. It may already have been used.',
         },
         { status: 404 },
       );
@@ -75,27 +87,44 @@ export async function POST(req: NextRequest) {
     row = data as unknown as ConfirmRow;
   } catch (err) {
     console.error('[SIGN/CONFIRM] lookup error:', err);
-    return NextResponse.json({ error: 'Could not load this confirmation. Please try again.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Could not load this confirmation. Please try again.' },
+      { status: 500 },
+    );
   }
 
   // Confirm-token expiry (separate from the proposal's own 7-day expiry).
-  if (row.sign_confirm_expires_at && new Date(row.sign_confirm_expires_at).getTime() < Date.now()) {
+  if (
+    row.sign_confirm_expires_at &&
+    new Date(row.sign_confirm_expires_at).getTime() < Date.now()
+  ) {
     return NextResponse.json(
       {
-        error: 'This confirmation link has expired. Please sign again to get a fresh one.',
+        error:
+          'This confirmation link has expired. Please sign again to get a fresh one.',
       },
       { status: 410 },
     );
   }
-  if (row.status === 'signed' || row.status === 'paid' || row.status === 'active') {
-    return NextResponse.json({ error: 'This proposal has already been signed.' }, { status: 409 });
+  if (
+    row.status === 'signed' ||
+    row.status === 'paid' ||
+    row.status === 'active'
+  ) {
+    return NextResponse.json(
+      { error: 'This proposal has already been signed.' },
+      { status: 409 },
+    );
   }
 
-  const result = await finalizeProposalSignature(admin, row);
+  const result = await finalizeProposalSignature(admin, row, ctoken);
 
   if (!result.ok) {
     if (result.outcome === 'already') {
-      return NextResponse.json({ error: 'This proposal has already been signed.' }, { status: 409 });
+      return NextResponse.json(
+        { error: 'This proposal has already been signed.' },
+        { status: 409 },
+      );
     }
     if (result.outcome === 'invalid') {
       return NextResponse.json(
@@ -105,7 +134,10 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
-    return NextResponse.json({ error: 'Could not finalise your signature. Please try again.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Could not finalise your signature. Please try again.' },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({

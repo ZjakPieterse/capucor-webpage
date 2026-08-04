@@ -6,7 +6,9 @@ import type { Database } from '@/types/db';
 // (skip / POST / store), not the document content (covered separately).
 const anonMock = {
   from: () => ({
-    select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+    select: () => ({
+      eq: () => ({ order: async () => ({ data: [], error: null }) }),
+    }),
   }),
 };
 vi.mock('@/lib/supabase/anon', () => ({
@@ -55,14 +57,19 @@ function signedRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeAdmin(row: Record<string, unknown> | null, { updateError = null }: { updateError?: unknown } = {}) {
+function makeAdmin(
+  row: Record<string, unknown> | null,
+  { updateError = null }: { updateError?: unknown } = {},
+) {
   const updatePayloads: Record<string, unknown>[] = [];
   const admin = {
     updatePayloads,
     from: (t: string) => {
       if (t !== 'proposals') throw new Error(`unexpected table ${t}`);
       return {
-        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: row, error: null }) }) }),
+        select: () => ({
+          eq: () => ({ maybeSingle: async () => ({ data: row, error: null }) }),
+        }),
         update: (payload: Record<string, unknown>) => {
           updatePayloads.push(payload);
           return { eq: async () => ({ error: updateError }) };
@@ -73,7 +80,8 @@ function makeAdmin(row: Record<string, unknown> | null, { updateError = null }: 
   return admin;
 }
 
-const asClient = (a: ReturnType<typeof makeAdmin>) => a as unknown as SupabaseClient<Database>;
+const asClient = (a: ReturnType<typeof makeAdmin>) =>
+  a as unknown as SupabaseClient<Database>;
 
 let fetchMock: ReturnType<typeof vi.fn>;
 
@@ -84,7 +92,11 @@ beforeEach(() => {
   fetchMock = vi.fn(async () => ({
     ok: true,
     status: 200,
-    json: async () => ({ ok: true, fileId: 'file_1', fileUrl: 'https://drive/file_1' }),
+    json: async () => ({
+      ok: true,
+      fileId: 'file_1',
+      fileUrl: 'https://drive/file_1',
+    }),
   }));
   vi.stubGlobal('fetch', fetchMock);
 });
@@ -100,21 +112,35 @@ describe('archiveSignedProposal', () => {
 
     expect(res).toMatchObject({ ok: true, fileId: 'file_1' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(admin.updatePayloads[0]).toEqual({ proposal_pdf_drive_id: 'file_1' });
+    expect(admin.updatePayloads[0]).toEqual({
+      proposal_pdf_drive_id: 'file_1',
+    });
 
     // Secret + filename travel in the POST body.
-    const body = JSON.parse((fetchMock.mock.calls[0]![1] as { body: string }).body);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0]![1] as { body: string }).body,
+    );
     expect(body.secret).toBe('shh');
+    expect(body.proposalId).toBe('prop_1');
     expect(body.filename).toContain('FT-2026-06-0042');
     expect(body.filename).toContain('Pat Trading Co');
     expect(typeof body.html).toBe('string');
+    expect(
+      (fetchMock.mock.calls[0]![1] as { signal: AbortSignal }).signal,
+    ).toBeInstanceOf(AbortSignal);
   });
 
   it('2. already archived — skips (no POST, no update)', async () => {
-    const admin = makeAdmin(signedRow({ proposal_pdf_drive_id: 'existing_file' }));
+    const admin = makeAdmin(
+      signedRow({ proposal_pdf_drive_id: 'existing_file' }),
+    );
     const res = await archiveSignedProposal(asClient(admin), 'prop_1');
 
-    expect(res).toMatchObject({ ok: true, skipped: true, fileId: 'existing_file' });
+    expect(res).toMatchObject({
+      ok: true,
+      skipped: true,
+      fileId: 'existing_file',
+    });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(admin.updatePayloads).toHaveLength(0);
   });
@@ -137,7 +163,11 @@ describe('archiveSignedProposal', () => {
   });
 
   it('5. Apps Script non-200 — ok:false, no id stored', async () => {
-    fetchMock.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) });
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({}),
+    });
     const admin = makeAdmin(signedRow());
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -167,5 +197,19 @@ describe('archiveSignedProposal', () => {
 
     expect(res.ok).toBe(false);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('8. Apps Script timeout is a recoverable archival failure', async () => {
+    fetchMock.mockRejectedValueOnce(
+      new DOMException('Timed out', 'TimeoutError'),
+    );
+    const admin = makeAdmin(signedRow());
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await archiveSignedProposal(asClient(admin), 'prop_1');
+
+    expect(res).toMatchObject({ ok: false, error: 'Timed out' });
+    expect(admin.updatePayloads).toHaveLength(0);
+    errorSpy.mockRestore();
   });
 });

@@ -34,7 +34,10 @@ function doPost(e) {
       return json_({ ok: false, error: 'unauthorized' });
     }
     if (!folderId) {
-      return json_({ ok: false, error: 'FOLDER_ID script property is not set' });
+      return json_({
+        ok: false,
+        error: 'FOLDER_ID script property is not set',
+      });
     }
     if (!body.html) {
       return json_({ ok: false, error: 'missing html' });
@@ -43,25 +46,70 @@ function doPost(e) {
     var filename = body.filename || 'signed proposal.pdf';
 
     // HTML → PDF via Google's converter.
-    var pdfBlob = Utilities.newBlob(body.html, 'text/html', filename).getAs('application/pdf');
-    pdfBlob.setName(filename);
+    // A caller can time out after Drive accepted the file but before the id was
+    // returned. Serialise search+create and reuse the stable proposal filename
+    // so retries converge to exactly one PDF.
+    var lock = LockService.getScriptLock();
+    lock.waitLock(20000);
+    try {
+      var existing = Drive.Files.list({
+        q:
+          "'" +
+          escapeDriveQuery_(folderId) +
+          "' in parents and name = '" +
+          escapeDriveQuery_(filename) +
+          "' and trashed = false",
+        spaces: 'drive',
+        pageSize: 1,
+        includeItemsFromAllDrives: true,
+        supportsAllDrives: true,
+        fields: 'files(id,webViewLink)',
+      });
+      if (existing.files && existing.files.length) {
+        return json_({
+          ok: true,
+          fileId: existing.files[0].id,
+          fileUrl: existing.files[0].webViewLink,
+          reused: true,
+        });
+      }
 
-    // File into the Shared Drive folder. The Advanced Drive Service with
-    // supportsAllDrives is the reliable path for Shared Drives.
-    var file = Drive.Files.create(
-      { name: filename, parents: [folderId] },
-      pdfBlob,
-      { supportsAllDrives: true, fields: 'id,webViewLink' }
-    );
+      var pdfBlob = Utilities.newBlob(body.html, 'text/html', filename).getAs(
+        'application/pdf',
+      );
+      pdfBlob.setName(filename);
 
-    return json_({ ok: true, fileId: file.id, fileUrl: file.webViewLink });
+      // File into the Shared Drive folder. The Advanced Drive Service with
+      // supportsAllDrives is the reliable path for Shared Drives.
+      var metadata = { name: filename, parents: [folderId] };
+      if (body.proposalId) {
+        metadata.appProperties = { capucorProposalId: String(body.proposalId) };
+      }
+      var file = Drive.Files.create(metadata, pdfBlob, {
+        supportsAllDrives: true,
+        fields: 'id,webViewLink',
+      });
+
+      return json_({
+        ok: true,
+        fileId: file.id,
+        fileUrl: file.webViewLink,
+        reused: false,
+      });
+    } finally {
+      lock.releaseLock();
+    }
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
 }
 
+function escapeDriveQuery_(value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
-    ContentService.MimeType.JSON
+    ContentService.MimeType.JSON,
   );
 }

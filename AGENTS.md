@@ -61,7 +61,7 @@ cp .env.example .env.local
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
 | `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. See "Domain seam" below |
-| `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10). Apps Script web-app `/exec` URL + its shared secret; archival no-ops if unset. See `scripts/apps-script/README.md` |
+| `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10/PH-06). Apps Script web-app `/exec` URL + its shared secret; when unset the legal signature remains committed but fulfilment stays visibly pending. See `scripts/apps-script/README.md` |
 
 ## Dev Scripts
 
@@ -176,15 +176,16 @@ curl -sI https://capucor.com/pricing     # 200 — never redirected
 ### ⚠️ Schema seam — the one thing that can break silently
 
 `supabase/migrations/` **lives in `../capucor-os` and nowhere else** (this repo's copy was deleted
-in Phase 3). But marketing still *writes* to those tables:
-[`src/lib/portal/provision.ts`](src/lib/portal/provision.ts) runs at signing and writes
-`client_orgs`, `client_org_members`, `subscriptions` and `proposals`, and mints the auth user.
+in Phase 3). Marketing still starts provisioning at signing:
+[`src/lib/portal/provision.ts`](src/lib/portal/provision.ts) idempotently mints/locates the Auth user,
+then calls the OS-owned `provision_from_signed_proposal` transaction. That RPC alone writes
+`client_orgs`, `client_org_members`, `subscriptions` and `proposals`.
 
 A rename or reshape of any of those in a capucor-os migration produces **no compile error and no
-failing test in either repo** — the symptom is a paying client who signs and never gets portal
-access. `src/__tests__/portal-provision.test.ts` pins the exact column set written to each table so
-a rename lands as a red test. **If that test goes red, find the migration that moved before you
-touch the list.** Read the header comment on `provision.ts` first.
+failing application type error unless the generated function contract changes — the symptom is a
+paying client whose durable portal stage keeps retrying. `src/__tests__/portal-provision.test.ts`
+pins the exact RPC argument boundary; migration 021's OS tests pin the internal table invariants.
+Regenerate both repositories' database types whenever that RPC changes.
 
 ### Cloudflare
 
@@ -228,10 +229,9 @@ using the canonical OS migration workflow. **Do not use `supabase db push` yet:*
 migration ledger does not contain the historical migrations. Apply only the intended file through
 the dashboard SQL editor or `supabase db query --linked --file ...`, then run the OS `db:check`.
 
-That matters here because marketing still **writes** to OS-owned tables at signing
-(`lib/portal/provision.ts` → `client_orgs`, `client_org_members`, `subscriptions`, `proposals`).
-See the **Schema seam** warning under "Domain seam" before changing any of them — a rename over
-there breaks provisioning here with no compile error.
+That matters here because marketing still initiates OS-owned provisioning at signing
+(`lib/portal/provision.ts` → `provision_from_signed_proposal`). See the **Schema seam** warning
+under "Domain seam" before changing the RPC or its four internal tables.
 
 Regenerate TypeScript types after a schema change:
 
