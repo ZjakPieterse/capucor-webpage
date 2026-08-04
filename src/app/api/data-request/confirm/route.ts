@@ -15,6 +15,7 @@ import { DATA_REQUEST_SLA_DAYS } from '@/lib/consent';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { siteConfig } from '@/config/site';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error' | 'rate_limited';
 
@@ -79,13 +80,12 @@ export async function GET(req: NextRequest) {
       outcome = 'confirmed';
 
       // Owner notification — non-fatal.
-      const resendKey = process.env.RESEND_API_KEY;
       const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
-      if (resendKey && ownerEmail) {
-        try {
-          const { Resend } = await import('resend');
-          const resend = new Resend(resendKey);
-          await resend.emails.send({
+      if (ownerEmail) {
+        await sendEmail({
+          eventType: 'data_request.confirmed_owner',
+          idempotencyKey: `capucor_web_data_request_confirmed_owner_${String(row.id)}`,
+          message: {
             from: siteConfig.email.senderWebsite,
             to: ownerEmail,
             subject: `Data ${requestType} request CONFIRMED: ${email}`,
@@ -98,10 +98,8 @@ export async function GET(req: NextRequest) {
               ``,
               `Mark the row as processed once complete.`,
             ].join('\n'),
-          });
-        } catch (mailErr) {
-          console.error('[DATA_REQUEST] confirm notify error:', mailErr);
-        }
+          },
+        });
       }
     }
   } catch (err) {
@@ -141,12 +139,7 @@ function htmlResponse(outcome: Outcome): Response {
   };
 
   const { title, body } = copy[outcome];
-  const status =
-    outcome === 'confirmed' || outcome === 'already'
-      ? 200
-      : outcome === 'rate_limited'
-        ? 429
-        : 400;
+  const status = outcome === 'confirmed' || outcome === 'already' ? 200 : outcome === 'rate_limited' ? 429 : 400;
 
   const html = `<!doctype html>
 <html lang="en">

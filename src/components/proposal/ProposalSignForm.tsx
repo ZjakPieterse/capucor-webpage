@@ -33,13 +33,7 @@ const METHODS: { value: SignMethod; label: string; icon: typeof Type }[] = [
   { value: 'uploaded', label: 'Upload', icon: Upload },
 ];
 
-export function ProposalSignForm({
-  token,
-  defaultName,
-}: {
-  token: string;
-  defaultName: string;
-}) {
+export function ProposalSignForm({ token, defaultName }: { token: string; defaultName: string }) {
   const [method, setMethod] = useState<SignMethod>('typed');
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
@@ -48,6 +42,7 @@ export function ProposalSignForm({
   const [done, setDone] = useState(false);
   // The masked address we emailed the "Confirm & sign" link to, e.g. j***@acme.com.
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [deliveryStatus, setDeliveryStatus] = useState<'accepted' | 'pending'>('pending');
 
   // Drawn signature
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -226,6 +221,7 @@ export function ProposalSignForm({
         throw new Error(data.error ?? 'We could not record your signature. Please try again.');
       }
       setSentTo(typeof data.maskedEmail === 'string' ? data.maskedEmail : null);
+      setDeliveryStatus(data.deliveryStatus === 'accepted' ? 'accepted' : 'pending');
       setDone(true);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -240,17 +236,33 @@ export function ProposalSignForm({
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Check className="h-6 w-6" />
         </div>
-        <p className="text-base font-semibold">Check your email to finish</p>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          We&rsquo;ve sent a confirmation link to{' '}
-          {sentTo ? (
-            <span className="font-medium text-foreground">{sentTo}</span>
-          ) : (
-            'the email address this proposal was sent to'
-          )}
-          . Open it and confirm to finalise your signature. That&rsquo;s how we check the signature came
-          from you. The link works once and expires in 30 minutes.
+        <p className="text-base font-semibold">
+          {deliveryStatus === 'accepted' ? 'Check your email to finish' : 'Email delivery needs another try'}
         </p>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {deliveryStatus === 'accepted' ? (
+            <>
+              The email provider accepted a confirmation link for{' '}
+              {sentTo ? (
+                <span className="font-medium text-foreground">{sentTo}</span>
+              ) : (
+                'the email address this proposal was sent to'
+              )}
+              . Open it and confirm to finalise your signature. That&rsquo;s how we check the signature came from you.
+              The link works once and expires in 30 minutes.
+            </>
+          ) : (
+            <>
+              Your signature is saved, but the email provider did not accept the confirmation message. Try sending it
+              again; nothing is legally signed until you open the email and confirm.
+            </>
+          )}
+        </p>
+        {deliveryStatus === 'pending' && (
+          <Button type="button" variant="outline" className="mt-4" onClick={() => setDone(false)}>
+            Try sending again
+          </Button>
+        )}
       </div>
     );
   }
@@ -262,8 +274,7 @@ export function ProposalSignForm({
         Sign &amp; accept
       </div>
       <p className="mt-1.5 text-sm text-muted-foreground">
-        Type, draw, or upload your signature to accept this proposal. No payment is required to get
-        started.
+        Type, draw, or upload your signature to accept this proposal. No payment is required to get started.
       </p>
 
       <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
@@ -304,9 +315,7 @@ export function ProposalSignForm({
               setTypedName(e.target.value);
             }}
           />
-          {errors.signatureName && (
-            <p className="mt-1 text-xs text-destructive">{errors.signatureName.message}</p>
-          )}
+          {errors.signatureName && <p className="mt-1 text-xs text-destructive">{errors.signatureName.message}</p>}
         </div>
 
         {/* Method-specific input */}
@@ -321,9 +330,7 @@ export function ProposalSignForm({
                 {typedName?.trim() ? typedName : 'Your signature'}
               </span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Your typed name becomes your signature.
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Your typed name becomes your signature.</p>
           </div>
         )}
 
@@ -347,9 +354,7 @@ export function ProposalSignForm({
               className="w-full touch-none rounded-lg border border-input bg-white"
               style={{ aspectRatio: '3 / 1' }}
             />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Use your mouse, trackpad, or finger.
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Use your mouse, trackpad, or finger.</p>
           </div>
         )}
 
@@ -390,12 +395,8 @@ export function ProposalSignForm({
               aria-required="true"
               aria-describedby={consentError ? 'sign-consent-error' : undefined}
             />
-            <Label
-              htmlFor="sign-consent"
-              className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
-            >
-              I agree to this proposal and its terms, and I accept the signature above as my
-              electronic signature.
+            <Label htmlFor="sign-consent" className="cursor-pointer text-sm leading-relaxed text-muted-foreground">
+              I agree to this proposal and its terms, and I accept the signature above as my electronic signature.
             </Label>
           </div>
           {consentError && (
@@ -411,11 +412,7 @@ export function ProposalSignForm({
           </p>
         )}
 
-        <Button
-          type="submit"
-          disabled={submitting}
-          className="gradient-cta w-full gap-2"
-        >
+        <Button type="submit" disabled={submitting} className="gradient-cta w-full gap-2">
           <span className="relative z-[2] inline-flex items-center gap-2">
             {submitting ? (
               <>

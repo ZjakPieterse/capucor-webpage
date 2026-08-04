@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { makeJsonRequest } from './helpers/request';
 import { siteConfig } from '@/config/site';
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -23,17 +25,41 @@ import { POST } from '@/app/api/proposals/route';
 
 // Pro prices: accounting ordinal 1 = 950, payroll ordinal 1 = 600 → 1550 monthly
 const PRO_BRACKETS = [
-  { service_slug: 'accounting', ordinal: 1, label: '0–1 Mil', basic_price: 725, pro_price: 950, premium_price: 1525 },
-  { service_slug: 'payroll', ordinal: 1, label: '1 employee', basic_price: 450, pro_price: 600, premium_price: 950 },
+  {
+    service_slug: 'accounting',
+    ordinal: 1,
+    label: '0–1 Mil',
+    basic_price: 725,
+    pro_price: 950,
+    premium_price: 1525,
+  },
+  {
+    service_slug: 'payroll',
+    ordinal: 1,
+    label: '1 employee',
+    basic_price: 450,
+    pro_price: 600,
+    premium_price: 950,
+  },
 ];
 const DORMANT_BRACKETS = [
-  { service_slug: 'bookkeeping', ordinal: 0, label: 'Dormant', basic_price: 0, pro_price: 0, premium_price: 0 },
+  {
+    service_slug: 'bookkeeping',
+    ordinal: 0,
+    label: 'Dormant',
+    basic_price: 0,
+    pro_price: 0,
+    premium_price: 0,
+  },
 ];
 
 // Mutable per-test results, read at call time by the from() closures below.
 let bracketRows: unknown = PRO_BRACKETS;
 let bracketError: unknown = null;
-let leadResult: { data: { id: string } | null; error: unknown } = { data: { id: 'lead_1' }, error: null };
+let leadResult: { data: { id: string } | null; error: unknown } = {
+  data: { id: 'lead_1' },
+  error: null,
+};
 // The route reads the trigger-assigned ref_number back via .select().single().
 let proposalResult: { data: { ref_number: string } | null; error: unknown } = {
   data: { ref_number: 'FT-2026-06-0001' },
@@ -53,7 +79,9 @@ function mountAdmin() {
       if (table === 'brackets') {
         return {
           select: () => ({
-            in: () => ({ returns: async () => ({ data: bracketRows, error: bracketError }) }),
+            in: () => ({
+              returns: async () => ({ data: bracketRows, error: bracketError }),
+            }),
           }),
         };
       }
@@ -94,6 +122,7 @@ describe('POST /api/proposals', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
+    expect(body.deliveryStatus).toBe('accepted');
     expect(body.proposalUrl).toMatch(new RegExp(`^${siteConfig.marketingUrl}/proposal/.+`));
 
     // Lead captured
@@ -118,6 +147,9 @@ describe('POST /api/proposals', () => {
 
     // Two emails attempted (client + owner)
     expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(sendMock.mock.calls[0]![1]).toEqual({
+      idempotencyKey: `capucor_web_proposal_created_client_${String(propPayload.token)}`,
+    });
   });
 
   it('2. tamper — server ignores client-supplied prices and recomputes', async () => {
@@ -135,7 +167,10 @@ describe('POST /api/proposals', () => {
 
   it('3. honeypot — silently succeeds, no DB calls', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals', { ...validBody, website: 'http://spam.example' }),
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        website: 'http://spam.example',
+      }),
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
@@ -143,7 +178,10 @@ describe('POST /api/proposals', () => {
   });
 
   it('4. rate limited — 429 with Retry-After, no DB calls', async () => {
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, retryAfter: 17 });
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      retryAfter: 17,
+    });
     const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('17');
@@ -158,7 +196,10 @@ describe('POST /api/proposals', () => {
 
   it('6. zod invalid — empty services returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals', { ...validBody, services: [] }),
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        services: [],
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('services');
@@ -166,7 +207,10 @@ describe('POST /api/proposals', () => {
 
   it('7. zod invalid — consentGiven:false returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals', { ...validBody, consentGiven: false }),
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        consentGiven: false,
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('consentGiven');
@@ -174,7 +218,10 @@ describe('POST /api/proposals', () => {
 
   it('8. zod invalid — missing firstName returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals', { ...validBody, firstName: '' }),
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        firstName: '',
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('firstName');
@@ -233,7 +280,10 @@ describe('POST /api/proposals', () => {
 
   it('14. dext add-on — flat R375 added to the recomputed total and persisted', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals', { ...validBody, addons: ['dext'] }),
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        addons: ['dext'],
+      }),
     );
     expect(res.status).toBe(200);
 
@@ -276,5 +326,29 @@ describe('POST /api/proposals', () => {
     expect(res.status).toBe(422);
     expect((await res.json()).error).toMatch(/no priced services/i);
     expect(proposalInsert).not.toHaveBeenCalled();
+  });
+
+  it('17. returned provider error — proposal persists and response reports pending', async () => {
+    sendMock.mockResolvedValueOnce({
+      data: null,
+      error: {
+        name: 'validation_error',
+        message: 'recipient rejected',
+        statusCode: 422,
+      },
+      headers: null,
+    });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      deliveryStatus: 'pending',
+    });
+    expect(proposalInsert).toHaveBeenCalledOnce();
+    // The owner copy is independent and is still attempted after client rejection.
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    errorSpy.mockRestore();
   });
 });

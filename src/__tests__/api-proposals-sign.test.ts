@@ -6,6 +6,8 @@ import { makeJsonRequest } from './helpers/request';
 // emails a "Confirm & sign" link to the proposal's own address. The commit
 // (provision + portal emails) is Step B — see api-proposals-sign-confirm.test.ts.
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -84,7 +86,9 @@ function mountAdmin() {
     from: (table: string) => {
       if (table !== 'proposals') throw new Error(`unexpected table ${table}`);
       return {
-        select: () => ({ eq: () => ({ maybeSingle: async () => lookupResult }) }),
+        select: () => ({
+          eq: () => ({ maybeSingle: async () => lookupResult }),
+        }),
         update: proposalUpdate,
       };
     },
@@ -120,6 +124,7 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
       ok: true,
       pendingConfirmation: true,
       maskedEmail: 'p***@example.com',
+      deliveryStatus: 'accepted',
     });
 
     const payload = updatePayloads[0]!;
@@ -149,7 +154,10 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
 
   it('2. happy path (drawn)', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, method: 'drawn' }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        method: 'drawn',
+      }),
     );
     expect(res.status).toBe(200);
     expect(updatePayloads[0]!.pending_signature_method).toBe('drawn');
@@ -157,7 +165,10 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
 
   it('3. happy path (uploaded)', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, method: 'uploaded' }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        method: 'uploaded',
+      }),
     );
     expect(res.status).toBe(200);
     expect(updatePayloads[0]!.pending_signature_method).toBe('uploaded');
@@ -176,7 +187,10 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
   });
 
   it('5. rate limited — 429 with Retry-After, no DB calls', async () => {
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, retryAfter: 23 });
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      retryAfter: 23,
+    });
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('23');
@@ -184,16 +198,17 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
   });
 
   it('6. malformed JSON — 400', async () => {
-    const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', null, { raw: '{nope' }),
-    );
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', null, { raw: '{nope' }));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'Invalid request body.' });
   });
 
   it('7. zod — missing signatureName returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, signatureName: '' }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        signatureName: '',
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('signatureName');
@@ -201,7 +216,10 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
 
   it('8. zod — consentGiven:false returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, consentGiven: false }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        consentGiven: false,
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('consentGiven');
@@ -209,7 +227,10 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
 
   it('9. zod — bad method returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, method: 'stamp' }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        method: 'stamp',
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('method');
@@ -229,7 +250,10 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
   it('11. oversized image — server byte guard returns 422 on imageDataUrl', async () => {
     const big = 'data:image/png;base64,' + 'A'.repeat(720_000);
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, imageDataUrl: big }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        imageDataUrl: big,
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('imageDataUrl');
@@ -287,7 +311,28 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ deliveryStatus: 'pending' });
     expect(updatePayloads[0]!.pending_signature_name).toBe('Pat Patterson');
+    errorSpy.mockRestore();
+  });
+
+  it('18b. Resend returns an error — pending signature remains retryable and response is pending', async () => {
+    sendMock.mockResolvedValueOnce({
+      data: null,
+      error: {
+        name: 'rate_limit_exceeded',
+        message: 'slow down',
+        statusCode: 429,
+      },
+      headers: null,
+    });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ deliveryStatus: 'pending' });
+    expect(updatePayloads[0]!.pending_signature_name).toBe('Pat Patterson');
+    expect(typeof updatePayloads[0]!.sign_confirm_token).toBe('string');
     errorSpy.mockRestore();
   });
 
@@ -304,6 +349,7 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ deliveryStatus: 'pending' });
     expect(sendMock).not.toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('/proposal/confirm/'));
     logSpy.mockRestore();

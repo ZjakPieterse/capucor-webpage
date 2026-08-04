@@ -57,7 +57,7 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase dashboard → Settings → API |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → Settings → API (never expose client-side) |
 | `REVALIDATE_SECRET` | Any long random string — `openssl rand -hex 32` |
-| `RESEND_API_KEY` | Resend dashboard (optional — logs to console if absent) |
+| `RESEND_API_KEY` | Resend dashboard. Optional locally (delivery reports `pending` and link-bearing routes log their URL); required in production. |
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
 | `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. See "Domain seam" below |
@@ -196,6 +196,17 @@ deploy from either repo cannot claim the other's hostname.
 records** — capucor.com is the verified Resend *sender* domain. Removing them silently kills every
 transactional email from **both** apps while the sites keep looking fine. This is still true even
 though capucor.com no longer serves any signed-in surface.
+
+### Email delivery contract
+
+Every transactional send goes through [`src/lib/email/sendEmail.ts`](src/lib/email/sendEmail.ts).
+Do not construct `Resend` or call `resend.emails.send()` anywhere else. The adapter requires a
+stable business-event idempotency key, bounds the provider call, checks both returned errors and
+thrown failures, and returns `accepted` only with a provider message id. `accepted` means the
+provider accepted the API request, not that the recipient opened or even received it. Never log a
+link token or idempotency key, and never write a sent timestamp from a `pending` result. Until the
+PH-03/PH-04 durable-delivery work lands, `pending` remains observable to the caller but is not an
+automatic retry queue.
 
 ## Database (Supabase)
 

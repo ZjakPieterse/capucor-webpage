@@ -33,6 +33,7 @@ import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { tierDisplayName } from '@/config/tiers';
 import { formatZAR, firstOfNextMonth } from '@/lib/utils';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 const PROPOSAL_TTL_DAYS = 7;
 
@@ -57,12 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Honeypot — silently succeed for bots, do not persist
-  if (
-    body &&
-    typeof body === 'object' &&
-    'website' in body &&
-    (body as Record<string, unknown>).website
-  ) {
+  if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {
     return NextResponse.json({ ok: true });
   }
 
@@ -70,10 +66,7 @@ export async function POST(req: NextRequest) {
   const parsed = ProposalRequestSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return NextResponse.json(
-      { error: issue.message, field: issue.path.join('.') },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: issue.message, field: issue.path.join('.') }, { status: 422 });
   }
 
   const input = parsed.data;
@@ -123,10 +116,7 @@ export async function POST(req: NextRequest) {
     leadId = (leadRow?.id as string) ?? null;
   } catch (err) {
     console.error('[PROPOSALS] lead insert error:', err);
-    return NextResponse.json(
-      { error: 'Could not save your details. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not save your details. Please try again.' }, { status: 500 });
   }
 
   const token = generateOpaqueToken();
@@ -167,71 +157,68 @@ export async function POST(req: NextRequest) {
     refNumber = (propRow?.ref_number as string) ?? null;
   } catch (err) {
     console.error('[PROPOSALS] proposal insert error:', err);
-    return NextResponse.json(
-      { error: 'Could not generate your proposal. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not generate your proposal. Please try again.' }, { status: 500 });
   }
 
   // 7. Email the proposal link to the client + a reference copy to the owner.
   //    Non-fatal — the proposal row is already persisted.
   const proposalUrl = `${siteConfig.marketingUrl}/proposal/${token}`;
   const tierName = tierDisplayName(input.tierSlug);
-  const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 
-  if (resendKey) {
-    try {
-      const { Resend } = await import('resend');
-      const resend = new Resend(resendKey);
+  const clientDelivery = await sendEmail({
+    eventType: 'proposal.created_client',
+    idempotencyKey: `capucor_web_proposal_created_client_${token}`,
+    message: {
+      from: siteConfig.email.sender,
+      replyTo: siteConfig.email.replyTo,
+      to: input.email,
+      subject: refNumber ? `Your Capucor proposal (${refNumber}) is ready` : 'Your Capucor proposal is ready',
+      html: renderProposalEmail({
+        firstName: input.firstName,
+        businessName: input.businessName,
+        tierName,
+        refNumber,
+        lineItems,
+        totalChargeZAR,
+        proposalUrl,
+      }),
+    },
+  });
+  const deliveryStatus = clientDelivery.deliveryStatus;
 
-      await resend.emails.send({
-        from: siteConfig.email.sender,
-        replyTo: siteConfig.email.replyTo,
-        to: input.email,
-        subject: refNumber
-          ? `Your Capucor proposal (${refNumber}) is ready`
-          : 'Your Capucor proposal is ready',
-        html: renderProposalEmail({
-          firstName: input.firstName,
-          businessName: input.businessName,
-          tierName,
-          refNumber,
-          lineItems,
-          totalChargeZAR,
-          proposalUrl,
-        }),
-      });
+  if (ownerEmail) {
+    await sendEmail({
+      eventType: 'proposal.created_owner',
+      idempotencyKey: `capucor_web_proposal_created_owner_${token}`,
+      message: {
+        from: siteConfig.email.senderWebsite,
+        to: ownerEmail,
+        subject: `New proposal: ${input.businessName}${refNumber ? ` (${refNumber})` : ''}`,
+        text: [
+          `A new proposal was generated from the pricing calculator.`,
+          ``,
+          `Reference: ${refNumber ?? '(pending)'}`,
+          `Name: ${fullName}`,
+          `Business: ${input.businessName}`,
+          `Email: ${input.email}`,
+          `Package: ${tierName}`,
+          `Client email: ${deliveryStatus}`,
+          ...lineItems.map((li) => `  · ${li.name}${li.label ? ` (${li.label})` : ''}: ${formatZAR(li.price)}`),
+          ``,
+          `Total monthly charge: ${formatZAR(totalChargeZAR)}`,
+          ``,
+          `Proposal link: ${proposalUrl}`,
+        ].join('\n'),
+      },
+    });
+  }
 
-      if (ownerEmail) {
-        await resend.emails.send({
-          from: siteConfig.email.senderWebsite,
-          to: ownerEmail,
-          subject: `New proposal: ${input.businessName}${refNumber ? ` (${refNumber})` : ''}`,
-          text: [
-            `A new proposal was generated from the pricing calculator.`,
-            ``,
-            `Reference: ${refNumber ?? '(pending)'}`,
-            `Name: ${fullName}`,
-            `Business: ${input.businessName}`,
-            `Email: ${input.email}`,
-            `Package: ${tierName}`,
-            ...lineItems.map((li) => `  · ${li.name}${li.label ? ` (${li.label})` : ''}: ${formatZAR(li.price)}`),
-            ``,
-            `Total monthly charge: ${formatZAR(totalChargeZAR)}`,
-            ``,
-            `Proposal link: ${proposalUrl}`,
-          ].join('\n'),
-        });
-      }
-    } catch (err) {
-      console.error('[PROPOSALS] Resend send error:', err);
-    }
-  } else {
+  if (clientDelivery.errorCode === 'missing_api_key') {
     console.log(`[PROPOSAL] business=${input.businessName} email=${input.email} url=${proposalUrl}`);
   }
 
-  return NextResponse.json({ ok: true, proposalUrl });
+  return NextResponse.json({ ok: true, proposalUrl, deliveryStatus });
 }
 
 interface ProposalEmailData {

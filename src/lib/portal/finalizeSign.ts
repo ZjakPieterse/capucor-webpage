@@ -21,6 +21,7 @@ import {
   renderProvisionFailedOwnerEmail,
 } from '@/lib/portal/signEmails';
 import { siteConfig } from '@/config/site';
+import { sendEmail, type DeliveryStatus } from '@/lib/email/sendEmail';
 
 // The row the confirm route loads by sign_confirm_token, including the pending
 // signature stashed at Step A.
@@ -55,17 +56,14 @@ export interface FinalizeResult {
   // 'error'   — DB write failed
   outcome: 'signed' | 'already' | 'invalid' | 'error';
   provisioned?: boolean;
+  deliveryStatus?: DeliveryStatus;
 }
 
 export async function finalizeProposalSignature(
   admin: SupabaseClient<Database>,
   row: FinalizeSignRow,
 ): Promise<FinalizeResult> {
-  if (
-    !row.pending_signature_name ||
-    !row.pending_signature_method ||
-    !row.pending_signature_image
-  ) {
+  if (!row.pending_signature_name || !row.pending_signature_method || !row.pending_signature_image) {
     return { ok: false, outcome: 'invalid' };
   }
 
@@ -136,84 +134,87 @@ export async function finalizeProposalSignature(
   // on capucor.app, so this must NOT use marketingUrl (capucor.com/login 301s
   // here anyway, but sending clients through a redirect is needless).
   const loginUrl = `${siteConfig.appUrl}/login?next=/portal`;
-  const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
+  const clientDelivery = await sendEmail({
+    eventType: provisioned ? 'proposal.portal_ready_client' : 'proposal.signed_client',
+    idempotencyKey: provisioned
+      ? `capucor_web_proposal_portal_ready_client_${row.id}`
+      : `capucor_web_proposal_signed_client_${row.id}`,
+    message: {
+      from: siteConfig.email.sender,
+      replyTo: siteConfig.email.replyTo,
+      to: row.email,
+      subject: provisioned ? 'Your Capucor portal is ready' : 'We’ve received your signed proposal',
+      html: provisioned
+        ? renderProvisionedClientEmail({
+            firstName: row.first_name,
+            businessName: row.business_name,
+            loginUrl,
+            signedAt: nowIso,
+          })
+        : renderSignedClientEmail({
+            firstName: row.first_name,
+            businessName: row.business_name,
+            signedAt: nowIso,
+          }),
+    },
+  });
 
-  if (resendKey) {
-    let emailsSent = false;
-    try {
-      const { Resend } = await import('resend');
-      const resend = new Resend(resendKey);
-
-      await resend.emails.send({
-        from: siteConfig.email.sender,
-        replyTo: siteConfig.email.replyTo,
-        to: row.email,
+  if (ownerEmail) {
+    await sendEmail({
+      eventType: provisioned ? 'proposal.provisioned_owner' : 'proposal.provision_failed_owner',
+      idempotencyKey: provisioned
+        ? `capucor_web_proposal_provisioned_owner_${row.id}`
+        : `capucor_web_proposal_provision_failed_owner_${row.id}`,
+      message: {
+        from: siteConfig.email.senderWebsite,
+        to: ownerEmail,
         subject: provisioned
-          ? 'Your Capucor portal is ready'
-          : 'We’ve received your signed proposal',
+          ? `Provisioned: ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}, set up billing`
+          : `Provisioning FAILED: ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
         html: provisioned
-          ? renderProvisionedClientEmail({
-              firstName: row.first_name,
+          ? renderProvisionedOwnerEmail({
+              fullName,
               businessName: row.business_name,
-              loginUrl,
+              email: row.email,
+              refNumber: row.ref_number,
               signedAt: nowIso,
+              proposalUrl,
+              pdfUrl,
             })
-          : renderSignedClientEmail({
-              firstName: row.first_name,
+          : renderProvisionFailedOwnerEmail({
+              fullName,
               businessName: row.business_name,
+              email: row.email,
+              refNumber: row.ref_number,
               signedAt: nowIso,
+              error: provision.error ?? 'unknown error',
+              proposalUrl,
             }),
-      });
+      },
+    });
+  }
 
-      if (ownerEmail) {
-        await resend.emails.send({
-          from: siteConfig.email.senderWebsite,
-          to: ownerEmail,
-          subject: provisioned
-            ? `Provisioned: ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}, set up billing`
-            : `Provisioning FAILED: ${row.business_name}${row.ref_number ? ` (${row.ref_number})` : ''}`,
-          html: provisioned
-            ? renderProvisionedOwnerEmail({
-                fullName,
-                businessName: row.business_name,
-                email: row.email,
-                refNumber: row.ref_number,
-                signedAt: nowIso,
-                proposalUrl,
-                pdfUrl,
-              })
-            : renderProvisionFailedOwnerEmail({
-                fullName,
-                businessName: row.business_name,
-                email: row.email,
-                refNumber: row.ref_number,
-                signedAt: nowIso,
-                error: provision.error ?? 'unknown error',
-                proposalUrl,
-              }),
-        });
-      }
-
-      emailsSent = true;
-    } catch (err) {
-      console.error('[SIGN/CONFIRM] Resend send error:', err);
+  if (clientDelivery.deliveryStatus === 'accepted') {
+    const { error: sentAtErr } = await admin
+      .from('proposals')
+      .update({ signed_email_sent_at: new Date().toISOString() })
+      .eq('id', row.id);
+    if (sentAtErr) {
+      console.error('[SIGN/CONFIRM] signed_email_sent_at update error:', sentAtErr);
     }
+  }
 
-    if (emailsSent) {
-      const { error: sentAtErr } = await admin
-        .from('proposals')
-        .update({ signed_email_sent_at: new Date().toISOString() })
-        .eq('id', row.id);
-      if (sentAtErr) {
-        console.error('[SIGN/CONFIRM] signed_email_sent_at update error:', sentAtErr);
-      }
-    }
-  } else {
+  if (clientDelivery.errorCode === 'missing_api_key') {
     console.log(
       `[PROPOSAL SIGNED] business=${row.business_name} email=${row.email} method=${row.pending_signature_method} provisioned=${provisioned}`,
     );
   }
 
-  return { ok: true, outcome: 'signed', provisioned };
+  return {
+    ok: true,
+    outcome: 'signed',
+    provisioned,
+    deliveryStatus: clientDelivery.deliveryStatus,
+  };
 }

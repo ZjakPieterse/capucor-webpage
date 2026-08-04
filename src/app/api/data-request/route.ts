@@ -21,13 +21,9 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { generateDataRequestToken } from '@/lib/data-request-token';
-import {
-  CONSENT_VERSION,
-  CONSENT_LANGUAGE,
-  DATA_REQUEST_SLA_DAYS,
-  DATA_REQUEST_TOKEN_TTL_HOURS,
-} from '@/lib/consent';
+import { CONSENT_VERSION, CONSENT_LANGUAGE, DATA_REQUEST_SLA_DAYS, DATA_REQUEST_TOKEN_TTL_HOURS } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
@@ -50,12 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Honeypot
-  if (
-    body &&
-    typeof body === 'object' &&
-    'website' in body &&
-    (body as Record<string, unknown>).website
-  ) {
+  if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {
     return NextResponse.json({ ok: true });
   }
 
@@ -63,19 +54,14 @@ export async function POST(req: NextRequest) {
   const parsed = DataRequestSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return NextResponse.json(
-      { error: issue.message, field: issue.path[0]?.toString() },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: issue.message, field: issue.path[0]?.toString() }, { status: 422 });
   }
 
   const { email, request_type } = parsed.data;
 
   // 5. Insert + generate token
   const token = generateDataRequestToken();
-  const tokenExpiresAt = new Date(
-    Date.now() + DATA_REQUEST_TOKEN_TTL_HOURS * 60 * 60 * 1000,
-  ).toISOString();
+  const tokenExpiresAt = new Date(Date.now() + DATA_REQUEST_TOKEN_TTL_HOURS * 60 * 60 * 1000).toISOString();
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -94,79 +80,76 @@ export async function POST(req: NextRequest) {
     if (dbError) throw dbError;
   } catch (err) {
     console.error('[DATA_REQUEST] Supabase insert error:', err);
-    return NextResponse.json(
-      { error: 'Could not save your request. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not save your request. Please try again.' }, { status: 500 });
   }
 
   // 6. Send confirmation email to the requester + notify the owner.
   //    Failures here are non-fatal — the row is already persisted, and the
   //    owner can manually follow up using the dashboard if mail breaks.
   const confirmUrl = `${siteConfig.marketingUrl}/api/data-request/confirm?token=${encodeURIComponent(token)}`;
-  const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 
-  if (resendKey) {
-    try {
-      const { Resend } = await import('resend');
-      const resend = new Resend(resendKey);
+  const requesterSubject =
+    request_type === 'delete' ? 'Confirm your data deletion request' : 'Confirm your data access request';
 
-      const requesterSubject =
-        request_type === 'delete'
-          ? 'Confirm your data deletion request'
-          : 'Confirm your data access request';
+  const requesterBody = [
+    `Hi,`,
+    ``,
+    `We received a POPIA ${request_type === 'delete' ? 'deletion' : 'access'} request for this email address from the Capucor website.`,
+    ``,
+    `To confirm it was you, please click the link below within ${DATA_REQUEST_TOKEN_TTL_HOURS} hours:`,
+    ``,
+    confirmUrl,
+    ``,
+    `Once confirmed, we will respond within ${DATA_REQUEST_SLA_DAYS} days.`,
+    ``,
+    `If you did not make this request, you can safely ignore this email. No action will be taken without confirmation.`,
+    ``,
+    `Thanks,`,
+    `Capucor Business Solutions`,
+  ].join('\n');
 
-      const requesterBody = [
-        `Hi,`,
-        ``,
-        `We received a POPIA ${request_type === 'delete' ? 'deletion' : 'access'} request for this email address from the Capucor website.`,
-        ``,
-        `To confirm it was you, please click the link below within ${DATA_REQUEST_TOKEN_TTL_HOURS} hours:`,
-        ``,
-        confirmUrl,
-        ``,
-        `Once confirmed, we will respond within ${DATA_REQUEST_SLA_DAYS} days.`,
-        ``,
-        `If you did not make this request, you can safely ignore this email. No action will be taken without confirmation.`,
-        ``,
-        `Thanks,`,
-        `Capucor Business Solutions`,
-      ].join('\n');
+  const requesterDelivery = await sendEmail({
+    eventType: 'data_request.confirmation_client',
+    idempotencyKey: `capucor_web_data_request_confirm_client_${token}`,
+    message: {
+      from: siteConfig.email.senderPrivacy,
+      replyTo: siteConfig.email.replyTo,
+      to: email,
+      subject: requesterSubject,
+      text: requesterBody,
+    },
+  });
+  const deliveryStatus = requesterDelivery.deliveryStatus;
 
-      await resend.emails.send({
-        from: siteConfig.email.senderPrivacy,
-        replyTo: siteConfig.email.replyTo,
-        to: email,
-        subject: requesterSubject,
-        text: requesterBody,
-      });
-
-      if (ownerEmail) {
-        await resend.emails.send({
-          from: siteConfig.email.senderWebsite,
-          to: ownerEmail,
-          subject: `Data ${request_type} request: ${email}`,
-          text: [
-            `A new POPIA ${request_type} request was submitted.`,
-            ``,
-            `Email: ${email}`,
-            `Type: ${request_type}`,
-            `IP: ${ip}`,
-            `Status: pending_confirmation (24h)`,
-            ``,
-            `The requester has been sent a confirmation link. You will be notified again once they confirm.`,
-          ].join('\n'),
-        });
-      }
-    } catch (err) {
-      console.error('[DATA_REQUEST] Resend send error:', err);
-    }
-  } else {
-    console.log(
-      `[DATA_REQUEST] type=${request_type} email=${email} confirm=${confirmUrl}`,
-    );
+  if (ownerEmail) {
+    await sendEmail({
+      eventType: 'data_request.pending_owner',
+      idempotencyKey: `capucor_web_data_request_pending_owner_${token}`,
+      message: {
+        from: siteConfig.email.senderWebsite,
+        to: ownerEmail,
+        subject: `Data ${request_type} request: ${email}`,
+        text: [
+          `A new POPIA ${request_type} request was submitted.`,
+          ``,
+          `Email: ${email}`,
+          `Type: ${request_type}`,
+          `IP: ${ip}`,
+          `Status: pending_confirmation (24h)`,
+          `Requester email: ${deliveryStatus}`,
+          ``,
+          deliveryStatus === 'accepted'
+            ? `The provider accepted the requester's confirmation email. You will be notified again once they confirm.`
+            : `The provider did not accept the requester's confirmation email. Manual follow-up is required until durable retry is available.`,
+        ].join('\n'),
+      },
+    });
   }
 
-  return NextResponse.json({ ok: true });
+  if (requesterDelivery.errorCode === 'missing_api_key') {
+    console.log(`[DATA_REQUEST] type=${request_type} email=${email} confirm=${confirmUrl}`);
+  }
+
+  return NextResponse.json({ ok: true, deliveryStatus });
 }

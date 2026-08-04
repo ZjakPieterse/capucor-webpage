@@ -6,6 +6,8 @@ import { makeJsonRequest } from './helpers/request';
 // commits — promote the pending signature, flip to `signed`, provision, archive,
 // and email. Provisioning/archival are mocked (their own suites cover them).
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -77,10 +79,7 @@ interface UpdateBuilder {
   eq: () => UpdateBuilder;
   in: () => UpdateBuilder;
   select: () => Promise<{ data: { id: string }[] | null; error: unknown }>;
-  then: (
-    onFulfilled: (v: { error: unknown }) => unknown,
-    onRejected?: (e: unknown) => unknown,
-  ) => Promise<unknown>;
+  then: (onFulfilled: (v: { error: unknown }) => unknown, onRejected?: (e: unknown) => unknown) => Promise<unknown>;
 }
 
 const proposalUpdate = vi.fn((payload: Record<string, unknown>) => {
@@ -92,8 +91,7 @@ const proposalUpdate = vi.fn((payload: Record<string, unknown>) => {
       data: updateResult.error ? null : updateRows,
       error: updateResult.error,
     }),
-    then: (onFulfilled, onRejected) =>
-      Promise.resolve({ error: null }).then(onFulfilled, onRejected),
+    then: (onFulfilled, onRejected) => Promise.resolve({ error: null }).then(onFulfilled, onRejected),
   };
   return builder;
 });
@@ -103,7 +101,9 @@ function mountAdmin() {
     from: (table: string) => {
       if (table !== 'proposals') throw new Error(`unexpected table ${table}`);
       return {
-        select: () => ({ eq: () => ({ maybeSingle: async () => lookupResult }) }),
+        select: () => ({
+          eq: () => ({ maybeSingle: async () => lookupResult }),
+        }),
         update: proposalUpdate,
       };
     },
@@ -140,7 +140,11 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
   it('1. provisioned — commits the pending signature, provisions, emails portal-ready + owner', async () => {
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign/confirm', validBody));
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ ok: true, provisioned: true });
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      provisioned: true,
+      deliveryStatus: 'accepted',
+    });
 
     // Commit payload: pending promoted to real columns + cleared.
     const payload = updatePayloads[0]!;
@@ -173,6 +177,7 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     expect(clientEmail.html).toMatch(/reply to this email right away/i);
     expect(ownerEmail.subject).toMatch(/set up billing/i);
     expect(ownerEmail.html).toContain('https://drive.google.com/file/d/file_1/view');
+    expect(updatePayloads.some((item) => typeof item.signed_email_sent_at === 'string')).toBe(true);
   });
 
   it('2. provisioning failed — still 200, fallback client email + owner failure alert', async () => {
@@ -192,9 +197,37 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     expect(ownerEmail.html).toContain('auth user mint failed');
   });
 
+  it('2b. returned client-email error — signature stays committed but no sent timestamp is written', async () => {
+    sendMock.mockResolvedValueOnce({
+      data: null,
+      error: {
+        name: 'validation_error',
+        message: 'recipient rejected',
+        statusCode: 422,
+      },
+      headers: null,
+    });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign/confirm', validBody));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      ok: true,
+      provisioned: true,
+      deliveryStatus: 'pending',
+    });
+    expect(updatePayloads[0]!.status).toBe('signed');
+    expect(updatePayloads.some((item) => 'signed_email_sent_at' in item)).toBe(false);
+    // The owner alert is independent and still attempted.
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    errorSpy.mockRestore();
+  });
+
   it('3. short ctoken — 400, no lookup', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign/confirm', { ctoken: 'short' }),
+      makeJsonRequest('http://test/api/proposals/sign/confirm', {
+        ctoken: 'short',
+      }),
     );
     expect(res.status).toBe(400);
     expect(createSupabaseAdminClient).not.toHaveBeenCalled();
@@ -209,7 +242,10 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
   });
 
   it('5. confirm token expired — 410, no commit', async () => {
-    lookupResult = { data: pendingRow({ sign_confirm_expires_at: CPAST }), error: null };
+    lookupResult = {
+      data: pendingRow({ sign_confirm_expires_at: CPAST }),
+      error: null,
+    };
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign/confirm', validBody));
     expect(res.status).toBe(410);
     expect(proposalUpdate).not.toHaveBeenCalled();
@@ -245,7 +281,10 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
   });
 
   it('9. rate limited — 429, no lookup', async () => {
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, retryAfter: 30 });
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      retryAfter: 30,
+    });
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign/confirm', validBody));
     expect(res.status).toBe(429);
     expect(createSupabaseAdminClient).not.toHaveBeenCalled();

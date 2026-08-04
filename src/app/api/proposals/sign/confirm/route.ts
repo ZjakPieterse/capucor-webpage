@@ -46,9 +46,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ctoken =
-    body && typeof body === 'object' && 'ctoken' in body
-      ? String((body as Record<string, unknown>).ctoken ?? '')
-      : '';
+    body && typeof body === 'object' && 'ctoken' in body ? String((body as Record<string, unknown>).ctoken ?? '') : '';
   if (ctoken.length < 16) {
     return NextResponse.json({ error: 'This confirmation link is invalid.' }, { status: 400 });
   }
@@ -68,56 +66,51 @@ export async function POST(req: NextRequest) {
     if (!data) {
       // Already used (cleared on commit), never issued, or wrong token.
       return NextResponse.json(
-        { error: 'This confirmation link is no longer valid. It may already have been used.' },
+        {
+          error: 'This confirmation link is no longer valid. It may already have been used.',
+        },
         { status: 404 },
       );
     }
     row = data as unknown as ConfirmRow;
   } catch (err) {
     console.error('[SIGN/CONFIRM] lookup error:', err);
-    return NextResponse.json(
-      { error: 'Could not load this confirmation. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not load this confirmation. Please try again.' }, { status: 500 });
   }
 
   // Confirm-token expiry (separate from the proposal's own 7-day expiry).
-  if (
-    row.sign_confirm_expires_at &&
-    new Date(row.sign_confirm_expires_at).getTime() < Date.now()
-  ) {
+  if (row.sign_confirm_expires_at && new Date(row.sign_confirm_expires_at).getTime() < Date.now()) {
     return NextResponse.json(
-      { error: 'This confirmation link has expired. Please sign again to get a fresh one.' },
+      {
+        error: 'This confirmation link has expired. Please sign again to get a fresh one.',
+      },
       { status: 410 },
     );
   }
   if (row.status === 'signed' || row.status === 'paid' || row.status === 'active') {
-    return NextResponse.json(
-      { error: 'This proposal has already been signed.' },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: 'This proposal has already been signed.' }, { status: 409 });
   }
 
   const result = await finalizeProposalSignature(admin, row);
 
   if (!result.ok) {
     if (result.outcome === 'already') {
-      return NextResponse.json(
-        { error: 'This proposal has already been signed.' },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: 'This proposal has already been signed.' }, { status: 409 });
     }
     if (result.outcome === 'invalid') {
       return NextResponse.json(
-        { error: 'There is no pending signature to confirm. Please sign again.' },
+        {
+          error: 'There is no pending signature to confirm. Please sign again.',
+        },
         { status: 409 },
       );
     }
-    return NextResponse.json(
-      { error: 'Could not finalise your signature. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not finalise your signature. Please try again.' }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, provisioned: result.provisioned ?? false });
+  return NextResponse.json({
+    ok: true,
+    provisioned: result.provisioned ?? false,
+    deliveryStatus: result.deliveryStatus ?? 'pending',
+  });
 }

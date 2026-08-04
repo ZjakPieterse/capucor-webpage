@@ -33,6 +33,7 @@ import { generateOpaqueToken } from '@/lib/token';
 import { renderSignConfirmEmail } from '@/lib/portal/signEmails';
 import { maskEmail } from '@/lib/maskEmail';
 import { siteConfig } from '@/config/site';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 // Minutes a "Confirm & sign" link stays valid.
 const CONFIRM_TTL_MINUTES = 30;
@@ -77,12 +78,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Honeypot — silently succeed for bots, do not persist
-  if (
-    body &&
-    typeof body === 'object' &&
-    'website' in body &&
-    (body as Record<string, unknown>).website
-  ) {
+  if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {
     return NextResponse.json({ ok: true, pendingConfirmation: true });
   }
 
@@ -90,19 +86,13 @@ export async function POST(req: NextRequest) {
   const parsed = SignProposalSchema.safeParse(body);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
-    return NextResponse.json(
-      { error: issue.message, field: issue.path.join('.') },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: issue.message, field: issue.path.join('.') }, { status: 422 });
   }
   const input = parsed.data;
 
   // 5. Hard byte-size guard (the zod char cap is intentionally looser).
   if (decodedByteLength(input.imageDataUrl) > MAX_SIGNATURE_BYTES) {
-    return NextResponse.json(
-      { error: 'Your signature image is too large.', field: 'imageDataUrl' },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: 'Your signature image is too large.', field: 'imageDataUrl' }, { status: 422 });
   }
 
   const admin = createSupabaseAdminClient();
@@ -123,33 +113,19 @@ export async function POST(req: NextRequest) {
     row = data as unknown as ProposalSignRow;
   } catch (err) {
     console.error('[PROPOSALS/SIGN] lookup error:', err);
-    return NextResponse.json(
-      { error: 'Could not load this proposal. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not load this proposal. Please try again.' }, { status: 500 });
   }
 
   // 7. Status guards.
-  const expired =
-    row.status === 'expired' ||
-    (!!row.expires_at && new Date(row.expires_at).getTime() < Date.now());
+  const expired = row.status === 'expired' || (!!row.expires_at && new Date(row.expires_at).getTime() < Date.now());
   if (expired) {
-    return NextResponse.json(
-      { error: 'This proposal has expired. Please request a fresh one.' },
-      { status: 410 },
-    );
+    return NextResponse.json({ error: 'This proposal has expired. Please request a fresh one.' }, { status: 410 });
   }
   if (row.status === 'signed' || row.status === 'paid' || row.status === 'active') {
-    return NextResponse.json(
-      { error: 'This proposal has already been signed.' },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: 'This proposal has already been signed.' }, { status: 409 });
   }
   if (row.status !== 'sent' && row.status !== 'viewed') {
-    return NextResponse.json(
-      { error: 'This proposal can no longer be signed.' },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: 'This proposal can no longer be signed.' }, { status: 409 });
   }
 
   // 8. Stash the pending signature + a fresh one-time confirm token. The status
@@ -175,45 +151,34 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
     if (!updated || updated.length === 0) {
-      return NextResponse.json(
-        { error: 'This proposal has already been signed.' },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: 'This proposal has already been signed.' }, { status: 409 });
     }
   } catch (err) {
     console.error('[PROPOSALS/SIGN] pending-signature write error:', err);
-    return NextResponse.json(
-      { error: 'Could not start the signing confirmation. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Could not start the signing confirmation. Please try again.' }, { status: 500 });
   }
 
   // 9. Email the confirm link to the proposal's OWN address only (never anything
   //    the submitter supplies). Clicking it is what finalises the signature.
   //    Non-fatal: the pending signature is already saved; in dev we log the URL.
   const confirmUrl = `${siteConfig.marketingUrl}/proposal/confirm/${confirmToken}`;
-  const resendKey = process.env.RESEND_API_KEY;
-
-  if (resendKey) {
-    try {
-      const { Resend } = await import('resend');
-      const resend = new Resend(resendKey);
-      await resend.emails.send({
-        from: siteConfig.email.sender,
-        replyTo: siteConfig.email.replyTo,
-        to: row.email,
-        subject: 'Confirm your Capucor signature',
-        html: renderSignConfirmEmail({
-          firstName: row.first_name,
-          businessName: row.business_name,
-          refNumber: row.ref_number,
-          confirmUrl,
-        }),
-      });
-    } catch (err) {
-      console.error('[PROPOSALS/SIGN] confirm-email send error:', err);
-    }
-  } else {
+  const delivery = await sendEmail({
+    eventType: 'proposal.sign_confirmation_client',
+    idempotencyKey: `capucor_web_sign_confirm_client_${confirmToken}`,
+    message: {
+      from: siteConfig.email.sender,
+      replyTo: siteConfig.email.replyTo,
+      to: row.email,
+      subject: 'Confirm your Capucor signature',
+      html: renderSignConfirmEmail({
+        firstName: row.first_name,
+        businessName: row.business_name,
+        refNumber: row.ref_number,
+        confirmUrl,
+      }),
+    },
+  });
+  if (delivery.errorCode === 'missing_api_key') {
     console.log(`[PROPOSAL SIGN CONFIRM] email=${row.email} confirmUrl=${confirmUrl}`);
   }
 
@@ -221,5 +186,6 @@ export async function POST(req: NextRequest) {
     ok: true,
     pendingConfirmation: true,
     maskedEmail: maskEmail(row.email),
+    deliveryStatus: delivery.deliveryStatus,
   });
 }

@@ -4,13 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, ArrowRight, Check, MailCheck, FileSignature } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +24,11 @@ const FormSchema = z.object({
 });
 
 type FormValues = z.infer<typeof FormSchema>;
+type ProposalDelivery = {
+  email: string;
+  proposalUrl: string;
+  deliveryStatus: 'accepted' | 'pending';
+};
 
 interface ActivateProposalModalProps {
   open: boolean;
@@ -41,7 +40,7 @@ interface ActivateProposalModalProps {
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
   selectedAddons?: string[];
-  /** Called after a proposal is successfully sent — marks the flow complete. */
+  /** Called after a proposal is successfully created — marks the flow complete. */
   onSuccess: () => void;
 }
 
@@ -60,7 +59,7 @@ export function ActivateProposalModal({
   const [serverError, setServerError] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [delivery, setDelivery] = useState<ProposalDelivery | null>(null);
 
   const activeServiceSlugs = [...selectedServices];
   const integerBrackets: Record<string, number> = {};
@@ -91,7 +90,7 @@ export function ActivateProposalModal({
   // successful send starts fresh rather than showing the old success panel.
   function handleOpenChange(next: boolean) {
     if (!next) {
-      setSentTo(null);
+      setDelivery(null);
       setServerError(null);
       setConsentGiven(false);
       setConsentError('');
@@ -142,7 +141,11 @@ export function ActivateProposalModal({
       if (!res.ok) throw new Error(data.error ?? 'Could not send your proposal. Please try again.');
 
       clearPricingDraft();
-      setSentTo(values.email);
+      setDelivery({
+        email: values.email,
+        proposalUrl: data.proposalUrl,
+        deliveryStatus: data.deliveryStatus === 'accepted' ? 'accepted' : 'pending',
+      });
       onSuccess();
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -152,26 +155,42 @@ export function ActivateProposalModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-lg">
-        {sentTo ? (
+        {delivery ? (
           <div className="py-2 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
               <MailCheck className="h-7 w-7" />
             </div>
             <DialogHeader>
               <DialogTitle className="text-center text-lg">
-                Your proposal is on its way
+                {delivery.deliveryStatus === 'accepted' ? 'Your proposal is on its way' : 'Your proposal is ready'}
               </DialogTitle>
               <DialogDescription className="text-center">
-                We&rsquo;ve emailed your proposal to{' '}
-                <span className="font-medium text-foreground">{sentTo}</span>. Open it to review the
-                details and sign electronically. No payment needed yet. A copy has gone to the
-                Capucor team for reference.
+                {delivery.deliveryStatus === 'accepted' ? (
+                  <>
+                    The email provider accepted your proposal for{' '}
+                    <span className="font-medium text-foreground">{delivery.email}</span>. Open it to review the details
+                    and sign electronically. No payment needed yet.
+                  </>
+                ) : (
+                  <>
+                    Your proposal was created, but we could not confirm email delivery to{' '}
+                    <span className="font-medium text-foreground">{delivery.email}</span>. You can open it safely below
+                    while our team follows up.
+                  </>
+                )}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <FileSignature className="h-3.5 w-3.5 text-primary" />
-              Look out for “Your Capucor proposal” in your inbox
+              {delivery.deliveryStatus === 'accepted'
+                ? 'Look out for “Your Capucor proposal” in your inbox'
+                : 'Your proposal link remains available now'}
             </div>
+            {delivery.deliveryStatus === 'pending' && (
+              <Button nativeButton={false} className="mt-5 w-full" render={<a href={delivery.proposalUrl} />}>
+                Open your proposal
+              </Button>
+            )}
             <Button className="mt-6 w-full" onClick={() => handleOpenChange(false)}>
               Done
             </Button>
@@ -181,8 +200,8 @@ export function ActivateProposalModal({
             <DialogHeader>
               <DialogTitle className="text-lg">Get your proposal</DialogTitle>
               <DialogDescription>
-                Tell us where to send it. We’ll email you a proposal to review and sign. No payment
-                required to get started.
+                Tell us where to send it. We’ll email you a proposal to review and sign. No payment required to get
+                started.
               </DialogDescription>
             </DialogHeader>
 
@@ -198,7 +217,9 @@ export function ActivateProposalModal({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label htmlFor="firstName" className="mb-1.5 block text-sm">First name</Label>
+                <Label htmlFor="firstName" className="mb-1.5 block text-sm">
+                  First name
+                </Label>
                 <Input
                   id="firstName"
                   type="text"
@@ -206,12 +227,12 @@ export function ActivateProposalModal({
                   aria-invalid={errors.firstName ? 'true' : undefined}
                   {...register('firstName')}
                 />
-                {errors.firstName && (
-                  <p className="mt-1 text-xs text-destructive">{errors.firstName.message}</p>
-                )}
+                {errors.firstName && <p className="mt-1 text-xs text-destructive">{errors.firstName.message}</p>}
               </div>
               <div>
-                <Label htmlFor="lastName" className="mb-1.5 block text-sm">Surname</Label>
+                <Label htmlFor="lastName" className="mb-1.5 block text-sm">
+                  Surname
+                </Label>
                 <Input
                   id="lastName"
                   type="text"
@@ -219,14 +240,14 @@ export function ActivateProposalModal({
                   aria-invalid={errors.lastName ? 'true' : undefined}
                   {...register('lastName')}
                 />
-                {errors.lastName && (
-                  <p className="mt-1 text-xs text-destructive">{errors.lastName.message}</p>
-                )}
+                {errors.lastName && <p className="mt-1 text-xs text-destructive">{errors.lastName.message}</p>}
               </div>
             </div>
 
             <div>
-              <Label htmlFor="businessName" className="mb-1.5 block text-sm">Business name</Label>
+              <Label htmlFor="businessName" className="mb-1.5 block text-sm">
+                Business name
+              </Label>
               <Input
                 id="businessName"
                 type="text"
@@ -234,13 +255,13 @@ export function ActivateProposalModal({
                 aria-invalid={errors.businessName ? 'true' : undefined}
                 {...register('businessName')}
               />
-              {errors.businessName && (
-                <p className="mt-1 text-xs text-destructive">{errors.businessName.message}</p>
-              )}
+              {errors.businessName && <p className="mt-1 text-xs text-destructive">{errors.businessName.message}</p>}
             </div>
 
             <div>
-              <Label htmlFor="proposal-email" className="mb-1.5 block text-sm">Email</Label>
+              <Label htmlFor="proposal-email" className="mb-1.5 block text-sm">
+                Email
+              </Label>
               <Input
                 id="proposal-email"
                 type="email"
@@ -248,9 +269,7 @@ export function ActivateProposalModal({
                 aria-invalid={errors.email ? 'true' : undefined}
                 {...register('email')}
               />
-              {errors.email && (
-                <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
             </div>
 
             {/* Honeypot */}
@@ -279,11 +298,7 @@ export function ActivateProposalModal({
               </p>
             )}
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="gradient-cta w-full gap-2"
-            >
+            <Button type="submit" disabled={isSubmitting} className="gradient-cta w-full gap-2">
               <span className="relative z-[2] inline-flex items-center gap-2">
                 {isSubmitting ? (
                   <>

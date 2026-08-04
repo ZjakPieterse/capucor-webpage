@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { makeJsonRequest } from './helpers/request';
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -10,7 +12,11 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 const { resendSendMock } = vi.hoisted(() => ({
-  resendSendMock: vi.fn(async () => ({ id: 'email_test' })),
+  resendSendMock: vi.fn(async () => ({
+    data: { id: 'email_test' },
+    error: null,
+    headers: null,
+  })),
 }));
 vi.mock('resend', () => ({
   Resend: vi.fn(function (this: { emails: { send: typeof resendSendMock } }) {
@@ -26,9 +32,7 @@ type SupabaseStub = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
 let insertSpy: ReturnType<typeof vi.fn>;
 
-function mountSupabase(
-  insertImpl: () => Promise<{ error: unknown }> = async () => ({ error: null }),
-) {
+function mountSupabase(insertImpl: () => Promise<{ error: unknown }> = async () => ({ error: null })) {
   insertSpy = vi.fn(insertImpl);
   vi.mocked(createSupabaseServerClient).mockResolvedValue({
     from: () => ({ insert: insertSpy }),
@@ -53,7 +57,7 @@ describe('POST /api/data-request', () => {
   it('1. happy path — inserts row with token + expiry, returns 200', async () => {
     const res = await POST(makeJsonRequest('http://test/api/data-request', validBody));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
+    expect(await res.json()).toEqual({ ok: true, deliveryStatus: 'pending' });
     expect(insertSpy).toHaveBeenCalledTimes(1);
 
     const inserted = insertSpy.mock.calls[0]![0] as Record<string, unknown>;
@@ -84,7 +88,10 @@ describe('POST /api/data-request', () => {
   });
 
   it('3. rate limited — 429 with Retry-After header, no insert', async () => {
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, retryAfter: 42 });
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      retryAfter: 42,
+    });
     const res = await POST(makeJsonRequest('http://test/api/data-request', validBody));
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('42');
@@ -94,7 +101,9 @@ describe('POST /api/data-request', () => {
 
   it('4. malformed JSON — 400', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/data-request', null, { raw: '{not json' }),
+      makeJsonRequest('http://test/api/data-request', null, {
+        raw: '{not json',
+      }),
     );
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'Invalid request body.' });
@@ -153,9 +162,7 @@ describe('POST /api/data-request', () => {
     const res = await POST(makeJsonRequest('http://test/api/data-request', validBody));
     expect(res.status).toBe(200);
     expect(insertSpy).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[DATA_REQUEST] type=access'),
-    );
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[DATA_REQUEST] type=access'));
     expect(resendSendMock).not.toHaveBeenCalled();
     logSpy.mockRestore();
   });
@@ -167,12 +174,12 @@ describe('POST /api/data-request', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/data-request', validBody));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
+    expect(await res.json()).toEqual({ ok: true, deliveryStatus: 'pending' });
     expect(insertSpy).toHaveBeenCalledTimes(1);
     expect(resendSendMock).toHaveBeenCalled();
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[DATA_REQUEST] Resend send error:'),
-      expect.any(Error),
+      '[EMAIL] delivery pending:',
+      expect.objectContaining({ errorCode: 'transport_error' }),
     );
     errorSpy.mockRestore();
   });
@@ -187,9 +194,7 @@ describe('POST /api/data-request', () => {
       }),
     );
     expect(res.status).toBe(200);
-    const subjects = resendSendMock.mock.calls.map(
-      (c) => ((c as unknown as [{ subject: string }])[0]).subject,
-    );
+    const subjects = resendSendMock.mock.calls.map((c) => (c as unknown as [{ subject: string }])[0].subject);
     expect(subjects.some((s) => /deletion/i.test(s))).toBe(true);
     expect(subjects.some((s) => /Data delete request/.test(s))).toBe(true);
   });

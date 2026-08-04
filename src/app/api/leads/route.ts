@@ -5,6 +5,7 @@ import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
+import { sendEmail } from '@/lib/email/sendEmail';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
       {
         status: 429,
         headers: { 'Retry-After': String(retryAfter) },
-      }
+      },
     );
   }
 
@@ -30,12 +31,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Honeypot — if website field is populated, silently succeed (do not insert)
-  if (
-    body &&
-    typeof body === 'object' &&
-    'website' in body &&
-    (body as Record<string, unknown>).website
-  ) {
+  if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {
     return NextResponse.json({ ok: true });
   }
 
@@ -48,19 +44,22 @@ export async function POST(req: NextRequest) {
         error: firstIssue.message,
         field: firstIssue.path[0]?.toString(),
       },
-      { status: 422 }
+      { status: 422 },
     );
   }
 
   const { website: _honeypot, consent_given, ...fields } = parsed.data;
+  const leadId = crypto.randomUUID();
+  const consentTimestamp = new Date().toISOString();
 
   // 5. Insert into Supabase
   try {
     const supabase = await createSupabaseServerClient();
     const { error: dbError } = await supabase.from('leads').insert({
+      id: leadId,
       ...fields,
       consent_given,
-      consent_timestamp: new Date().toISOString(),
+      consent_timestamp: consentTimestamp,
       consent_version: CONSENT_VERSION,
       consent_language: CONSENT_LANGUAGE,
     });
@@ -68,21 +67,17 @@ export async function POST(req: NextRequest) {
     if (dbError) throw dbError;
   } catch (err) {
     console.error('[LEADS] Supabase insert error:', err);
-    return NextResponse.json(
-      { error: 'Could not save your enquiry. Please try again.' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Could not save your enquiry. Please try again.' }, { status: 500 });
   }
 
   // 6. Notification email via Resend (optional — stubs to console if key absent)
-  const resendKey = process.env.RESEND_API_KEY;
   const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
 
-  if (resendKey && ownerEmail) {
-    try {
-      const { Resend } = await import('resend');
-      const resend = new Resend(resendKey);
-      await resend.emails.send({
+  if (ownerEmail) {
+    const delivery = await sendEmail({
+      eventType: 'lead.owner_notification',
+      idempotencyKey: `capucor_web_lead_owner_${leadId}`,
+      message: {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,
         subject: `New lead: ${fields.name} (${fields.source})`,
@@ -97,15 +92,13 @@ export async function POST(req: NextRequest) {
         ]
           .filter(Boolean)
           .join('\n'),
-      });
-    } catch (err) {
-      // Non-fatal — lead was already saved; log but don't fail the request
-      console.error('[LEADS] Resend notification error:', err);
+      },
+    });
+    if (delivery.errorCode === 'missing_api_key') {
+      console.log(`[LEAD] source=${fields.source} name=${fields.name} email=${fields.email}`);
     }
   } else {
-    console.log(
-      `[LEAD] source=${fields.source} name=${fields.name} email=${fields.email}`
-    );
+    console.log(`[LEAD] source=${fields.source} name=${fields.name} email=${fields.email}`);
   }
 
   return NextResponse.json({ ok: true });

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -38,10 +40,7 @@ function pendingRow(overrides: Record<string, unknown> = {}) {
 interface UpdateBuilder {
   eq: () => UpdateBuilder;
   select: () => Promise<{ data: { id: string }[] | null; error: unknown }>;
-  then: (
-    onFulfilled: (v: { error: unknown }) => unknown,
-    onRejected?: (e: unknown) => unknown,
-  ) => Promise<unknown>;
+  then: (onFulfilled: (v: { error: unknown }) => unknown, onRejected?: (e: unknown) => unknown) => Promise<unknown>;
 }
 
 function mountAdmin() {
@@ -49,14 +48,15 @@ function mountAdmin() {
     from: (table: string) => {
       if (table !== 'data_requests') throw new Error(`unexpected table ${table}`);
       return {
-        select: () => ({ eq: () => ({ maybeSingle: async () => lookupResult }) }),
+        select: () => ({
+          eq: () => ({ maybeSingle: async () => lookupResult }),
+        }),
         update: (payload: Record<string, unknown>) => {
           updatePayloads.push(payload);
           const builder: UpdateBuilder = {
             eq: () => builder,
             select: async () => ({ data: updateRows, error: null }),
-            then: (onFulfilled, onRejected) =>
-              Promise.resolve({ error: null }).then(onFulfilled, onRejected),
+            then: (onFulfilled, onRejected) => Promise.resolve({ error: null }).then(onFulfilled, onRejected),
           };
           return builder;
         },
@@ -66,10 +66,10 @@ function mountAdmin() {
 }
 
 function makeConfirmRequest(token: string | null): NextRequest {
-  const url = token
-    ? `http://test/api/data-request/confirm?token=${token}`
-    : 'http://test/api/data-request/confirm';
-  return new NextRequest(url, { headers: { 'x-forwarded-for': '203.0.113.1' } });
+  const url = token ? `http://test/api/data-request/confirm?token=${token}` : 'http://test/api/data-request/confirm';
+  return new NextRequest(url, {
+    headers: { 'x-forwarded-for': '203.0.113.1' },
+  });
 }
 
 beforeEach(() => {
@@ -91,7 +91,10 @@ describe('GET /api/data-request/confirm', () => {
   });
 
   it('2. rate limited — 429, no DB calls', async () => {
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, retryAfter: 42 });
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      retryAfter: 42,
+    });
     const res = await GET(makeConfirmRequest(TOKEN));
     expect(res.status).toBe(429);
     expect(await res.text()).toContain('Too many attempts');
@@ -128,7 +131,10 @@ describe('GET /api/data-request/confirm', () => {
   });
 
   it('7. expired token — expired page, row flipped to expired', async () => {
-    lookupResult = { data: pendingRow({ token_expires_at: PAST }), error: null };
+    lookupResult = {
+      data: pendingRow({ token_expires_at: PAST }),
+      error: null,
+    };
     const res = await GET(makeConfirmRequest(TOKEN));
     expect(res.status).toBe(400);
     expect(await res.text()).toContain('Link expired');

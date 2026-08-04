@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { makeJsonRequest } from './helpers/request';
 
+vi.mock('server-only', () => ({}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true, retryAfter: 0 })),
 }));
@@ -10,7 +12,11 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 const { resendSendMock } = vi.hoisted(() => ({
-  resendSendMock: vi.fn(async () => ({ id: 'email_test' })),
+  resendSendMock: vi.fn(async () => ({
+    data: { id: 'email_test' },
+    error: null,
+    headers: null,
+  })),
 }));
 vi.mock('resend', () => ({
   Resend: vi.fn(function (this: { emails: { send: typeof resendSendMock } }) {
@@ -67,7 +73,10 @@ describe('POST /api/leads', () => {
 
   it('2. honeypot — silently 200s without inserting', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/leads', { ...validBody, website: 'http://spam.example' }),
+      makeJsonRequest('http://test/api/leads', {
+        ...validBody,
+        website: 'http://spam.example',
+      }),
     );
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
@@ -75,7 +84,10 @@ describe('POST /api/leads', () => {
   });
 
   it('3. rate limited — 429 with Retry-After header, no insert', async () => {
-    vi.mocked(checkRateLimit).mockResolvedValueOnce({ allowed: false, retryAfter: 42 });
+    vi.mocked(checkRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      retryAfter: 42,
+    });
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
     expect(res.status).toBe(429);
     expect(res.headers.get('Retry-After')).toBe('42');
@@ -84,9 +96,7 @@ describe('POST /api/leads', () => {
   });
 
   it('4. malformed JSON — 400', async () => {
-    const res = await POST(
-      makeJsonRequest('http://test/api/leads', null, { raw: '{not json' }),
-    );
+    const res = await POST(makeJsonRequest('http://test/api/leads', null, { raw: '{not json' }));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'Invalid request body.' });
     expect(insertSpy).not.toHaveBeenCalled();
@@ -108,7 +118,10 @@ describe('POST /api/leads', () => {
 
   it('6. zod invalid — consent_given:false returns 422 with field', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/leads', { ...validBody, consent_given: false }),
+      makeJsonRequest('http://test/api/leads', {
+        ...validBody,
+        consent_given: false,
+      }),
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('consent_given');
@@ -143,9 +156,7 @@ describe('POST /api/leads', () => {
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
     expect(res.status).toBe(200);
     expect(insertSpy).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[LEAD] source=signup'),
-    );
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[LEAD] source=signup'));
     expect(resendSendMock).not.toHaveBeenCalled();
     logSpy.mockRestore();
   });
@@ -161,8 +172,8 @@ describe('POST /api/leads', () => {
     expect(insertSpy).toHaveBeenCalledTimes(1);
     expect(resendSendMock).toHaveBeenCalledTimes(1);
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[LEADS] Resend notification error:'),
-      expect.any(Error),
+      '[EMAIL] delivery pending:',
+      expect.objectContaining({ errorCode: 'transport_error' }),
     );
     errorSpy.mockRestore();
   });
