@@ -32,8 +32,8 @@ import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { tierDisplayName } from '@/config/tiers';
-import { formatZAR, firstOfNextMonth } from '@/lib/utils';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { renderCreatedProposalClientEmail, renderCreatedProposalOwnerText } from '@/lib/email/messages.mjs';
 
 const PROPOSAL_TTL_DAYS = 7;
 
@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
       replyTo: siteConfig.email.replyTo,
       to: input.email,
       subject: refNumber ? `Your Capucor proposal (${refNumber}) is ready` : 'Your Capucor proposal is ready',
-      html: renderProposalEmail({
+      html: renderCreatedProposalClientEmail({
         firstName: input.firstName,
         businessName: input.businessName,
         tierName,
@@ -188,6 +188,7 @@ export async function POST(req: NextRequest) {
         lineItems,
         totalChargeZAR,
         proposalUrl,
+        firstDebitFrom: nowIso,
       }),
     },
   });
@@ -204,21 +205,17 @@ export async function POST(req: NextRequest) {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,
         subject: `New proposal: ${input.businessName}${refNumber ? ` (${refNumber})` : ''}`,
-        text: [
-          `A new proposal was generated from the pricing calculator.`,
-          ``,
-          `Reference: ${refNumber ?? '(pending)'}`,
-          `Name: ${fullName}`,
-          `Business: ${input.businessName}`,
-          `Email: ${input.email}`,
-          `Package: ${tierName}`,
-          `Client email: ${deliveryStatus}`,
-          ...lineItems.map((li) => `  · ${li.name}${li.label ? ` (${li.label})` : ''}: ${formatZAR(li.price)}`),
-          ``,
-          `Total monthly charge: ${formatZAR(totalChargeZAR)}`,
-          ``,
-          `Proposal link: ${proposalUrl}`,
-        ].join('\n'),
+        text: renderCreatedProposalOwnerText({
+          refNumber,
+          fullName,
+          businessName: input.businessName,
+          email: input.email,
+          tierName,
+          clientDeliveryStatus: deliveryStatus,
+          lineItems,
+          totalChargeZAR,
+          proposalUrl,
+        }),
       },
     });
   }
@@ -228,92 +225,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, proposalUrl, deliveryStatus });
-}
-
-interface ProposalEmailData {
-  firstName: string;
-  businessName: string;
-  tierName: string;
-  refNumber: string | null;
-  lineItems: { name: string; label: string | null; price: number }[];
-  totalChargeZAR: number;
-  proposalUrl: string;
-}
-
-// Hand-rolled, inline-styled HTML so it renders in any email client without a
-// build step or extra dependency. Keep it simple and table-free where possible.
-function renderProposalEmail(d: ProposalEmailData): string {
-  // Billing starts on the 1st of the next calendar month (see firstOfNextMonth),
-  // matching the subscription created at signing. Show that first-debit date.
-  const firstDebitDate = firstOfNextMonth().toLocaleDateString('en-ZA', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const rows = d.lineItems
-    .map(
-      (li) => `
-      <tr>
-        <td style="padding:8px 0;color:#1f2937;font-size:14px;">${escapeHtml(li.name)}${
-          li.label ? `<span style="color:#6b7280;"> · ${escapeHtml(li.label)}</span>` : ''
-        }</td>
-        <td style="padding:8px 0;text-align:right;color:#1f2937;font-size:14px;white-space:nowrap;">${formatZAR(li.price)}</td>
-      </tr>`,
-    )
-    .join('');
-
-  return `<!doctype html>
-<html lang="en">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
-<body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
-  <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;">
-      <p style="margin:0 0 24px;font-weight:700;font-size:18px;letter-spacing:-0.01em;color:#0f766e;">Capucor</p>
-      ${
-        d.refNumber
-          ? `<p style="margin:0 0 8px;font-size:12px;color:#6b7280;">Reference ${escapeHtml(d.refNumber)}</p>`
-          : ''
-      }
-      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Hi ${escapeHtml(d.firstName)}, here&rsquo;s your proposal</h1>
-      <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#4b5563;">
-        Thanks for configuring a plan for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
-        of your ${escapeHtml(d.tierName)} subscription. Open your proposal to review the full details and
-        sign electronically. There&rsquo;s no payment required to get started.
-      </p>
-
-      <table style="width:100%;border-collapse:collapse;margin:0 0 8px;">
-        ${rows}
-      </table>
-      <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
-        <tr><td style="padding:8px 0;color:#111827;font-size:16px;font-weight:700;">Total monthly charge</td><td style="padding:8px 0;text-align:right;color:#111827;font-size:16px;font-weight:700;">${formatZAR(d.totalChargeZAR)}</td></tr>
-      </table>
-      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">
-        Your first debit order will be on <strong>${firstDebitDate}</strong>.
-      </p>
-
-      <a href="${d.proposalUrl}" style="display:block;margin:28px 0 8px;background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:15px;padding:14px 20px;border-radius:10px;">
-        View &amp; sign your proposal
-      </a>
-      <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-align:center;">
-        Billed monthly in advance · cancel any time with 30 days&rsquo; notice
-      </p>
-      <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
-        This proposal link is valid for 7 days.
-      </p>
-    </div>
-    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
-      Capucor Business Solutions · Outsourced finance for growing SMEs
-    </p>
-  </div>
-</body>
-</html>`;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }

@@ -125,7 +125,7 @@ export async function finalizeProposalSignature(
 
   // 3. Archive the signed proposal as a PDF (PR10). Non-fatal, no-ops until wired.
   const archive = await archiveSignedProposal(admin, row.id);
-  const pdfUrl = archive.ok ? (archive.fileUrl ?? null) : null;
+  const pdfUrl = archive.ok && archive.fileId ? `https://drive.google.com/file/d/${archive.fileId}/view` : null;
 
   // 4. Emails — non-fatal. The signature is already saved.
   const fullName = `${row.first_name} ${row.last_name}`.trim();
@@ -194,7 +194,6 @@ export async function finalizeProposalSignature(
               email: row.email,
               refNumber: row.ref_number,
               signedAt: nowIso,
-              error: provision.error ?? 'unknown error',
               proposalUrl,
             }),
       },

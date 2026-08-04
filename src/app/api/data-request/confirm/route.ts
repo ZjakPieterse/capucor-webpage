@@ -16,6 +16,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { renderDataRequestConfirmedOwnerText } from '@/lib/email/messages.mjs';
 
 type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error' | 'rate_limited';
 
@@ -66,9 +67,10 @@ export async function GET(req: NextRequest) {
     } else {
       // Guard on the status we read so a concurrent confirm (or expiry
       // sweep) between the check and this update can't double-transition.
+      const confirmedAt = new Date().toISOString();
       const { data: updated, error: updErr } = await supabase
         .from('data_requests')
-        .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+        .update({ status: 'confirmed', confirmed_at: confirmedAt })
         .eq('id', row.id as string)
         .eq('status', row.status as string)
         .select('id');
@@ -92,15 +94,12 @@ export async function GET(req: NextRequest) {
             from: siteConfig.email.senderWebsite,
             to: ownerEmail,
             subject: `Data ${requestType} request CONFIRMED: ${email}`,
-            text: [
-              `A POPIA ${requestType} request has been confirmed and is ready to action.`,
-              ``,
-              `Email: ${email}`,
-              `Type: ${requestType}`,
-              `Respond by: ${new Date(Date.now() + DATA_REQUEST_SLA_DAYS * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}`,
-              ``,
-              `Mark the row as processed once complete.`,
-            ].join('\n'),
+            text: renderDataRequestConfirmedOwnerText({
+              requestType,
+              email,
+              confirmedAt,
+              slaDays: DATA_REQUEST_SLA_DAYS,
+            }),
           },
         });
       }

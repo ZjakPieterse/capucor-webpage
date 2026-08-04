@@ -6,6 +6,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { renderLeadOwnerText } from '@/lib/email/messages.mjs';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
@@ -83,17 +84,7 @@ export async function POST(req: NextRequest) {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,
         subject: `New lead: ${fields.name} (${fields.source})`,
-        text: [
-          `Source: ${fields.source}`,
-          `Name: ${fields.name}`,
-          `Email: ${fields.email}`,
-          fields.business ? `Business: ${fields.business}` : null,
-          fields.phone ? `Phone: ${fields.phone}` : null,
-          fields.message ? `\nMessage:\n${fields.message}` : null,
-          fields.config ? `\nConfig:\n${JSON.stringify(fields.config, null, 2)}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n'),
+        text: renderLeadOwnerText(fields),
       },
     });
     if (delivery.errorCode === 'missing_api_key') {

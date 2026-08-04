@@ -205,7 +205,8 @@ describe('POST /api/proposals/sign/confirm (Step B — finalise)', () => {
     const ownerEmail = sendEmailMock.mock.calls[1]![0].message;
     expect(clientEmail.subject).toMatch(/received your signed proposal/i);
     expect(ownerEmail.subject).toMatch(/provisioning failed/i);
-    expect(ownerEmail.html).toContain('auth user mint failed');
+    expect(ownerEmail.html).toContain('Check the application logs');
+    expect(ownerEmail.html).not.toContain('auth user mint failed');
   });
 
   it('2b. returned client-email error — signature stays committed but no sent timestamp is written', async () => {

@@ -212,9 +212,11 @@ transport failures, timeouts and missing provider configuration become `retry_sc
 or concurrent requests load the existing event instead of creating another provider message. A
 stale processing lease is reclaimable with the same provider key. Callers must supply a UUID source
 (`lead`, `data_request` or `proposal`) and a dotted event type; store no subject, body, snippet,
-recipient link token or other message content in the operational table. Scheduled reconciliation
-is owned by PH-05; until that lands, the durable pending row is observable but not automatically
-drained.
+recipient link token or other message content in the operational table. The weekday business-hours
+GitHub Action in capucor-os now drains due work every ten minutes with six bounded attempts and
+fails visibly on permanent work. It rebuilds messages through the dependency-free
+`src/lib/email/messages.mjs`; keep that file byte-equivalent to capucor-os's copy so the retry sends
+the exact original provider payload.
 
 ## Database (Supabase)
 

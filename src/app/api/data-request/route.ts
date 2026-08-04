@@ -24,6 +24,7 @@ import { generateDataRequestToken } from '@/lib/data-request-token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE, DATA_REQUEST_SLA_DAYS, DATA_REQUEST_TOKEN_TTL_HOURS } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { renderDataRequestConfirmationText, renderDataRequestPendingOwnerText } from '@/lib/email/messages.mjs';
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
@@ -94,22 +95,12 @@ export async function POST(req: NextRequest) {
   const requesterSubject =
     request_type === 'delete' ? 'Confirm your data deletion request' : 'Confirm your data access request';
 
-  const requesterBody = [
-    `Hi,`,
-    ``,
-    `We received a POPIA ${request_type === 'delete' ? 'deletion' : 'access'} request for this email address from the Capucor website.`,
-    ``,
-    `To confirm it was you, please click the link below within ${DATA_REQUEST_TOKEN_TTL_HOURS} hours:`,
-    ``,
+  const requesterBody = renderDataRequestConfirmationText({
+    requestType: request_type,
     confirmUrl,
-    ``,
-    `Once confirmed, we will respond within ${DATA_REQUEST_SLA_DAYS} days.`,
-    ``,
-    `If you did not make this request, you can safely ignore this email. No action will be taken without confirmation.`,
-    ``,
-    `Thanks,`,
-    `Capucor Business Solutions`,
-  ].join('\n');
+    tokenTtlHours: DATA_REQUEST_TOKEN_TTL_HOURS,
+    slaDays: DATA_REQUEST_SLA_DAYS,
+  });
 
   const requesterDelivery = await sendEmail({
     sourceType: 'data_request',
@@ -136,19 +127,13 @@ export async function POST(req: NextRequest) {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,
         subject: `Data ${request_type} request: ${email}`,
-        text: [
-          `A new POPIA ${request_type} request was submitted.`,
-          ``,
-          `Email: ${email}`,
-          `Type: ${request_type}`,
-          `IP: ${ip}`,
-          `Status: pending_confirmation (24h)`,
-          `Requester email: ${deliveryStatus}`,
-          ``,
-          deliveryStatus === 'accepted'
-            ? `The provider accepted the requester's confirmation email. You will be notified again once they confirm.`
-            : `The requester's confirmation email is pending and retained for retry. Check the delivery queue if it remains pending.`,
-        ].join('\n'),
+        text: renderDataRequestPendingOwnerText({
+          requestType: request_type,
+          email,
+          ipAddress: ip === 'unknown' ? null : ip,
+          tokenTtlHours: DATA_REQUEST_TOKEN_TTL_HOURS,
+          requesterDeliveryStatus: deliveryStatus,
+        }),
       },
     });
   }
