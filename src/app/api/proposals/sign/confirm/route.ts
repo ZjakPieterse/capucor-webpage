@@ -12,6 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { readJsonBody } from '@/lib/readJsonBody';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import {
@@ -37,6 +38,9 @@ interface ConfirmRow extends FinalizeSignRow {
 const RATE_LIMIT_KEY = 'proposal-sign-confirm';
 const CONFIRM_LIMIT = 30;
 
+// One opaque token. Nothing else is read off this body.
+const MAX_BODY_BYTES = 4 * 1024;
+
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
@@ -51,15 +55,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: 'Invalid request body.' },
-      { status: 400 },
-    );
+  const read = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
+  const body = read.body;
 
   const ctoken =
     body && typeof body === 'object' && 'ctoken' in body

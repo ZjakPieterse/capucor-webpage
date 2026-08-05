@@ -198,6 +198,33 @@ records** — capucor.com is the verified Resend *sender* domain. Removing them 
 transactional email from **both** apps while the sites keep looking fine. This is still true even
 though capucor.com no longer serves any signed-in surface.
 
+### Request bodies are capped — never call `req.json()` in a route handler
+
+**Read the body with `readJsonBody(req, MAX_BODY_BYTES)`** from
+[`src/lib/readJsonBody.ts`](src/lib/readJsonBody.ts), with a per-route `MAX_BODY_BYTES` constant
+beside the route's `RATE_LIMIT_KEY`. All six body-reading routes here do.
+
+⚠️ **`await req.json()` reads whatever it is sent, and nothing in this stack bounds it.** Measured on
+a local production build (PH-08b, 2026-08-05): a **25 MB** body was fully read and JSON-parsed by
+`/api/leads`, `/api/data-request` and `/api/proposals/sign/confirm` before Zod refused it — 422/400,
+never 413. Next caps **Server Actions** at 1 MB by default but applies **no cap to Route Handlers**,
+`proxyClientMaxBodySize` only truncates and only when a proxy clones the body, and **this repo has no
+middleware at all**. On Workers Free that is a cheap denial of service: 10ms CPU per invocation, and
+parsing megabytes of JSON is CPU, not I/O.
+
+The helper does two things and both are load-bearing — a `content-length` refusal *before* the stream
+is touched (the half that actually saves the CPU) and a running byte count while reading (a chunked
+request sends no `content-length`, and a declared one can lie). `route-body-bounds.test.ts` pins
+both, plus that the refusal happens before any Supabase or email work.
+
+⚠️ **`/api/proposals/sign` has three nested bounds and the order is deliberate:** 1 MB raw body >
+750,000 schema chars > 512 KB decoded (`MAX_SIGNATURE_BYTES`). Keep the outer one loosest, so a real
+oversized signature lands on an inner check and the signer is told their image is too large instead
+of getting a bare 413.
+
+Routes that read **no** body (`/api/revalidate`, both `/api/cron/*`, `/api/data-request/confirm`,
+`/api/health`) need no cap — an unconsumed body costs no CPU. Don't add one for symmetry.
+
 ### Email delivery contract
 
 Every transactional send goes through [`src/lib/email/sendEmail.ts`](src/lib/email/sendEmail.ts).

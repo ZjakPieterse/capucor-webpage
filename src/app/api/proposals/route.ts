@@ -24,6 +24,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ProposalRequestSchema } from '@/lib/validations';
+import { readJsonBody } from '@/lib/readJsonBody';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -41,6 +42,11 @@ const PROPOSAL_TTL_DAYS = 7;
 // keeps the standard allowance rather than the roomier signing one.
 const RATE_LIMIT_KEY = 'proposal-create';
 
+// A service selection, its bracket map, a tier slug, up to 5 add-ons and four
+// short contact fields. ProposalRequestSchema puts no maximum on `services`, so
+// the byte cap is what actually bounds that array.
+const MAX_BODY_BYTES = 16 * 1024;
+
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
   const ip = getClientIp(req.headers);
@@ -53,13 +59,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Parse body
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  // 2. Parse body, under a hard byte cap
+  const read = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
+  const body = read.body;
 
   // 3. Honeypot — silently succeed for bots, do not persist
   if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {

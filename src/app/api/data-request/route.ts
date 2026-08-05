@@ -17,6 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { DataRequestSchema } from '@/lib/validations';
+import { readJsonBody } from '@/lib/readJsonBody';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -30,6 +31,10 @@ import { renderDataRequestConfirmationText, renderDataRequestPendingOwnerText } 
 // contact form or the signing path.
 const RATE_LIMIT_KEY = 'data-request';
 
+// An email address, a two-value enum and a consent boolean. Nothing here is
+// long, so the cap is tight.
+const MAX_BODY_BYTES = 4 * 1024;
+
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
   const ip = getClientIp(req.headers);
@@ -42,13 +47,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Parse body
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  // 2. Parse body, under a hard byte cap
+  const read = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
+  const body = read.body;
 
   // 3. Honeypot
   if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {

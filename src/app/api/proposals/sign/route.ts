@@ -26,6 +26,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SignProposalSchema, MAX_SIGNATURE_BYTES } from '@/lib/validations';
+import { readJsonBody } from '@/lib/readJsonBody';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -44,6 +45,14 @@ const CONFIRM_TTL_MINUTES = 30;
 // real gate; this limit only stops someone hammering the endpoint.
 const RATE_LIMIT_KEY = 'proposal-sign';
 const SIGN_LIMIT = 30;
+
+// The one route here with a genuinely large legitimate body: the signature PNG
+// arrives as a base64 data URL that SignProposalSchema caps at 750,000 chars.
+// This is the OUTERMOST of three nested bounds and must stay the loosest of the
+// three, so the inner two are what a real oversized signature lands on and the
+// signer gets "your signature image is too large" rather than a bare 413:
+//   1 MB raw body  >  750,000 schema chars  >  512 KB decoded (MAX_SIGNATURE_BYTES).
+const MAX_BODY_BYTES = 1024 * 1024;
 
 interface ProposalSignRow {
   id: string;
@@ -81,13 +90,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Parse body
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  // 2. Parse body, under a hard byte cap
+  const read = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
+  const body = read.body;
 
   // 3. Honeypot — silently succeed for bots, do not persist
   if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {

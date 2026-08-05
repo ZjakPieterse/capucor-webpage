@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LeadSchema } from '@/lib/validations';
+import { readJsonBody } from '@/lib/readJsonBody';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -12,6 +13,11 @@ import { renderLeadOwnerText } from '@/lib/email/messages.mjs';
 // visitor who resubmitted the contact form could exhaust the allowance that
 // guards signing a proposal.
 const RATE_LIMIT_KEY = 'leads';
+
+// LeadSchema's longest field is `message` at 2000 chars, plus a calculator
+// config of at most 20 services and their brackets. A real submission is a
+// couple of KB; 16 KB is roomy enough that no honest form can hit it.
+const MAX_BODY_BYTES = 16 * 1024;
 
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
@@ -28,13 +34,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Parse body
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  // 2. Parse body, under a hard byte cap
+  const read = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!read.ok) {
+    return NextResponse.json({ error: read.error }, { status: read.status });
   }
+  const body = read.body;
 
   // 3. Honeypot — if website field is populated, silently succeed (do not insert)
   if (body && typeof body === 'object' && 'website' in body && (body as Record<string, unknown>).website) {
