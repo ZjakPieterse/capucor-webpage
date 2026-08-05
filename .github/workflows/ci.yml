@@ -119,12 +119,25 @@ jobs:
       #
       # GitHub Actions secrets are BUILD-time. Worker secrets are separate and
       # are set by hand; nothing in CI sets them. This step is what notices.
+      # The public /api/health response is only {ok, app} — it deliberately no
+      # longer names our secrets to the internet. This step signs its request so
+      # it gets the per-variable detail, which is what makes the failure message
+      # below actionable. The key is never sent, only an HMAC over a timestamp.
+      # See src/lib/healthAuth.ts.
       - name: Verify deployed runtime secrets
         if: github.event_name == 'push'
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5 6; do
-            body="$(curl -sS -o /tmp/health.json -w '%{http_code}' https://capucor.com/api/health || echo 000)"
+            ts="$(date +%s)000"
+            sig="$(printf '%s.health' "$ts" \
+              | openssl dgst -sha256 -hmac "$SUPABASE_SERVICE_ROLE_KEY" -hex \
+              | awk '{print $NF}')"
+            body="$(curl -sS -o /tmp/health.json -w '%{http_code}' \
+              -H "x-capucor-timestamp: $ts" -H "x-capucor-signature: $sig" \
+              https://capucor.com/api/health || echo 000)"
             if [ "$body" = "200" ]; then
               echo "✓ capucor-web: every required runtime secret is present on the Worker."
               cat /tmp/health.json

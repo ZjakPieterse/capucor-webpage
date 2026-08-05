@@ -26,11 +26,15 @@ import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { renderDataRequestConfirmationText, renderDataRequestPendingOwnerText } from '@/lib/email/messages.mjs';
 
+// Its own bucket, so a POPIA request cannot be starved by — or starve — the
+// contact form or the signing path.
+const RATE_LIMIT_KEY = 'data-request';
+
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
   const ip = getClientIp(req.headers);
 
-  const { allowed, retryAfter } = await checkRateLimit(ip);
+  const { allowed, retryAfter } = await checkRateLimit(ip, { key: RATE_LIMIT_KEY });
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again in a few minutes.' },

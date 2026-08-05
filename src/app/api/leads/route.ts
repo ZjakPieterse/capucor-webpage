@@ -8,11 +8,16 @@ import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { renderLeadOwnerText } from '@/lib/email/messages.mjs';
 
+// Its own bucket. Sharing one counter across every public endpoint meant a
+// visitor who resubmitted the contact form could exhaust the allowance that
+// guards signing a proposal.
+const RATE_LIMIT_KEY = 'leads';
+
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limiting
   const ip = getClientIp(req.headers);
 
-  const { allowed, retryAfter } = await checkRateLimit(ip);
+  const { allowed, retryAfter } = await checkRateLimit(ip, { key: RATE_LIMIT_KEY });
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again in a few minutes.' },

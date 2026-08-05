@@ -20,11 +20,20 @@ import { renderDataRequestConfirmedOwnerText } from '@/lib/email/messages.mjs';
 
 type Outcome = 'confirmed' | 'expired' | 'invalid' | 'already' | 'error' | 'rate_limited';
 
+// Its own bucket. This is a GET reached by clicking a link in an email, so
+// mail-client prefetchers and a user clicking twice both land here; sharing the
+// submit endpoint's counter let that traffic exhaust unrelated flows. Roomier
+// than a form POST for the same reason — the token itself is the real gate.
+const RATE_LIMIT_KEY = 'data-request-confirm';
+const CONFIRM_LIMIT = 20;
+
 export async function GET(req: NextRequest) {
-  // Per-IP rate limit — same bucket as the submit endpoint, so the token
-  // lookup can't be hammered.
+  // Per-IP rate limit, so the token lookup can't be hammered.
   const ip = getClientIp(req.headers);
-  const { allowed } = await checkRateLimit(ip);
+  const { allowed } = await checkRateLimit(ip, {
+    key: RATE_LIMIT_KEY,
+    limit: CONFIRM_LIMIT,
+  });
   if (!allowed) {
     return htmlResponse('rate_limited');
   }

@@ -8,7 +8,7 @@
  * inbox for reference.
  *
  * Flow:
- *   1. Rate-limit per IP (same bucket as /api/leads).
+ *   1. Rate-limit per IP (its own bucket, not shared with /api/leads).
  *   2. Validate body with ProposalRequestSchema.
  *   3. Recompute pricing server-side from the live `brackets` table — the
  *      client payload is config only (services / brackets / tier); prices come
@@ -37,11 +37,15 @@ import { renderCreatedProposalClientEmail, renderCreatedProposalOwnerText } from
 
 const PROPOSAL_TTL_DAYS = 7;
 
+// Its own bucket. Creating a proposal writes rows and sends two emails, so it
+// keeps the standard allowance rather than the roomier signing one.
+const RATE_LIMIT_KEY = 'proposal-create';
+
 export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
   const ip = getClientIp(req.headers);
 
-  const { allowed, retryAfter } = await checkRateLimit(ip);
+  const { allowed, retryAfter } = await checkRateLimit(ip, { key: RATE_LIMIT_KEY });
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again in a few minutes.' },

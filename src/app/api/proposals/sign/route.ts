@@ -11,7 +11,7 @@
  * no longer enough to sign.
  *
  * Flow:
- *   1. Rate-limit per IP (same bucket as /api/leads).
+ *   1. Rate-limit per IP (its own, roomier bucket — see RATE_LIMIT_KEY below).
  *   2. Honeypot → silently succeed for bots.
  *   3. Validate body with SignProposalSchema + a decoded byte-size check.
  *   4. Look up the proposal by its opaque token (service-role admin client; no
@@ -38,6 +38,13 @@ import { sendEmail } from '@/lib/email/sendEmail';
 // Minutes a "Confirm & sign" link stays valid.
 const CONFIRM_TTL_MINUTES = 30;
 
+// Signing is the money path and must be the most generous bucket, not the most
+// contended one. Several signers behind a single office NAT share one IP, and a
+// signer who redraws a signature retries here. The opaque proposal token is the
+// real gate; this limit only stops someone hammering the endpoint.
+const RATE_LIMIT_KEY = 'proposal-sign';
+const SIGN_LIMIT = 30;
+
 interface ProposalSignRow {
   id: string;
   ref_number: string | null;
@@ -63,7 +70,10 @@ export async function POST(req: NextRequest) {
   // 1. Per-IP rate limit
   const ip = getClientIp(req.headers);
 
-  const { allowed, retryAfter } = await checkRateLimit(ip);
+  const { allowed, retryAfter } = await checkRateLimit(ip, {
+    key: RATE_LIMIT_KEY,
+    limit: SIGN_LIMIT,
+  });
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again in a few minutes.' },

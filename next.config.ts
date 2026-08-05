@@ -54,9 +54,22 @@ const SECURITY_HEADERS = [
     value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
   },
   // HSTS — only kicks in once served over HTTPS, harmless otherwise.
+  //
+  // ⚠️ THE EDGE IS CANONICAL, NOT THIS LINE. Cloudflare's SSL/TLS → Edge
+  // Certificates → HSTS setting (enabled 2026-08-03) rewrites this header on
+  // every response, so production actually serves whatever the dashboard says —
+  // measured 2026-08-05 as `max-age=15552000; includeSubDomains`. That is the
+  // right place for it to live: the edge also covers responses this app never
+  // generates, like Cloudflare's own error pages. Raising the value means
+  // changing the dashboard; editing this line will not move production.
+  //
+  // This stays as the fallback if edge HSTS is ever switched off. `preload` was
+  // dropped on 2026-08-05: it does nothing unless the domain is submitted to
+  // hstspreload.org, we have deliberately decided not to submit, and the edge
+  // strips it anyway. See capucor-docs/operations/cloudflare-hardening.md.
   {
     key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
+    value: "max-age=63072000; includeSubDomains",
   },
   { key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
 ];
@@ -131,6 +144,10 @@ const hostRedirects = [
 ];
 
 const nextConfig: NextConfig = {
+  // Don't advertise the framework on every response. Pure topology disclosure:
+  // it tells a scanner which CVE list to try and buys us nothing.
+  poweredByHeader: false,
+
   async headers() {
     return [
       {

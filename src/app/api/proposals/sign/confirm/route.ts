@@ -30,10 +30,20 @@ interface ConfirmRow extends FinalizeSignRow {
   sign_confirm_expires_at: string | null;
 }
 
+// The legally binding commit, and the last step of the money path. It gets its
+// own roomy bucket for the same reason as Step A: a shared office IP must never
+// be the thing that stops a client signing. The one-time confirm token, bound
+// to the proposal's own inbox, is the real gate.
+const RATE_LIMIT_KEY = 'proposal-sign-confirm';
+const CONFIRM_LIMIT = 30;
+
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
 
-  const { allowed, retryAfter } = await checkRateLimit(ip);
+  const { allowed, retryAfter } = await checkRateLimit(ip, {
+    key: RATE_LIMIT_KEY,
+    limit: CONFIRM_LIMIT,
+  });
   if (!allowed) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again in a few minutes.' },
