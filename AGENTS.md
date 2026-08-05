@@ -122,9 +122,9 @@ These are hard-won and load-bearing — ignoring them has taken production down:
 
 > **Working on the portal, `/internal`, login, or anything a signed-in user sees?
 > Wrong repo — go to [`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md).** None of that code is
-> here any more. It was deleted in **Phase 3 of the OS split (2026-08-02)**, after capucor.app had
-> been served by its own Worker since Phase 1c. Git history keeps it if you need to look something
-> up.
+> here any more; it was deleted in Phase 3 of the OS split (2026-08-02, `ac91b75`) and git history
+> keeps it. What went, what stayed and why is in
+> [`../capucor-docs/archive/capucor-web-phase-history.md`](../capucor-docs/archive/capucor-web-phase-history.md).
 
 ### What is left of the seam in this repo
 
@@ -186,6 +186,24 @@ failing application type error unless the generated function contract changes �
 paying client whose durable portal stage keeps retrying. `src/__tests__/portal-provision.test.ts`
 pins the exact RPC argument boundary; migration 021's OS tests pin the internal table invariants.
 Regenerate both repositories' database types whenever that RPC changes.
+
+### The cross-repo contract — one command, in the other repo
+
+⚠️ **`next.config.ts`'s `APP_PATHS`, the pinned runtime versions, the provisioning RPC boundary and
+every file hand-synced with capucor-os are declared in
+[`contracts/cross-repo-contract.json`](contracts/cross-repo-contract.json)** — canonical in
+`capucor-docs/contracts/`, vendored byte-identical here. Change one of those things and you must
+change the manifest too, in all three copies.
+
+- **CI enforces this repo's half** via `src/__tests__/cross-repo-contract.test.ts` (`npm test`).
+  It cannot see capucor-os; the recorded **digest** of each hand-synced file is what covers that gap.
+  Edit `src/lib/pricing.ts` here without editing capucor-os's copy and this repo goes red, naming
+  the counterpart.
+- **The full audit lives in capucor-os** — `npm run audit` there, read-only, all three repos, seven
+  checks. It is the only thing that can compare the two repos to each other, so run it from a full
+  workspace checkout before pushing a cross-repo change.
+- Re-record digests after a sanctioned change with `npm run audit -- --print-digests` (in
+  capucor-os) and paste into all three copies of the manifest.
 
 ### Cloudflare
 
@@ -252,9 +270,14 @@ Both apps share **one Supabase project**, but ⚠️ **this repo does not own th
 
 **`supabase/migrations/` lives in [`../capucor-os`](../capucor-os/AGENTS.md) and nowhere else** —
 this repo's copy was deleted in Phase 3 of the OS split. Write new migrations there, and apply them
-using the canonical OS migration workflow. **Do not use `supabase db push` yet:** the live remote
-migration ledger does not contain the historical migrations. Apply only the intended file through
-the dashboard SQL editor or `supabase db query --linked --file ...`, then run the OS `db:check`.
+using the canonical OS migration workflow.
+
+⛔ **`supabase db push` is forbidden.** The live database has **no migration ledger at all** — the
+`supabase_migrations` schema does not exist (measured read-only, 2026-08-05), so `db push` would try
+to run all 23 migrations against a database that already has every table. Apply only the intended
+file through the dashboard SQL editor or `supabase db query --linked --file …`, then run the OS
+`db:check`. Audit and reviewed-but-unexecuted repair plan:
+[`../capucor-docs/operations/migration-ledger-repair-plan.md`](../capucor-docs/operations/migration-ledger-repair-plan.md).
 
 That matters here because marketing still initiates OS-owned provisioning at signing
 (`lib/portal/provision.ts` → `provision_from_signed_proposal`). See the **Schema seam** warning
@@ -484,12 +507,11 @@ billing decision** (documented in `../capucor-docs/operations/audit-portal-tasks
 - **Shop one-offs** will use **PayFast** (signed redirect + an ITN webhook validated by MD5
   signature + a server postback) — not yet wired in code.
 
-**The Paystack stubs were deleted on 2026-08-01** (Phase 0 of the Capucor OS split). Removed:
-`api/subscriptions/route.ts`, `api/webhooks/paystack/route.ts`, `lib/paystack.ts`, their schemas
-and tests, and the `PAYSTACK_SECRET_KEY` env var. None of it carried over — the shop needs the
-**PayFast ITN/MD5** scheme, not Paystack's HMAC-SHA512, and subscriptions are provisioned on sign
-rather than by a payment webhook. `lib/security.ts` (`timingSafeEqual`) stayed; it is used by
-`/api/revalidate` and both cron routes.
+⛔ **There is no Paystack code here.** It was deleted on 2026-08-01 and **none of it is worth
+resurrecting** — the shop needs PayFast's ITN/MD5 scheme, not Paystack's HMAC-SHA512, and
+subscriptions are provisioned on sign rather than by a payment webhook. Inventory of what went, in
+[`../capucor-docs/archive/capucor-web-phase-history.md`](../capucor-docs/archive/capucor-web-phase-history.md).
+`lib/security.ts` (`timingSafeEqual`) stayed; it is used by `/api/revalidate` and both cron routes.
 
 **When the PayFast shop path lands it starts from scratch:** a signed redirect plus an ITN webhook
 validated by MD5 signature and a server postback.

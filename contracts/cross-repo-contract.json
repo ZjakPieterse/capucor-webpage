@@ -1,0 +1,237 @@
+{
+  "$comment": [
+    "THE CROSS-REPO CONTRACT. Every invariant that spans capucor-web, capucor-os and",
+    "capucor-docs, in one machine-readable place instead of prose in two AGENTS.md files.",
+    "",
+    "WHY IT EXISTS. The 2026-08-04 audit kept finding the same four classes of drift —",
+    "coupled dependencies, the provisioning/schema contract, backup coverage, and files",
+    "duplicated on purpose — and every single one was caught by a person noticing, not by",
+    "anything failing. Drift that only a careful reader catches is drift that ships.",
+    "",
+    "HOW IT IS ENFORCED. `capucor-os/scripts/audit-cross-repo.mjs` (npm run audit) reads",
+    "this file and checks every class against all three repos. It is READ-ONLY: it changes",
+    "nothing, writes nothing, and touches no production state.",
+    "",
+    "WHY THREE COPIES. capucor-docs holds the canonical copy; capucor-web and capucor-os",
+    "each carry a byte-identical vendored copy under contracts/. A CI job runs in ONE",
+    "repo's checkout and cannot see its siblings, so a vendored copy is the only way the",
+    "in-repo test (src/__tests__/cross-repo-contract.test.ts) can enforce anything from",
+    "here. The cross-repo audit compares the three copies to each other, so a drifted copy",
+    "is caught by the same command it belongs to. Edit the capucor-docs copy first."
+  ],
+
+  "version": 1,
+  "lastReviewed": "2026-08-05",
+  "canonical": "capucor-docs/contracts/cross-repo-contract.json",
+  "repos": {
+    "web": "capucor-web",
+    "os": "capucor-os",
+    "docs": "capucor-docs"
+  },
+
+  "coupledDependencies": {
+    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.x requires Next >=16.2.11, and moving one side alone can make a clean install select an adapter whose Next peer range the app does not satisfy. React and supabase-js are shared because both Workers render the same components and speak to the same PostgREST. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped.",
+    "exact": {
+      "next": "16.3.0",
+      "eslint-config-next": "16.3.0",
+      "@opennextjs/cloudflare": "1.20.2",
+      "wrangler": "4.86.0",
+      "react": "19.2.4",
+      "react-dom": "19.2.4",
+      "@supabase/supabase-js": "2.112.0",
+      "resend": "6.18.1"
+    },
+    "node": {
+      "version": "24",
+      "why": "The dev box runs Node 24 / npm 11. CI ran Node 20 until 2026-08-03 and a lockfile written by npm 11 was rejected outright by npm 10. `.nvmrc` and the `setup-node` step in ci.yml must move together or that trap returns.",
+      "declaredIn": [".nvmrc", ".github/workflows/ci.yml"]
+    }
+  },
+
+  "provisioning": {
+    "why": "A client signs on capucor.com and capucor-web starts a write whose schema lives in capucor-os. A rename on either side produces NO compile error and NO failing test in either repo. The symptom is a paying client whose durable portal stage keeps retrying.",
+    "rpc": "provision_from_signed_proposal",
+    "args": ["p_proposal_id", "p_user_id", "p_org_slug"],
+    "caller": "capucor-web/src/lib/portal/provision.ts",
+    "definedIn": "capucor-os/supabase/migrations/022_fix_on_conflict_ambiguity.sql",
+    "supersedes": "capucor-os/supabase/migrations/021_recoverable_proposal_fulfilment.sql",
+    "seamTables": {
+      "client_orgs": ["display_name", "slug", "primary_contact_email", "status"],
+      "client_org_members": ["client_org_id", "user_id", "role"],
+      "subscriptions": [
+        "client_org_id",
+        "email",
+        "full_name",
+        "business",
+        "services",
+        "brackets",
+        "tier_slug",
+        "monthly_total_zar",
+        "vat_zar",
+        "total_charge_zar",
+        "status",
+        "current_period_start",
+        "current_period_end"
+      ],
+      "proposals": ["status", "client_org_id", "signed_at", "business_name", "email", "first_name", "last_name"]
+    },
+    "tripwires": [
+      "capucor-web/src/__tests__/portal-provision.test.ts",
+      "capucor-os/src/__tests__/proposal-fulfilment-schema.test.ts"
+    ],
+    "blindSpot": "Since migration 017 an `after insert` trigger (client_orgs_default_entity -> ensure_default_entity) runs INSIDE the provisioning insert. Both tripwires are blind to it — one drives an in-memory fake, the other checks table invariants. If it ever raises, the insert aborts and a paying client gets no portal access. Verify it live, per PO-01's seam test."
+  },
+
+  "handSynced": {
+    "why": "These files exist in both app repos and a one-sided edit costs money or breaks a seam, with no compile error and no failing test. The per-repo digests below are what lets a SINGLE repo's CI notice a one-sided edit: change the file, the digest moves, that repo goes red naming its counterpart. Regenerate the values with `npm run audit -- --print-digests` in capucor-os and paste them into all three copies of this file.",
+    "pairModes": {
+      "byte": "The two copies must be identical after whitespace normalisation.",
+      "code": "The two copies must be identical after comments and blank lines are stripped. Each repo keeps its own explanatory banner — they all carry one, and they should.",
+      "independent": "The two copies legitimately differ. No cross-repo equality is asserted; the digests still pin each side so a one-sided edit is visible. `expectedCodeDiffLines` bounds how far apart they are allowed to drift."
+    },
+    "files": [
+      {
+        "path": "src/lib/pricing.ts",
+        "pairMode": "code",
+        "why": "Both repos price the same proposals off the same `brackets` table — capucor.com when a lead builds one, capucor.app when staff amend one. Drift means two different quotes for one selection.",
+        "digest": { "web": "sha256:9e0d135628b34e495d0d703f7859801fce6235fa4d5a98fd86c6e6553c6a6ffc", "os": "sha256:9e0d135628b34e495d0d703f7859801fce6235fa4d5a98fd86c6e6553c6a6ffc" }
+      },
+      {
+        "path": "src/lib/proposalPricing.ts",
+        "pairMode": "independent",
+        "expectedCodeDiffLines": 3,
+        "why": "Same pricing math, but capucor-os routes the bracket-fetch failure through its own `lib/log.ts` while capucor-web still uses console.error. That is the ONLY sanctioned divergence: three lines (one import, one call site each). If the count moves, the math itself may have drifted.",
+        "digest": { "web": "sha256:055ae8bd24dd8e3bbf982f651815498f821c7971b65fff7280423381d012eb26", "os": "sha256:aef1a4e7a25ad2d9a8b127edbe13578eb0d957daf31815677e8f777ea971d960" }
+      },
+      {
+        "path": "src/config/tiers.ts",
+        "pairMode": "code",
+        "why": "PRICING_ADDONS is the server-side WHITELIST of accepted add-on slugs and their prices, not display strings. Reprice an add-on in one repo only and the two apps quote different totals, or one silently drops an add-on the other charges for.",
+        "digest": { "web": "sha256:f09495c5208a2a79befdc456b1a851bf777ef7c5ef9a6f26539ba47b1a7d7bc2", "os": "sha256:f09495c5208a2a79befdc456b1a851bf777ef7c5ef9a6f26539ba47b1a7d7bc2" }
+      },
+      {
+        "path": "src/lib/portal/orgSlug.ts",
+        "pairMode": "code",
+        "why": "Both repos mint into the SAME unique client_orgs.slug column from two different Workers. A divergence in the slugify rule or the collision suffix surfaces as a unique-constraint violation on a paying client's first insert.",
+        "digest": { "web": "sha256:6e180e1907f11f580df973fec7abd97f4acf6ab900018d4d529c977d51fcecc6", "os": "sha256:6e180e1907f11f580df973fec7abd97f4acf6ab900018d4d529c977d51fcecc6" }
+      },
+      {
+        "path": "src/lib/email/messages.mjs",
+        "pairMode": "byte",
+        "why": "The retry runner in capucor-os rebuilds a capucor-web message from this file and sends it under the ORIGINAL idempotency key. A divergence means the retry sends different content from the original, inside Resend's 24-hour idempotency window.",
+        "digest": { "web": "sha256:cc7bc83b272707079368f41f9f0a0e00f3af74599641f40684577028813282d3", "os": "sha256:cc7bc83b272707079368f41f9f0a0e00f3af74599641f40684577028813282d3" }
+      }
+    ]
+  },
+
+  "knownDuplicates": {
+    "why": "Same-path files that are identical in both repos but are not worth the friction of a pinned digest — design primitives, thin client factories, and generated types. The audit still enforces the declared relationship across repos. Its real job is the INVERSE check: an identical same-path file that appears in neither this list nor handSynced is reported, so a new accidental duplicate has to be classified rather than quietly accumulate.",
+    "entries": [
+      {
+        "glob": "src/components/ui/*.tsx",
+        "pairMode": "byte",
+        "why": "shadcn/Base-Nova primitives. Drift is a visual inconsistency between the marketing site and the OS, not a data bug — but the two surfaces are meant to look like one product."
+      },
+      {
+        "glob": "src/lib/supabase/{admin,anon}.ts",
+        "pairMode": "byte",
+        "why": "The service-role and cookieless client factories. Both repos read the same tables under the same policies; a divergence here is a silent-zero-rows bug."
+      },
+      { "glob": "src/lib/token.ts", "pairMode": "byte", "why": "One-time link tokens minted by capucor-web and consumed by flows both repos touch." },
+      { "glob": "src/lib/utils.ts", "pairMode": "byte", "why": "cn() plus firstOfNextMonth(), which decides the first debit date shown on a proposal and written into a subscription period." },
+      { "glob": "src/lib/rate-limit.ts", "pairMode": "byte", "why": "The per-IP token bucket. Namespacing rules differ per repo but the bucket implementation must not." },
+      { "glob": "src/lib/getClientIp.ts", "pairMode": "byte", "why": "On Cloudflare the real client IP is CF-Connecting-IP; x-forwarded-for is the worker loopback and collapses every visitor into one bucket. Both repos rate-limit and both record signer IPs." },
+      { "glob": "src/lib/readJsonBody.ts", "pairMode": "code", "why": "The PH-08b body cap. Per-route limits differ; the content-length-then-running-count helper must not." },
+      { "glob": "src/lib/healthAuth.ts", "pairMode": "code", "why": "The HMAC that gates detailed /api/health. Both CI workflows sign with the same scheme; a divergence silently drops one repo back to the public view." },
+      { "glob": "src/types/db.ts", "pairMode": "byte", "why": "Generated from ONE Supabase project by `npm run db:types`. If the two copies differ, one repo regenerated after a migration and the other did not — which is the only way this file can drift at all." },
+      { "glob": "{eslint.config.mjs,postcss.config.mjs,next-env.d.ts}", "pairMode": "byte", "why": "Toolchain configuration. Both Workers are built by the same pinned Next/OpenNext pair, so a divergence here means one repo is being linted, styled or bundled differently from the thing it is supposed to be identical to." },
+      { "glob": "open-next.config.ts", "pairMode": "code", "why": "The same incremental-cache override in both, but the COMMENTS deliberately differ: capucor-web's describes real ISR on / and /pricing, while capucor-os's records that the same comment was copied over in Phase 1a and was false there — no /api/revalidate, and `revalidate` is banned on every per-user route. Each Worker must keep its OWN KV namespace regardless; both apps have a \"/\" route key, so a shared one makes one app serve the other's cached page." },
+      { "glob": "src/config/site.ts", "pairMode": "independent", "why": "Shared URLs and senders, but each repo declares its own origin defaults." },
+      { "glob": "src/types/index.ts", "pairMode": "independent", "why": "Phase 3 dropped the OS-only types (SubscriptionSummary, SubscriptionStatus, ProposalRow) from capucor-web's copy. Only the pricing shapes are shared — this is no longer a straight mirror." }
+    ]
+  },
+
+  "syncedTriples": {
+    "why": "Files that must be identical in all three repos. Checked repo-to-repo by the cross-repo audit only; a digest recorded inside a file cannot cover that file itself.",
+    "files": [
+      { "path": "contracts/cross-repo-contract.json", "in": ["docs", "web", "os"] },
+      { "path": "contracts/contract.mjs", "in": ["docs", "web", "os"] }
+    ]
+  },
+
+  "routeSeam": {
+    "why": "One Worker per domain, split by host-based redirects, with each repo holding one half of the table. A path dropped from the wrong list turns an old bookmark or an already-sent email link into a 404.",
+    "web": {
+      "file": "next.config.ts",
+      "listName": "APP_PATHS",
+      "mustContain": ["/portal", "/portal/:path*", "/internal", "/internal/:path*", "/login", "/login/:path*", "/onboarding"]
+    },
+    "os": {
+      "file": "next.config.ts",
+      "listName": "MARKETING_PATHS",
+      "mustContain": ["/", "/pricing", "/privacy", "/resources/:path*", "/proposal/:path*"],
+      "note": "/proposal/:path* is the one that looks removable and is not: the signing document lives on capucor.com, but proposal links in already-sent emails were minted against capucor.app."
+    },
+    "forbiddenSources": ["/api", "/api/:path*", "/api/(.*)", "/_next/:path*", "/brand/:path*"],
+    "forbiddenWhy": "A 301 on a POST downgrades it to GET and drops the body. Redirecting /_next or /brand off capucor.app strips the CSS and logo from every portal page — which is why the lists are explicit rather than a negative-lookahead catch-all."
+  },
+
+  "backup": {
+    "why": "The dump is the only copy of the signed debit-order mandates. Supabase Free includes no platform backups and no PITR.",
+    "keyPrefix": "db-backup/",
+    "keyPrefixDeclaredIn": [
+      "capucor-os/scripts/upload-backup.mjs (KEY_PREFIX)",
+      "Cloudflare R2 lifecycle rule — 185-day expiry (dashboard only, NOT checkable from here)",
+      "Cloudflare R2 bucket-lock rule — 180-day retention (dashboard only, NOT checkable from here)"
+    ],
+    "keyPrefixWarning": "One fact in three places and only the code half is testable. Changing KEY_PREFIX without changing both Cloudflare rules silently un-retains and un-expires every object.",
+    "tableListModule": "capucor-os/scripts/backup-tables.mjs",
+    "coverageGate": "capucor-os/src/__tests__/backup-coverage.test.ts",
+    "zeroDependencyWorkflows": [
+      "capucor-os/.github/workflows/cron-backup.yml",
+      "capucor-os/.github/workflows/cron-email-reconciliation.yml"
+    ],
+    "zeroDependencyWhy": "These jobs are checkout + setup-node + `node script.mjs` BY DESIGN. No `npm ci`, which is the difference between a run billing one minute against the free 2,000 and billing five. Do not add one.",
+    "weakestLink": "GitHub disables scheduled workflows after 60 days of repository inactivity, which stops the job and with it BOTH destinations. There is no alert."
+  },
+
+  "migrationLedger": {
+    "state": "absent",
+    "evidence": "2026-08-05, read-only query against the linked project: `select count(*) from information_schema.schemata where schema_name = 'supabase_migrations'` returned 0. The ledger SCHEMA does not exist, so the ledger holds nothing at all — not 001-017 and not 018-022. This is a stronger statement than the earlier prose ('does not contain 001-017'), which assumed the table existed and was partially filled.",
+    "pushForbidden": true,
+    "pushForbiddenWhy": "A 2026-08-04 `supabase db push` dry run proposed replaying every plain `create table` migration from 001 against a live database that already has all 27 tables. Until the repair plan is reviewed, apply the one intended file with `supabase db query --linked --file` and let `npm run db:check` prove the result.",
+    "repairPlan": "capucor-docs/operations/migration-ledger-repair-plan.md",
+    "filenamePattern": "^\\d+_[a-z0-9_]+\\.sql$",
+    "filenamePatternWhy": "The Supabase CLI parses a migration version as the leading digits up to the first underscore. A suffixed name is not skipped with a warning — it is not seen as a migration at all.",
+    "knownNonConforming": ["009a_leads_source_roi_magnet.sql", "009b_proposal_addons.sql"],
+    "knownNonConformingWhy": "There were two 009_ files until 2026-08-03. They were suffixed rather than renumbered so the file order still reflects when they were actually applied. Renaming them is part of the repair plan, not a tidy-up to do casually."
+  },
+
+  "fixedPaths": {
+    "why": "Two SessionStart hooks in .claude/hooks/ read these files by hard-coded path and grep for a control line. Moving or renaming either breaks the nudge SILENTLY — the hook exits 0 on a missing file by design, so nothing ever reports it.",
+    "entries": [
+      {
+        "path": "AGENTS.md",
+        "repo": "root",
+        "mustMatch": "Last reviewed[^0-9]*\\d{4}-\\d{2}-\\d{2}",
+        "readBy": ".claude/hooks/self-review-nudge.sh"
+      },
+      {
+        "path": "capucor-docs/operations/cloudflare-hardening.md",
+        "repo": "root",
+        "mustMatch": "<!-- reminder: due=\\d{4}-\\d{2}-\\d{2} status=[a-z]+ -->",
+        "readBy": ".claude/hooks/cloudflare-reminder.sh"
+      }
+    ]
+  },
+
+  "docs": {
+    "why": "The board, the tracker and the two AGENTS.md files are load-bearing navigation. A relative link that stopped resolving is the cheapest possible drift to catch and the easiest to leave rotting.",
+    "linkCheckRoots": ["capucor-docs", "capucor-web/AGENTS.md", "capucor-os/AGENTS.md", "AGENTS.md"],
+    "linkCheckExclude": ["capucor-docs/archive"],
+    "linkCheckExcludeWhy": "archive/ is frozen history. Its documents cite files at the paths they had when the work was done, and a good number of those files were deleted in Phase 3 of the OS split. Rewriting those links to today's paths would make the record say something that was never true, and deleting them would lose the citation. A link checker that forces a historical document to describe the present is a checker that gets switched off.",
+    "canonicalInstructionFiles": ["AGENTS.md", "capucor-web/AGENTS.md", "capucor-os/AGENTS.md"],
+    "thinPointers": ["CLAUDE.md", "GEMINI.md", "capucor-web/CLAUDE.md", "capucor-os/CLAUDE.md"],
+    "thinPointerMaxLines": 12
+  }
+}
