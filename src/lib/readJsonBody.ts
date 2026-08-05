@@ -26,6 +26,12 @@
  * being refused: the counted read bounds it anyway, and treating a malformed
  * header as "too large" would answer 413 to something that is not.
  *
+ * ⚠️ What this does NOT do: it cannot un-receive bytes. A sender that streams
+ * with no `content-length` still gets its first chunk into memory before the
+ * count can refuse it. What the cap buys is that the bytes are never **decoded**
+ * and never **parsed**, which is where the CPU actually goes — and check (1)
+ * removes even the read for anything that declares its size honestly.
+ *
  * Callers own their own response shape — this returns a status and a message
  * rather than a NextResponse, so each route keeps the error envelope its client
  * already parses.
@@ -51,6 +57,8 @@ export async function readJsonBody(
   maxBytes: number,
 ): Promise<ReadJsonResult> {
   // 1. Refuse a credible oversized declaration before reading a single byte.
+  //    An absent header gives Number(null) === 0, which falls through to the
+  //    counted read — that is the intended path for a chunked request, not a bug.
   const declared = Number(req.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > maxBytes) {
     return { ok: false, status: 413, error: TOO_LARGE };
