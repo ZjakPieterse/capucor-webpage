@@ -184,6 +184,47 @@ describe('route body bounds', () => {
   });
 });
 
+describe('routes that read no body', () => {
+  // PH-08b closed these as a FINDING rather than adding a cap: an unconsumed
+  // request body costs no CPU, so there is nothing to bound. But that finding is
+  // only true while they keep not reading one — so it is tested, not merely
+  // written down. If someone later adds a body read to one of these, it must
+  // arrive with a cap, and these tests are what says so.
+
+  it('the ?secret= routes ignore an oversized body and answer their normal 401', async () => {
+    // A 413 here would mean someone added a body read and a cap (fine, but the
+    // finding is stale); a 500 would mean the body reached something that choked
+    // on it. The ordinary 401 is the proof that the body was never touched.
+    const { POST: revalidatePost } = await import('@/app/api/revalidate/route');
+    const { POST: pruneLeadsPost } = await import('@/app/api/cron/prune-leads/route');
+    const { POST: expireProposalsPost } = await import(
+      '@/app/api/cron/expire-proposals/route'
+    );
+
+    for (const [name, run] of [
+      ['/api/revalidate', revalidatePost],
+      ['/api/cron/prune-leads', pruneLeadsPost],
+      ['/api/cron/expire-proposals', expireProposalsPost],
+    ] as const) {
+      const res = await run(makeJsonRequest(`http://test${name}`, null, { raw: OVERSIZED }));
+      expect(res.status, `${name} reacted to an oversized body it should ignore`).toBe(401);
+    }
+  });
+
+  it('the GET-only routes expose no POST handler at all', async () => {
+    // The cheapest possible bound: there is no POST to send a body to. Adding one
+    // fails this test, which is the prompt to give it readJsonBody + a cap.
+    const health = await import('@/app/api/health/route');
+    const dataRequestConfirm = await import('@/app/api/data-request/confirm/route');
+
+    expect('POST' in health, '/api/health gained a POST — give it a body cap').toBe(false);
+    expect(
+      'POST' in dataRequestConfirm,
+      '/api/data-request/confirm gained a POST — give it a body cap',
+    ).toBe(false);
+  });
+});
+
 describe('readJsonBody', () => {
   const req = (payload: string, headers: Record<string, string> = {}) =>
     new NextRequest('http://test/x', {
