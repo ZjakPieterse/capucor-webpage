@@ -300,12 +300,16 @@ Both apps share **one Supabase project**, but ⚠️ **this repo does not own th
 this repo's copy was deleted in Phase 3 of the OS split. Write new migrations there, and apply them
 using the canonical OS migration workflow.
 
-⛔ **`supabase db push` is forbidden.** The live database has **no migration ledger at all** — the
-`supabase_migrations` schema does not exist (measured read-only, 2026-08-05), so `db push` would try
-to run all 23 migrations against a database that already has every table. Apply only the intended
-file through the dashboard SQL editor or `supabase db query --linked --file …`, then run the OS
-`db:check`. Audit and reviewed-but-unexecuted repair plan:
+✅ **`supabase db push` is allowed since 2026-08-06**, from `capucor-os` and nowhere else. It was
+forbidden until then because the live database had **no migration ledger at all** — the
+`supabase_migrations` schema did not exist (measured read-only, 2026-08-05 and again on 2026-08-06),
+so `db push` would have tried to run all 23 migrations against a database that already had every
+table. The ledger was created and backfilled on 2026-08-06 and the dry run now proposes nothing.
+Whichever way a migration is applied, the OS `db:check` is still what proves it. Dated record:
 [`../capucor-docs/operations/migration-ledger-repair-plan.md`](../capucor-docs/operations/migration-ledger-repair-plan.md).
+
+⛔ **`009a` / `009b` are deliberately absent from the ledger** and must stay that way — a ledger
+version with no matching local file blocks *every* push. Measured 2026-08-06.
 
 That matters here because marketing still initiates OS-owned provisioning at signing
 (`lib/portal/provision.ts` → `provision_from_signed_proposal`). See the **Schema seam** warning

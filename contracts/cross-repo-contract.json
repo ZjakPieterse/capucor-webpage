@@ -245,15 +245,18 @@
   },
 
   "migrationLedger": {
-    "state": "absent",
-    "evidence": "2026-08-05, read-only query against the linked project: `select count(*) from information_schema.schemata where schema_name = 'supabase_migrations'` returned 0. The ledger SCHEMA does not exist, so the ledger holds nothing at all — not 001-017 and not 018-022. This is a stronger statement than the earlier prose ('does not contain 001-017'), which assumed the table existed and was partially filled.",
-    "pushForbidden": true,
-    "pushForbiddenWhy": "A 2026-08-04 `supabase db push` dry run proposed replaying every plain `create table` migration from 001 against a live database that already has all 27 tables. Until the repair plan is reviewed, apply the one intended file with `supabase db query --linked --file` and let `npm run db:check` prove the result.",
+    "state": "backfilled",
+    "backfilledOn": "2026-08-06",
+    "evidence": "Until 2026-08-06 the ledger SCHEMA did not exist — `select count(*) from information_schema.schemata where schema_name = 'supabase_migrations'` returned 0, measured read-only on 2026-08-05 and again immediately before the repair. The repair created it with `supabase migration repair --status applied` (the CLI's own command, so the DDL is the CLI's and not hand-rolled) and backfilled the 21 CLI-parseable versions 001-008 and 010-022. `supabase db push --dry-run` now reports `Remote database is up to date`. The schema was proven unmoved either side: `npm run db:check` passed 27 tables from 23 migrations, and `npm run db:types` regenerated with NO diff against the committed src/types/db.ts.",
+    "pushForbidden": false,
+    "pushAllowedSince": "2026-08-06",
+    "pushAllowedWhy": "Reviewed and approved by Zjak on 2026-08-06, then executed against a proven backup. The ban existed because a 2026-08-04 dry run proposed replaying every plain `create table` migration from 001 against a live database that already had all 27 tables. With the ledger honest, the dry run proposes nothing. `npm run db:check` remains the gate that actually proves the result and still runs in CI — db push replaces the apply step, not the proof.",
     "repairPlan": "capucor-docs/operations/migration-ledger-repair-plan.md",
+    "ledgerInvariant": "Every version in the remote ledger MUST have a matching local migration file. A remote-only version is not harmlessly ignored: `supabase db push` aborts with 'Remote migration versions not found in local migrations directory' and EVERY push stays blocked until the row is removed. MEASURED 2026-08-06 on CLI 2.93.1 — the repair first backfilled 0091/0092 for the two 009 files, and the dry run refused to run at all. This is why the two files below are deliberately absent from the ledger.",
     "filenamePattern": "^\\d+_[a-z0-9_]+\\.sql$",
-    "filenamePatternWhy": "The Supabase CLI parses a migration version as the leading digits up to the first underscore. A suffixed name is not skipped with a warning — it is not seen as a migration at all.",
+    "filenamePatternWhy": "The Supabase CLI parses a migration version as the leading digits up to the first underscore. A letter-suffixed name is not merely mis-ordered — the file is not treated as a migration at all. The CLI does print `Skipping migration <file>... (file name must match pattern)`, so it is visible if you read the output, but nothing fails.",
     "knownNonConforming": ["009a_leads_source_roi_magnet.sql", "009b_proposal_addons.sql"],
-    "knownNonConformingWhy": "There were two 009_ files until 2026-08-03. They were suffixed rather than renumbered so the file order still reflects when they were actually applied. Renaming them is part of the repair plan, not a tidy-up to do casually."
+    "knownNonConformingWhy": "There were two 009_ files until 2026-08-03. They were suffixed rather than renumbered so the file order still reflects when they were actually applied. They are applied in the database and are deliberately NOT in the ledger: the CLI cannot see the files, so it will never propose them, and recording them by hand blocks every push (see ledgerInvariant). Decided 2026-08-06 — the ledger's two-row hole lives in prose here rather than renaming files that four documents reference. If they are ever renumbered to conforming names, backfill the matching versions in the SAME change."
   },
 
   "fixedPaths": {
