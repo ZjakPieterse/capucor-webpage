@@ -181,11 +181,27 @@ in Phase 3). Marketing still starts provisioning at signing:
 then calls the OS-owned `provision_from_signed_proposal` transaction. That RPC alone writes
 `client_orgs`, `client_org_members`, `subscriptions` and `proposals`.
 
-A rename or reshape of any of those in a capucor-os migration produces **no compile error and no
+A rename or reshape of any of those in a capucor-os migration produces **no compile error** and no
 failing application type error unless the generated function contract changes — the symptom is a
 paying client whose durable portal stage keeps retrying. `src/__tests__/portal-provision.test.ts`
 pins the exact RPC argument boundary; migration 021's OS tests pin the internal table invariants.
 Regenerate both repositories' database types whenever that RPC changes.
+
+⚠️ **A capucor-os trigger runs INSIDE the insert this repo starts.** Since migration 017,
+`client_orgs` carries an `after insert` trigger — `client_orgs_default_entity` →
+`ensure_default_entity()` — that creates the org's primary `entities` row. **If it ever raises, the
+insert aborts and a paying client signs and never gets portal access.** So a reshape of `entities`,
+a table this repo never touches and which is not one of the four seam tables, is still a change to
+*this* repo's provisioning path.
+
+⚠️ **`portal-provision.test.ts` is permanently blind to it** — it drives an in-memory fake Supabase
+client, so it is a *rename* tripwire and would stay green against a trigger that raises on every
+insert. ✅ The risk itself is **cleared**: PO-01 proved it live on 2026-08-03, and
+`capucor-os/e2e/global-setup.ts` re-proves it on every `npm run e2e` by inserting a real fixture org
+and throwing by name if the entity is not created (green on 2026-08-05, after migration 018 altered
+that function). **That e2e suite is the live check — run it in capucor-os after any change to
+`entities` or the trigger.** Full account: `../capucor-os/AGENTS.md` → "Schema seam", and
+`provisioning.blindSpotCleared` in the contract manifest.
 
 ### The cross-repo contract — one command, in the other repo
 
