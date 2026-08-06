@@ -221,6 +221,12 @@
         "repo": "root",
         "mustMatch": "<!-- reminder: due=\\d{4}-\\d{2}-\\d{2} status=[a-z]+ -->",
         "readBy": ".claude/hooks/cloudflare-reminder.sh"
+      },
+      {
+        "path": "capucor-docs/plans/README.md",
+        "repo": "root",
+        "mustMatch": "<!-- zjak-list-nudge: due=\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2} status=[a-z]+ -->",
+        "readBy": ".claude/hooks/zjak-list-nudge.sh"
       }
     ]
   },
