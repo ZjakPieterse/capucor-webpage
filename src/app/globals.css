@@ -895,23 +895,6 @@
   );
 }
 
-/* ─── FAQ accordion item open-state glow (no lift; content jumping is bad UX) */
-[data-slot="accordion-item"] {
-  transition:
-    border-color 360ms ease,
-    box-shadow 360ms ease;
-  border-radius: calc(var(--radius) * 0.8);
-  padding: 0 0.75rem;
-  margin: 0.25rem -0.75rem;
-  border: 1px solid transparent;
-}
-
-[data-slot="accordion-item"][data-open] {
-  border-color: color-mix(in oklch, var(--primary) 28%, var(--border));
-  box-shadow:
-    0 12px 36px -22px color-mix(in oklch, var(--primary) 38%, transparent),
-    inset 0 1px 0 color-mix(in oklch, white 6%, transparent);
-}
 
 /* ─── Pricing calculator — Step 1 service card selection badge ───────────── */
 .service-card {

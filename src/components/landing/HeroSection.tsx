@@ -118,17 +118,27 @@ function FinanceCommandCentre() {
             {dates.closeMonth} close complete. Three items flagged for review.
           </div>
         </div>
+        {/* ⚠️ This panel is a DESIGN MOCKUP with hardcoded figures, not a live
+            dashboard, and it must never present itself as one. It used to carry
+            a pulsing cyan "Live" badge next to invented numbers (Cash Runway
+            4.2 months, Debtor Days 32), on the homepage of an accounting firm
+            asking visitors to sign a debit-order mandate. Capucor does not yet
+            surface any of these figures to a client — the portal's finance page
+            reads "Connect Xero (coming soon)". Keep the label honest: if this
+            ever does show real data, change the copy in the same commit that
+            makes it true. */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-          style={{ background: "rgba(34,211,238,.12)", color: "#22d3ee" }}
+          style={{
+            background: "rgba(255,255,255,.06)",
+            color: "rgba(255,255,255,.55)",
+          }}
         >
-          <motion.div
+          <div
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#22d3ee", boxShadow: "0 0 5px #22d3ee" }}
-            animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
+            style={{ background: "rgba(255,255,255,.35)" }}
           />
-          Live
+          Example
         </div>
       </div>
 
@@ -287,6 +297,13 @@ function FinanceCommandCentre() {
           </div>
         </div>
       </div>
+
+      {/* Says in words what the "Example" badge says in a glance. Two labels
+          because the badge is small and this is the claim that has to be
+          unambiguous. */}
+      <p className="relative z-20 mt-3 text-[10px] leading-relaxed text-muted-foreground">
+        Illustrative example. The figures shown are not client data.
+      </p>
     </motion.div>
   );
 }
