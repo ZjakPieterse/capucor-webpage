@@ -21,7 +21,7 @@
   ],
 
   "version": 1,
-  "lastReviewed": "2026-08-05",
+  "lastReviewed": "2026-08-06",
   "canonical": "capucor-docs/contracts/cross-repo-contract.json",
   "repos": {
     "web": "capucor-web",
@@ -98,10 +98,9 @@
       },
       {
         "path": "src/lib/proposalPricing.ts",
-        "pairMode": "independent",
-        "expectedCodeDiffLines": 3,
-        "why": "Same pricing math, but capucor-os routes the bracket-fetch failure through its own `lib/log.ts` while capucor-web still uses console.error. That is the ONLY sanctioned divergence: three lines (one import, one call site each). If the count moves, the math itself may have drifted.",
-        "digest": { "web": "sha256:055ae8bd24dd8e3bbf982f651815498f821c7971b65fff7280423381d012eb26", "os": "sha256:aef1a4e7a25ad2d9a8b127edbe13578eb0d957daf31815677e8f777ea971d960" }
+        "pairMode": "code",
+        "why": "Both repos price the same proposals off the same `brackets` table. It carried three sanctioned divergent lines until 2026-08-06 — capucor-os logged the bracket-fetch failure through `lib/log.ts`, capucor-web through console.error — and giving capucor-web the same `lib/log.ts` collapsed that to zero. A BOUNDED divergence still needs a reader to judge whether the bound is measuring the right thing; an equality does not.",
+        "digest": { "web": "sha256:aef1a4e7a25ad2d9a8b127edbe13578eb0d957daf31815677e8f777ea971d960", "os": "sha256:aef1a4e7a25ad2d9a8b127edbe13578eb0d957daf31815677e8f777ea971d960" }
       },
       {
         "path": "src/config/tiers.ts",
@@ -141,6 +140,8 @@
       { "glob": "src/lib/utils.ts", "pairMode": "byte", "why": "cn() plus firstOfNextMonth(), which decides the first debit date shown on a proposal and written into a subscription period." },
       { "glob": "src/lib/rate-limit.ts", "pairMode": "byte", "why": "The per-IP token bucket. Namespacing rules differ per repo but the bucket implementation must not." },
       { "glob": "src/lib/getClientIp.ts", "pairMode": "byte", "why": "On Cloudflare the real client IP is CF-Connecting-IP; x-forwarded-for is the worker loopback and collapses every visitor into one bucket. Both repos rate-limit and both record signer IPs." },
+      { "glob": "src/lib/log.ts", "pairMode": "byte", "why": "Structured one-line-JSON logging into Workers Logs. `evt` is treated as an API — a saved Cloudflare query built on one repo's event name should mean the same thing in the other. It sits here rather than in handSynced deliberately: a one-sided edit is a log line in the wrong shape, not a wrong price or a broken seam, and PH-10 kept digests to the five files where a one-sided edit costs money. Cross-repo equality is still enforced." },
+      { "glob": "scripts/schedule-watchdog.mjs", "pairMode": "byte", "why": "The scheduled-workflow watchdog, byte-identical in both repos because each copy selects its own crons from scheduledWorkflows by GITHUB_REPOSITORY. A one-sided edit means one repo's crons stop being watched — caught here, cross-repo, with no digest to re-record every time the script is touched." },
       { "glob": "src/lib/readJsonBody.ts", "pairMode": "code", "why": "The PH-08b body cap. Per-route limits differ; the content-length-then-running-count helper must not." },
       { "glob": "src/lib/healthAuth.ts", "pairMode": "code", "why": "The HMAC that gates detailed /api/health. Both CI workflows sign with the same scheme; a divergence silently drops one repo back to the public view." },
       { "glob": "src/types/db.ts", "pairMode": "byte", "why": "Generated from ONE Supabase project by `npm run db:types`. If the two copies differ, one repo regenerated after a migration and the other did not — which is the only way this file can drift at all." },
@@ -192,7 +193,55 @@
       "capucor-os/.github/workflows/cron-email-reconciliation.yml"
     ],
     "zeroDependencyWhy": "These jobs are checkout + setup-node + `node script.mjs` BY DESIGN. No `npm ci`, which is the difference between a run billing one minute against the free 2,000 and billing five. Do not add one.",
-    "weakestLink": "GitHub disables scheduled workflows after 60 days of repository inactivity, which stops the job and with it BOTH destinations. There is no alert."
+    "weakestLink": "The dump exists only if cron-backup.yml keeps running, and a workflow that stops running produces an empty Actions history nobody looks at. That is now watched — see `scheduledWorkflows` below. What remains unwatchable from inside these repos is the quiet period itself: the watchdog runs on push, so it reports the silence on the first push back rather than during it."
+  },
+
+  "scheduledWorkflows": {
+    "why": "Everything irreplaceable here is kept alive by a GitHub Actions cron: the daily database dump (both destinations), the email/fulfilment reconciler, and the POPIA lead prune. They all fail the same way — they stop, and nothing says so. `scripts/schedule-watchdog.mjs` asks the Actions API when each one last SUCCEEDED and fails the build when the answer is older than `maxAgeDays`.",
+    "watchesForSilenceNotCause": "The check is deliberately cause-agnostic. Asking 'is the workflow disabled?' covers one failure mode; asking 'when did it last succeed?' covers that one plus an expired secret, an exhausted Actions allowance, a renamed file, a deleted schedule and a job that has been failing every night. A watchdog written against a named cause stops working the moment the cause is different.",
+    "inactivityRule": "MEASURED 2026-08-06, and it corrects a claim that was carried in three places. GitHub's documentation scopes the auto-disable to public repositories: 'In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.' capucor-webpage IS public (unauthenticated api.github.com read → 200), so its two crons are exposed to exactly that rule. capucor-os is PRIVATE (→ 404) and holds cron-backup.yml, so the 60-day rule as documented does not reach the backup at all. The private repo's analogous silent-stop risk is different — it bills against a finite free Actions allowance that a public repo does not have. Neither repo is safe by being the other kind, which is why the watchdog checks recency rather than visibility.",
+    "cannotFireDuringQuiet": "The watchdog runs on push. It cannot fire during the quiet period that causes the disable, and no in-repo mechanism can — every in-repo mechanism is hosted by the thing that goes quiet. Stated rather than papered over, with the one external control, in capucor-docs/operations/backup-watchdog.md.",
+    "githubRepos": {
+      "web": "ZjakPieterse/capucor-webpage",
+      "os": "ZjakPieterse/capucor-os"
+    },
+    "watchdogScript": "scripts/schedule-watchdog.mjs",
+    "watchdogWorkflow": ".github/workflows/watchdog.yml",
+    "watchdogIn": ["web", "os"],
+    "watchdogWhy": "Both copies are byte-identical and each watches only its OWN repo's crons, selected by matching GITHUB_REPOSITORY against githubRepos. A CI job cannot read a sibling repo's Actions API with its own GITHUB_TOKEN, so one watchdog covering both repos would need a cross-repo PAT — a long-lived credential to avoid duplicating a 250-line file. Two copies, no credential.",
+    "workflows": [
+      {
+        "repo": "os",
+        "file": "cron-backup.yml",
+        "schedule": "0 2 * * *",
+        "maxAgeDays": 3,
+        "why": "This is the ONLY backup of the signed debit-order mandates — Supabase Free has no platform backups and no PITR. If it has stopped, both destinations have stopped with it."
+      },
+      {
+        "repo": "os",
+        "file": "cron-email-reconciliation.yml",
+        "schedule": "*/10 5-15 * * 1-5",
+        "maxAgeDays": 5,
+        "why": "Drains durable email and signed-proposal fulfilment retries. If it has stopped, a paying client's portal stage retries forever and no email is ever resent. Five days rather than three because it is weekday-only: a long weekend plus a public holiday is a legitimate gap of nearly four."
+      },
+      {
+        "repo": "web",
+        "file": "cron-prune-leads.yml",
+        "schedule": "15 3 * * *",
+        "maxAgeDays": 3,
+        "why": "The POPIA retention job. If it has stopped, personal data is being kept past the retention policy — a compliance failure whose only symptom is nothing happening."
+      },
+      {
+        "repo": "web",
+        "file": "cron-expire-proposals.yml",
+        "schedule": "30 3 * * *",
+        "maxAgeDays": 3,
+        "why": "Flips proposals past expires_at to expired. If it has stopped, an expired quote stays signable at a price that is no longer offered."
+      }
+    ],
+    "maxAgeWhy": "Three days for a daily job, not one. GitHub delays scheduled runs under load — measured on capucor-webpage 2026-08-06, jobs scheduled for 03:15/03:30 UTC actually ran between 06:01 and 06:44 — and a run can be skipped outright. A threshold that goes red on one late night is a threshold somebody switches off.",
+    "reportsFailureDoesNotFailOnIt": "A failing LATEST run is reported as context but is not itself a failure here. GitHub already emails on a failed scheduled run, so a red night is loud without us; silence is what nothing else covers, and a job that keeps failing crosses the staleness threshold on its own. Failing on it would also leave every push red after an intentional R2 fire drill until the next nightly run.",
+    "drill": "SCHEDULE_WATCHDOG_DRILL=stale forces maxAgeDays to 0 so a healthy cron reads as overdue; =disabled rewrites the reported state to disabled_inactivity. Both are workflow_dispatch inputs on watchdog.yml, touch no secret and mutate nothing. Same reasoning as R2_FIRE_DRILL: an unexercised failure path is not a control."
   },
 
   "migrationLedger": {

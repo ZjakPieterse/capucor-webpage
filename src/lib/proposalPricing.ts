@@ -24,6 +24,7 @@ import {
   type ProposalLineItem,
 } from '@/lib/pricing';
 import { PRICING_ADDONS } from '@/config/tiers';
+import { logError } from '@/lib/log';
 import type { Bracket } from '@/types';
 
 type BracketRow = Pick<
@@ -72,7 +73,7 @@ export async function priceProposalSelection(
     if (error || !data) throw error ?? new Error('Brackets fetch returned no rows');
     bracketRows = data;
   } catch (err) {
-    console.error('[proposalPricing] brackets fetch failed:', err);
+    logError('pricing.brackets_fetch_failed', err, { services: input.services });
     return { ok: false, error: 'Could not price your proposal. Please try again.', status: 500 };
   }
 

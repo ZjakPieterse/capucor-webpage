@@ -1,0 +1,72 @@
+name: Watchdog — are the crons still running?
+
+# WHY THIS EXISTS. Every irreplaceable thing in this platform is kept alive by a
+# scheduled workflow, and every one of them fails the same way: it stops, and the
+# failure mode is an empty Actions history nobody looks at. This asks, on every
+# push, when each declared cron last SUCCEEDED — and turns the run red if the
+# answer is "longer ago than the contract allows".
+#
+# ⚠️ IT RUNS ON PUSH, NOT ON A SCHEDULE, and that is the whole point. A second
+# cron watching the first would share the first one's failure modes and need a
+# third to watch it. A push is the one moment we know a human is present and
+# something can actually be done about the answer.
+#
+# ⚠️ IT CANNOT FIRE DURING THE QUIET PERIOD. No in-repo mechanism can — every
+# in-repo mechanism is hosted by the thing that goes quiet. What this buys is
+# that the silence is discovered on the first push back, loudly, instead of
+# during a restore. The honest account of what is left over, and the one control
+# that has to live outside these repos, is in
+# capucor-docs/operations/backup-watchdog.md.
+#
+# ⚠️ ZERO DEPENDENCIES. checkout + setup-node + one .mjs, no `npm ci`, the same
+# rule the cron jobs it watches follow. `npm ci` here would be a five-fold cost
+# increase on a job that runs on every push. The audit's `schedule` check fails
+# if one appears.
+#
+# It is a SEPARATE workflow rather than a step in ci.yml on purpose: it must not
+# block a deploy (you may be pushing the very fix), it must not be skipped by an
+# earlier CI failure, and a drill dispatch must not rebuild the whole app.
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      drill:
+        description: "Fire drill: force the failure path. The run MUST go red."
+        type: choice
+        default: "off"
+        options:
+          - "off"
+          - stale
+          - disabled
+
+# Least privilege. `actions: read` is all the Actions API needs to answer "when
+# did this workflow last succeed"; `contents: read` is for the checkout.
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check every declared cron is still running
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The workflow's own repo, set automatically. The script matches it
+          # against scheduledWorkflows.githubRepos in the contract manifest to
+          # decide which crons to expect here, so neither copy of this file
+          # needs to know which repo it is in.
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          # "off" is the default choice value and means no drill. The script
+          # treats any unrecognised value as no drill, so a typo cannot silently
+          # weaken the check — it can only fail to strengthen it.
+          SCHEDULE_WATCHDOG_DRILL: ${{ github.event.inputs.drill == 'off' && '' || github.event.inputs.drill }}
+        run: node scripts/schedule-watchdog.mjs

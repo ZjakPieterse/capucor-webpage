@@ -199,11 +199,39 @@ change the manifest too, in all three copies.
   It cannot see capucor-os; the recorded **digest** of each hand-synced file is what covers that gap.
   Edit `src/lib/pricing.ts` here without editing capucor-os's copy and this repo goes red, naming
   the counterpart.
-- **The full audit lives in capucor-os** — `npm run audit` there, read-only, all three repos, seven
+- **The full audit lives in capucor-os** — `npm run audit` there, read-only, all three repos, eight
   checks. It is the only thing that can compare the two repos to each other, so run it from a full
   workspace checkout before pushing a cross-repo change.
 - Re-record digests after a sanctioned change with `npm run audit -- --print-digests` (in
   capucor-os) and paste into all three copies of the manifest.
+
+### ⚠️ This repo is PUBLIC, and that is where the 60-day cron rule bites
+
+Measured 2026-08-06: `ZjakPieterse/capucor-webpage` is a **public** repository (unauthenticated
+`api.github.com` read → 200); capucor-os and capucor-docs are private. GitHub's documentation scopes
+the scheduled-workflow auto-disable to public repos — *"In a public repository, scheduled workflows
+are automatically disabled when no repository activity has occurred in 60 days"* — so **this repo's
+two crons are the ones the documented rule actually reaches**, including
+`cron-prune-leads.yml`, the **POPIA retention job**. If it stops, personal data is kept past policy
+and the only symptom is nothing happening.
+
+✅ **Watched since 2026-08-06.** `.github/workflows/watchdog.yml` runs `scripts/schedule-watchdog.mjs`
+**on every push**, asks the Actions API when each declared cron last **succeeded**, and turns the run
+red past its `maxAgeDays`. It watches for silence rather than for a cause: an expired secret, a
+renamed file or a deleted schedule produce the same symptom as a disable.
+
+- **The script is byte-identical to capucor-os's copy** and selects this repo's crons by matching
+  `GITHUB_REPOSITORY` against `scheduledWorkflows.githubRepos`. Change one copy and the audit's
+  `duplicate-file` check goes red.
+- ⚠️ **A new cron must be declared in `scheduledWorkflows`** in all three copies of the manifest, or
+  the audit's `schedule` check fails — an undeclared cron is a job nothing watches.
+- **Zero dependencies, `actions: read` only, and it runs on push, never on a schedule** (a cron
+  watching a cron needs a third to watch it). It therefore **cannot fire during a quiet period**;
+  it reports the silence on the first push back. Full reasoning and the one control that has to live
+  outside these repos:
+  [`../capucor-docs/operations/backup-watchdog.md`](../capucor-docs/operations/backup-watchdog.md).
+- `SCHEDULE_WATCHDOG_DRILL` (`stale` / `disabled`) is a `workflow_dispatch` input that forces the
+  failure path against the real API. Re-run it after changing the script or the workflow.
 
 ### Cloudflare
 
@@ -336,6 +364,10 @@ src/
 ├── config/           # siteConfig, tier config, proposal terms, compliance calendar
 ├── hooks/            # usePricingState, useCursorGlow
 ├── lib/              # utils, pricing logic, Supabase clients, validations
+│   ├── log.ts        # structured one-line-JSON logging into Workers Logs.
+│   │                 #   Use logError/logWarn/logInfo, not console.*; `evt` is a
+│   │                 #   stable dotted id you can query on in the Cloudflare
+│   │                 #   dashboard. Byte-identical to capucor-os's copy.
 │   ├── portal/       # ⚠️ NAME IS HISTORICAL — this is the SIGNING half, not a portal:
 │   │                 #   finalizeSign, provision, proposalPdf, signEmails, orgSlug.
 │   │                 #   The actual portal is in ../capucor-os.
