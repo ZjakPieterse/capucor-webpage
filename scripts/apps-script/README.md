@@ -37,8 +37,8 @@ returns the existing file instead of creating a second legal PDF.
    - `APPS_SCRIPT_PDF_URL` = the `/exec` URL
    - `APPS_SCRIPT_PDF_SECRET` = the same value as `SHARED_SECRET`
 
-   Until both are set, signing remains legally committed but the durable fulfilment record keeps
-   the PDF and downstream email stages pending for operator-visible retry.
+   Archival does not run until both are set. Until then the fulfilment record keeps the PDF and
+   downstream email stages `pending` for operator-visible retry, so finish this step.
 
 ## Request / response contract
 
