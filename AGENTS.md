@@ -88,8 +88,14 @@ The Cloudflare target is configured in `wrangler.jsonc` and `open-next.config.ts
 
 These are hard-won and load-bearing — ignoring them has taken production down:
 
-- **Deploy to prod via CI push to `master` ONLY.** `.github/workflows/ci.yml` runs the
-  secrets-driven `build:cf` + `wrangler deploy` on Ubuntu.
+- **Deploy to prod by MANUAL DISPATCH ONLY.** `.github/workflows/deploy.yml` runs the
+  secrets-driven `build:cf` + `wrangler deploy` on Ubuntu. It triggers on `workflow_dispatch`
+  alone and refuses to run unless you type `deploy` into its `confirm` input.
+- **Merging to `master` no longer ships anything.** `ci.yml` validates and stops; it has no deploy
+  step and must never get one. A merged fix is NOT a shipped fix here any more, so someone has to
+  remember to dispatch the deploy. This is deliberate (ADR 0010 part 1, extending ADR 0003 to this
+  repo) and it removed an unattended path from merge to a live surface handling signed engagements
+  and debit-order mandates.
 - **NEVER run `npm run deploy:cf` from the Windows dev box.** OpenNext's Windows build produces
   a runtime-broken worker (`ChunkLoadError` on every server route). If a bad deploy ships,
   recover with **`wrangler rollback`**.
@@ -107,9 +113,9 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   `POST /api/revalidate?secret=<REVALIDATE_SECRET>` (GET also works for browser use). Do not add
   `revalidate` to `/proposal/[token]` — it mutates status on view.
 - Prod smoke-check: `curl -sD- -o /dev/null https://capucor.com/pricing | grep -i content-security-policy`
-  should show the Supabase host in `connect-src`. CI runs this same check post-deploy. **Don't
-  point it at capucor.app** — that is a different Worker from a different repo, so it would report
-  capucor-os's health, not this deploy's.
+  should show the Supabase host in `connect-src`. `deploy.yml` runs this same check post-deploy.
+  **Don't point it at capucor.app** — that is a different Worker from a different repo, so it would
+  report capucor-os's health, not this deploy's.
 
 ## Domain seam — capucor.com vs capucor.app
 

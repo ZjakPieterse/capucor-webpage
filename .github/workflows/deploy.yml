@@ -1,0 +1,226 @@
+name: Deploy — production
+
+# PRODUCTION DEPLOYMENT of capucor.com. Manual trigger only.
+#
+# ADR 0010 part 1 (2026-08-20) split this out of ci.yml. Before the split,
+# `ci.yml` ran `on: push: branches: [master, main]` and its Deploy step was
+# gated only on `github.event_name == 'push'` — so ANY push to the default
+# branch shipped capucor.com to production, unattended, with no approval step
+# anywhere in the path. This is the repository where signing and debit-order
+# mandates happen, which is why it was the highest-severity item in `O-2`.
+#
+# This mirrors the design ADR 0003 already accepted for capucor-os. It EXTENDS
+# that decision to the second production surface; it does not supersede it.
+#
+# ⚠️ NOTE THE DIFFERENCE FROM capucor-os. There, the intended control — a
+# GitHub Environment with a required reviewer — is unavailable, because the
+# repository is private and the account is on Free (HTTP 422). THIS repository
+# is public, and environment required reviewers are available on public
+# repositories at no cost (ADR 0010, pricing table). Declaring the environment
+# below creates it; adding a required reviewer to it afterwards is a settings
+# change that would make this the strongest deploy gate in the estate. That has
+# deliberately NOT been done here, because it is a repository-settings decision
+# for the account owner, not part of this workflow change.
+#
+# ⚠️ If a reviewer is added, THIS FILE STILL MATTERS. The manual trigger is what
+# stops a push from starting a deploy at all; the reviewer is what stops an
+# unwanted dispatch from finishing one. They address different failure modes.
+# Keep both.
+#
+# See capucor-os/docs/adr/0010-capucor-webpage-visibility-and-deployment-governance.md
+# and capucor-os/docs/adr/0003-ci-validation-and-deployment-separation.md.
+#
+# Every validation gate from ci.yml is repeated here on purpose. A dispatch can
+# target any ref, including one CI never saw or one whose CI failed, so this
+# workflow re-proves the build rather than trusting that something else did.
+# ADR 0010 accepts the resulting duplication as risk `R-8`; extracting a shared
+# composite action is explicitly out of scope.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm you intend to ship capucor.com to production.'
+        required: true
+        default: ''
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # Scopes this run to the "production" GitHub Environment. Today that gives
+    # a deployment record and a place to hold environment-scoped secrets; it is
+    # also where a required reviewer would attach (see the note above).
+    #
+    # This repository had NO deployment environments before this change (ADR
+    # 0010, E-8). Declaring it here creates it on the first dispatch, which is
+    # what makes `O-7` — moving CLOUDFLARE_API_TOKEN to an environment secret —
+    # actionable in this repository too. `O-7` still needs a human to handle the
+    # secret value and is NOT settled by this file.
+    environment: production
+
+    # Env lives at the job level (not on the Build step) so it is inherited by
+    # every step AND every child process — including the `next build` that
+    # OpenNext spawns as a grandchild via execSync('npm run build'). A
+    # step-scoped env can fail to reach that grandchild; the job scope cannot.
+    # NEXT_PUBLIC_SUPABASE_URL is consumed at build time (CSP in next.config.ts);
+    # if it is empty every funnel form on the deployed site 500s. See the
+    # post-build assertion below, which fails the run before deploy.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+      OWNER_NOTIFICATION_EMAIL: zjak@capucor.com
+      NEXT_PUBLIC_BOOKING_URL: ${{ secrets.NEXT_PUBLIC_BOOKING_URL }}
+
+    steps:
+      # Cheap, deliberate friction. workflow_dispatch is one button; this makes
+      # shipping to production a thing you have to type. It is not a security
+      # control — anyone who can dispatch can type the word — it is a guard
+      # against the wrong workflow being started by accident.
+      - name: Confirm deployment intent
+        run: |
+          if [ "${{ inputs.confirm }}" != "deploy" ]; then
+            echo "::error::Confirmation input was not \"deploy\". Refusing to deploy capucor.com to production."
+            exit 1
+          fi
+          echo "✓ Deployment of capucor.com to production confirmed by ${{ github.actor }}."
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Build (Cloudflare)
+        run: npm run build:cf
+
+      # Hard gate before deploy: prove the Supabase env actually reached the
+      # build. A missing value ships a site whose every funnel form 500s.
+      #
+      # This deliberately does NOT grep .open-next/assets/_next/static for the
+      # Supabase host. That assertion was removed in Phase 3 of the OS split and
+      # must not be restored here: this repo no longer has a browser Supabase
+      # client (it went to capucor-os with /login), so every Supabase call is
+      # server-side and the host is correctly absent from the client bundle. The
+      # grep would now fail 100% of the time. The bundle-inlining gate still
+      # exists, armed and meaningful, in the capucor-os repo — that is where
+      # login lives.
+      - name: Assert Supabase env reached the build
+        run: |
+          set -euo pipefail
+          if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ]; then
+            echo "::error::NEXT_PUBLIC_SUPABASE_URL is empty in the CI env — the secret is not wired up. Refusing to deploy."
+            exit 1
+          fi
+          if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty in the CI env — provision-on-sign would fail at signing. Refusing to deploy."
+            exit 1
+          fi
+          echo "✓ Supabase env present for the build."
+
+      - name: Deploy (Cloudflare)
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Post-deploy proof that THIS Worker is serving. Retries to absorb edge
+      # propagation. Red if the deployed site is broken even though the upload
+      # itself succeeded.
+      #
+      # Targets capucor.com/pricing — the funnel's entry point, and a
+      # Supabase-backed page. It used to hit capucor.app/login, but since Phase
+      # 3 of the OS split that hostname is a DIFFERENT Worker from a different
+      # repo: the check was reporting capucor-os's health and said nothing about
+      # this deploy. Do not point it back across the seam.
+      #
+      # The host is hardcoded rather than read from a repository variable, which
+      # is the opposite of capucor-os's SMOKE_BASE_URL arrangement and is correct
+      # here: this Worker only ever answers on capucor.com, and a variable could
+      # be pointed across the seam at capucor.app. capucor-os needs the variable
+      # because its origin moved during the Phase 1c cutover; this one has not.
+      - name: Smoke test deployed /pricing CSP
+        run: |
+          set -euo pipefail
+          host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
+          host="${host%%/*}"
+          for attempt in 1 2 3 4 5 6; do
+            csp="$(curl -fsS -D - -o /dev/null https://capucor.com/pricing | grep -i '^content-security-policy:' || true)"
+            if echo "$csp" | grep -qF "$host"; then
+              echo "✓ Deployed /pricing CSP includes the Supabase host."
+              exit 0
+            fi
+            echo "Attempt $attempt: CSP missing Supabase host, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::Deployed capucor.com/pricing never advertised the Supabase URL — the marketing deploy is broken. Roll back."
+          exit 1
+
+      # Post-deploy proof that the Worker's RUNTIME SECRETS are actually set.
+      #
+      # This is a different question from "does a page render", and the one that
+      # has actually bitten: capucor-os ran for two entire phases with NO
+      # Cloudflare secrets while every check stayed green, because anonymous
+      # traffic returns early and never reaches the code that needs them. Worse,
+      # several failures here are silent by design — PDF archival no-ops and
+      # Resend falls back to console logging — so nothing looks wrong until a
+      # client asks where their email went.
+      #
+      # GitHub Actions secrets are BUILD-time. Worker secrets are separate and
+      # are set by hand; nothing in CI sets them. This step is what notices.
+      # The public /api/health response is only {ok, app} — it deliberately no
+      # longer names our secrets to the internet. This step signs its request so
+      # it gets the per-variable detail, which is what makes the failure message
+      # below actionable. The key is never sent, only an HMAC over a timestamp.
+      # See src/lib/healthAuth.ts.
+      - name: Verify deployed runtime secrets
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6; do
+            ts="$(date +%s)000"
+            sig="$(printf '%s.health' "$ts" \
+              | openssl dgst -sha256 -hmac "$SUPABASE_SERVICE_ROLE_KEY" -hex \
+              | awk '{print $NF}')"
+            body="$(curl -sS -o /tmp/health.json -w '%{http_code}' \
+              -H "x-capucor-timestamp: $ts" -H "x-capucor-signature: $sig" \
+              https://capucor.com/api/health || echo 000)"
+            if [ "$body" = "200" ]; then
+              echo "✓ capucor-web: every required runtime secret is present on the Worker."
+              cat /tmp/health.json
+              exit 0
+            fi
+            if [ "$body" = "503" ]; then
+              echo "::error::capucor-web is deployed but MISSING runtime secrets:"
+              cat /tmp/health.json
+              echo ""
+              echo "Set them on the Worker (Cloudflare dashboard → Workers & Pages → capucor-web"
+              echo "→ Settings → Variables and Secrets, or 'wrangler secret put NAME')."
+              echo "See RUNTIME_VARS in src/lib/env.ts for what each one breaks."
+              exit 1
+            fi
+            echo "Attempt $attempt: /api/health returned $body, retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::capucor-web/api/health never responded after the deploy."
+          exit 1
