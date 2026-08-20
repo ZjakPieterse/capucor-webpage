@@ -609,6 +609,7 @@ export type Database = {
           created_at: string
           email: string
           full_name: string | null
+          id: string
           role: string
           updated_at: string
         }
@@ -617,6 +618,7 @@ export type Database = {
           created_at?: string
           email: string
           full_name?: string | null
+          id?: string
           role?: string
           updated_at?: string
         }
@@ -625,10 +627,19 @@ export type Database = {
           created_at?: string
           email?: string
           full_name?: string | null
+          id?: string
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "internal_users_role_fkey"
+            columns: ["role"]
+            isOneToOne: false
+            referencedRelation: "staff_roles"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       invoices: {
         Row: {
@@ -1277,6 +1288,129 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_capabilities: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      staff_client_grants: {
+        Row: {
+          all_clients: boolean
+          client_org_id: string | null
+          created_at: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          note: string | null
+          staff_user_id: string
+        }
+        Insert: {
+          all_clients?: boolean
+          client_org_id?: string | null
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          note?: string | null
+          staff_user_id: string
+        }
+        Update: {
+          all_clients?: boolean
+          client_org_id?: string | null
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          note?: string | null
+          staff_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_client_grants_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_client_grants_staff_user_id_fkey"
+            columns: ["staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_role_capabilities: {
+        Row: {
+          capability_code: string
+          role_code: string
+        }
+        Insert: {
+          capability_code: string
+          role_code: string
+        }
+        Update: {
+          capability_code?: string
+          role_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_role_capabilities_capability_code_fkey"
+            columns: ["capability_code"]
+            isOneToOne: false
+            referencedRelation: "staff_capabilities"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "staff_role_capabilities_role_code_fkey"
+            columns: ["role_code"]
+            isOneToOne: false
+            referencedRelation: "staff_roles"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      staff_roles: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          label: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          label: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          label?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           brackets: Json
@@ -1563,6 +1697,11 @@ export type Database = {
           p_proposal_id: string
           p_stage: string
         }
+        Returns: boolean
+      }
+      has_capability: { Args: { cap: string; uid: string }; Returns: boolean }
+      has_client_access: {
+        Args: { org_id: string; uid: string }
         Returns: boolean
       }
       is_internal: { Args: { uid: string }; Returns: boolean }
