@@ -181,33 +181,18 @@ curl -sI https://capucor.com/pricing     # 200 — never redirected
 
 ### ⚠️ Schema seam — the one thing that can break silently
 
-`supabase/migrations/` **lives in `../capucor-os` and nowhere else** (this repo's copy was deleted
-in Phase 3). Marketing still starts provisioning at signing:
-[`src/lib/portal/provision.ts`](src/lib/portal/provision.ts) idempotently mints/locates the Auth user,
-then calls the OS-owned `provision_from_signed_proposal` transaction. That RPC alone writes
-`client_orgs`, `client_org_members`, `subscriptions` and `proposals`.
+`supabase/migrations/` **lives in `../capucor-os` and nowhere else** (this repo's copy was deleted in
+Phase 3). Marketing still starts provisioning at signing:
+[`src/lib/portal/provision.ts`](src/lib/portal/provision.ts) idempotently mints/locates the Auth
+user, then calls the OS-owned `provision_from_signed_proposal` transaction.
 
-A rename or reshape of any of those in a capucor-os migration produces **no compile error** and no
-failing application type error unless the generated function contract changes — the symptom is a
-paying client whose durable portal stage keeps retrying. `src/__tests__/portal-provision.test.ts`
-pins the exact RPC argument boundary; migration 021's OS tests pin the internal table invariants.
-Regenerate both repositories' database types whenever that RPC changes.
+⚠️ **A change on the capucor-os side can break this repo's provisioning path with no compile error
+and no failing test here.** `src/__tests__/portal-provision.test.ts` pins the RPC argument boundary
+but cannot see the database. The live check is `npm run e2e` **in capucor-os** — run it there after
+any change to this path. Regenerate both repositories' database types whenever that RPC changes.
 
-⚠️ **A capucor-os trigger runs INSIDE the insert this repo starts.** Since migration 017,
-`client_orgs` carries an `after insert` trigger — `client_orgs_default_entity` →
-`ensure_default_entity()` — that creates the org's primary `entities` row. **If it ever raises, the
-insert aborts and a paying client signs and never gets portal access.** So a reshape of `entities`,
-a table this repo never touches and which is not one of the four seam tables, is still a change to
-*this* repo's provisioning path.
-
-⚠️ **`portal-provision.test.ts` is permanently blind to it** — it drives an in-memory fake Supabase
-client, so it is a *rename* tripwire and would stay green against a trigger that raises on every
-insert. ✅ The risk itself is **cleared**: PO-01 proved it live on 2026-08-03, and
-`capucor-os/e2e/global-setup.ts` re-proves it on every `npm run e2e` by inserting a real fixture org
-and throwing by name if the entity is not created (green on 2026-08-05, after migration 018 altered
-that function). **That e2e suite is the live check — run it in capucor-os after any change to
-`entities` or the trigger.** Full account: `../capucor-os/AGENTS.md` → "Schema seam", and
-`provisioning.blindSpotCleared` in the contract manifest.
+⚠️ **Read this before changing provisioning, and before changing any table it touches:**
+[`../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md`](../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md).
 
 ### The cross-repo contract — one command, in the other repo
 
@@ -227,33 +212,23 @@ change the manifest too, in all three copies.
 - Re-record digests after a sanctioned change with `npm run audit -- --print-digests` (in
   capucor-os) and paste into all three copies of the manifest.
 
-### ⚠️ This repo is PUBLIC, and that is where the 60-day cron rule bites
+### Scheduled workflows and the watchdog
 
-Measured 2026-08-06: `ZjakPieterse/capucor-webpage` is a **public** repository (unauthenticated
-`api.github.com` read → 200); capucor-os and capucor-docs are private. GitHub's documentation scopes
-the scheduled-workflow auto-disable to public repos — *"In a public repository, scheduled workflows
-are automatically disabled when no repository activity has occurred in 60 days"* — so **this repo's
-two crons are the ones the documented rule actually reaches**, including
-`cron-prune-leads.yml`, the **POPIA retention job**. If it stops, personal data is kept past policy
-and the only symptom is nothing happening.
-
-✅ **Watched since 2026-08-06.** `.github/workflows/watchdog.yml` runs `scripts/schedule-watchdog.mjs`
-**on every push**, asks the Actions API when each declared cron last **succeeded**, and turns the run
-red past its `maxAgeDays`. It watches for silence rather than for a cause: an expired secret, a
-renamed file or a deleted schedule produce the same symptom as a disable.
+This repo runs two scheduled workflows, and `.github/workflows/watchdog.yml` checks on every push
+that each one is still succeeding, via `scripts/schedule-watchdog.mjs`.
 
 - **The script is byte-identical to capucor-os's copy** and selects this repo's crons by matching
   `GITHUB_REPOSITORY` against `scheduledWorkflows.githubRepos`. Change one copy and the audit's
   `duplicate-file` check goes red.
 - ⚠️ **A new cron must be declared in `scheduledWorkflows`** in all three copies of the manifest, or
   the audit's `schedule` check fails — an undeclared cron is a job nothing watches.
-- **Zero dependencies, `actions: read` only, and it runs on push, never on a schedule** (a cron
-  watching a cron needs a third to watch it). It therefore **cannot fire during a quiet period**;
-  it reports the silence on the first push back. Full reasoning and the one control that has to live
-  outside these repos:
-  [`../capucor-docs/operations/backup-watchdog.md`](../capucor-docs/operations/backup-watchdog.md).
+- **Zero dependencies and `actions: read` only.** Keep it that way; the audit's `schedule` check
+  fails if `npm ci` appears in that workflow.
 - `SCHEDULE_WATCHDOG_DRILL` (`stale` / `disabled`) is a `workflow_dispatch` input that forces the
   failure path against the real API. Re-run it after changing the script or the workflow.
+
+⚠️ **Why this watchdog exists, and what it deliberately cannot cover:**
+[`../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md`](../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md).
 
 ### Cloudflare
 
@@ -261,10 +236,10 @@ capucor.com + www are bound to the `capucor-web` Worker; capucor.app + www to `c
 bindings are managed in the dashboard, not in `wrangler.jsonc` (which declares no `routes`), so a
 deploy from either repo cannot claim the other's hostname.
 
-⚠️ **Never delete the capucor.com zone or its MX / SPF / `resend._domainkey` DKIM / DMARC
-records** — capucor.com is the verified Resend *sender* domain. Removing them silently kills every
-transactional email from **both** apps while the sites keep looking fine. This is still true even
-though capucor.com no longer serves any signed-in surface.
+⚠️ **Never delete the capucor.com zone or any of its DNS records.** Several are load-bearing for
+services beyond this website, and removing them breaks those services silently while the sites keep
+looking fine. Which records, and what each one carries:
+[`../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md`](../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md).
 
 ### Request bodies are capped — never call `req.json()` in a route handler
 
@@ -272,26 +247,15 @@ though capucor.com no longer serves any signed-in surface.
 [`src/lib/readJsonBody.ts`](src/lib/readJsonBody.ts), with a per-route `MAX_BODY_BYTES` constant
 beside the route's `RATE_LIMIT_KEY`. All six body-reading routes here do.
 
-⚠️ **`await req.json()` reads whatever it is sent, and nothing in this stack bounds it.** Measured on
-a local production build (PH-08b, 2026-08-05): a **25 MB** body was fully read and JSON-parsed by
-`/api/leads`, `/api/data-request` and `/api/proposals/sign/confirm` before Zod refused it — 422/400,
-never 413. Next caps **Server Actions** at 1 MB by default but applies **no cap to Route Handlers**,
-`proxyClientMaxBodySize` only truncates and only when a proxy clones the body, and **this repo has no
-middleware at all**. On Workers Free that is a cheap denial of service: 10ms CPU per invocation, and
-parsing megabytes of JSON is CPU, not I/O.
+⚠️ **`await req.json()` is unbounded — never introduce it in a route handler.**
+`route-body-bounds.test.ts` pins the behaviour, including that the refusal happens before any
+Supabase or email work. Routes that read **no** body need no cap; don't add one for symmetry.
 
-The helper does two things and both are load-bearing — a `content-length` refusal *before* the stream
-is touched (the half that actually saves the CPU) and a running byte count while reading (a chunked
-request sends no `content-length`, and a declared one can lie). `route-body-bounds.test.ts` pins
-both, plus that the refusal happens before any Supabase or email work.
+⚠️ **`/api/proposals/sign` has three nested bounds and the order is deliberate.** Read the reasoning
+before changing any of them — getting the order wrong degrades a real signer's error message.
 
-⚠️ **`/api/proposals/sign` has three nested bounds and the order is deliberate:** 1 MB raw body >
-750,000 schema chars > 512 KB decoded (`MAX_SIGNATURE_BYTES`). Keep the outer one loosest, so a real
-oversized signature lands on an inner check and the signer is told their image is too large instead
-of getting a bare 413.
-
-Routes that read **no** body (`/api/revalidate`, both `/api/cron/*`, `/api/data-request/confirm`,
-`/api/health`) need no cap — an unconsumed body costs no CPU. Don't add one for symmetry.
+The measurements behind these bounds, and why the nesting order matters:
+[`../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md`](../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md).
 
 ### Email delivery contract
 
