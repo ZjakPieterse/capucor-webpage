@@ -1,5 +1,22 @@
 name: CI
 
+# VALIDATION ONLY. This workflow cannot deploy.
+#
+# ADR 0010 part 1 (2026-08-20) removed the Deploy step and the two post-deploy
+# checks from this file and moved them to `deploy.yml`, which runs on manual
+# dispatch only. Before that change, a push to `master` (or `main`) shipped
+# capucor.com straight to production with no human approval anywhere in the
+# path, on the repository where signing and debit-order mandates happen.
+#
+# ⚠️ DO NOT ADD A DEPLOY STEP HERE. The separation is the control. If you
+# need something to happen at deploy time, it belongs in `deploy.yml`.
+#
+# The build still runs, because a build failure is a validation failure worth
+# catching on a pull request. What no longer happens is `wrangler deploy`.
+#
+# See capucor-os/docs/adr/0010-capucor-webpage-visibility-and-deployment-governance.md
+# and capucor-os/docs/adr/0003-ci-validation-and-deployment-separation.md.
+
 on:
   push:
     branches: [master, main]
@@ -65,95 +82,12 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ]; then
-            echo "::error::NEXT_PUBLIC_SUPABASE_URL is empty in the CI env — the secret is not wired up. Refusing to deploy."
+            echo "::error::NEXT_PUBLIC_SUPABASE_URL is empty in the CI env — the secret is not wired up. Failing validation."
             exit 1
           fi
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty in the CI env — provision-on-sign would fail at signing. Refusing to deploy."
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty in the CI env — provision-on-sign would fail at signing. Failing validation."
             exit 1
           fi
           echo "✓ Supabase env present for the build."
 
-      - name: Deploy (Cloudflare)
-        if: github.event_name == 'push'
-        run: npx wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      # Post-deploy proof that THIS Worker is serving. Retries to absorb edge
-      # propagation. Red if the deployed site is broken even though the upload
-      # itself succeeded.
-      #
-      # Targets capucor.com/pricing — the funnel's entry point, and a
-      # Supabase-backed page. It used to hit capucor.app/login, but since Phase
-      # 3 of the OS split that hostname is a DIFFERENT Worker from a different
-      # repo: the check was reporting capucor-os's health and said nothing about
-      # this deploy. Do not point it back across the seam.
-      - name: Smoke test deployed /pricing CSP
-        if: github.event_name == 'push'
-        run: |
-          set -euo pipefail
-          host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
-          host="${host%%/*}"
-          for attempt in 1 2 3 4 5 6; do
-            csp="$(curl -fsS -D - -o /dev/null https://capucor.com/pricing | grep -i '^content-security-policy:' || true)"
-            if echo "$csp" | grep -qF "$host"; then
-              echo "✓ Deployed /pricing CSP includes the Supabase host."
-              exit 0
-            fi
-            echo "Attempt $attempt: CSP missing Supabase host, retrying in 10s..."
-            sleep 10
-          done
-          echo "::error::Deployed capucor.com/pricing never advertised the Supabase URL — the marketing deploy is broken. Roll back."
-          exit 1
-
-      # Post-deploy proof that the Worker's RUNTIME SECRETS are actually set.
-      #
-      # This is a different question from "does a page render", and the one that
-      # has actually bitten: capucor-os ran for two entire phases with NO
-      # Cloudflare secrets while every check stayed green, because anonymous
-      # traffic returns early and never reaches the code that needs them. Worse,
-      # several failures here are silent by design — PDF archival no-ops and
-      # Resend falls back to console logging — so nothing looks wrong until a
-      # client asks where their email went.
-      #
-      # GitHub Actions secrets are BUILD-time. Worker secrets are separate and
-      # are set by hand; nothing in CI sets them. This step is what notices.
-      # The public /api/health response is only {ok, app} — it deliberately no
-      # longer names our secrets to the internet. This step signs its request so
-      # it gets the per-variable detail, which is what makes the failure message
-      # below actionable. The key is never sent, only an HMAC over a timestamp.
-      # See src/lib/healthAuth.ts.
-      - name: Verify deployed runtime secrets
-        if: github.event_name == 'push'
-        env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3 4 5 6; do
-            ts="$(date +%s)000"
-            sig="$(printf '%s.health' "$ts" \
-              | openssl dgst -sha256 -hmac "$SUPABASE_SERVICE_ROLE_KEY" -hex \
-              | awk '{print $NF}')"
-            body="$(curl -sS -o /tmp/health.json -w '%{http_code}' \
-              -H "x-capucor-timestamp: $ts" -H "x-capucor-signature: $sig" \
-              https://capucor.com/api/health || echo 000)"
-            if [ "$body" = "200" ]; then
-              echo "✓ capucor-web: every required runtime secret is present on the Worker."
-              cat /tmp/health.json
-              exit 0
-            fi
-            if [ "$body" = "503" ]; then
-              echo "::error::capucor-web is deployed but MISSING runtime secrets:"
-              cat /tmp/health.json
-              echo ""
-              echo "Set them on the Worker (Cloudflare dashboard → Workers & Pages → capucor-web"
-              echo "→ Settings → Variables and Secrets, or 'wrangler secret put NAME')."
-              echo "See RUNTIME_VARS in src/lib/env.ts for what each one breaks."
-              exit 1
-            fi
-            echo "Attempt $attempt: /api/health returned $body, retrying in 10s..."
-            sleep 10
-          done
-          echo "::error::capucor-web/api/health never responded after the deploy."
-          exit 1
