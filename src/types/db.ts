@@ -426,6 +426,7 @@ export type Database = {
           provisional_taxpayer: boolean
           registration_no: string | null
           status: string
+          statutory_effective_from: string | null
           uif_no: string | null
           updated_at: string
           vat_category: string | null
@@ -456,6 +457,7 @@ export type Database = {
           provisional_taxpayer?: boolean
           registration_no?: string | null
           status?: string
+          statutory_effective_from?: string | null
           uif_no?: string | null
           updated_at?: string
           vat_category?: string | null
@@ -486,6 +488,7 @@ export type Database = {
           provisional_taxpayer?: boolean
           registration_no?: string | null
           status?: string
+          statutory_effective_from?: string | null
           uif_no?: string | null
           updated_at?: string
           vat_category?: string | null
@@ -558,6 +561,71 @@ export type Database = {
           series?: string
         }
         Relationships: []
+      }
+      entity_statutory_periods: {
+        Row: {
+          cipc_ar_required: boolean
+          client_org_id: string
+          coida_registered: boolean
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          entity_id: string
+          financial_year_end_day: number | null
+          financial_year_end_month: number | null
+          id: string
+          origin: string
+          payroll_registered: boolean
+          provisional_taxpayer: boolean
+          updated_at: string
+          vat_category: string | null
+          vat_registered: boolean
+        }
+        Insert: {
+          cipc_ar_required?: boolean
+          client_org_id: string
+          coida_registered?: boolean
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          entity_id: string
+          financial_year_end_day?: number | null
+          financial_year_end_month?: number | null
+          id?: string
+          origin?: string
+          payroll_registered?: boolean
+          provisional_taxpayer?: boolean
+          updated_at?: string
+          vat_category?: string | null
+          vat_registered?: boolean
+        }
+        Update: {
+          cipc_ar_required?: boolean
+          client_org_id?: string
+          coida_registered?: boolean
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          entity_id?: string
+          financial_year_end_day?: number | null
+          financial_year_end_month?: number | null
+          id?: string
+          origin?: string
+          payroll_registered?: boolean
+          provisional_taxpayer?: boolean
+          updated_at?: string
+          vat_category?: string | null
+          vat_registered?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_statutory_periods_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_accounts: {
         Row: {
@@ -1702,6 +1770,19 @@ export type Database = {
           proposal_version: number
           reused: boolean
         }[]
+      }
+      entity_statutory_captured: {
+        Args: {
+          p_cipc_ar_required: boolean
+          p_coida_registered: boolean
+          p_financial_year_end_day: number
+          p_financial_year_end_month: number
+          p_payroll_registered: boolean
+          p_provisional_taxpayer: boolean
+          p_vat_category: string
+          p_vat_registered: boolean
+        }
+        Returns: boolean
       }
       finish_proposal_fulfilment_stage: {
         Args: {
