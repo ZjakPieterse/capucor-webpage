@@ -405,6 +405,7 @@ export type Database = {
         Row: {
           cipc_ar_required: boolean
           client_org_id: string
+          client_ref: string | null
           coida_no: string | null
           coida_registered: boolean
           created_at: string
@@ -434,6 +435,7 @@ export type Database = {
         Insert: {
           cipc_ar_required?: boolean
           client_org_id: string
+          client_ref?: string | null
           coida_no?: string | null
           coida_registered?: boolean
           created_at?: string
@@ -463,6 +465,7 @@ export type Database = {
         Update: {
           cipc_ar_required?: boolean
           client_org_id?: string
+          client_ref?: string | null
           coida_no?: string | null
           coida_registered?: boolean
           created_at?: string
@@ -540,6 +543,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      entity_ref_counters: {
+        Row: {
+          last_seq: number
+          series: string
+        }
+        Insert: {
+          last_seq?: number
+          series: string
+        }
+        Update: {
+          last_seq?: number
+          series?: string
+        }
+        Relationships: []
       }
       financial_accounts: {
         Row: {
@@ -1707,6 +1725,7 @@ export type Database = {
       is_internal: { Args: { uid: string }; Returns: boolean }
       is_internal_admin: { Args: { uid: string }; Returns: boolean }
       is_org_member: { Args: { org_id: string }; Returns: boolean }
+      next_entity_ref: { Args: never; Returns: string }
       next_proposal_ref: { Args: never; Returns: string }
       provision_from_signed_proposal: {
         Args: { p_org_slug: string; p_proposal_id: string; p_user_id: string }
