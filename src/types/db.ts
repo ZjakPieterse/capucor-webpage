@@ -118,6 +118,72 @@ export type Database = {
           },
         ]
       }
+      change_records: {
+        Row: {
+          actor_email: string | null
+          actor_kind: string
+          client_org_id: string | null
+          created_at: string
+          effective_from: string | null
+          entity_id: string | null
+          field: string
+          id: string
+          new_value: string | null
+          occurred_at: string
+          previous_value: string | null
+          source: string
+          subject_id: string | null
+          subject_table: string
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_kind?: string
+          client_org_id?: string | null
+          created_at?: string
+          effective_from?: string | null
+          entity_id?: string | null
+          field: string
+          id?: string
+          new_value?: string | null
+          occurred_at?: string
+          previous_value?: string | null
+          source?: string
+          subject_id?: string | null
+          subject_table: string
+        }
+        Update: {
+          actor_email?: string | null
+          actor_kind?: string
+          client_org_id?: string | null
+          created_at?: string
+          effective_from?: string | null
+          entity_id?: string | null
+          field?: string
+          id?: string
+          new_value?: string | null
+          occurred_at?: string
+          previous_value?: string | null
+          source?: string
+          subject_id?: string | null
+          subject_table?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_records_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_records_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_org_members: {
         Row: {
           client_org_id: string
@@ -1719,6 +1785,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bulk_add_service_assignments: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_rows: Json
+          p_source: string
+        }
+        Returns: number
+      }
+      bulk_update_entities: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_rows: Json
+          p_source: string
+        }
+        Returns: number
+      }
+      change_context: {
+        Args: { p_default: string; p_name: string }
+        Returns: string
+      }
       claim_proposal_fulfilment_stage: {
         Args: {
           p_lease_expires_at: string
@@ -1821,6 +1909,52 @@ export type Database = {
           subscription_id: string
           user_id: string
         }[]
+      }
+      save_entity_change: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_cipc_ar_required: boolean
+          p_coida_no: string | null
+          p_coida_registered: boolean
+          p_display_name: string
+          p_drive_folder_id: string | null
+          p_drive_folder_url: string | null
+          p_entity_id: string
+          p_entity_type: string
+          p_financial_year_end_day: number | null
+          p_financial_year_end_month: number | null
+          p_income_tax_no: string | null
+          p_incorporation_date: string | null
+          p_legal_name: string | null
+          p_notes: string | null
+          p_paye_no: string | null
+          p_payroll_registered: boolean
+          p_provisional_taxpayer: boolean
+          p_registration_no: string | null
+          p_source: string
+          p_status: string
+          p_statutory_effective_from: string | null
+          p_uif_no: string | null
+          p_vat_category: string | null
+          p_vat_no: string | null
+          p_vat_registered: boolean
+        }
+        Returns: {
+          client_org_id: string
+          client_ref: string
+          id: string
+        }[]
+      }
+      set_service_assignments: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_entity_id: string
+          p_rows: Json
+          p_source: string
+        }
+        Returns: number
       }
       start_proposal_resend: {
         Args: {
