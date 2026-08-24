@@ -23,6 +23,14 @@ name: Watchdog — are the crons still running?
 # increase on a job that runs on every push. The audit's `schedule` check fails
 # if one appears.
 #
+# ⚠️ IT NOW ASKS TWO QUESTIONS. The second, added for R-12a, is "is production
+# still the tip of master, and if not, how long has that been true?" — the same
+# Actions API, the same token, the same push trigger, one more step. It is here
+# rather than in its own workflow because a push is again the one moment we know
+# a human is present, and because a second workflow would be a second thing to
+# notice going quiet. See `deployDrift` in the contract manifest for why that
+# check is a comparison rather than a staleness threshold on the deploy itself.
+#
 # It is a SEPARATE workflow rather than a step in ci.yml on purpose: it must not
 # block a deploy (you may be pushing the very fix), it must not be skipped by an
 # earlier CI failure, and a drill dispatch must not rebuild the whole app.
@@ -40,9 +48,19 @@ on:
           - "off"
           - stale
           - disabled
+      deployDrill:
+        description: "Fire drill for the deploy-drift check. The run MUST go red."
+        type: choice
+        default: "off"
+        options:
+          - "off"
+          - drift
+          - never
 
 # Least privilege. `actions: read` is all the Actions API needs to answer "when
-# did this workflow last succeed"; `contents: read` is for the checkout.
+# did this workflow last succeed"; `contents: read` is for the checkout AND, since
+# R-12a, for the commit comparison the deploy-drift step makes. Neither step needs
+# write of any kind, and neither touches a secret beyond the job's own GITHUB_TOKEN.
 permissions:
   actions: read
   contents: read
@@ -70,3 +88,27 @@ jobs:
           # weaken the check — it can only fail to strengthen it.
           SCHEDULE_WATCHDOG_DRILL: ${{ github.event.inputs.drill == 'off' && '' || github.event.inputs.drill }}
         run: node scripts/schedule-watchdog.mjs
+
+      # R-12a. A DIFFERENT QUESTION FROM THE STEP ABOVE: not "are the crons still
+      # running" but "is what production is serving still the tip of master, and if
+      # not, how long has that been true".
+      #
+      # ⚠️ `if: always()` IS LOAD-BEARING. Without it a stale cron above would skip
+      # this step, so the two failures could never be seen in the same run and the
+      # louder one would mask the quieter. Each step reports its own verdict; the
+      # job is red if either is.
+      #
+      # ⚠️ It reads the Actions API only. A green result means a deploy run
+      # succeeded on that commit — NOT that the Worker is serving it. See
+      # deployDrift.cannotSeeProduction in the contract for why closing that gap
+      # would mean putting a production secret into a job that runs on every push.
+      - name: Check production is not far behind the release branch
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          # Same convention as the drill above: "off" is the default choice value
+          # and means no drill, and any unrecognised value is treated as no drill,
+          # so a typo can only fail to strengthen the check, never weaken it.
+          DEPLOY_DRIFT_DRILL: ${{ github.event.inputs.deployDrill == 'off' && '' || github.event.inputs.deployDrill }}
+        run: node scripts/deploy-drift.mjs
