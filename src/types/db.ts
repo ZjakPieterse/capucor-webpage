@@ -297,6 +297,128 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_email_org_claims: {
+        Row: {
+          client_org_id: string
+          contact_email_id: string
+          created_at: string
+          email: string
+          person_id: string
+        }
+        Insert: {
+          client_org_id: string
+          contact_email_id: string
+          created_at?: string
+          email: string
+          person_id: string
+        }
+        Update: {
+          client_org_id?: string
+          contact_email_id?: string
+          created_at?: string
+          email?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_email_org_claims_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_email_org_claims_contact_email_id_fkey"
+            columns: ["contact_email_id"]
+            isOneToOne: false
+            referencedRelation: "contact_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_email_org_claims_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_emails: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_primary: boolean
+          label: string | null
+          person_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          person_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          person_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_emails_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_phones: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          label: string | null
+          person_id: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          person_id: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          label?: string | null
+          person_id?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_phones_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           active: boolean
@@ -307,6 +429,7 @@ export type Database = {
           id: string
           is_primary: boolean
           notes: string | null
+          person_id: string | null
           phone: string | null
           receives_requests: boolean
           role_label: string | null
@@ -321,6 +444,7 @@ export type Database = {
           id?: string
           is_primary?: boolean
           notes?: string | null
+          person_id?: string | null
           phone?: string | null
           receives_requests?: boolean
           role_label?: string | null
@@ -335,6 +459,7 @@ export type Database = {
           id?: string
           is_primary?: boolean
           notes?: string | null
+          person_id?: string | null
           phone?: string | null
           receives_requests?: boolean
           role_label?: string | null
@@ -346,6 +471,13 @@ export type Database = {
             columns: ["client_org_id"]
             isOneToOne: false
             referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
         ]
@@ -477,6 +609,7 @@ export type Database = {
           created_at: string
           display_name: string
           drive_folder_id: string | null
+          drive_folder_inheritance_mode: string
           drive_folder_url: string | null
           entity_type: string
           financial_year_end_day: number | null
@@ -508,6 +641,7 @@ export type Database = {
           created_at?: string
           display_name: string
           drive_folder_id?: string | null
+          drive_folder_inheritance_mode?: string
           drive_folder_url?: string | null
           entity_type?: string
           financial_year_end_day?: number | null
@@ -539,6 +673,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           drive_folder_id?: string | null
+          drive_folder_inheritance_mode?: string
           drive_folder_url?: string | null
           entity_type?: string
           financial_year_end_day?: number | null
@@ -945,6 +1080,27 @@ export type Database = {
           phone?: string | null
           source?: string
           status?: string
+        }
+        Relationships: []
+      }
+      people: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1785,6 +1941,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_staff_managers: { Args: { p_excluding: string }; Returns: number }
+      add_staff_member: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_all_clients: boolean
+          p_client_org_ids?: string[]
+          p_email: string
+          p_full_name?: string
+          p_note?: string
+          p_role: string
+          p_source: string
+        }
+        Returns: {
+          grants_created: number
+          new_staff_id: string
+        }[]
+      }
       bulk_add_service_assignments: {
         Args: {
           p_actor_email: string
@@ -1886,6 +2060,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      grant_client_access: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_all_clients: boolean
+          p_client_org_id?: string
+          p_note?: string
+          p_source: string
+          p_staff_user_id: string
+        }
+        Returns: {
+          grant_id: string
+        }[]
+      }
       has_capability: { Args: { cap: string; uid: string }; Returns: boolean }
       has_client_access: {
         Args: { org_id: string; uid: string }
@@ -1910,34 +2098,48 @@ export type Database = {
           user_id: string
         }[]
       }
+      revoke_client_access: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_grant_id: string
+          p_source: string
+          p_staff_user_id: string
+        }
+        Returns: {
+          revoked_all_clients: boolean
+          revoked_org_id: string
+        }[]
+      }
       save_entity_change: {
         Args: {
           p_actor_email: string
           p_actor_kind: string
           p_cipc_ar_required: boolean
-          p_coida_no: string | null
+          p_coida_no?: string
           p_coida_registered: boolean
           p_display_name: string
-          p_drive_folder_id: string | null
-          p_drive_folder_url: string | null
+          p_drive_folder_id?: string
+          p_drive_folder_inheritance_mode?: string
+          p_drive_folder_url?: string
           p_entity_id: string
           p_entity_type: string
-          p_financial_year_end_day: number | null
-          p_financial_year_end_month: number | null
-          p_income_tax_no: string | null
-          p_incorporation_date: string | null
-          p_legal_name: string | null
-          p_notes: string | null
-          p_paye_no: string | null
+          p_financial_year_end_day?: number
+          p_financial_year_end_month?: number
+          p_income_tax_no?: string
+          p_incorporation_date?: string
+          p_legal_name?: string
+          p_notes?: string
+          p_paye_no?: string
           p_payroll_registered: boolean
           p_provisional_taxpayer: boolean
-          p_registration_no: string | null
+          p_registration_no?: string
           p_source: string
           p_status: string
-          p_statutory_effective_from: string | null
-          p_uif_no: string | null
-          p_vat_category: string | null
-          p_vat_no: string | null
+          p_statutory_effective_from?: string
+          p_uif_no?: string
+          p_vat_category?: string
+          p_vat_no?: string
           p_vat_registered: boolean
         }
         Returns: {
@@ -1955,6 +2157,36 @@ export type Database = {
           p_source: string
         }
         Returns: number
+      }
+      set_staff_active: {
+        Args: {
+          p_active: boolean
+          p_actor_email: string
+          p_actor_kind: string
+          p_source: string
+          p_staff_user_id: string
+        }
+        Returns: {
+          staff_active: boolean
+          staff_email: string
+          staff_id: string
+          staff_role: string
+        }[]
+      }
+      set_staff_role: {
+        Args: {
+          p_actor_email: string
+          p_actor_kind: string
+          p_role: string
+          p_source: string
+          p_staff_user_id: string
+        }
+        Returns: {
+          staff_active: boolean
+          staff_email: string
+          staff_id: string
+          staff_role: string
+        }[]
       }
       start_proposal_resend: {
         Args: {
