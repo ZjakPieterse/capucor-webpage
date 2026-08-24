@@ -424,13 +424,11 @@ export type Database = {
           active: boolean
           client_org_id: string
           created_at: string
-          email: string | null
           full_name: string
           id: string
           is_primary: boolean
           notes: string | null
           person_id: string | null
-          phone: string | null
           receives_requests: boolean
           role_label: string | null
           updated_at: string
@@ -439,13 +437,11 @@ export type Database = {
           active?: boolean
           client_org_id: string
           created_at?: string
-          email?: string | null
           full_name: string
           id?: string
           is_primary?: boolean
           notes?: string | null
           person_id?: string | null
-          phone?: string | null
           receives_requests?: boolean
           role_label?: string | null
           updated_at?: string
@@ -454,13 +450,11 @@ export type Database = {
           active?: boolean
           client_org_id?: string
           created_at?: string
-          email?: string | null
           full_name?: string
           id?: string
           is_primary?: boolean
           notes?: string | null
           person_id?: string | null
-          phone?: string | null
           receives_requests?: boolean
           role_label?: string | null
           updated_at?: string
