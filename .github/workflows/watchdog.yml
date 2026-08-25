@@ -1,35 +1,49 @@
-name: Watchdog — are the crons still running?
+name: Watchdog — are the crons running, is production current, did CI actually run?
 
-# WHY THIS EXISTS. Every irreplaceable thing in this platform is kept alive by a
-# scheduled workflow, and every one of them fails the same way: it stops, and the
-# failure mode is an empty Actions history nobody looks at. This asks, on every
-# push, when each declared cron last SUCCEEDED — and turns the run red if the
-# answer is "longer ago than the contract allows".
+# WHY THIS EXISTS. Every irreplaceable thing in this platform is kept alive by
+# something that can stop without producing an error: a scheduled workflow, a
+# manual deploy, a push trigger. All three fail the same way — nothing happens,
+# and the failure mode is an empty Actions history nobody looks at. This job asks
+# three different questions about three different silences.
 #
-# ⚠️ IT RUNS ON PUSH, NOT ON A SCHEDULE, and that is the whole point. A second
-# cron watching the first would share the first one's failure modes and need a
-# third to watch it. A push is the one moment we know a human is present and
-# something can actually be done about the answer.
+# ⚠️ IT RUNS ON BOTH PUSH AND SCHEDULE, AND WHICH TRIGGER ANSWERS WHICH QUESTION
+# IS THE WHOLE DESIGN. This used to be push-only, and the header used to say that
+# was "the whole point". That sentence was about CRON silence and is still
+# correct about it — it is kept below, where it belongs. R-12b needed the
+# opposite, so the file now carries both triggers and says which is which:
 #
-# ⚠️ IT CANNOT FIRE DURING THE QUIET PERIOD. No in-repo mechanism can — every
-# in-repo mechanism is hosted by the thing that goes quiet. What this buys is
-# that the silence is discovered on the first push back, loudly, instead of
-# during a restore. The honest account of what is left over, and the one control
-# that has to live outside these repos, is in
-# capucor-docs/operations/backup-watchdog.md.
+#   ON PUSH — "are the crons still running?" and "is production still the tip of
+#             master?". A second cron watching the first would share the first
+#             one's failure mode and need a third to watch it. A push is the one
+#             moment we know a human is present and something can actually be
+#             done about the answer.
 #
-# ⚠️ ZERO DEPENDENCIES. checkout + setup-node + one .mjs, no `npm ci`, the same
-# rule the cron jobs it watches follow. `npm ci` here would be a five-fold cost
-# increase on a job that runs on every push. The audit's `schedule` check fails
-# if one appears.
+#   ON SCHEDULE — "did validation actually run on the commits that landed?"
+#             (R-12b). Here the thing being watched IS the push path, so hosting
+#             the detector on the push path is that same shared-failure mistake,
+#             and the schedule is the independent choice. MEASURED: during the
+#             2026-08-06 Actions incident that dropped two pushes to
+#             capucor-webpage, every scheduled run fired on time — one of them at
+#             05:03Z on 2026-08-07 with `56e0acf`, the exact commit CI never
+#             validated, as its head.
 #
-# ⚠️ IT NOW ASKS TWO QUESTIONS. The second, added for R-12a, is "is production
-# still the tip of master, and if not, how long has that been true?" — the same
-# Actions API, the same token, the same push trigger, one more step. It is here
-# rather than in its own workflow because a push is again the one moment we know
-# a human is present, and because a second workflow would be a second thing to
-# notice going quiet. See `deployDrift` in the contract manifest for why that
-# check is a comparison rather than a staleness threshold on the deploy itself.
+# ⚠️ THE TWO PATHS WATCH EACH OTHER, AND THAT IS MUTUAL RATHER THAN RECURSIVE.
+# The push half asserts this file's own schedule is alive — watchdog.yml is now a
+# declared entry in scheduledWorkflows, carrying `event: schedule` so that one of
+# its own push runs cannot satisfy it. The schedule half asserts the push path is
+# alive. Two independent GitHub dispatch paths, and the 2026-08-06 incident is
+# the evidence that they fail independently.
+#
+# ⚠️ WHAT STILL CANNOT BE REACHED FROM IN HERE. A total Actions outage takes both
+# paths, and no in-repo mechanism survives that. The honest account, and the one
+# control that lives outside these repos, is in
+# capucor-docs/operations/backup-watchdog.md and
+# capucor-docs/operations/ci-silence-watchdog.md.
+#
+# ⚠️ ZERO DEPENDENCIES. checkout + setup-node + three .mjs files, no `npm ci`,
+# the same rule the cron jobs it watches follow. `npm ci` here would be a
+# five-fold cost increase on a job that runs on every push. The audit's
+# `schedule` check fails if one appears.
 #
 # It is a SEPARATE workflow rather than a step in ci.yml on purpose: it must not
 # block a deploy (you may be pushing the very fix), it must not be skipped by an
@@ -38,6 +52,12 @@ name: Watchdog — are the crons still running?
 on:
   push:
     branches: [master, main]
+  schedule:
+    # 06:00 UTC daily. After the nightly crons in both repos (02:00, 03:15,
+    # 03:30) so their runs are already recorded when the first step looks, and
+    # late enough to sit outside GitHub's own scheduling delay, measured on this
+    # estate at up to ~2h50m.
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       drill:
@@ -56,11 +76,20 @@ on:
           - "off"
           - drift
           - never
+      ciSilenceDrill:
+        description: "Fire drill for the CI-silence check. The run MUST go red."
+        type: choice
+        default: "off"
+        options:
+          - "off"
+          - silent
+          - blind
 
 # Least privilege. `actions: read` is all the Actions API needs to answer "when
-# did this workflow last succeed"; `contents: read` is for the checkout AND, since
-# R-12a, for the commit comparison the deploy-drift step makes. Neither step needs
-# write of any kind, and neither touches a secret beyond the job's own GITHUB_TOKEN.
+# did this workflow last succeed" and "which commits have a run"; `contents: read`
+# is for the checkout, for the commit comparison the deploy-drift step makes, and
+# for the branch commit list the CI-silence step reads. No step needs write of any
+# kind, and none touches a secret beyond the job's own GITHUB_TOKEN.
 permissions:
   actions: read
   contents: read
@@ -94,9 +123,9 @@ jobs:
       # not, how long has that been true".
       #
       # ⚠️ `if: always()` IS LOAD-BEARING. Without it a stale cron above would skip
-      # this step, so the two failures could never be seen in the same run and the
+      # this step, so the failures could never be seen in the same run and the
       # louder one would mask the quieter. Each step reports its own verdict; the
-      # job is red if either is.
+      # job is red if any of them is.
       #
       # ⚠️ It reads the Actions API only. A green result means a deploy run
       # succeeded on that commit — NOT that the Worker is serving it. See
@@ -112,3 +141,24 @@ jobs:
           # so a typo can only fail to strengthen the check, never weaken it.
           DEPLOY_DRIFT_DRILL: ${{ github.event.inputs.deployDrill == 'off' && '' || github.event.inputs.deployDrill }}
         run: node scripts/deploy-drift.mjs
+
+      # R-12b. THE THIRD QUESTION, and the one the other two structurally cannot
+      # answer: did validation actually RUN on the commits that landed on master?
+      #
+      # ⚠️ ITS VALUE IS ON THE SCHEDULE RUN. On a push it is close to tautological
+      # — this job running at all is evidence the push path works. On the 06:00 UTC
+      # schedule it is the only thing in either repository that can notice a
+      # dropped push trigger, because it is the only check not hosted by one. It
+      # runs on both anyway: the push case costs two API calls and removes a
+      # conditional that would otherwise have to be right.
+      #
+      # ⚠️ It asks whether validation RAN, never whether it passed. GitHub already
+      # emails on a failed run; silence produces no run, therefore no failure,
+      # therefore no email. See ciSilence.asksDidItRunNotDidItPass.
+      - name: Check validation actually ran on the commits that landed
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CI_SILENCE_DRILL: ${{ github.event.inputs.ciSilenceDrill == 'off' && '' || github.event.inputs.ciSilenceDrill }}
+        run: node scripts/ci-silence.mjs
