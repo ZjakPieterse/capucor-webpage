@@ -1,0 +1,40 @@
+{
+  "$comment": [
+    "SessionStart nudges for a session started in THIS repo. The hook scripts themselves live once, at the workspace root, and are versioned in capucor-docs/workspace-root/dot-claude/hooks/. This file only points at them; it deliberately holds no logic, no secret and no absolute local path.",
+    "WHY IT EXISTS: Claude Code does not read settings.json from parent directories. Measured 2026-08-25 - a headless session started in this repo ran ZERO SessionStart hooks while a session started at the workspace root ran the root's. Most work happens here, so the nudges never reached the place they were written for, and Phase 2 ran 2026-08-24 to 2026-08-25 with no board row for any of it.",
+    "THE ../ ESCAPES THIS REPOSITORY, ON PURPOSE. If the workspace is ever restructured so that capucor-web/ is not a direct child of the folder holding .claude/hooks/, bash cannot find the script and the nudge dies with no error. That path is pinned in contracts/cross-repo-contract.json under fixedPaths so `npm run audit` fails instead of going quiet.",
+    "The scripts also root-anchor themselves by walking up to the capucor-docs/ sentinel, so they read the workspace-root copies of the board and AGENTS.md rather than this repo's. Both halves are needed: this file makes the hook RUN, the walk-up makes it READ THE RIGHT FILE.",
+    "capucor-webpage is a PUBLIC repository. This file is committed and a stranger can read it. It therefore holds no secret, no token, no project id and no absolute local path - only a relative path and the reasoning above. Keep it that way."
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/../.claude/hooks/zjak-list-nudge.sh\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/../.claude/hooks/self-review-nudge.sh\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/../.claude/hooks/cloudflare-reminder.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
