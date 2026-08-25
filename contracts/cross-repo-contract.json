@@ -229,9 +229,9 @@
       {
         "repo": "os",
         "file": "cron-email-reconciliation.yml",
-        "schedule": "*/10 5-15 * * 1-5",
-        "maxAgeDays": 5,
-        "why": "Drains durable email and signed-proposal fulfilment retries. If it has stopped, a paying client's portal stage retries forever and no email is ever resent. Five days rather than three because it is weekday-only: a long weekend plus a public holiday is a legitimate gap of nearly four."
+        "schedule": "0 * * * *",
+        "maxAgeDays": 3,
+        "why": "Drains durable email and signed-proposal fulfilment retries. If it has stopped, a paying client's portal stage retries forever and no email is ever resent. TWO CRONS, and the declared one is deliberately the SPARSER: `*/10 5-15 * * 1-5` is a dense weekday window sized for proposal fulfilment, and `0 * * * *` is an hourly sweep that runs every hour of every day. maxAgeDays is a STALENESS bound, so it is set against the always-on tier, which is why three is now correct where five was right for a weekday-only cadence. WARNING: the audit asserts the declared string with a SUBSTRING match, so adding a third cron would pass silently and understate the cadence — update this field whenever a cron is added, removed or retimed. The hourly tier was added 2026-08-25 under ADR 0015 PQ-3: before it, a send failing at 18:00 on a Friday waited until Monday 07:00, roughly 61 hours, while the work item stayed open."
       },
       {
         "repo": "web",
