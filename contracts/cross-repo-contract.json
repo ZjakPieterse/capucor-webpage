@@ -21,7 +21,7 @@
   ],
 
   "version": 1,
-  "lastReviewed": "2026-08-06",
+  "lastReviewed": "2026-08-25",
   "canonical": "capucor-docs/contracts/cross-repo-contract.json",
   "repos": {
     "web": "capucor-web",
@@ -372,7 +372,7 @@
   },
 
   "fixedPaths": {
-    "why": "Two SessionStart hooks in .claude/hooks/ read these files by hard-coded path and grep for a control line. Moving or renaming either breaks the nudge SILENTLY — the hook exits 0 on a missing file by design, so nothing ever reports it.",
+    "why": "The three SessionStart hooks in .claude/hooks/ read these files by hard-coded path and grep for a control line, and the two per-repo settings.json files are what makes those hooks RUN at all for a session started inside a repo. Moving or renaming any of them breaks the nudge SILENTLY — the hook exits 0 on a missing file by design, and a settings.json pointing at a script bash cannot find produces no error a person ever sees. Nothing else in the estate reports it, which is why it is pinned here.",
     "entries": [
       {
         "path": "AGENTS.md",
@@ -391,8 +391,41 @@
         "repo": "root",
         "mustMatch": "<!-- zjak-list-nudge: due=\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2} status=[a-z]+ -->",
         "readBy": ".claude/hooks/zjak-list-nudge.sh"
+      },
+      {
+        "path": "capucor-os/.claude/settings.json",
+        "repo": "root",
+        "mustMatch": "\\.\\./\\.claude/hooks/zjak-list-nudge\\.sh",
+        "readBy": "Claude Code, for any session started in capucor-os/",
+        "why": "ADDED 2026-08-25 by WC-04. Claude Code does not read settings.json from parent directories — MEASURED, not assumed: before this file existed, a headless session started in capucor-os/ ran ZERO SessionStart hooks while one started at the workspace root ran the root’s. Most work happens in this repo, so every nudge was dead exactly where it was needed. ⚠️ THE ../ IN THAT COMMAND ESCAPES THE REPOSITORY ON PURPOSE, so the hook scripts exist once rather than three times. If the workspace is ever restructured so this repo is not a direct child of the folder holding .claude/hooks/, bash cannot find the script and the nudge dies with no error anywhere."
+      },
+      {
+        "path": "capucor-web/.claude/settings.json",
+        "repo": "root",
+        "mustMatch": "\\.\\./\\.claude/hooks/zjak-list-nudge\\.sh",
+        "readBy": "Claude Code, for any session started in capucor-web/",
+        "why": "ADDED 2026-08-25 by WC-04, same mechanism as capucor-os. ⚠️ capucor-webpage is a PUBLIC repository and this file is committed: it must never carry a secret, a token, a project id or an absolute local path. Review it as if a stranger will read it, because one can."
       }
-    ]
+    ],
+    "workspaceRootSentinel": {
+      "dir": "capucor-docs",
+      "why": "⚠️ EVERY SessionStart hook root-anchors itself by walking UP from the session’s project directory until it finds a folder with this name, then cd’s there so its root-relative reads resolve. RENAME OR MOVE capucor-docs/ AND EVERY HOOK GOES SILENT AT ONCE — the walk-up fails, the hook exits 0, and nothing anywhere reports it. That is the single highest-blast-radius rename in the workspace, and it is why this is a contract key rather than only a comment in the scripts. The walk stops at a FIXPOINT, not at \"/\": on Windows, dirname of \"c:\" is \"c:\", so the obvious \"/\" guard never terminates for a session started outside the workspace and the hook would HANG session start rather than exit quietly. Measured in Git Bash 2026-08-25.",
+      "usedBy": [
+        ".claude/hooks/self-review-nudge.sh",
+        ".claude/hooks/cloudflare-reminder.sh",
+        ".claude/hooks/zjak-list-nudge.sh"
+      ],
+      "vendoredIn": "capucor-docs/workspace-root/dot-claude/hooks",
+      "unversionedWhy": "Those three paths are at the WORKSPACE ROOT, which is not a git repo and cannot be one — it holds the three repos. They are versioned in capucor-docs/workspace-root/dot-claude/hooks/ and deployed by capucor-docs/workspace-root/bootstrap.sh. The audit checks the DEPLOYED copies, because those are the ones that actually run, and separately checks the vendored copies have not drifted from them. Nothing else detects a stale vendored copy."
+    }
+  },
+
+  "boardCoverage": {
+    "why": "⚠️ Every project directory under capucor-docs/plans/ must have at least one row on the board, and every board row must resolve to a chunk file that exists. ways-of-working.md makes the board the single place to answer what’s next; a project running without a row on it is a project running outside the system, which is exactly how Phase 2 took ~20 commits, four ADRs and three T-0 merges between 2026-08-24 and 2026-08-25 with no chunk file, no board row and no handover for any of it.",
+    "board": "capucor-docs/plans/README.md",
+    "plansDir": "capucor-docs/plans",
+    "wouldNotHaveCaughtPhase2": "⚠️ STATED HONESTLY, BECAUSE THE OPPOSITE BELIEF IS THE DANGEROUS ONE: this check would NOT have caught the drift it was written in response to. Phase 2 had no plans/ directory AT ALL, so there was no project directory for the check to find unlisted. What it does catch is the next-cheapest failure — a project whose chunk files nobody put on the board, or a board row pointing at a file since renamed or deleted. Catching \"an accepted ADR exists but no project tracks its slices\" needs a judgement no script makes. This is a BACKSTOP, not the fix. The fix is that the board nudge now reaches the repo where the work happens.",
+    "rowShape": "A board row is a relative markdown link from capucor-docs/plans/README.md into a project directory beneath it, i.e. [text](<project>/<file>.md). Absolute URLs, bare anchors, and links that climb out of plans/ are not board rows and are ignored."
   },
 
   "docs": {
