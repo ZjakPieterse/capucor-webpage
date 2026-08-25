@@ -420,6 +420,111 @@
     }
   },
 
+  "rootScaffold": {
+    "why": "⚠️ THE WORKSPACE ROOT IS IN NO REPOSITORY AND CANNOT BE ONE — it CONTAINS the three repos. Everything that sits there is therefore unversioned, and the only protection is the vendored mirror in capucor-docs/workspace-root/ plus bootstrap.sh. That protection was INCOMPLETE AND SILENTLY SO: bootstrap.sh mapped eight files and synced brand-assets/, and handover/ — eight briefs that existed nowhere else — was in neither. Nothing detected it, and nothing would have detected the next one. This key is the allowlist that closes the CLASS rather than the instance. The precedent is not hypothetical: the ENTIRE root scaffold went missing between 2026-08-07 and 2026-08-24 when the workspace moved and only the repos came across, taking all three SessionStart nudges and the whole audit fire drill offline for seventeen days before anyone noticed.",
+    "root": "the parent directory of the three repo folders",
+    "vendoredIn": "capucor-docs/workspace-root",
+    "restoredBy": "capucor-docs/workspace-root/bootstrap.sh",
+    "allowlistNotDenylist": "⚠️ THIS IS AN ALLOWLIST, AND THAT IS THE WHOLE POINT. A denylist assumes a new unexpected entry at the root is fine until someone names it as a problem; an allowlist assumes it is a problem until someone classifies it. handover/ survived years of denylist thinking. Every entry present at the workspace root must appear in `entries` below or the audit fails, which forces the question \"is this thing versioned anywhere?\" to be answered at the moment it is created.",
+    "dispositions": {
+      "mirrored": "Vendored in capucor-docs/workspace-root/ and restored by bootstrap.sh. Must exist at the root AND match its vendored copy BYTE-FOR-BYTE.",
+      "superseded": "Present at the root, deliberately NOT vendored, because a canonical copy already lives in a repository. `canonicalCopy` names it and the audit asserts that copy exists — a superseded classification that has itself gone stale is worse than no classification. bootstrap.sh does not restore these, so a rebuilt workspace will not have them, and that is intended.",
+      "ignored-by-design": "Present at the root and deliberately outside the mirror. The three repo folders (they version themselves) and per-machine local files.",
+      "generated": "Reproducible from something else in the estate, so neither vendored nor checked for content. ⚠️ NOTHING AT THE ROOT IS `generated` TODAY. The term is defined so that the first build artifact to appear at the root has an honest classification available and does not get quietly filed as `ignored-by-design`."
+    },
+    "byteExactWhy": "⚠️ THE COMPARISON IS BYTE-EXACT AND MUST NEVER NORMALISE LINE ENDINGS. workspace-root/** is `-text` in .gitattributes and the deployed root files are LF, while the rest of capucor-docs is CRLF in this Windows worktree. A comparison that normalised would pass on a vendored hook that bootstrap.sh would then restore with CRLF line endings — and A CRLF `#!/usr/bin/env bash` DOES NOT EXECUTE. The check would be green and the restored workspace broken. Binary files (brand-assets/*.png) are compared the same way, which byte comparison handles and a text comparison would corrupt.",
+    "degradesWhen": "⚠️ SKIP WITH A NOTE, NEVER FAIL, WHEN THE SCAFFOLD IS NOT DEPLOYED HERE. `npm run audit` is not run in CI — it needs all three repos and the unversioned root — but it CAN legitimately be run in a bare workspace: three repos freshly cloned into an empty folder, before anyone has run bootstrap.sh. In that shape every mirrored entry is absent, which is a workspace that has not been bootstrapped yet, not drift. The rule is ALL-OR-NOTHING: if ZERO mirrored entries are present the check emits a NOTE telling the reader to run bootstrap.sh and stops. If SOME are present and some are not, that is a partially-deployed root and it FAILS. A check that fails for structural reasons is a check that gets switched off, and a check that stays quiet when half the scaffold is missing is not a check at all.",
+    "vendorOnly": [
+      "README.md",
+      "bootstrap.sh"
+    ],
+    "vendorOnlyWhy": "The only two files allowed to live in capucor-docs/workspace-root/ WITHOUT being deployed to the root: the mirror’s own documentation and its restore script. ⚠️ ANYTHING ELSE VENDORED THERE AND NOT NAMED BY AN ENTRY BELOW IS A FILE SOMEONE MEANT TO PUT AT THE ROOT AND DID NOT WIRE UP — it looks protected, bootstrap.sh never copies it, and a rebuilt workspace silently lacks it. That is the same silent-incompleteness failure as handover/, running in the other direction.",
+    "delegatedToDocsCheck": {
+      "paths": [
+        ".claude/hooks/cloudflare-reminder.sh",
+        ".claude/hooks/self-review-nudge.sh",
+        ".claude/hooks/zjak-list-nudge.sh"
+      ],
+      "why": "⚠️ THESE THREE ARE ALREADY ASSERTED BYTE-FOR-BYTE AGAINST THEIR VENDORED COPIES BY THE `docs` CHECK, via fixedPaths.workspaceRootSentinel, added by WC-04. This check therefore SKIPS them rather than re-implementing the same assertion: two checks reporting one defect trains people to read the report as noise, and the second one to be written is the one that drifts. They are still `mirrored` — bootstrap.sh restores them and the drill still proves the assertion — it is only the comparison that lives elsewhere. ⚠️ IF THE SENTINEL BLOCK IS EVER REMOVED FROM fixedPaths, DELETE THIS LIST IN THE SAME CHANGE or the three highest-blast-radius files at the root become the only unchecked ones."
+    },
+    "entries": [
+      {
+        "name": "AGENTS.md",
+        "type": "file",
+        "disposition": "mirrored",
+        "vendoredAs": "AGENTS.md",
+        "why": "Canonical root orientation, loaded into every session started at the root. Carries the `Last reviewed` stamp self-review-nudge.sh greps for, which is also pinned in fixedPaths. ⚠️ The most common root edit by far is bumping that stamp during /self-review — mirror it."
+      },
+      {
+        "name": "CLAUDE.md",
+        "type": "file",
+        "disposition": "mirrored",
+        "vendoredAs": "CLAUDE.md",
+        "why": "Thin pointer to AGENTS.md. Line-counted separately by docs.thinPointers."
+      },
+      {
+        "name": "GEMINI.md",
+        "type": "file",
+        "disposition": "mirrored",
+        "vendoredAs": "GEMINI.md",
+        "why": "Thin pointer to AGENTS.md. Also a docs.linkCheckRoot."
+      },
+      {
+        "name": ".ignore",
+        "type": "file",
+        "disposition": "mirrored",
+        "vendoredAs": "dot-ignore",
+        "why": "Scopes ripgrep away from node_modules and build output for every agent working here. ⚠️ Stored dot-prefix-renamed: a real .ignore inside capucor-docs would silently change what searches in THAT repo can see."
+      },
+      {
+        "name": ".claude",
+        "type": "dir",
+        "disposition": "mirrored",
+        "vendoredAs": "dot-claude",
+        "why": "Permissions and the four SessionStart hooks. ⚠️ Stored as dot-claude/ deliberately: a real .claude/ directory inside capucor-docs would be read as configuration FOR THAT REPOSITORY and its SessionStart hooks would fire in every capucor-docs session with the wrong working directory. bootstrap.sh renames on copy. The whole tree is compared, so a FOURTH hook script added at the root and not vendored fails this check — which is exactly the WC-09 shape.",
+        "exceptions": [
+          {
+            "path": "settings.local.json",
+            "disposition": "ignored-by-design",
+            "why": "⚠️ PER-MACHINE, AND IT MUST NEVER BE VENDORED. The copy on the dev box has carried allow-rules containing LIVE PROPOSAL SIGNING TOKENS from past debugging sessions; committing it would put client-facing capability tokens into git history permanently. Nothing is lost by leaving it out — Claude Code recreates it as it prompts for permissions. ⚠️ Both of the tokens found there on 2026-08-25 were already dead by TTL, which is luck, not a control."
+          }
+        ]
+      },
+      {
+        "name": "brand-assets",
+        "type": "dir",
+        "disposition": "mirrored",
+        "vendoredAs": "brand-assets",
+        "why": "Five PNGs, legacy convenience copies. ⚠️ RETIRING THIS FOLDER IS AN OPEN DECISION, not settled here: rules/where-things-live.md records it as \"not canonical after Brand v1\" and the masters now live in capucor-docs/knowledge/brand/assets/source-masters/, so vendoring these is a fourth copy of material this estate already owns. It is classified `mirrored` because that is what bootstrap.sh does TODAY and this key must describe the root as it is. Retiring it means editing the scaffold, this entry, the AGENTS.md bullet and the additionalDirectories entry in settings.json together — a brand-canonicality decision for the Brand v1 phases."
+      },
+      {
+        "name": "handover",
+        "type": "dir",
+        "disposition": "superseded",
+        "canonicalCopy": "capucor-docs/archive/handover",
+        "why": "Eight handover briefs (ADR 0010 parts 1 and 2, O-2, S-1, S-2, S-4, S-5, and an archived e2e defect brief). ⚠️ THIS FOLDER IS THE REASON THIS WHOLE KEY EXISTS — it sat at the root, in no repository and in no mirror, and nothing anywhere reported it. WC-01 rescued all eight into capucor-docs/archive/handover/ on 2026-08-25; verified line by line, each rescued copy differs from the root original by exactly the 8-line provenance banner WC-01 added and nothing else, and archive/E2E_SESSION_DEFECT_HANDOVER_BRIEF.md was flattened out of the root subfolder in the process. DOCUMENTED DECISION, Zjak, 2026-08-25: classified `superseded` rather than mirrored or deleted. Not mirrored, because vendoring it would make a THIRD copy and the vendored copy would lack the banner, so the two capucor-docs copies would disagree. Not deleted, because 00-plan.md’s standing rules make WC-06 the only chunk that deletes. ⚠️ RETIRING THE ROOT COPY IS A WC-06 CANDIDATE, and it must change this entry in the same commit — a root that no longer contains what the mirror would restore, described by a contract that still says it does, is a check contradicting itself."
+      },
+      {
+        "name": "capucor-os",
+        "type": "dir",
+        "disposition": "ignored-by-design",
+        "why": "⚠️ A GIT REPOSITORY. It versions itself and MUST NEVER BE MIRRORED — nor may node_modules/, .next/ or .open-next/ inside it. Mirroring a repo into a folder inside another repo is how the retired OneDrive scaffold came to be a snapshot of a snapshot."
+      },
+      {
+        "name": "capucor-web",
+        "type": "dir",
+        "disposition": "ignored-by-design",
+        "why": "⚠️ A GIT REPOSITORY (remote name: capucor-webpage, and PUBLIC). Never mirrored."
+      },
+      {
+        "name": "capucor-docs",
+        "type": "dir",
+        "disposition": "ignored-by-design",
+        "why": "⚠️ A GIT REPOSITORY, and also the walk-up sentinel every SessionStart hook looks for — see fixedPaths.workspaceRootSentinel. Never mirrored; it HOLDS the mirror."
+      }
+    ]
+  },
+
   "boardCoverage": {
     "why": "⚠️ Every project directory under capucor-docs/plans/ must have at least one row on the board, and every board row must resolve to a chunk file that exists. ways-of-working.md makes the board the single place to answer what’s next; a project running without a row on it is a project running outside the system, which is exactly how Phase 2 took ~20 commits, four ADRs and three T-0 merges between 2026-08-24 and 2026-08-25 with no chunk file, no board row and no handover for any of it.",
     "board": "capucor-docs/plans/README.md",
