@@ -91,6 +91,54 @@ describe('silence — the thing nothing else covers', () => {
     expect(r.reason).toMatch(/never completed successfully/);
   });
 
+  it('⚠️ still fails when a spent notBefore grace has passed', () => {
+    // The grace is a DEADLINE, not a mute. Once the date is behind us a
+    // workflow that has still never run is exactly the silence this exists to
+    // catch, and the message must say the first run was expected and missed.
+    const r = check({
+      declared: { ...declared, notBefore: '2026-08-01T06:00:00Z' },
+      newestSuccess: null,
+      newestRun: null,
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/first run was expected by 2026-08-01T06:00:00Z and has not happened/);
+  });
+});
+
+describe('a newly declared workflow that has not run yet', () => {
+  it('⚠️ reports as pending rather than failing, before its notBefore', () => {
+    // Without this, the push that MERGES a new cron turns every subsequent push
+    // red until the schedule first fires — a gate red for a reason whose only
+    // fix is to wait, which is how a gate gets switched off. R-12b hit exactly
+    // this when watchdog.yml became a declared cron in the same change that
+    // gave it a schedule.
+    const r = check({
+      declared: { ...declared, notBefore: '2026-08-09T06:00:00Z' },
+      newestSuccess: null,
+      newestRun: null,
+    }) as Verdict & { pending?: boolean };
+    expect(r.ok).toBe(true);
+    expect(r.pending).toBe(true);
+    expect(r.reason).toMatch(/declared but not yet run/);
+    // It must name the deadline, so a reader knows this is temporary and when
+    // it stops being tolerated.
+    expect(r.reason).toContain('2026-08-09T06:00:00Z');
+  });
+
+  it('⚠️ the contract keeps every notBefore inside the three-day bound', () => {
+    // A notBefore far in the future silences a dead cron indefinitely. The
+    // audit refuses one more than three days out; this pins the contract's own
+    // values so a widened date fails here too, offline.
+    for (const w of contract.scheduledWorkflows.workflows as { file: string; notBefore?: string }[]) {
+      if (!w.notBefore) continue;
+      const when = new Date(w.notBefore).getTime();
+      expect(Number.isNaN(when), `${w.file} notBefore is not a date`).toBe(false);
+      expect(when - Date.parse('2026-08-25T00:00:00Z')).toBeLessThanOrEqual(3 * 86_400_000);
+    }
+  });
+});
+
+describe('a workflow the Actions API cannot find', () => {
   it('fails when the Actions API has never heard of the file', () => {
     const r = check({ workflow: null, newestRun: null, newestSuccess: null });
     expect(r.ok).toBe(false);

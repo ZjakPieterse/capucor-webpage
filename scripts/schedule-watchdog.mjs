@@ -130,12 +130,30 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, maxAgeD
   }
 
   if (!newestSuccess) {
+    // ⚠️ A NEWLY DECLARED WORKFLOW HAS NOT RUN YET, AND THAT IS NOT A FAILURE —
+    // for a bounded time, stated as a date in the contract. Without this, the
+    // push that MERGES a new cron turns every subsequent push red until the
+    // schedule first fires, which is a gate going red for a reason nobody can
+    // act on: the fix is to wait. `notBefore` is the deadline by which the first
+    // successful run must exist, and the audit refuses one more than two days
+    // out so this cannot become an indefinite mute. Reported, never silent.
+    if (declared.notBefore && now.getTime() < new Date(declared.notBefore).getTime()) {
+      return {
+        ...base,
+        ok: true,
+        pending: true,
+        reason:
+          `declared but not yet run — its first successful run is expected by ${declared.notBefore}. ` +
+          `After that this row fails. ${declared.why}`,
+      };
+    }
     return {
       ...base,
       ok: false,
       reason:
         `it has never completed successfully. Either it has only ever failed, or it has never ` +
-        `been triggered — both mean the job this workflow exists to do is not being done.`,
+        `been triggered — both mean the job this workflow exists to do is not being done.` +
+        (declared.notBefore ? ` Its first run was expected by ${declared.notBefore} and has not happened.` : ''),
     };
   }
 
@@ -207,12 +225,21 @@ async function observe(declared, repoSlug, token) {
   const workflow = await gh(base, token);
   if (!workflow) return { declared, workflow: null, newestRun: null, newestSuccess: null };
 
+  // ⚠️ OPTIONAL `event` FILTER, AND IT IS LOAD-BEARING ON EXACTLY ONE ENTRY.
+  // The four cron files are only ever run by their schedule, so an unfiltered
+  // question is the right one for them and they carry no `event`. watchdog.yml
+  // is different — since R-12b it runs on BOTH push and schedule — so without
+  // this filter one of its own push runs would satisfy its own staleness check
+  // and a dead schedule would be invisible behind the very pushes it exists to
+  // outlive. See scheduledWorkflows.eventWhy.
+  const event = declared.event ? `&event=${declared.event}` : '';
+
   // Two exact queries rather than one paged window: "the newest run" and "the
   // newest SUCCESSFUL run" are different questions, and deriving the second
   // from a page of the first quietly assumes the success is on that page.
   const [runs, successes] = await Promise.all([
-    gh(`${base}/runs?per_page=1&exclude_pull_requests=true`, token),
-    gh(`${base}/runs?status=success&per_page=1&exclude_pull_requests=true`, token),
+    gh(`${base}/runs?per_page=1&exclude_pull_requests=true${event}`, token),
+    gh(`${base}/runs?status=success&per_page=1&exclude_pull_requests=true${event}`, token),
   ]);
 
   return {
