@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
+import { RENDER_COLORS } from '@/config/renderColors';
 
 // No `runtime = 'edge'` here: on OpenNext/Cloudflare the Worker already runs at
 // the edge, and declaring the edge runtime makes OpenNext refuse to bundle the
@@ -28,7 +29,7 @@ export function GET(req: NextRequest) {
           flexDirection: 'column',
           alignItems: 'flex-start',
           justifyContent: 'center',
-          background: '#020617',
+          background: RENDER_COLORS.dark.background,
           padding: '80px',
           fontFamily: 'system-ui, sans-serif',
         }}
@@ -42,7 +43,7 @@ export function GET(req: NextRequest) {
             width: '500px',
             height: '500px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, #2dd4ff 0%, transparent 70%)',
+            background: `radial-gradient(circle, ${RENDER_COLORS.dark.primary} 0%, transparent 70%)`,
             opacity: 0.15,
           }}
         />
@@ -61,7 +62,7 @@ export function GET(req: NextRequest) {
               width: '40px',
               height: '40px',
               borderRadius: '10px',
-              background: '#2dd4ff',
+              background: RENDER_COLORS.dark.primary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -72,13 +73,13 @@ export function GET(req: NextRequest) {
                 width: '20px',
                 height: '20px',
                 borderRadius: '50%',
-                background: '#020617',
+                background: RENDER_COLORS.dark.background,
               }}
             />
           </div>
           <span
             style={{
-              color: '#f8fafc',
+              color: RENDER_COLORS.dark.foreground,
               fontSize: '20px',
               fontWeight: 600,
               letterSpacing: '-0.02em',
@@ -91,7 +92,7 @@ export function GET(req: NextRequest) {
         {/* Headline */}
         <div
           style={{
-            color: '#f8fafc',
+            color: RENDER_COLORS.dark.foreground,
             fontSize: '56px',
             fontWeight: 700,
             lineHeight: 1.1,
@@ -106,7 +107,7 @@ export function GET(req: NextRequest) {
         {/* Subtitle */}
         <div
           style={{
-            color: '#94a3b8',
+            color: RENDER_COLORS.og.mutedForeground,
             fontSize: '24px',
             lineHeight: 1.4,
             maxWidth: '700px',
@@ -129,11 +130,11 @@ export function GET(req: NextRequest) {
             <div
               key={tag}
               style={{
-                background: 'rgba(45, 212, 255, 0.15)',
-                border: '1px solid rgba(45, 212, 255, 0.3)',
+                background: RENDER_COLORS.og.primarySoft,
+                border: `1px solid ${RENDER_COLORS.og.primaryBorder}`,
                 borderRadius: '8px',
                 padding: '6px 14px',
-                color: '#2dd4ff',
+                color: RENDER_COLORS.dark.primary,
                 fontSize: '14px',
                 fontWeight: 600,
               }}

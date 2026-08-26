@@ -283,7 +283,7 @@ export function PayrollDashboard() {
             Payslips
           </div>
           <div className="flex items-center gap-1.5">
-            <Wallet className="h-4 w-4 shrink-0" style={{ color: '#22d3ee' }} />
+            <Wallet className="h-4 w-4 shrink-0" style={{ color: 'var(--brand-cyan)' }} />
             <span className="text-xs font-semibold">8 of 8 delivered</span>
           </div>
           <div className="text-[10px] text-muted-foreground mt-1.5">Emailed to each employee</div>
