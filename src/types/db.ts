@@ -976,6 +976,78 @@ export type Database = {
           },
         ]
       }
+      jobs: {
+        Row: {
+          client_org_id: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          due_date: string
+          due_date_source: string
+          entity_id: string
+          id: string
+          job_type: string
+          notes: string | null
+          period_end: string
+          period_label: string
+          period_start: string
+          service_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_org_id: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          due_date: string
+          due_date_source?: string
+          entity_id: string
+          id?: string
+          job_type: string
+          notes?: string | null
+          period_end: string
+          period_label: string
+          period_start: string
+          service_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_org_id?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          due_date?: string
+          due_date_source?: string
+          entity_id?: string
+          id?: string
+          job_type?: string
+          notes?: string | null
+          period_end?: string
+          period_label?: string
+          period_start?: string
+          service_code?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_service_code_fkey"
+            columns: ["service_code"]
+            isOneToOne: false
+            referencedRelation: "practice_services"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       karbon_tasks_cache: {
         Row: {
           assignee: string | null
