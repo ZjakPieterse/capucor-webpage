@@ -4,10 +4,20 @@
     "WHY IT EXISTS: Claude Code does not read settings.json from parent directories. Measured 2026-08-25 - a headless session started in this repo ran ZERO SessionStart hooks while a session started at the workspace root ran the root's. Most work happens here, so the nudges never reached the place they were written for, and Phase 2 ran 2026-08-24 to 2026-08-25 with no board row for any of it.",
     "THE ../ ESCAPES THIS REPOSITORY, ON PURPOSE. If the workspace is ever restructured so that capucor-web/ is not a direct child of the folder holding .claude/hooks/, bash cannot find the script and the nudge dies with no error. That path is pinned in contracts/cross-repo-contract.json under fixedPaths so `npm run audit` fails instead of going quiet.",
     "The scripts also root-anchor themselves by walking up to the capucor-docs/ sentinel, so they read the workspace-root copies of the board and AGENTS.md rather than this repo's. Both halves are needed: this file makes the hook RUN, the walk-up makes it READ THE RIGHT FILE.",
-    "capucor-webpage is a PUBLIC repository. This file is committed and a stranger can read it. It therefore holds no secret, no token, no project id and no absolute local path - only a relative path and the reasoning above. Keep it that way."
+    "capucor-webpage is a PUBLIC repository. This file is committed and a stranger can read it. It therefore holds no secret, no token, no project id and no absolute local path - only a relative path and the reasoning above. Keep it that way.",
+    "WC-09, 2026-08-26: board-nudge.sh is new here. It carries the ways-of-working rule itself (\"the board answers what to work on next, one chunk per session, update its status and the chunk file's Notes before finishing\"). Until WC-09 it was an INLINE echo in the workspace-root settings.json and therefore fired ONLY at the root — so a session started in this repo got Zjak's open-list reminder but not the rule telling it to update the board. That is the single nudge whose absence best explains Phase 2 running 2026-08-24 to 2026-08-25 with no board row."
   ],
   "hooks": {
     "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/../.claude/hooks/board-nudge.sh\""
+          }
+        ]
+      },
       {
         "hooks": [
           {
