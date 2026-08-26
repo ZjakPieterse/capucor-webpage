@@ -32,11 +32,12 @@
   --color-brand-navy: var(--brand-navy);
   --color-brand-navy-deep: var(--brand-navy-deep);
   --color-brand-blue-glow: var(--brand-blue-glow);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.35);
-  --radius-2xl: calc(var(--radius) * 1.7);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
 }
 
 :root {
@@ -70,8 +71,6 @@
   --success-soft: rgba(52, 211, 153, 0.12);
   --success-border: rgba(52, 211, 153, 0.22);
   --warning: #f99c00;
-
-  --radius: 0.75rem;
 }
 
 @layer base {
@@ -282,7 +281,7 @@
 
 .premium-button {
   position: relative;
-  border-radius: calc(var(--radius) * 1.1);
+  border-radius: var(--radius-lg);
   box-shadow:
     0 1px 0 color-mix(in oklch, white 18%, transparent) inset,
     0 12px 30px -18px color-mix(in oklch, var(--primary) 70%, transparent);
@@ -561,9 +560,9 @@
   .how-card,
   .fcc-tile {
     transition:
-      transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-      border-color 220ms ease,
-      box-shadow 220ms ease;
+      transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 260ms ease,
+      box-shadow 260ms ease;
   }
 
   .premium-card:active,
@@ -658,7 +657,7 @@
   grid-row: 1;
   width: 48px;
   height: 48px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   align-items: center;
   justify-content: center;
   background: var(--background);
@@ -676,7 +675,7 @@
 .how-card {
   position: relative;
   padding: 20px 20px;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: color-mix(in oklch, var(--background) 88%, transparent);
   border: 1px solid color-mix(in oklch, var(--primary) 12%, transparent);
   backdrop-filter: blur(10px);
@@ -735,7 +734,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: color-mix(in oklch, var(--primary) 6%, transparent);
   border: 1px solid color-mix(in oklch, var(--primary) 14%, transparent);
 }
@@ -800,10 +799,10 @@
 /* ─── Finance Command Centre tiles (hero dashboard) ─────────────────────── */
 .fcc-tile {
   transition:
-    transform 250ms ease,
-    opacity 250ms ease,
-    border-color 250ms ease,
-    box-shadow 250ms ease;
+    transform 260ms ease,
+    opacity 260ms ease,
+    border-color 260ms ease,
+    box-shadow 260ms ease;
 }
 
 @media all {
@@ -819,7 +818,7 @@
   }
 }
 
-/* Sequential heartbeat on SARS/CIPC compliance row — fires once every 8s, items offset by 200ms */
+/* Sequential heartbeat on SARS/CIPC compliance row — fires once every 8s, items offset by 0.2s */
 @keyframes fcc-heartbeat {
   0%,
   96%,
@@ -900,10 +899,10 @@
 .service-card {
   position: relative;
   transition:
-    transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 220ms ease,
-    background-color 220ms ease,
-    box-shadow 220ms ease;
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 260ms ease,
+    background-color 260ms ease,
+    box-shadow 260ms ease;
 }
 
 @media all {
@@ -924,7 +923,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   border: 1.5px solid color-mix(in oklch, var(--primary) 55%, transparent);
   color: color-mix(in oklch, var(--primary) 80%, var(--foreground));
   background: color-mix(in oklch, var(--card) 80%, transparent);
@@ -932,11 +931,11 @@
   line-height: 1;
   font-weight: 400;
   transition:
-    background-color 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease,
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 200ms ease;
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms ease;
   pointer-events: none;
 }
 
@@ -956,7 +955,7 @@
   box-shadow:
     0 0 0 4px color-mix(in oklch, var(--primary) 18%, transparent),
     0 6px 18px -6px color-mix(in oklch, var(--primary) 55%, transparent);
-  animation: service-card-toggle-pop 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: service-card-toggle-pop 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes service-card-toggle-pop {
@@ -1011,16 +1010,16 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.4rem 0.85rem;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--border);
   background: color-mix(in oklch, var(--card) 60%, transparent);
   color: var(--muted-foreground);
   font-size: 0.75rem;
   font-weight: 500;
   transition:
-    border-color 220ms ease,
-    color 220ms ease,
-    background-color 220ms ease;
+    border-color 180ms ease,
+    color 180ms ease,
+    background-color 180ms ease;
 }
 
 .selection-counter.is-active {
@@ -1038,14 +1037,14 @@
   grid-template-columns: 1fr;
   gap: 0.85rem;
   padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-  border-radius: 1rem;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: color-mix(in oklch, var(--card) 40%, transparent);
   backdrop-filter: blur(12px);
   transition:
-    background-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 240ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    background-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 768px) {
@@ -1136,14 +1135,14 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
   background: var(--muted);
   color: var(--muted-foreground);
   transition:
-    background-color 220ms ease,
-    color 220ms ease,
-    box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scope-card__icon.is-set {
@@ -1162,7 +1161,7 @@
   width: 1.05rem;
   align-items: center;
   justify-content: center;
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   background: var(--primary);
   color: var(--primary-foreground);
   box-shadow:
@@ -1172,7 +1171,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .scope-card__check {
-    animation: service-card-toggle-pop 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    animation: service-card-toggle-pop 260ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
@@ -1233,7 +1232,7 @@
     color-mix(in oklch, var(--primary) 14%, transparent),
     transparent 60%
   );
-  transition: opacity 240ms ease;
+  transition: opacity 260ms ease;
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────── */
