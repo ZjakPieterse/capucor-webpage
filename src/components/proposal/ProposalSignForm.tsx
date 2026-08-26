@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { SignProposalSchema } from '@/lib/validations';
 import { signatureFont } from '@/lib/fonts';
 import { siteConfig } from '@/config/site';
+import { RENDER_COLORS } from '@/config/renderColors';
 
 type SignMethod = 'typed' | 'drawn' | 'uploaded';
 
@@ -75,9 +76,9 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = RENDER_COLORS.signatureCanvas.background;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#0f172a';
+    ctx.strokeStyle = RENDER_COLORS.signatureCanvas.ink;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -454,7 +455,7 @@ async function renderTypedSignature(name: string): Promise<string> {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas unavailable');
 
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = RENDER_COLORS.signatureCanvas.background;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
   const family = signatureFont.style.fontFamily;
@@ -466,7 +467,7 @@ async function renderTypedSignature(name: string): Promise<string> {
     /* fall back to the generic the family list already includes */
   }
 
-  ctx.fillStyle = '#0f172a';
+  ctx.fillStyle = RENDER_COLORS.signatureCanvas.ink;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -496,7 +497,7 @@ function normalizeImageFile(file: File): Promise<string> {
         canvas.height = h;
         const ctx = canvas.getContext('2d');
         if (!ctx) return reject(new Error('canvas unavailable'));
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = RENDER_COLORS.signatureCanvas.background;
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/png'));

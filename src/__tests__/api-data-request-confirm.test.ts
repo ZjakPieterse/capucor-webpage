@@ -167,4 +167,15 @@ describe('GET /api/data-request/confirm', () => {
       }),
     );
   });
+
+  it('9. renders the standalone confirmation page with the canonical dark palette', async () => {
+    const res = await GET(makeConfirmRequest('short'));
+    const html = await res.text();
+
+    expect(html).toContain('font-family: Geist, system-ui, -apple-system, Segoe UI, sans-serif');
+    expect(html).toContain('background: #020618');
+    expect(html).toContain('color: #f8fafc');
+    expect(html).toContain('color: #90a1b9');
+    expect(html).not.toMatch(/#0b0b0c|#f4f4f5|#a1a1aa/i);
+  });
 });

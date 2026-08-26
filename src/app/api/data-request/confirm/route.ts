@@ -15,6 +15,7 @@ import { DATA_REQUEST_SLA_DAYS } from '@/lib/consent';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/getClientIp';
 import { siteConfig } from '@/config/site';
+import { RENDER_COLORS } from '@/config/renderColors';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { renderDataRequestConfirmedOwnerText } from '@/lib/email/messages.mjs';
 
@@ -160,11 +161,11 @@ function htmlResponse(outcome: Outcome): Response {
   <meta name="robots" content="noindex, nofollow" />
   <title>${title} | Capucor</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: #0b0b0c; color: #f4f4f5; margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 2rem; }
+    body { font-family: Geist, system-ui, -apple-system, Segoe UI, sans-serif; background: ${RENDER_COLORS.dark.background}; color: ${RENDER_COLORS.dark.foreground}; margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 2rem; }
     main { max-width: 32rem; text-align: center; }
     h1 { font-size: 1.5rem; margin: 0 0 1rem; letter-spacing: -0.01em; }
-    p { color: #a1a1aa; line-height: 1.6; margin: 0 0 1.5rem; }
-    a { color: #f4f4f5; text-decoration: underline; text-underline-offset: 4px; }
+    p { color: ${RENDER_COLORS.dark.mutedForeground}; line-height: 1.6; margin: 0 0 1.5rem; }
+    a { color: ${RENDER_COLORS.dark.foreground}; text-decoration: underline; text-underline-offset: 4px; }
   </style>
 </head>
 <body>

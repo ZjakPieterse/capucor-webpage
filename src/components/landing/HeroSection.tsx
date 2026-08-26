@@ -128,11 +128,14 @@ function FinanceCommandCentre() {
             these numbers. */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-          style={{ background: "rgba(34,211,238,.12)", color: "#22d3ee" }}
+          style={{ background: "rgba(34,211,238,.12)", color: "var(--brand-cyan)" }}
         >
           <motion.div
             className="w-1.5 h-1.5 rounded-full"
-            style={{ background: "#22d3ee", boxShadow: "0 0 5px #22d3ee" }}
+            style={{
+              background: "var(--brand-cyan)",
+              boxShadow: "0 0 5px var(--brand-cyan)",
+            }}
             animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           />
@@ -266,11 +269,11 @@ function FinanceCommandCentre() {
           <div className="flex items-center gap-1.5">
             <Clock
               className="h-3.5 w-3.5 shrink-0"
-              style={{ color: "#22d3ee" }}
+              style={{ color: "var(--brand-cyan)" }}
             />
             <span
               className="text-[11px] font-semibold"
-              style={{ color: "#22d3ee" }}
+              style={{ color: "var(--brand-cyan)" }}
             >
               Ready for review
             </span>
