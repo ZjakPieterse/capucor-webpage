@@ -54,7 +54,7 @@ export function MobileTotalBar({
           type="button"
           onClick={scrollToSummary}
           aria-label="Jump to subscription summary"
-          className="min-w-0 flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:bg-primary/5"
+          className="min-w-0 flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-primary/5"
         >
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
             <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">

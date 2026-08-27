@@ -39,7 +39,7 @@ export function InfoTooltip({ content }: InfoTooltipProps) {
         className={cn(
           'ml-1.5 inline-flex items-center rounded-sm transition-colors',
           'text-muted-foreground/40 hover:text-muted-foreground/70',
-          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary',
+          'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
           open && 'text-muted-foreground/70'
         )}
         onMouseEnter={() => { if (!clickOpenRef.current) setOpen(true); }}

@@ -92,7 +92,7 @@ export function Step2Tiers({
               aria-label={`${isSelected ? 'Selected ' : ''}${tier.name} tier`}
               className={cn(
                 'service-card pricing-card-item relative rounded-2xl border-2 p-6 pr-12 text-left outline-none w-full h-full flex flex-col',
-                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
                   : 'border-border bg-card/40 backdrop-blur-md'
@@ -173,7 +173,7 @@ export function Step2Tiers({
                 aria-label={`${isOn ? 'Remove' : 'Add'} ${addon.name}`}
                 className={cn(
                   'service-card relative w-full rounded-2xl border-2 p-4 pr-14 sm:p-5 sm:pr-16 text-left outline-none',
-                  'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                   isOn
                     ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
                     : 'border-border bg-card/40 backdrop-blur-md'

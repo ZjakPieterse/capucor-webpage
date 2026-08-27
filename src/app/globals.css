@@ -98,6 +98,18 @@
       var(--background);
     background-attachment: fixed;
   }
+  /* Baseline focus-visible. The `*` rule above sets only the outline COLOUR;
+     with no width or style nothing paints, so any element that is not one of
+     the ui/ primitives (bare links, native controls) fell back to the browser
+     default. 3px matches the `focus-visible:ring-3` those primitives use.
+     Measured 2026-08-27 (BD-06): #2dd4ff at 50% is 3.45:1 on the surface and
+     3.46:1 on the background, clearing SC 1.4.11's 3.0:1. Components that set
+     their own focus-visible ring override this. */
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   html {
     @apply font-sans;
     scroll-behavior: smooth;

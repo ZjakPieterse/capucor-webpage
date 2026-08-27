@@ -103,7 +103,7 @@ export function TierComparison({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="tier-comparison-table"
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
       >
         <div>
           <p className="font-semibold text-sm">See all tiers side by side</p>
