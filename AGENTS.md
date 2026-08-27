@@ -500,10 +500,16 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
 
 ### Voice & copy (applies to all UI text)
 
-Plain, direct, human. The rules below are the essentials; the **full guide** (complete
-banned-vocab list, ✅/❌ examples, South African specificity, sample copy) lives in
+Plain, direct, human. The rules below are the essentials; the **full website guide**
+(complete banned-vocab list, ✅/❌ examples, South African specificity, sample copy) lives in
 [`docs/voice-and-copy.md`](./docs/voice-and-copy.md) — read it before writing or reviewing
 user-visible copy.
+
+⚠️ **Neither this section nor that guide owns Capucor brand voice.** The canonical
+cross-product standard is `capucor-docs/rules/brand-voice-and-content.md` in the private
+`capucor-docs` repository (named in prose — a relative link across repositories would not
+resolve). It governs shared brand rules; the website guide governs capucor.com implementation
+detail only, and loses to the standard on anything shared.
 
 - **Banned vocab:** "best-in-class", "tech-forward", "cutting-edge", "seamless", "leverage",
   "robust", "purpose-built", and similar marketing filler. **Banned structures:** em-dash

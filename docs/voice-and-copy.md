@@ -1,9 +1,23 @@
 # Capucor — Voice & Copy Guide
 
+> **This guide is the website-specific extension of the cross-product Capucor Brand Voice &
+> Content Standard**, which lives at `capucor-docs/rules/brand-voice-and-content.md` in the
+> private `capucor-docs` repository. (Named in prose, not linked: the two repositories are
+> separate and a relative link from here would not resolve.)
+>
+> **The cross-product standard governs shared brand rules — voice, tone, banned vocabulary and
+> sentence structure. This guide governs implementation details that apply only to capucor.com**
+> — the JSX apostrophe rule, landing-page patterns, and the reference examples below. Where the
+> two conflict on a shared brand rule, the cross-product standard wins, and this file should be
+> corrected rather than treated as an exception.
+>
+> Section numbers referenced below (§6 discouraged language, §7 sentence structure, §10
+> relationship to marketing guidance) are sections of that standard.
+
 The full guide for writing and reviewing all user-visible website copy. [`AGENTS.md`](../AGENTS.md)
-carries the condensed essentials; this is the complete reference. Before writing or reviewing any
-copy, check every sentence against these rules — if a rewrite introduces any banned pattern, fix
-it before shipping.
+carries the condensed essentials; this is the complete website reference. Before writing or
+reviewing any copy, check every sentence against these rules — if a rewrite introduces any banned
+pattern, fix it before shipping.
 
 All copy must be conversational, direct, and grounded in specific South African business context.
 The goal is copy that sounds like a knowledgeable person talking to a business owner, not a
@@ -13,6 +27,10 @@ generic and untrustworthy.)
 ---
 
 ## Banned vocabulary
+
+This list is reconciled with §6 of the cross-product standard and matches it item for item
+(`"align with"` originated here and was promoted to the canonical list). If the two ever diverge
+again, the canonical list governs and this one is the copy to correct.
 
 Do not use these words or phrases anywhere in user-visible copy:
 
@@ -51,12 +69,18 @@ missing date) or the separator inside a fair-usage bracket label.
 In marketing prose (the public site), one deliberate em dash per section is acceptable for rhythm
 ("no callback — just a number"); multiple em dashes in the same paragraph or section is not.
 
+**The "one per section" figure is a website-specific concretisation of canonical §7, not an
+exception to it.** §7 says marketing prose "may use an em dash very sparingly when the rhythm
+genuinely benefits"; one per section is this site's working reading of "very sparingly". The
+outright ban on em dashes in emails, proposals and PDF prose is §7's rule verbatim.
+
 ### Triple-always parallel structure
 - ❌ "Your numbers are always current, your filings are always on time, and your accountant is always ahead."
 - ✅ "By the time the new month starts, your books are closed, your returns are filed, and there's a management report in your inbox."
 
 ### Triple-negative kickers
-Avoid ending paragraphs with "No X, no Y, no Z":
+Avoid ending paragraphs with "No X, no Y, no Z". Canonical §7 bans repeated "no X, no Y, no Z"
+kickers with no carve-out, so there is no site-specific exception to reach for:
 - ❌ "No forms, no waiting, no obligation."
 - ✅ "No contact form, no callback — just a number." (two-item is acceptable)
 
@@ -108,6 +132,6 @@ Reference examples of strong, human-sounding copy:
 - "No more shoebox accounting at year-end."
 - "We believe you should stay because the service is valuable, not because you're trapped."
 - "SARS penalties don't care that you forgot."
-- "Pull a clean P&L or balance sheet any time. No waiting, no chasing, no surprises."
+- "Pull a clean P&L or balance sheet any time."
 - "It's a conversation, not a sales pitch."
 - "By the time the new month starts, your books are closed, your returns are filed, and there's a management report in your inbox."
