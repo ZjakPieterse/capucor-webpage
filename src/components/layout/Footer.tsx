@@ -75,7 +75,7 @@ export function Footer() {
               className="hover:opacity-80 transition-opacity block"
             >
               <Image
-                src="/brand/logo-dark.png"
+                src="/brand/capucor-logo-on-dark.png"
                 alt="Capucor Business Solutions"
                 height={28}
                 width={140}
