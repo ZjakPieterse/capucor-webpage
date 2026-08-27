@@ -35,7 +35,7 @@ export function Navbar() {
           className="hover:opacity-80 transition-opacity flex items-center"
         >
           <Image
-            src="/brand/logo-dark.png"
+            src="/brand/capucor-logo-on-dark.png"
             alt="Capucor Business Solutions"
             height={40}
             width={200}

@@ -43,7 +43,7 @@ export function DocumentHeader({
         <div>
           <Link href="/" className="inline-flex items-center transition-opacity hover:opacity-80">
             <Image
-              src="/brand/logo-dark.png"
+              src="/brand/capucor-logo-on-dark.png"
               alt="Capucor Business Solutions"
               height={40}
               width={200}
