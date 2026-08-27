@@ -72,8 +72,8 @@ function computeDashboardDates(): DashboardDates {
 
 const VAT_STATUS_STYLES: Record<VatStatus, { bg: string; color: string }> = {
   green: { bg: "var(--success-soft)", color: "var(--success)" },
-  amber: { bg: "rgba(234,179,8,.15)", color: "#eab308" },
-  red: { bg: "rgba(239,68,68,.15)", color: "#ef4444" },
+  amber: { bg: "var(--warning-soft)", color: "var(--warning)" },
+  red: { bg: "var(--destructive-soft)", color: "var(--destructive)" },
 };
 
 // ── Finance Command Centre ────────────────────────────────────────────────────────
@@ -174,7 +174,7 @@ function FinanceCommandCentre() {
           </div>
           <div
             className="text-[10px] mt-1 font-medium"
-            style={{ color: "#eab308" }}
+            style={{ color: "var(--warning)" }}
           >
             Watch: below 6-month target
           </div>

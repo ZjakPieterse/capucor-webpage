@@ -155,8 +155,8 @@ export function AccountingDashboard() {
           </div>
           <div className="font-mono font-bold text-lg leading-none">38.6%</div>
           <div className="flex items-center gap-1 mt-2">
-            <ArrowDownRight className="h-3.5 w-3.5 shrink-0" style={{ color: '#eab308' }} />
-            <span className="text-[11px] font-medium" style={{ color: '#eab308' }}>−1.2pt</span>
+            <ArrowDownRight className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--warning)' }} />
+            <span className="text-[11px] font-medium" style={{ color: 'var(--warning)' }}>−1.2pt</span>
           </div>
         </motion.div>
         <motion.div

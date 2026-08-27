@@ -55,6 +55,7 @@ function contrast(fg: Rgb | string, bg: Rgb | string): number {
 
 const AA_TEXT = 4.5;
 const AA_NON_TEXT = 3.0; // SC 1.4.11 — UI components and graphical objects
+const AAA_TEXT = 7.0; // SC 1.4.6 — enhanced contrast
 
 // Canonical dark theme, from capucor-docs/knowledge/brand/design-tokens.json
 const BACKGROUND = '#020618';
@@ -110,7 +111,7 @@ describe('canonical dark theme contrast', () => {
   });
 });
 
-describe('BD-02 status colour convergence', () => {
+describe('BD-02b status colour convergence (shipped)', () => {
   // The hero Finance Command Centre tiles composite `bg-background/40` over a
   // `premium-glass` card gradient over `bg-card/80` over the page background.
   // Measuring against the nominal surface would overstate the ratios, so the
@@ -120,28 +121,73 @@ describe('BD-02 status colour convergence', () => {
   const glassDark = over(hexToRgb(SURFACE), 0.64, heroCard);
   const tile = over(hexToRgb(BACKGROUND), 0.4, glassDark);
 
-  it('does not regress amber when #eab308 converges on the canonical #f99c00', () => {
-    const current = contrast('#eab308', tile);
-    const proposed = contrast(WARNING, tile);
+  // The service mini-dashboard tiles are `bg-background/40` over the card,
+  // with no premium-glass layer between. A shallower stack, so a separate
+  // composite — reusing `tile` here would understate the backdrop.
+  const dashTile = over(hexToRgb(BACKGROUND), 0.4, heroCard);
 
-    expect(current).toBeGreaterThanOrEqual(AA_TEXT);
-    expect(proposed).toBeGreaterThanOrEqual(AA_TEXT);
+  // Superseded Tailwind values. Retained ONLY as the regression floor these
+  // were converged away from (BD-02b, 2026-08-27); they must not reappear in
+  // component source.
+  const TAILWIND_AMBER_500 = '#eab308';
+  const TAILWIND_RED_500 = '#ef4444';
+
+  it('holds AAA for amber at every site after converging on #f99c00', () => {
+    // 9.90 -> 8.85, 7.69 -> 7.05 and 9.99 -> 8.93. A sub-1-point loss that
+    // stays AAA everywhere, which is what made the convergence affordable.
+    const chip = (c: string) => over(hexToRgb(c), 0.15, tile);
+
+    expect(contrast(WARNING, tile)).toBeGreaterThanOrEqual(AAA_TEXT);
+    expect(contrast(WARNING, chip(WARNING))).toBeGreaterThanOrEqual(AAA_TEXT);
+    expect(contrast(WARNING, dashTile)).toBeGreaterThanOrEqual(AAA_TEXT);
+
+    // The loss is real; pin its size so a future token edit cannot widen it
+    // unnoticed.
+    expect(contrast(TAILWIND_AMBER_500, tile) - contrast(WARNING, tile))
+      .toBeLessThan(1.5);
   });
 
-  it('IMPROVES the red chip, which fails AA today', () => {
-    // The VAT chip paints its status colour at 15% alpha behind the same
-    // colour as text. That is the one pairing on the site below AA, and the
-    // canonical #ff6568 is what fixes it — the brand change and the
-    // accessibility fix point the same way here.
-    const currentChip = over(hexToRgb('#ef4444'), 0.15, tile);
-    const proposedChip = over(hexToRgb(DANGER), 0.15, tile);
+  it('clears the red VAT chip defect by converging on #ff6568', () => {
+    // The chip paints its status colour at 15% alpha behind the same colour
+    // as text, which lifts the backdrop toward the text and crushes the
+    // ratio. #ef4444 sat at 4.43:1 — the one pairing on the site below AA.
+    // #ff6568 reaches 5.54:1, so the brand change and the accessibility fix
+    // pointed the same way. This is a live path: vatStatus goes red when the
+    // VAT deadline is <= 7 days out, roughly eight days in every month.
+    const superseded = over(hexToRgb(TAILWIND_RED_500), 0.15, tile);
+    const shipped = over(hexToRgb(DANGER), 0.15, tile);
 
-    const current = contrast('#ef4444', currentChip);
-    const proposed = contrast(DANGER, proposedChip);
+    expect(contrast(TAILWIND_RED_500, superseded)).toBeLessThan(AA_TEXT);
+    expect(contrast(DANGER, shipped)).toBeGreaterThanOrEqual(AA_TEXT);
+  });
 
-    expect(current).toBeLessThan(AA_TEXT); // 4.43:1 — the defect BD-02b clears
-    expect(proposed).toBeGreaterThanOrEqual(AA_TEXT); // 5.54:1
-    expect(proposed).toBeGreaterThan(current);
+  it('routes the converged status colours through tokens, not literals', () => {
+    // The convergence is only durable if the literals cannot creep back. Both
+    // components read the canonical values through CSS variables, so assert
+    // the superseded Tailwind hexes are absent from component source.
+    const files = [
+      'src/components/landing/HeroSection.tsx',
+      'src/components/services/ServiceMiniDashboards.tsx',
+    ];
+
+    for (const file of files) {
+      const src = readFileSync(join(process.cwd(), file), 'utf8');
+      expect(src).not.toMatch(/eab308/i);
+      expect(src).not.toMatch(/ef4444/i);
+      // ...and not as the rgba() triplets those hexes expand to.
+      expect(src).not.toMatch(/234\s*,\s*179\s*,\s*8/);
+      expect(src).not.toMatch(/239\s*,\s*68\s*,\s*68/);
+    }
+  });
+
+  it('defines the soft tints the status chips composite against', () => {
+    // The chip backdrops moved from inline rgba() to --warning-soft and
+    // --destructive-soft. Both must stay at the 15% alpha the ratios above
+    // were measured at; success-soft is 12% and copying it would shift them.
+    const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+
+    expect(css).toMatch(/--warning-soft:\s*rgba\(249,\s*156,\s*0,\s*0\.15\)/);
+    expect(css).toMatch(/--destructive-soft:\s*rgba\(255,\s*101,\s*104,\s*0\.15\)/);
   });
 });
 
