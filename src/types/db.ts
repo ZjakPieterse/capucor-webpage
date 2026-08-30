@@ -184,6 +184,60 @@ export type Database = {
           },
         ]
       }
+      client_entitlements: {
+        Row: {
+          client_org_id: string
+          commercial_basis: string
+          created_at: string
+          ended_on: string | null
+          entity_id: string
+          frequency: string
+          id: string
+          service_code: string
+          started_on: string
+          updated_at: string
+        }
+        Insert: {
+          client_org_id: string
+          commercial_basis: string
+          created_at?: string
+          ended_on?: string | null
+          entity_id: string
+          frequency: string
+          id?: string
+          service_code: string
+          started_on: string
+          updated_at?: string
+        }
+        Update: {
+          client_org_id?: string
+          commercial_basis?: string
+          created_at?: string
+          ended_on?: string | null
+          entity_id?: string
+          frequency?: string
+          id?: string
+          service_code?: string
+          started_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_entitlements_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_entitlements_service_code_fkey"
+            columns: ["service_code"]
+            isOneToOne: false
+            referencedRelation: "practice_services"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       client_org_members: {
         Row: {
           client_org_id: string
@@ -884,6 +938,147 @@ export type Database = {
           },
         ]
       }
+      gmail_sync_state: {
+        Row: {
+          history_id: string | null
+          last_error_code: string | null
+          last_recovery_at: string | null
+          last_synced_at: string | null
+          mailbox: string
+          updated_at: string
+        }
+        Insert: {
+          history_id?: string | null
+          last_error_code?: string | null
+          last_recovery_at?: string | null
+          last_synced_at?: string | null
+          mailbox: string
+          updated_at?: string
+        }
+        Update: {
+          history_id?: string | null
+          last_error_code?: string | null
+          last_recovery_at?: string | null
+          last_synced_at?: string | null
+          mailbox?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      inbound_documents: {
+        Row: {
+          byte_size: number
+          client_org_id: string | null
+          created_at: string
+          drive_file_id: string | null
+          filed_at: string | null
+          filename: string
+          filing_status: string
+          gmail_attachment_id: string
+          id: string
+          inbound_message_id: string
+          mime_type: string
+          sha256: string
+        }
+        Insert: {
+          byte_size: number
+          client_org_id?: string | null
+          created_at?: string
+          drive_file_id?: string | null
+          filed_at?: string | null
+          filename: string
+          filing_status?: string
+          gmail_attachment_id: string
+          id?: string
+          inbound_message_id: string
+          mime_type: string
+          sha256: string
+        }
+        Update: {
+          byte_size?: number
+          client_org_id?: string | null
+          created_at?: string
+          drive_file_id?: string | null
+          filed_at?: string | null
+          filename?: string
+          filing_status?: string
+          gmail_attachment_id?: string
+          id?: string
+          inbound_message_id?: string
+          mime_type?: string
+          sha256?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_documents_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbound_documents_inbound_message_id_fkey"
+            columns: ["inbound_message_id"]
+            isOneToOne: false
+            referencedRelation: "inbound_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbound_messages: {
+        Row: {
+          client_org_id: string | null
+          created_at: string
+          delivered_to: string
+          gmail_history_id: string | null
+          gmail_message_id: string
+          gmail_thread_id: string
+          id: string
+          received_at: string
+          reply_to_cycle_id: string | null
+          sender_email: string
+        }
+        Insert: {
+          client_org_id?: string | null
+          created_at?: string
+          delivered_to: string
+          gmail_history_id?: string | null
+          gmail_message_id: string
+          gmail_thread_id: string
+          id?: string
+          received_at: string
+          reply_to_cycle_id?: string | null
+          sender_email: string
+        }
+        Update: {
+          client_org_id?: string | null
+          created_at?: string
+          delivered_to?: string
+          gmail_history_id?: string | null
+          gmail_message_id?: string
+          gmail_thread_id?: string
+          id?: string
+          received_at?: string
+          reply_to_cycle_id?: string | null
+          sender_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_messages_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbound_messages_reply_to_cycle_id_fkey"
+            columns: ["reply_to_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "request_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_users: {
         Row: {
           active: boolean
@@ -1148,6 +1343,67 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      outbound_request_emails: {
+        Row: {
+          accepted_at: string | null
+          client_org_id: string
+          created_at: string
+          delivery_id: string | null
+          id: string
+          recipient: string
+          request_cycle_id: string
+          sent_by: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_org_id: string
+          created_at?: string
+          delivery_id?: string | null
+          id?: string
+          recipient: string
+          request_cycle_id: string
+          sent_by: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          client_org_id?: string
+          created_at?: string
+          delivery_id?: string | null
+          id?: string
+          recipient?: string
+          request_cycle_id?: string
+          sent_by?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_request_emails_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_request_emails_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "email_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_request_emails_request_cycle_id_fkey"
+            columns: ["request_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "request_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       people: {
         Row: {
@@ -1485,6 +1741,195 @@ export type Database = {
           },
         ]
       }
+      request_cycles: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          created_by: string
+          entity_id: string
+          id: string
+          job_id: string
+          period_end: string
+          request_kind: string
+          status: string
+          updated_at: string
+          workflow_owner_email: string
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          created_by: string
+          entity_id: string
+          id?: string
+          job_id: string
+          period_end: string
+          request_kind: string
+          status?: string
+          updated_at?: string
+          workflow_owner_email: string
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          created_by?: string
+          entity_id?: string
+          id?: string
+          job_id?: string
+          period_end?: string
+          request_kind?: string
+          status?: string
+          updated_at?: string
+          workflow_owner_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_cycles_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_cycles_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_cycles_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_item_matches: {
+        Row: {
+          client_org_id: string
+          confidence: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string
+          evidence: Json
+          id: string
+          inbound_document_id: string
+          matcher_version: string
+          request_item_id: string
+        }
+        Insert: {
+          client_org_id: string
+          confidence: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision: string
+          evidence: Json
+          id?: string
+          inbound_document_id: string
+          matcher_version: string
+          request_item_id: string
+        }
+        Update: {
+          client_org_id?: string
+          confidence?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          evidence?: Json
+          id?: string
+          inbound_document_id?: string
+          matcher_version?: string
+          request_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_item_matches_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_item_matches_inbound_document_id_fkey"
+            columns: ["inbound_document_id"]
+            isOneToOne: false
+            referencedRelation: "inbound_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_item_matches_request_item_id_fkey"
+            columns: ["request_item_id"]
+            isOneToOne: false
+            referencedRelation: "request_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_items: {
+        Row: {
+          account_label: string
+          account_last4: string | null
+          client_org_id: string
+          created_at: string
+          financial_account_id: string
+          id: string
+          item_kind: string
+          request_cycle_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_label: string
+          account_last4?: string | null
+          client_org_id: string
+          created_at?: string
+          financial_account_id: string
+          id?: string
+          item_kind: string
+          request_cycle_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_label?: string
+          account_last4?: string | null
+          client_org_id?: string
+          created_at?: string
+          financial_account_id?: string
+          id?: string
+          item_kind?: string
+          request_cycle_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_items_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_items_financial_account_id_fkey"
+            columns: ["financial_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_items_request_cycle_id_fkey"
+            columns: ["request_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "request_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_assignments: {
         Row: {
           client_org_id: string
@@ -1535,6 +1980,41 @@ export type Database = {
           },
           {
             foreignKeyName: "service_assignments_service_code_fkey"
+            columns: ["service_code"]
+            isOneToOne: false
+            referencedRelation: "practice_services"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      service_slug_map: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          marketing_slug: string
+          service_code: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          marketing_slug: string
+          service_code: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          marketing_slug?: string
+          service_code?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_slug_map_service_code_fkey"
             columns: ["service_code"]
             isOneToOne: false
             referencedRelation: "practice_services"
@@ -1970,6 +2450,98 @@ export type Database = {
         }
         Relationships: []
       }
+      work_items: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          entity_id: string
+          id: string
+          period_key: string
+          status: string
+          updated_at: string
+          work_ref: string | null
+          workflow_key: string
+          workflow_version: string | null
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          period_key: string
+          status?: string
+          updated_at?: string
+          work_ref?: string | null
+          workflow_key: string
+          workflow_version?: string | null
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          period_key?: string
+          status?: string
+          updated_at?: string
+          work_ref?: string | null
+          workflow_key?: string
+          workflow_version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_items_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_items_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_tasks: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          id: string
+          status: string
+          task_key: string
+          updated_at: string
+          work_item_id: string
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          id?: string
+          status?: string
+          task_key: string
+          updated_at?: string
+          work_item_id: string
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+          task_key?: string
+          updated_at?: string
+          work_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_tasks_work_item_id_client_org_id_fkey"
+            columns: ["work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id", "client_org_id"]
+          },
+        ]
+      }
       xero_snapshot_cache: {
         Row: {
           as_of_date: string
@@ -2099,6 +2671,10 @@ export type Database = {
           reused: boolean
         }[]
       }
+      decide_request_item_match: {
+        Args: { p_actor_email?: string; p_decision: string; p_match_id: string }
+        Returns: boolean
+      }
       entity_statutory_captured: {
         Args: {
           p_cipc_ar_required: boolean
@@ -2150,6 +2726,7 @@ export type Database = {
       is_org_member: { Args: { org_id: string }; Returns: boolean }
       next_entity_ref: { Args: never; Returns: string }
       next_proposal_ref: { Args: never; Returns: string }
+      next_work_ref: { Args: never; Returns: string }
       provision_from_signed_proposal: {
         Args: { p_org_slug: string; p_proposal_id: string; p_user_id: string }
         Returns: {
