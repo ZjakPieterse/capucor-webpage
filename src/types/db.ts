@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      approvals: {
+        Row: {
+          addressee_staff_user_id: string
+          client_org_id: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string | null
+          decision_channel: string
+          id: string
+          reason_code: string
+          requested_at: string
+          requested_by: string
+          work_item_id: string
+        }
+        Insert: {
+          addressee_staff_user_id: string
+          client_org_id: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          decision_channel?: string
+          id?: string
+          reason_code: string
+          requested_at?: string
+          requested_by: string
+          work_item_id: string
+        }
+        Update: {
+          addressee_staff_user_id?: string
+          client_org_id?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string | null
+          decision_channel?: string
+          id?: string
+          reason_code?: string
+          requested_at?: string
+          requested_by?: string
+          work_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approvals_addressee_staff_user_id_fkey"
+            columns: ["addressee_staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approvals_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approvals_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "approvals_work_item_client_org_fkey"
+            columns: ["work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id", "client_org_id"]
+          },
+        ]
+      }
       audit_events: {
         Row: {
           action: string
@@ -2514,6 +2585,7 @@ export type Database = {
           created_at: string
           entity_id: string
           id: string
+          open_approval_count: number
           period_key: string
           status: string
           updated_at: string
@@ -2526,6 +2598,7 @@ export type Database = {
           created_at?: string
           entity_id: string
           id?: string
+          open_approval_count?: number
           period_key: string
           status?: string
           updated_at?: string
@@ -2538,6 +2611,7 @@ export type Database = {
           created_at?: string
           entity_id?: string
           id?: string
+          open_approval_count?: number
           period_key?: string
           status?: string
           updated_at?: string
@@ -2699,6 +2773,17 @@ export type Database = {
           proposal_id: string
         }[]
       }
+      complete_work_item: {
+        Args: {
+          p_actor_email: string
+          p_client_org_id: string
+          p_work_item_id: string
+        }
+        Returns: {
+          work_event_id: string
+          work_item_id: string
+        }[]
+      }
       create_proposal_amendment: {
         Args: {
           p_addons: Json
@@ -2732,6 +2817,18 @@ export type Database = {
       decide_request_item_match: {
         Args: { p_actor_email?: string; p_decision: string; p_match_id: string }
         Returns: boolean
+      }
+      decide_work_item_approval: {
+        Args: {
+          p_approval_id: string
+          p_client_org_id: string
+          p_decided_by: string
+          p_decision: string
+        }
+        Returns: {
+          approval_id: string
+          work_item_id: string
+        }[]
       }
       entity_statutory_captured: {
         Args: {
@@ -2797,6 +2894,20 @@ export type Database = {
           subscription_created: boolean
           subscription_id: string
           user_id: string
+        }[]
+      }
+      request_work_item_approval: {
+        Args: {
+          p_actor_email: string
+          p_addressee_staff_user_id: string
+          p_client_org_id: string
+          p_reason_code: string
+          p_requested_by: string
+          p_work_item_id: string
+        }
+        Returns: {
+          approval_id: string
+          work_event_id: string
         }[]
       }
       revoke_client_access: {
