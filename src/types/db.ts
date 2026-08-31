@@ -348,6 +348,115 @@ export type Database = {
           },
         ]
       }
+      client_manual_fact_keys: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          enum_values: string[] | null
+          fact_key: string
+          integer_max: number | null
+          integer_min: number | null
+          label: string
+          risk_class: string
+          value_domain: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          enum_values?: string[] | null
+          fact_key: string
+          integer_max?: number | null
+          integer_min?: number | null
+          label: string
+          risk_class: string
+          value_domain: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          enum_values?: string[] | null
+          fact_key?: string
+          integer_max?: number | null
+          integer_min?: number | null
+          label?: string
+          risk_class?: string
+          value_domain?: string
+        }
+        Relationships: []
+      }
+      client_manual_facts: {
+        Row: {
+          client_org_id: string
+          confidence: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          entity_id: string
+          evidence_drive_file_id: string | null
+          fact_key: string
+          id: string
+          recorded_at: string
+          recorded_by: string
+          source_kind: string
+          value_text: string
+        }
+        Insert: {
+          client_org_id: string
+          confidence: string
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          entity_id: string
+          evidence_drive_file_id?: string | null
+          fact_key: string
+          id?: string
+          recorded_at?: string
+          recorded_by: string
+          source_kind: string
+          value_text: string
+        }
+        Update: {
+          client_org_id?: string
+          confidence?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          entity_id?: string
+          evidence_drive_file_id?: string | null
+          fact_key?: string
+          id?: string
+          recorded_at?: string
+          recorded_by?: string
+          source_kind?: string
+          value_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_manual_facts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_manual_facts_fact_key_fkey"
+            columns: ["fact_key"]
+            isOneToOne: false
+            referencedRelation: "client_manual_fact_keys"
+            referencedColumns: ["fact_key"]
+          },
+          {
+            foreignKeyName: "client_manual_facts_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_orgs: {
         Row: {
           address: string | null
