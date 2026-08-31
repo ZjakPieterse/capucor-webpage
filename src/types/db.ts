@@ -2450,6 +2450,64 @@ export type Database = {
         }
         Relationships: []
       }
+      work_events: {
+        Row: {
+          actor_email: string | null
+          actor_kind: string
+          client_org_id: string
+          detail: Json
+          entity_id: string | null
+          event_type: string
+          id: string
+          occurred_at: string
+          work_item_id: string | null
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_kind?: string
+          client_org_id: string
+          detail?: Json
+          entity_id?: string | null
+          event_type: string
+          id?: string
+          occurred_at?: string
+          work_item_id?: string | null
+        }
+        Update: {
+          actor_email?: string | null
+          actor_kind?: string
+          client_org_id?: string
+          detail?: Json
+          entity_id?: string | null
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          work_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_events_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_events_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_events_work_item_client_org_fkey"
+            columns: ["work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id", "client_org_id"]
+          },
+        ]
+      }
       work_items: {
         Row: {
           client_org_id: string
@@ -2855,6 +2913,7 @@ export type Database = {
         Args: { p_delivery_id: string }
         Returns: boolean
       }
+      work_event_detail_is_valid: { Args: { p_detail: Json }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
