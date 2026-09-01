@@ -325,6 +325,7 @@ export type Database = {
           fact_key: string
           integer_max: number | null
           integer_min: number | null
+          is_overridable: boolean
           label: string
           risk_class: string
           value_domain: string
@@ -337,6 +338,7 @@ export type Database = {
           fact_key: string
           integer_max?: number | null
           integer_min?: number | null
+          is_overridable?: boolean
           label: string
           risk_class: string
           value_domain: string
@@ -349,6 +351,7 @@ export type Database = {
           fact_key?: string
           integer_max?: number | null
           integer_min?: number | null
+          is_overridable?: boolean
           label?: string
           risk_class?: string
           value_domain?: string
@@ -1477,6 +1480,112 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "client_orgs"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_override_targets: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_order: number
+          enum_values: string[] | null
+          label: string
+          target_field: string
+          target_kind: string
+          value_domain: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          enum_values?: string[] | null
+          label: string
+          target_field: string
+          target_kind: string
+          value_domain: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_order?: number
+          enum_values?: string[] | null
+          label?: string
+          target_field?: string
+          target_kind?: string
+          value_domain?: string
+        }
+        Relationships: []
+      }
+      knowledge_overrides: {
+        Row: {
+          authorised_at: string
+          authorised_by: string
+          client_org_id: string
+          created_at: string
+          effective_from: string
+          entity_id: string
+          evidence_drive_file_id: string | null
+          expires_at: string
+          id: string
+          override_value: string
+          reason_code: string
+          target_field: string
+          target_id: string
+          target_kind: string
+        }
+        Insert: {
+          authorised_at?: string
+          authorised_by: string
+          client_org_id: string
+          created_at?: string
+          effective_from?: string
+          entity_id: string
+          evidence_drive_file_id?: string | null
+          expires_at: string
+          id?: string
+          override_value: string
+          reason_code: string
+          target_field: string
+          target_id: string
+          target_kind: string
+        }
+        Update: {
+          authorised_at?: string
+          authorised_by?: string
+          client_org_id?: string
+          created_at?: string
+          effective_from?: string
+          entity_id?: string
+          evidence_drive_file_id?: string | null
+          expires_at?: string
+          id?: string
+          override_value?: string
+          reason_code?: string
+          target_field?: string
+          target_id?: string
+          target_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_overrides_authorised_by_fkey"
+            columns: ["authorised_by"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_overrides_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_overrides_target_fkey"
+            columns: ["target_kind", "target_field"]
+            isOneToOne: false
+            referencedRelation: "knowledge_override_targets"
+            referencedColumns: ["target_kind", "target_field"]
           },
         ]
       }
