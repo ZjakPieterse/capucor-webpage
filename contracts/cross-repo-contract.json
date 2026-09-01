@@ -693,9 +693,10 @@
     "rule": "capucor-docs/rules/where-things-live.md"
   },
   "docs": {
-    "why": "The board, the tracker and the two AGENTS.md files are load-bearing navigation. A relative link that stopped resolving is the cheapest possible drift to catch and the easiest to leave rotting.",
+    "why": "The board, the tracker, the two AGENTS.md files and capucor-os/docs are load-bearing navigation. A relative link that stopped resolving is the cheapest possible drift to catch and the easiest to leave rotting. capucor-os/docs was ADDED 2026-09-01 (housekeeping H-3): it holds the accepted ADRs, the prototype operational reference that AGENTS.md tells every agent to read BEFORE touching application code, the architecture navigation and the phase trackers. Those are the most-linked-to documents in the estate, and until this change the only load-bearing directory whose OWN outbound links were never resolved anywhere. ⚠️ Adding it roughly DOUBLES the reported link count — that jump is the coverage arriving, not a regression.",
     "linkCheckRoots": [
       "capucor-docs",
+      "capucor-os/docs",
       "capucor-web/AGENTS.md",
       "capucor-os/AGENTS.md",
       "AGENTS.md",
