@@ -316,38 +316,6 @@ export type Database = {
           },
         ]
       }
-      client_org_members: {
-        Row: {
-          client_org_id: string
-          created_at: string
-          id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          client_org_id: string
-          created_at?: string
-          id?: string
-          role?: string
-          user_id: string
-        }
-        Update: {
-          client_org_id?: string
-          created_at?: string
-          id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_org_members_client_org_id_fkey"
-            columns: ["client_org_id"]
-            isOneToOne: false
-            referencedRelation: "client_orgs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       client_manual_fact_keys: {
         Row: {
           active: boolean
@@ -453,6 +421,38 @@ export type Database = {
             columns: ["recorded_by"]
             isOneToOne: false
             referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_org_members: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_org_members_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
             referencedColumns: ["id"]
           },
         ]
