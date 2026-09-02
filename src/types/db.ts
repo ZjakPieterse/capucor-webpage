@@ -541,6 +541,71 @@ export type Database = {
         }
         Relationships: []
       }
+      client_owners: {
+        Row: {
+          client_org_id: string
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          entity_id: string | null
+          id: string
+          owner_user_id: string
+          recorded_at: string
+          recorded_by: string
+        }
+        Insert: {
+          client_org_id: string
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          entity_id?: string | null
+          id?: string
+          owner_user_id: string
+          recorded_at?: string
+          recorded_by: string
+        }
+        Update: {
+          client_org_id?: string
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          entity_id?: string | null
+          id?: string
+          owner_user_id?: string
+          recorded_at?: string
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_owners_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_owners_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_owners_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_owners_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_email_org_claims: {
         Row: {
           client_org_id: string
