@@ -16,13 +16,25 @@ Both apps share **one Supabase project**, but ⚠️ **this repo does not own th
 this repo's copy was deleted in Phase 3 of the OS split. Write new migrations there, and apply them
 using the canonical OS migration workflow.
 
-✅ **`supabase db push` is allowed since 2026-08-06**, from `capucor-os` and nowhere else. It was
-forbidden until then because the live database had **no migration ledger at all** — the
-`supabase_migrations` schema did not exist (measured read-only, 2026-08-05 and again on 2026-08-06),
-so `db push` would have tried to run all 23 migrations against a database that already had every
-table. The ledger was created and backfilled on 2026-08-06 and the dry run now proposes nothing.
-Whichever way a migration is applied, the OS `db:check` is still what proves it. Dated record:
-[`../capucor-docs/operations/migration-ledger-repair-plan.md`](../../capucor-docs/operations/migration-ledger-repair-plan.md).
+⛔ **ZJAK APPLIES EVERY MIGRATION BY HAND IN THE SUPABASE SQL EDITOR. NO AGENT APPLIES ONE, BY ANY
+ROUTE** — not `supabase db push`, not `supabase db query --linked`, not a script. Standing rule,
+set 2026-08-26. Write the file in `capucor-os/supabase/migrations/`, hand it over, then prove the
+result with `npm run db:check` there; the proof is the writer's, not the operator's. The
+reasoning is in
+[`../../capucor-os/docs/engineering/prototype/DATABASE.md`](../../capucor-os/docs/engineering/prototype/DATABASE.md)
+and the rule is repeated in [`../../capucor-os/AGENTS.md`](../../capucor-os/AGENTS.md).
+
+> ⛔ **CORRECTED 2026-09-03 (EH-02). THIS FILE SAID THE OPPOSITE FOR EIGHT DAYS.** The line here
+> read *"✅ `supabase db push` is allowed since 2026-08-06, from `capucor-os` and nowhere else"* —
+> true when written, and false from **2026-08-26**, when the standing rule was set. It is the one
+> line EH-02 did not move verbatim, because moving it would have minted a new document dated
+> today that granted permission a standing safety rule forbids.
+>
+> ⚠️ **`db push` is not merely disallowed, it is actively dangerous here.** The remote ledger
+> stopped being maintained and sits twelve versions behind production, so a push would replay
+> already-applied migrations — including the destructive `034`. **Repairing the ledger does NOT
+> re-open push.** The original ledger reasoning, now historical, is in
+> [`../../capucor-docs/operations/migration-ledger-repair-plan.md`](../../capucor-docs/operations/migration-ledger-repair-plan.md).
 
 ⛔ **`009a` / `009b` are deliberately absent from the ledger** and must stay that way — a ledger
 version with no matching local file blocks *every* push. Measured 2026-08-06.
