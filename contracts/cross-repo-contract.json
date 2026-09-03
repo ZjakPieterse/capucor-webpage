@@ -697,6 +697,7 @@
     "linkCheckRoots": [
       "capucor-docs",
       "capucor-os/docs",
+      "capucor-web/docs",
       "capucor-web/AGENTS.md",
       "capucor-os/AGENTS.md",
       "AGENTS.md",
