@@ -692,6 +692,37 @@
     "historyNotRewritten": "⚠️ THE DELETED FILES REMAIN IN GIT HISTORY AT 878ef47 (WC-01’s rescue commit) AND THIS CHECK CANNOT SEE THEM. Zjak’s decision, 2026-08-26: no history rewrite — capucor-docs is private and single-owner, and a filter-repo force-push would rewrite every SHA after 878ef47 and invalidate three checkouts. Recorded so the deletion is never read as a stronger guarantee than it is.",
     "rule": "capucor-docs/rules/where-things-live.md"
   },
+  "sharedRules": [
+    {
+      "id": "migrations-applied-by-hand",
+      "title": "Migrations are applied by hand; no agent applies one",
+      "why": "Set by Zjak 2026-08-26. It was corrected in capucor-docs and capucor-os that day and NEVER in capucor-web, where AGENTS.md went on saying 'supabase db push is allowed since 2026-08-06' for eight days with all thirteen audit checks green. duplicate-file cannot see it: a rule restated in prose across hand-written files is not a duplicated file. That is the drift this check exists for, and re-injecting exactly it is a drill case.",
+      "files": [
+        "capucor-os/AGENTS.md",
+        "capucor-web/AGENTS.md",
+        "capucor-web/docs/database.md"
+      ],
+      "mustMatch": "no agent applies one",
+      "mustMatchWhy": "The one phrase all three files share. They word the rest of the rule differently ('Zjak applies every migration by hand' vs 'Migrations are applied BY HAND by Zjak'), so a longer literal would match none of them.",
+      "mustNotMatch": "db push[^.]{0,40}is allowed",
+      "mustNotMatchWhy": "The exact shape of the 2026-08-26 drift."
+    },
+    {
+      "id": "production-deploys-are-manual",
+      "title": "Production deploys are manual dispatch only, in both app repos",
+      "why": "ADR 0003 for capucor-os, extended to capucor-web by ADR 0010. A merged fix is not a shipped fix in either repo, and PO-13's manual walk lost its first attempt to exactly this misunderstanding. If one repo's instructions ever say a push deploys, an agent will believe it.",
+      "files": [
+        "capucor-os/AGENTS.md",
+        "capucor-web/AGENTS.md",
+        "capucor-web/docs/deploy.md"
+      ],
+      "mustMatch": "manual(ly)? (dispatch|triggered)",
+      "mustMatchWhy": "capucor-os says 'manually triggered workflow'; capucor-web says 'MANUAL DISPATCH ONLY'. One rule, two wordings, so the pattern is an alternation rather than a phrase.",
+      "mustNotMatch": "deploys? (automatically )?on (every )?push",
+      "mustNotMatchWhy": "The claim that would be dangerous to believe. Verified to match none of the three files on 2026-09-03."
+    }
+  ],
+  "sharedRulesHow": "Each rule names the files that must carry it. ⛔ NOT every canonicalInstructionFile: the workspace-root AGENTS.md is a 110-line pointer and carries neither rule, by design. Patterns are case-insensitive JavaScript regular expressions. mustMatch is evaluated against the whole file. ⚠️ mustNotMatch is evaluated against the file with BLOCKQUOTE LINES REMOVED, and that asymmetry is load-bearing: after EH-02 the estate's convention is that a corrected claim stays quoted inside a '>' block beside a dated correction, so capucor-web/docs/database.md legitimately contains the old 'db push is allowed' wording. A checker that could not tell an assertion from a quotation would flag the very file that fixed the bug, and would then be switched off. The cost is stated rather than hidden: a live rule written inside a blockquote would be missed by mustNotMatch. Fenced code blocks are stripped from both directions.",
   "docs": {
     "why": "The board, the tracker, the two AGENTS.md files and capucor-os/docs are load-bearing navigation. A relative link that stopped resolving is the cheapest possible drift to catch and the easiest to leave rotting. capucor-os/docs was ADDED 2026-09-01 (housekeeping H-3): it holds the accepted ADRs, the prototype operational reference that AGENTS.md tells every agent to read BEFORE touching application code, the architecture navigation and the phase trackers. Those are the most-linked-to documents in the estate, and until this change the only load-bearing directory whose OWN outbound links were never resolved anywhere. ⚠️ Adding it roughly DOUBLES the reported link count — that jump is the coverage arriving, not a regression.",
     "linkCheckRoots": [
