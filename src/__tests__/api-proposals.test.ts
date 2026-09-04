@@ -77,9 +77,12 @@ function mountAdmin() {
       if (table === 'brackets') {
         return {
           select: () => ({
-            in: () => ({
-              returns: async () => ({ data: bracketRows, error: bracketError }),
-            }),
+            // ⚠️ Resolves at `.in()`, mirroring production. Until 2026-09-04 it
+            // resolved at `.returns()`, which meant this mock REQUIRED the
+            // production code to keep the type override that disabled the
+            // select-string check. A mock shaped around an escape hatch pins it
+            // in place — see src/__tests__/supabase-query-typing.test.ts.
+            in: async () => ({ data: bracketRows, error: bracketError }),
           }),
         };
       }

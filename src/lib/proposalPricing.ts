@@ -67,8 +67,7 @@ export async function priceProposalSelection(
     const { data, error } = await admin
       .from('brackets')
       .select('service_slug, ordinal, label, basic_price, pro_price, premium_price')
-      .in('service_slug', input.services)
-      .returns<BracketRow[]>();
+      .in('service_slug', input.services);
 
     if (error || !data) throw error ?? new Error('Brackets fetch returned no rows');
     bracketRows = data;
