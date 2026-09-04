@@ -143,10 +143,41 @@ const hostRedirects = [
   })),
 ];
 
+// ---------------------------------------------------------------------------
+// Release provenance — the commit this bundle was built from
+// ---------------------------------------------------------------------------
+// Baked into the SERVER compilation only, so /api/health can say which revision
+// is actually serving and deploy.yml can refuse a deploy that did not land the
+// commit it intended. See src/lib/release.ts for why that gap mattered.
+//
+// ⚠️ `isServer` IS LOAD-BEARING, NOT TIDINESS. Defining this for the client
+// compilation would inline the SHA into `.open-next/assets/_next/static/*`,
+// which is served unauthenticated to anyone — publishing repository metadata
+// that the whole point of the signed health response is to withhold. The
+// deploy workflow asserts BOTH halves after the build: the SHA present in the
+// server bundle, and absent from the client assets.
+//
+// ⚠️ AND IT MUST NOT BECOME `env:` OR `NEXT_PUBLIC_*`. Both of those inline
+// into the client bundle by design, which is the same disclosure by a shorter
+// route. Adding it to `env:` would look like a simplification and would be a
+// regression.
+const RELEASE = process.env.CAPUCOR_RELEASE ?? "";
+
 const nextConfig: NextConfig = {
   // Don't advertise the framework on every response. Pure topology disclosure:
   // it tells a scanner which CVE list to try and buys us nothing.
   poweredByHeader: false,
+
+  webpack(config, { isServer, webpack }) {
+    if (isServer) {
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          "process.env.CAPUCOR_RELEASE": JSON.stringify(RELEASE),
+        }),
+      );
+    }
+    return config;
+  },
 
   async headers() {
     return [

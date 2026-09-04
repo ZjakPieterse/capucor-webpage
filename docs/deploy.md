@@ -109,3 +109,56 @@ it. Both repositories build the same way and need the same boundary.
 - **The static build logs three failed `[pricing]` fetches.** That is the placeholder Supabase host
   refusing to resolve, which is the point of using a reserved `.invalid` domain. The page falls
   back and the build completes; it is not a regression.
+
+---
+
+## Knowing which commit production is serving
+
+> **Added 2026-09-04 (AE-05).**
+
+The **signed** `/api/health` response carries `release`: the full git SHA the running bundle was
+built from. The **public** response is unchanged and still exactly `{ ok, app }` — repository
+state is not something anonymous callers get.
+
+`next.config.ts` defines `process.env.CAPUCOR_RELEASE` into the **server** webpack compilation
+only, so the SHA is a literal in the compiled worker. It is deliberately **not** a Worker secret:
+a secret is set by hand and can be edited to say anything, which would make the check a statement
+about the dashboard rather than about the artefact that was uploaded.
+
+`deploy.yml` uses it twice:
+
+| When | Gate |
+| --- | --- |
+| **Before deploying** | The SHA must be in `.open-next/server-functions` **and absent from `.open-next/assets`**. A leak into the public assets refuses the deploy. |
+| **After deploying** | Signs a health request and fails the run unless the returned `release` equals the SHA just shipped. The verdict lives in [`scripts/release-provenance.mjs`](../scripts/release-provenance.mjs) so every case has a unit test. |
+
+All three post-deploy steps are conditioned on the deploy having succeeded rather than on the
+step above them, so **the first failure no longer skips the rest** — the incident where that
+matters is precisely the one with several faults at once.
+
+### ⚠️ What this proves
+
+That the expected revision was serving **immediately after that deploy**. It does **not**
+continuously detect a later rollback: nothing re-asks the question, and giving the push-triggered
+watchdog the key needed to ask is a trade the cross-repo contract deliberately refused.
+
+### ⚠️ A hand-run `npm run deploy:cf` now reports `release: "unknown"`
+
+Nothing outside `deploy.yml` sets `CAPUCOR_RELEASE`, so a laptop deploy produces a worker that
+cannot say what it is. That is the **right** outcome — it makes the laptop deploy this page
+already forbids visibly distinguishable from a real one — but do not read `unknown` as a bug in
+the injection without checking how the running bundle was built.
+
+> ⛔ **This supersedes the suggestion above** of comparing the two Workers by CSS/chunk hash on
+> their `*.workers.dev` URLs. That was a proxy for "which build is this?"; the signed
+> `release` field answers it directly, and exactly.
+
+### Rehearsing it locally
+
+```bash
+npm run build:cf:offline
+```
+
+The credential-free build sets a synthetic release and asserts both halves of the pre-deploy gate
+— present in the server bundle, absent from the public assets. So a broken injection is caught on
+the dev box rather than by capucor-web's first production dispatch.

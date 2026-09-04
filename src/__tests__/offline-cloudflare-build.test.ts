@@ -252,7 +252,10 @@ describe('offline Cloudflare build — environment scrub', () => {
 
   it('8. every synthetic value is unmistakably fake and cannot resolve', () => {
     for (const [name, value] of Object.entries(SYNTHETIC_ENV)) {
-      if (name === 'CI') continue;
+      // CI is a flag, and CAPUCOR_RELEASE has to LOOK like a real SHA for the
+      // build's DefinePlugin to be exercised the way production exercises it —
+      // so neither can carry the placeholder marker. 8a covers the release.
+      if (name === 'CI' || name === 'CAPUCOR_RELEASE') continue;
       expect(value).toContain('offline-build-placeholder');
       if (value.startsWith('https://')) {
         // RFC 2606 reserves .invalid — a bundle built here cannot reach a real
@@ -260,6 +263,15 @@ describe('offline Cloudflare build — environment scrub', () => {
         expect(new URL(value).host.endsWith('.invalid')).toBe(true);
       }
     }
+  });
+
+  it('8a. the synthetic release is a well-formed SHA that is obviously not a commit', () => {
+    // It must satisfy lib/release.ts's 40-hex rule, or the build would bake
+    // 'unknown' and the injection would go unexercised — which is the bug this
+    // value was added to close. It must equally never be mistaken for a real
+    // commit, so it spells out what it is.
+    expect(SYNTHETIC_ENV.CAPUCOR_RELEASE).toMatch(/^[0-9a-f]{40}$/);
+    expect(SYNTHETIC_ENV.CAPUCOR_RELEASE).toContain('0ff11e0ff11e');
   });
 
   it('9. sets CI, so next.config.ts enforces its own empty-URL guard', () => {
