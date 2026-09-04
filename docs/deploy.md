@@ -36,10 +36,17 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   recover with **`wrangler rollback`**.
 - **The build is pinned to webpack** (`next build --webpack`), not Turbopack — OpenNext-for-
   Cloudflare cannot bundle a Turbopack build into a working worker.
-- **The coupled runtime is pinned exact:** Next.js / `eslint-config-next` **16.3.0**,
-  `@opennextjs/cloudflare` **1.20.2** and Wrangler **4.86.0**. Move them together and verify a full
-  `build:cf`; a caret on OpenNext previously allowed a clean install to select an adapter whose
-  Next peer range the app did not satisfy.
+- **The coupled runtime is pinned exact:** Next.js / `eslint-config-next` **16.3.4**,
+  `@opennextjs/cloudflare` **1.20.6** and Wrangler **4.129.0** (moved together 2026-09-04, AE-04;
+  previously 16.3.0 / 1.20.2 / 4.86.0). Move them together and verify a full `build:cf`; a caret on
+  OpenNext previously allowed a clean install to select an adapter whose Next peer range the app
+  did not satisfy.
+  **The peer ranges are now tight in BOTH directions:** OpenNext 1.20.6 requires Next `>=16.3.3`
+  *and* Wrangler `^4.125.0`, where 1.20.2 accepted Wrangler `^4.86.0`. Bumping Wrangler for a
+  security fix therefore drags OpenNext, and OpenNext drags Next.
+  ⚠️ Wrangler 4.129.0 depends on `miniflare@5.x-alpha`. That is what Cloudflare ships on the
+  `latest` tag, not something we opted into; Miniflare is the LOCAL simulator behind
+  `wrangler dev` and `preview:cf`, and `wrangler deploy` does not run it.
 - **No edge-runtime routes.** Cloudflare Workers are already edge; do not add
   `export const runtime = 'edge'` (it breaks the OpenNext bundle — e.g. `/api/og` had it removed).
 - **ISR caching:** `/` and `/pricing` are cached for 1 hour (`export const revalidate = 3600`)
@@ -162,3 +169,46 @@ npm run build:cf:offline
 The credential-free build sets a synthetic release and asserts both halves of the pre-deploy gate
 — present in the server bundle, absent from the public assets. So a broken injection is caught on
 the dev box rather than by capucor-web's first production dispatch.
+## Dependency exposure — what is left, and what would clear it
+
+> **Measured 2026-09-04 (AE-04).** Re-measure before trusting these numbers; they move on their
+> own as upstream publishes advisories.
+
+This repository went from **18 `npm audit` findings (1 critical, 9 high) to 13 (0 critical,
+7 high)**. What closed, and how:
+
+| Direct dependency | Moved | Closed |
+| --- | --- | --- |
+| `supabase` | `^2.93.1` → `^2.116.0` | `tar` — the only **critical**, and the only finding here that a version bump could reach on its own |
+| `vitest` / `@vitest/ui` | `^4.1.5` → `^4.1.11` | `vite`, and `fflate` via a lockfile refresh (`^0.8.2` already admitted the patched `0.8.3`) |
+| `@tailwindcss/postcss` | lockfile refresh | `nanoid` — **the only `runtime`-scope alert in either repository** |
+| `shadcn` | `4.4.0` → `4.21.0` | nothing; the newest release still carries the same MCP-SDK chain |
+
+### ⛔ 34 of the 50 remaining advisories are one dev-only CLI
+
+Attributed by advisory count, not by package count:
+
+| Direct dependency | Advisories | Why it cannot be fixed by upgrading |
+| --- | ---: | --- |
+| `shadcn` | **34** | `hono` (21), `fast-uri` (7), `ip-address` (2), `browserslist` (2), `@hono/node-server`, `postcss-selector-parser`, `express-rate-limit` — all through `@modelcontextprotocol/sdk`. Already on the newest `shadcn`. |
+| `@opennextjs/cloudflare` | 12 | `brace-expansion` (7), `qs` (3), `form-data`, `body-parser` — through `@opennextjs/aws` → `express` and `@node-minify/core` → `glob`. Already on the newest OpenNext. |
+| `eslint` | 3 | `js-yaml`, through `@eslint/eslintrc`. |
+| `eslint-config-next` | 1 | `@babel/core`, through `eslint-plugin-react-hooks`. |
+
+**Every one is `development` scope** — build and tooling, never a deployed Worker. That is not
+"harmless": a build machine is exactly where a supply-chain problem lands. It does mean none of
+them is a live exposure on capucor.com.
+
+**The trigger for each is an upstream release**, not a change here. Do not add package overrides
+to force a transitive version: an override that silently disagrees with what a package actually
+imports buys a green dashboard and a harder debugging session.
+
+### 💡 The one lever that is ours, and it is a decision, not a fix
+
+`shadcn` is a **scaffolding CLI** — it generates component files and is never imported by
+application code. Removing it would clear 34 of the 50 remaining advisories at a stroke, and
+**`../capucor-os` does not have it at all** while carrying the same `src/components/ui/*.tsx`
+(a declared `knownDuplicates` pair — the two repos are byte-compared there). The cost is that
+`npx shadcn add` would need `npx shadcn@latest` instead of a pinned local version.
+
+That is a tooling decision for a human, so AE-04 measured it and did not take it.

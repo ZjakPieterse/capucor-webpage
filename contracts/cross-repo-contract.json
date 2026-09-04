@@ -28,12 +28,12 @@
     "docs": "capucor-docs"
   },
   "coupledDependencies": {
-    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.x requires Next >=16.2.11, and moving one side alone can make a clean install select an adapter whose Next peer range the app does not satisfy. React and supabase-js are shared because both Workers render the same components and speak to the same PostgREST. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped.",
+    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.6 requires Next >=16.3.3 AND wrangler ^4.125.0, and moving one side alone can make a clean install select an adapter whose peer range the app does not satisfy. React and supabase-js are shared because both Workers render the same components and speak to the same PostgREST. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped. ⚠️ THE PEER RANGES ARE NOW TIGHTER IN BOTH DIRECTIONS THAN THEY WERE AT 1.20.2, so the triple is less separable than it used to be: 1.20.2 accepted wrangler ^4.86.0, while every release from 1.20.3 onward names ^4.125.0. Bumping wrangler for a security fix therefore drags OpenNext, and OpenNext drags Next. That is the whole reason AE-04 moved four packages to close alerts against two.",
     "exact": {
-      "next": "16.3.0",
-      "eslint-config-next": "16.3.0",
-      "@opennextjs/cloudflare": "1.20.2",
-      "wrangler": "4.86.0",
+      "next": "16.3.4",
+      "eslint-config-next": "16.3.4",
+      "@opennextjs/cloudflare": "1.20.6",
+      "wrangler": "4.129.0",
       "react": "19.2.4",
       "react-dom": "19.2.4",
       "@supabase/supabase-js": "2.112.0",
@@ -46,6 +46,13 @@
         ".nvmrc",
         ".github/workflows/ci.yml"
       ]
+    },
+    "securityRefresh": {
+      "why": "AE-04, 2026-09-04. GitHub reported 17 open Dependabot alerts on capucor-os and 58 on capucor-webpage, every one against a lockfile and every one development-scope. ⚠️ THE FIRST USEFUL STEP WAS REFUSING TO ASSUME WRANGLER CAUSED THEM ALL. Traced package by package with `npm ls --all`: in capucor-os 16 of the 17 came through wrangler → miniflare (undici ×12, ws ×2, sharp, esbuild) and exactly ONE did not — fflate, reached through @vitest/ui, which needed no version change at all because the declared range `^0.8.2` already admitted the patched 0.8.3 and only the lockfile was holding it back.",
+      "measurement": "MEASURED against the registry rather than assumed. miniflare 4.20260708.1 (the newest miniflare-4 line, wrangler ~4.110) ships ws 8.21.0 and undici 7.28.0 but sharp 0.34.5, so it clears some alerts and leaves the sharp high and four undici advisories that need >=7.29.0. miniflare 5.20260903.0-alpha (wrangler 4.129.0) ships undici 7.29.0, ws 8.21.0 and sharp 0.35.2, and wrangler's own esbuild moves 0.27.3 → 0.28.1. Only the second option clears the whole set, which is why the toolchain went to the newest release rather than to the nearest one that looked sufficient.",
+      "miniflareIsAlpha": "⚠️ STATED PLAINLY BECAUSE IT LOOKS ALARMING IN A LOCKFILE: wrangler 4.129.0 depends on `miniflare@5.x-alpha`. That is what Cloudflare ships on the `latest` wrangler tag, not a pre-release we opted into. Miniflare is the LOCAL simulator behind `wrangler dev` and `opennextjs-cloudflare preview`; `wrangler deploy` does not run it, so it is not in the production path. It is still the reason the alerts were development-scope in the first place.",
+      "scope": "⛔ NONE OF THE ALERTS WERE PRODUCTION-REACHABLE IN capucor-os. All 17 were `development` scope: build and local-simulator tooling that never reaches a deployed Worker. That does NOT make them free — a build machine is a place a supply-chain problem lands — but it does mean the record must not describe this as closing a production exposure, because it is not.",
+      "residual": "See the AE-04 chunk record in capucor-docs for what remains open in capucor-webpage and why. Anything not closed here is named there with the upgrade that would close it, rather than left to be rediscovered."
     }
   },
   "provisioning": {
