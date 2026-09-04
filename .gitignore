@@ -34,6 +34,15 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Wrangler local dev vars and private key material.
+#
+# ⚠️ ADDED 2026-09-04 AFTER A SECURITY REVIEW. The offline build's deny-filter
+# kept these out of its disposable snapshot, and the byte-shared comment in
+# scripts/build-cf-offline.mjs claimed .gitignore covered them — true in
+# capucor-os, and not here. Nothing kept them out of a COMMIT.
+.dev.vars*
+*.key
+
 # vercel
 .vercel
 

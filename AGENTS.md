@@ -68,6 +68,7 @@ cp .env.example .env.local
 ```bash
 npm run dev          # Start dev server with Turbopack (http://localhost:3000)
 npm run lint         # ESLint over src/
+npm run build:cf:offline  # Full OpenNext/Cloudflare build with NO credentials — see docs/deploy.md
 npm run test         # Run Vitest unit tests
 npm run test:watch   # Vitest in watch mode
 npm run test:ui      # Open Vitest browser UI
