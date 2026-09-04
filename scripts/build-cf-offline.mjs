@@ -111,6 +111,9 @@ const SEARCHABLE = /\.(?:m?js|cjs|json|html|txt)$/i;
 /** The host the post-build assertion looks for in the client bundle. */
 const SYNTHETIC_HOST = new URL(SYNTHETIC_ENV.NEXT_PUBLIC_SUPABASE_URL).host;
 
+/** The release the build must bake into the SERVER bundle, and only there. */
+const SYNTHETIC_RELEASE = SYNTHETIC_ENV.CAPUCOR_RELEASE;
+
 function fail(message) {
   console.error(`\n✗ ${message}\n`);
   process.exitCode = 1;
@@ -249,6 +252,37 @@ function run(command, args, cwd, env) {
  * build genuinely consumed the env this script supplied; if the script had
  * somehow picked up a different one, the placeholder host would be absent.
  */
+/**
+ * Find every emitted file under `directory` containing `needle`.
+ *
+ * Searched in-process rather than by shelling out to grep: this script has to
+ * run from PowerShell as well as from a POSIX shell, and a missing grep would
+ * turn an assertion into a crash rather than a verdict.
+ *
+ * Bounded to emitted code by SEARCHABLE. The traced tree contains native
+ * binaries and wasm; reading all of it as UTF-8 is minutes of I/O per run, and
+ * one unreadable file would become a reported build failure. Everything looked
+ * for here is an inlined literal, so it can only be in code.
+ */
+function searchFor(directory, needle) {
+  const found = [];
+  if (!existsSync(directory)) return found;
+
+  const walk = (current) => {
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const full = join(current, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+      } else if (entry.isFile() && SEARCHABLE.test(entry.name)) {
+        if (readFileSync(full, 'utf8').includes(needle)) found.push(full);
+      }
+    }
+  };
+
+  walk(directory);
+  return found;
+}
+
 function assertSyntheticValuesReachedTheBundle(root) {
   const worker = join(root, '.open-next', 'worker.js');
   if (!existsSync(worker)) {
@@ -256,30 +290,7 @@ function assertSyntheticValuesReachedTheBundle(root) {
   }
   log('✓ .open-next/worker.js exists.');
 
-  // Searched in-process rather than by shelling out to grep: this script has to
-  // run from PowerShell as well as from a POSIX shell, and a missing grep would
-  // turn the assertion into a crash rather than a verdict.
-  const search = (directory) => {
-    const found = [];
-    if (!existsSync(directory)) return found;
-    const walk = (current) => {
-      for (const entry of readdirSync(current, { withFileTypes: true })) {
-        const full = join(current, entry.name);
-        if (entry.isDirectory()) {
-          walk(full);
-        } else if (entry.isFile() && SEARCHABLE.test(entry.name)) {
-          // Bounded to emitted JavaScript on purpose. The traced tree contains
-          // native binaries and wasm; reading all of it as UTF-8 is minutes of
-          // I/O per run, and one unreadable file would become a reported build
-          // failure. The values we look for are inlined literals, so they can
-          // only be in code.
-          if (readFileSync(full, 'utf8').includes(SYNTHETIC_HOST)) found.push(full);
-        }
-      }
-    };
-    walk(directory);
-    return found;
-  };
+  const search = (directory) => searchFor(directory, SYNTHETIC_HOST);
 
   // The server bundle ALWAYS carries it: next.config.ts puts the Supabase URL
   // into the CSP `connect-src`, and that header is baked at build time. This is
@@ -321,6 +332,42 @@ function assertSyntheticValuesReachedTheBundle(root) {
   log(`✓ Synthetic Supabase host inlined into ${inClient.length} client asset(s).`);
 }
 
+/**
+ * Rehearse BOTH halves of deploy.yml's pre-deploy release gate, credential-free.
+ *
+ * ⚠️ THIS IS THE ONLY PLACE THE AE-05 INJECTION IS EXERCISED OUTSIDE A REAL
+ * PRODUCTION DEPLOY. next.config.ts defines CAPUCOR_RELEASE into the SERVER
+ * webpack compilation only; if that stops working the deploy fails closed, but
+ * it fails after someone has dispatched a production deploy and waited for a
+ * build. Proving it here costs one more pass over output we already walk.
+ *
+ * The ABSENCE half matters at least as much as the presence half: defining the
+ * value for the client compilation, or moving it to `env:` or a NEXT_PUBLIC_
+ * name, would publish the repository's commit to every anonymous visitor.
+ */
+function assertReleaseWentServerSideOnly(root) {
+  const inServer = searchFor(join(root, '.open-next', 'server-functions'), SYNTHETIC_RELEASE);
+  if (inServer.length === 0) {
+    fail(
+      'The synthetic release was not baked into the server bundle, so AE-05 ' +
+        'build-time injection is not working. The deployed /api/health would ' +
+        'report "unknown" and deploy.yml would refuse to ship.',
+    );
+  }
+  log(`✓ Release baked into ${inServer.length} server file(s) — the AE-05 injection works.`);
+
+  const inClient = searchFor(join(root, '.open-next', 'assets'), SYNTHETIC_RELEASE);
+  if (inClient.length > 0) {
+    fail(
+      'THE RELEASE LEAKED INTO THE PUBLIC CLIENT ASSETS:\n' +
+        inClient.map((f) => `    ${f}`).join('\n') +
+        '\n  That publishes repository state to anonymous visitors. Check that ' +
+        'the DefinePlugin in next.config.ts is still gated on isServer.',
+    );
+  }
+  log('✓ Release absent from the public client assets.');
+}
+
 function main() {
   // Derived, not written: this file is a code-mode knownDuplicates pair, so a
   // repo-specific literal here would either break the equality or announce the
@@ -357,6 +404,7 @@ function main() {
     log('');
     assertNoDotenvFiles(snapshot, 'after the build');
     assertSyntheticValuesReachedTheBundle(snapshot);
+    assertReleaseWentServerSideOnly(snapshot);
 
     log('');
     log('✓ Credential-free Cloudflare build succeeded.');

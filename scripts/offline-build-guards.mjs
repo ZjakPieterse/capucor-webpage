@@ -82,6 +82,18 @@ export const CREDENTIAL_ENV =
  */
 export const SYNTHETIC_ENV = Object.freeze({
   CI: '1',
+  /**
+   * A synthetic release SHA, so the offline build exercises AE-05's build-time
+   * injection instead of leaving a production dispatch to discover a break.
+   *
+   * ⚠️ IT IS ALSO WHY THE VALUE IS SET RATHER THAN INHERITED. CAPUCOR_RELEASE
+   * does not match CREDENTIAL_ENV, so one exported in the developer shell would
+   * otherwise pass straight through and the build would prove something about
+   * that value instead of about this one.
+   *
+   * Not a real commit: valid hex that reads as "offline" over and over.
+   */
+  CAPUCOR_RELEASE: '0ff11e0ff11e0ff11e0ff11e0ff11e0ff11e0ff1',
   NEXT_PUBLIC_SUPABASE_URL: 'https://offline-build-placeholder.supabase.invalid',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'offline-build-placeholder-anon-key',
   NEXT_PUBLIC_APP_URL: 'https://offline-build-placeholder.invalid',

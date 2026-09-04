@@ -23,11 +23,21 @@
  * step both fail loudly instead of reporting a healthy-looking 200. That is
  * deliberately unchanged and stays on the PUBLIC response: `ok` and the status
  * code carry it, and neither names anything.
+ *
+ * RELEASE PROVENANCE (2026-09-04). The signed view also carries `release`: the
+ * full git SHA this bundle was built from, baked in at build time. It answers
+ * the question the deploy-drift check explicitly could not — not "did we intend
+ * to ship this commit?" but "is that commit the one actually serving?".
+ * deploy.yml compares it to the SHA it just deployed and fails the run if they
+ * differ. It is on the SIGNED view only: the public body stays `{ ok, app }`,
+ * because handing an anonymous caller our repository state is a disclosure
+ * decision nobody has taken. See src/lib/release.ts.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRuntimeEnv } from '@/lib/env';
 import { verifyHealthSignature } from '@/lib/healthAuth';
+import { currentRelease } from '@/lib/release';
 
 // Per-request: a cached health check is a lie. Also keeps it off the ISR path.
 export const dynamic = 'force-dynamic';
@@ -46,6 +56,7 @@ export async function GET(req: NextRequest) {
       ? {
           ok: env.ok,
           app: 'capucor-web',
+          release: currentRelease(),
           env: env.checks,
           missing: env.missing,
         }
