@@ -169,46 +169,117 @@ npm run build:cf:offline
 The credential-free build sets a synthetic release and asserts both halves of the pre-deploy gate
 — present in the server bundle, absent from the public assets. So a broken injection is caught on
 the dev box rather than by capucor-web's first production dispatch.
+
 ## Dependency exposure — what is left, and what would clear it
 
-> **Measured 2026-09-04 (AE-04).** Re-measure before trusting these numbers; they move on their
-> own as upstream publishes advisories.
+> **Measured 2026-09-04 (AE-06), after removing `shadcn`.** Re-measure before trusting these
+> numbers; they move on their own as upstream publishes advisories.
 
-This repository went from **18 `npm audit` findings (1 critical, 9 high) to 13 (0 critical,
-7 high)**. What closed, and how:
+| | `npm audit` findings | Dependabot open alerts |
+| --- | ---: | ---: |
+| After AE-04 (2026-09-04) | 13 (0 critical, 7 high) | 39 |
+| After AE-06 (2026-09-04) | **7** (0 critical, 4 high) | **9 expected** |
 
-| Direct dependency | Moved | Closed |
-| --- | --- | --- |
-| `supabase` | `^2.93.1` → `^2.116.0` | `tar` — the only **critical**, and the only finding here that a version bump could reach on its own |
-| `vitest` / `@vitest/ui` | `^4.1.5` → `^4.1.11` | `vite`, and `fflate` via a lockfile refresh (`^0.8.2` already admitted the patched `0.8.3`) |
-| `@tailwindcss/postcss` | lockfile refresh | `nanoid` — **the only `runtime`-scope alert in either repository** |
-| `shadcn` | `4.4.0` → `4.21.0` | nothing; the newest release still carries the same MCP-SDK chain |
+134 packages left the lockfile with `shadcn` — `@modelcontextprotocol/sdk` and its whole subtree.
 
-### ⛔ 34 of the 50 remaining advisories are one dev-only CLI
+### ⛔ `shadcn` was never only a CLI, and that is why it took a vendoring
 
-Attributed by advisory count, not by package count:
+AE-04 measured the exposure correctly and then mis-stated the cost of removal:
 
-| Direct dependency | Advisories | Why it cannot be fixed by upgrading |
+> `shadcn` is a **scaffolding CLI** — it generates component files and is never imported by
+> application code.
+
+**Corrected 2026-09-04.** The first half was true; the second was not. `src/app/globals.css`
+carried `@import "shadcn/tailwind.css";` — a build-time resolution into `node_modules/shadcn`.
+Deleting the devDependency without touching that line does not degrade quietly, it **hard-fails
+the build**:
+
+```
+Failed to compile.
+Syntax error: tailwindcss: src/app/globals.css
+Can't resolve 'shadcn/tailwind.css' in '…/src/app'
+```
+
+That file defines six custom variants nothing else defines: `data-open` and `data-closed`
+(`dialog.tsx`, `select.tsx`), `data-checked` (`checkbox.tsx`), `data-disabled` (`select.tsx`), and
+`data-horizontal` / `data-vertical` (`separator.tsx`). The last two are the quietest of the six —
+Tailwind's native `data-*` shorthand would read a bare `data-horizontal:` as `[data-horizontal]`,
+an attribute Base UI never sets, so losing the definition would silently unstyle the divider rather
+than error.
+`../capucor-os` hit exactly this on 2026-08-19 and resolved it the same way; the fix here is
+deliberately identical.
+
+**The CSS is now vendored into `src/app/globals.css`**, in a commented block byte-identical to
+capucor-os's — the first 95 lines of `shadcn@4.21.0`'s `dist/tailwind.css`, which are unchanged
+from the `4.4.0` capucor-os captured.
+
+#### What the vendoring cost, measured rather than assumed
+
+The emitted stylesheet was diffed before and after. `105,090 → 104,190 bytes`, and **the entire
+900-byte delta is dead declarations**: eight `@property` rules for `--scroll-fade-*` and
+`--shimmer-*`, their `@layer properties` fallbacks, and one `prefers-reduced-motion` rule for
+`.shimmer`. Those are the `scroll-fade` and `shimmer` utilities `shadcn` added between `4.4.0` and
+`4.21.0`, and **nothing in this repository uses either family** — a repo-wide grep for those
+strings returns only the vendored block itself and this page. Every other byte of the 105 KB
+stylesheet is unchanged.
+
+> ⚠️ **Do not type a live utility class name into prose in this repository.** Tailwind v4 detects
+> its own sources, and that sweep reaches `docs/**/*.md` — a class name written on a page like this
+> one is a candidate exactly like one written in a component. Measured 2026-09-04: an earlier draft
+> of this section named the vendored scrollbar-hiding utility literally, and put 105 bytes of it
+> into the production stylesheet. That is why it is described rather than named here. The
+> `scroll-fade` and `shimmer` names above are safe **only because this change deleted their
+> definitions**; re-vendor a newer block and they stop being safe.
+
+> ⚠️ That is a CSS-output proof, not a browser one. No screenshot or live probe was taken for
+> AE-06 — the byte diff was judged the stronger evidence for this specific question, since it
+> covers every rule rather than the states someone thought to open — including the three variants
+> that are NOT in the vendored block at all (`data-placeholder` in `select.tsx`,
+> `data-starting-style` and `data-ending-style` in `sheet.tsx`), whose emitted rules are byte-for-byte
+> unchanged, confirming Tailwind resolves them natively. capucor-os's 2026-08-19 removal *was*
+> visually verified, on the same vendored block.
+
+### 💡 Adding a shadcn component now
+
+`components.json` **stays** — it is the CLI's configuration file, not a dependency of it, and it
+still names the `base-nova` style, the `neutral` base colour, the `lucide` icon library and the
+`@/components/ui` alias. Use the CLI without pinning it:
+
+```bash
+npx shadcn@latest add <component>
+```
+
+Then, before committing:
+
+1. **Re-check the vendored block.** Compare `src/app/globals.css`'s vendored section against the
+   `dist/tailwind.css` of whatever version `npx` just fetched. A new component may rely on a
+   variant or utility added upstream since `4.21.0`, and nothing here will tell you it is missing —
+   Tailwind drops an unknown variant silently. This is the upstream-drift seam the block's comment
+   describes.
+2. **Keep the byte-pair.** `src/components/ui/*.tsx` is a `knownDuplicates` entry with
+   `pairMode: byte` against `../capucor-os`. A component regenerated on one side only turns
+   `npm run audit` red. Regenerate both, or neither.
+
+### What remains, and the trigger that would clear each
+
+All of them are `development` scope — build and tooling, never a deployed Worker.
+
+The two instruments count differently and both numbers are given deliberately: **Dependabot reports
+9 advisories across 6 packages**, and **`npm audit` reports 7 findings across 7 packages** — it adds
+`body-parser` (low, via `express`), which Dependabot does not raise here. Advisory counts below are
+Dependabot's.
+
+| Direct dependency | Advisories | Reaches |
 | --- | ---: | --- |
-| `shadcn` | **34** | `hono` (21), `fast-uri` (7), `ip-address` (2), `browserslist` (2), `@hono/node-server`, `postcss-selector-parser`, `express-rate-limit` — all through `@modelcontextprotocol/sdk`. Already on the newest `shadcn`. |
-| `@opennextjs/cloudflare` | 12 | `brace-expansion` (7), `qs` (3), `form-data`, `body-parser` — through `@opennextjs/aws` → `express` and `@node-minify/core` → `glob`. Already on the newest OpenNext. |
-| `eslint` | 3 | `js-yaml`, through `@eslint/eslintrc`. |
-| `eslint-config-next` | 1 | `@babel/core`, through `eslint-plugin-react-hooks`. |
+| `eslint` | 3 | `js-yaml`, through `@eslint/eslintrc` |
+| `@opennextjs/cloudflare` | 4 | `brace-expansion` (2), `qs`, `form-data` — through `@opennextjs/aws` → `express` and `@node-minify/core` → `glob` |
+| `eslint-config-next` | 2 | `@babel/core` and `browserslist`, through `eslint-plugin-react-hooks` |
 
-**Every one is `development` scope** — build and tooling, never a deployed Worker. That is not
-"harmless": a build machine is exactly where a supply-chain problem lands. It does mean none of
-them is a live exposure on capucor.com.
+⚠️ **`browserslist` does not leave with `shadcn`.** AE-04 attributed it to the CLI, and it *was*
+reachable that way — but `eslint-config-next` → `eslint-plugin-react-hooks` → `@babel/core` reaches
+the same resolved copy. Verified with `npm ls browserslist --all` after removal. So the expected
+Dependabot clearance is **30 of 39, not 31**.
 
-**The trigger for each is an upstream release**, not a change here. Do not add package overrides
-to force a transitive version: an override that silently disagrees with what a package actually
+**The trigger for each is an upstream release**, not a change here. Do not add package overrides to
+force a transitive version: an override that silently disagrees with what a package actually
 imports buys a green dashboard and a harder debugging session.
-
-### 💡 The one lever that is ours, and it is a decision, not a fix
-
-`shadcn` is a **scaffolding CLI** — it generates component files and is never imported by
-application code. Removing it would clear 34 of the 50 remaining advisories at a stroke, and
-**`../capucor-os` does not have it at all** while carrying the same `src/components/ui/*.tsx`
-(a declared `knownDuplicates` pair — the two repos are byte-compared there). The cost is that
-`npx shadcn add` would need `npx shadcn@latest` instead of a pinned local version.
-
-That is a tooling decision for a human, so AE-04 measured it and did not take it.
