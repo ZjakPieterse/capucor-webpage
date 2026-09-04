@@ -78,6 +78,21 @@ jobs:
       REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
       OWNER_NOTIFICATION_EMAIL: zjak@capucor.com
       NEXT_PUBLIC_BOOKING_URL: ${{ secrets.NEXT_PUBLIC_BOOKING_URL }}
+      # The exact commit this run is deploying, baked into the SERVER bundle by
+      # next.config.ts and reported on the signed /api/health response.
+      #
+      # ⚠️ THIS IS THE ONLY THING THAT CAN PROVE PRODUCTION IS SERVING THE CODE
+      # WE THINK IT IS. The deploy-drift watchdog compares the newest successful
+      # deploy run's head_sha to the tip of master, which answers "did we intend
+      # to ship this?" — a green wrangler upload, a dashboard rollback, a
+      # hand-run deploy from a laptop and a deploy against the wrong account all
+      # look identical from the Actions API. This repository is the one the
+      # 2026-08-24 measurement found four days and twenty-one commits adrift.
+      #
+      # ⚠️ Hand-synced with ../capucor-os/.github/workflows/deploy.yml. Both
+      # Workers report a release the same way and both gates compare it the same
+      # way; see contracts/cross-repo-contract.json → releaseProvenance.
+      CAPUCOR_RELEASE: ${{ github.sha }}
 
     steps:
       # Cheap, deliberate friction. workflow_dispatch is one button; this makes
@@ -138,7 +153,55 @@ jobs:
           fi
           echo "✓ Supabase env present for the build."
 
+      # Hard gate before deploy: prove the release SHA reached the artefact,
+      # and prove it did NOT reach the part of the artefact the public can read.
+      #
+      # Both halves matter. Without the first, an injection that silently stopped
+      # working would leave /api/health reporting "unknown" and the post-deploy
+      # check below would fail AFTER production had already been changed — the
+      # expensive place to find out. Without the second, a future edit that moved
+      # the value to `env:` or a NEXT_PUBLIC_ variable would publish our
+      # repository state to every anonymous visitor, silently, while every other
+      # check stayed green. See the isServer comment in next.config.ts.
+      #
+      # ⚠️ IT MATTERS MORE ON THIS REPO THAN ON THE OTHER ONE. capucor.com is a
+      # PUBLIC marketing site with static pages, so its client assets are read by
+      # search engines and anyone who looks. The SHA must not be among them.
+      #
+      # Scoped to server-functions/ rather than all of .open-next: worker.js is
+      # the OpenNext shim and never carries app code, so a match there would mean
+      # something other than what this step is asserting.
+      - name: Assert the release SHA reached the server bundle only
+        run: |
+          set -euo pipefail
+          if [ -z "${CAPUCOR_RELEASE:-}" ]; then
+            echo "::error::CAPUCOR_RELEASE is empty. Refusing to deploy a build with no release provenance."
+            exit 1
+          fi
+          if grep -rqF "$CAPUCOR_RELEASE" .open-next/server-functions; then
+            echo "✓ Release $CAPUCOR_RELEASE is baked into the server bundle."
+          else
+            echo "::error::The release SHA did not reach the server bundle, so /api/health would report unknown and the post-deploy provenance check could not pass. Refusing to deploy."
+            exit 1
+          fi
+          # ⚠️ EXISTENCE FIRST. `grep -r` exits 2 on a missing path, and
+          # `set -e` is suppressed inside an `if` condition — so without this
+          # check a relocated assets/ directory took the same branch as "no
+          # match" and printed a tick having searched nothing. That is the
+          # disclosure half of this gate silently switching itself off.
+          if [ ! -d .open-next/assets ]; then
+            echo "::error::.open-next/assets does not exist, so the disclosure check would search nothing. The OpenNext output layout has moved. Refusing to deploy."
+            exit 1
+          fi
+          if grep -rqF "$CAPUCOR_RELEASE" .open-next/assets; then
+            echo "::error::The release SHA is in the PUBLIC client assets. That publishes repository metadata to anonymous visitors, which the signed health response exists to avoid. Refusing to deploy."
+            grep -rlF "$CAPUCOR_RELEASE" .open-next/assets || true
+            exit 1
+          fi
+          echo "✓ Release SHA absent from the public client assets."
+
       - name: Deploy (Cloudflare)
+        id: deploy
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -159,6 +222,18 @@ jobs:
       # be pointed across the seam at capucor.app. capucor-os needs the variable
       # because its origin moved during the Phase 1c cutover; this one has not.
       - name: Smoke test deployed /pricing CSP
+        # ⚠️ THE CONDITION BELOW IS LOAD-BEARING ON EVERY POST-DEPLOY STEP.
+        # Each of them exits 1 on failure, so without this the first to fail
+        # skips the rest — and the incident where that matters is exactly the
+        # one where several things are wrong at once. A rollback PLUS an unset
+        # Worker secret would report only the secret, the operator would fix
+        # it and re-dispatch, and the rollback would never be named.
+        # watchdog.yml already carries this reasoning; it belongs here too.
+        #
+        # Gated on the DEPLOY step rather than bare always(): after a failed
+        # upload the previous revision is legitimately still serving, and a
+        # mismatch reported there is noise, not a finding.
+        if: ${{ !cancelled() && steps.deploy.outcome == 'success' }}
         run: |
           set -euo pipefail
           host="${NEXT_PUBLIC_SUPABASE_URL#https://}"
@@ -193,6 +268,18 @@ jobs:
       # below actionable. The key is never sent, only an HMAC over a timestamp.
       # See src/lib/healthAuth.ts.
       - name: Verify deployed runtime secrets
+        # ⚠️ THE CONDITION BELOW IS LOAD-BEARING ON EVERY POST-DEPLOY STEP.
+        # Each of them exits 1 on failure, so without this the first to fail
+        # skips the rest — and the incident where that matters is exactly the
+        # one where several things are wrong at once. A rollback PLUS an unset
+        # Worker secret would report only the secret, the operator would fix
+        # it and re-dispatch, and the rollback would never be named.
+        # watchdog.yml already carries this reasoning; it belongs here too.
+        #
+        # Gated on the DEPLOY step rather than bare always(): after a failed
+        # upload the previous revision is legitimately still serving, and a
+        # mismatch reported there is noise, not a finding.
+        if: ${{ !cancelled() && steps.deploy.outcome == 'success' }}
         env:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
@@ -223,4 +310,69 @@ jobs:
             sleep 10
           done
           echo "::error::capucor-web/api/health never responded after the deploy."
+          exit 1
+
+      # THE POINT OF ALL OF THIS: does the Worker that is live RIGHT NOW report
+      # the commit this run set out to deploy?
+      #
+      # Everything before this proves an upload succeeded. This proves the thing
+      # that was uploaded is the thing being served. It closes the half of
+      # contracts/cross-repo-contract.json → deployDrift.cannotSeeProduction that
+      # could be closed without putting a production secret somewhere it does not
+      # belong: the release rides on the SIGNED /api/health view, and this job
+      # already holds SUPABASE_SERVICE_ROLE_KEY, which the push-triggered
+      # watchdog deliberately does not and must not.
+      #
+      # ⚠️ BE PRECISE ABOUT THE GUARANTEE. This proves the expected revision was
+      # serving IMMEDIATELY AFTER THIS DEPLOY. It does NOT continuously detect a
+      # later rollback in the Cloudflare dashboard: nothing re-asks the question,
+      # and giving the every-push watchdog the key needed to ask is the trade that
+      # was already refused. That residual is stated in the contract, not papered
+      # over.
+      #
+      # The origin is hard-coded, matching the runtime-secrets step above: this
+      # repository has no SMOKE_BASE_URL variable and capucor.com is not a
+      # rebindable target the way capucor.app was during the Phase 1c cutover.
+      - name: Verify the deployed release is this commit
+        # ⚠️ THE CONDITION BELOW IS LOAD-BEARING ON EVERY POST-DEPLOY STEP.
+        # Each of them exits 1 on failure, so without this the first to fail
+        # skips the rest — and the incident where that matters is exactly the
+        # one where several things are wrong at once. A rollback PLUS an unset
+        # Worker secret would report only the secret, the operator would fix
+        # it and re-dispatch, and the rollback would never be named.
+        # watchdog.yml already carries this reasoning; it belongs here too.
+        #
+        # Gated on the DEPLOY step rather than bare always(): after a failed
+        # upload the previous revision is legitimately still serving, and a
+        # mismatch reported there is noise, not a finding.
+        if: ${{ !cancelled() && steps.deploy.outcome == 'success' }}
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          # The verdict itself lives in scripts/release-provenance.mjs so it
+          # can be unit-tested. Inline, the MISMATCH case — a well-formed SHA
+          # that is not ours — could only be exercised by a real production
+          # deploy, which is the one thing no check here may run.
+          # Same pattern as scripts/deploy-drift.mjs. Exit 2 means "ask again".
+          for attempt in 1 2 3 4 5 6; do
+            ts="$(date +%s)000"
+            sig="$(printf '%s.health' "$ts" \
+              | openssl dgst -sha256 -hmac "$SUPABASE_SERVICE_ROLE_KEY" -hex \
+              | awk '{print $NF}')"
+            code="$(curl -sS -o /tmp/release.json -w '%{http_code}' \
+              -H "x-capucor-timestamp: $ts" -H "x-capucor-signature: $sig" \
+              https://capucor.com/api/health || echo 000)"
+
+            set +e
+            node scripts/release-provenance.mjs "$code" /tmp/release.json "$CAPUCOR_RELEASE"
+            verdict=$?
+            set -e
+
+            if [ "$verdict" = "0" ]; then exit 0; fi
+            if [ "$verdict" = "1" ]; then exit 1; fi
+            echo "Attempt $attempt of 6; retrying in 10s..."
+            sleep 10
+          done
+          echo "::error::${SMOKE_BASE_URL:-https://capucor.com} never reported release $CAPUCOR_RELEASE. The upload succeeded but production is NOT serving this commit — check for a rollback, a competing deploy, or a deploy against the wrong Cloudflare account. Do not treat this deployment as done."
           exit 1

@@ -29,6 +29,9 @@ const REQUIRED = [
 
 const SECRET = 'test-service-role-key';
 
+/** A plausible full git SHA — deploy.yml compares this exactly. */
+const RELEASE = '4c9c5c7a1b2d3e4f5061728394a5b6c7d8e9f001';
+
 async function sign(timestamp: string, secret = SECRET): Promise<string> {
   const key = await crypto.subtle.importKey(
     'raw',
@@ -57,11 +60,13 @@ beforeEach(async () => {
   vi.resetModules();
   for (const name of REQUIRED) process.env[name] = 'set';
   process.env.SUPABASE_SERVICE_ROLE_KEY = SECRET;
+  process.env.CAPUCOR_RELEASE = RELEASE;
   ({ GET } = await import('@/app/api/health/route'));
 });
 
 afterEach(() => {
   for (const name of REQUIRED) delete process.env[name];
+  delete process.env.CAPUCOR_RELEASE;
 });
 
 describe('GET /api/health', () => {
@@ -75,6 +80,14 @@ describe('GET /api/health', () => {
     // Belt and braces: no secret name may appear anywhere in the payload.
     const raw = JSON.stringify(body);
     for (const name of REQUIRED) expect(raw).not.toContain(name);
+
+    // The release is NOT public, and this repo is the PUBLIC marketing site:
+    // handing an anonymous visitor our repository state is a disclosure
+    // decision nobody has taken, and it is exactly the topology the public
+    // body was narrowed to withhold. `toEqual` above already pins the shape;
+    // this names the reason so a future edit fails with an explanation.
+    expect(body.release).toBeUndefined();
+    expect(raw).not.toContain(RELEASE);
   });
 
   it('2. a valid signature unlocks the per-variable detail', async () => {
@@ -93,6 +106,62 @@ describe('GET /api/health', () => {
     for (const name of REQUIRED) expect(body.env[name]).toBe(true);
   });
 
+
+  it('2a. the signed view reports the exact commit this bundle was built from', async () => {
+    // deploy.yml compares this to github.sha with a string equality and fails
+    // the run when they differ, so anything less than the full SHA — a prefix,
+    // a tag — would make the gate meaningless. See lib/release.ts.
+    const ts = String(Date.now());
+    const res = await GET(
+      request({
+        'x-capucor-timestamp': ts,
+        'x-capucor-signature': await sign(ts),
+      }),
+    );
+
+    const body = await res.json();
+    expect(body.release).toBe(RELEASE);
+    expect(body.release).toHaveLength(40);
+  });
+
+  it('2b. a build with no release says so, rather than reporting an empty string', async () => {
+    // The MISSING case. An empty string serialises as an answer; "unknown" is
+    // one the deploy gate can recognise and report differently from a mismatch.
+    delete process.env.CAPUCOR_RELEASE;
+    vi.resetModules();
+    ({ GET } = await import('@/app/api/health/route'));
+
+    const ts = String(Date.now());
+    const res = await GET(
+      request({
+        'x-capucor-timestamp': ts,
+        'x-capucor-signature': await sign(ts),
+      }),
+    );
+
+    expect((await res.json()).release).toBe('unknown');
+  });
+
+  it('2c. a release that is not a full SHA is reported as unknown, not passed through', async () => {
+    // The MISMATCHED case, at the point where it can still be caught honestly.
+    // A short SHA looks like provenance and cannot be compared exactly, so the
+    // deploy gate must see "unknown" rather than a value it might half-match.
+    process.env.CAPUCOR_RELEASE = RELEASE.slice(0, 7);
+    vi.resetModules();
+    ({ GET } = await import('@/app/api/health/route'));
+
+    const ts = String(Date.now());
+    const res = await GET(
+      request({
+        'x-capucor-timestamp': ts,
+        'x-capucor-signature': await sign(ts),
+      }),
+    );
+
+    const body = await res.json();
+    expect(body.release).toBe('unknown');
+    expect(body.release).not.toBe(RELEASE.slice(0, 7));
+  });
   it('3. a wrong signature gets the public view, not a 401', async () => {
     const ts = String(Date.now());
     const res = await GET(
@@ -103,7 +172,10 @@ describe('GET /api/health', () => {
     );
     // Still a health check: it answers, it just does not elaborate.
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, app: 'capucor-web' });
+    const body = await res.json();
+    expect(body).toEqual({ ok: true, app: 'capucor-web' });
+    // A forged signature must not leak the release either.
+    expect(JSON.stringify(body)).not.toContain(RELEASE);
   });
 
   it('4. a stale timestamp is refused even with a correct signature', async () => {
