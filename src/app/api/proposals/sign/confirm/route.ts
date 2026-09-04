@@ -15,16 +15,35 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { readJsonBody } from '@/lib/readJsonBody';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
+import type { Json } from '@/types/db';
 import {
   finalizeProposalSignature,
   type FinalizeSignRow,
 } from '@/lib/portal/finalizeSign';
 
+// ⚠️ ONE STRING LITERAL, DELIBERATELY. Keep it that way.
+//
+// This was four concatenated lines until 2026-09-04. `'a' + 'b'` widens to
+// `string`, and supabase-js's `.select()` parser needs the LITERAL type to
+// derive a row shape from it — given `string` it yields `GenericStringError`
+// instead. Combined with the `as unknown as ConfirmRow` that used to sit below,
+// that error was thrown away and THIS COLUMN LIST WAS NEVER CHECKED AGAINST THE
+// SCHEMA AT ALL.
+//
+// ✅ Measured 2026-09-04, and it is better than that now: with the cast gone and
+// the result ASSIGNED to `ConfirmRaw`, re-wrapping this into a concatenation no
+// longer goes quiet — the assignment rejects `GenericStringError` and the build
+// fails. What is lost is the DIAGNOSIS: as one literal, a typo reads
+// `column 'pending_signature_ipp' does not exist on 'proposals'`; concatenated,
+// the same typo is invisible and you get a shapeless type error instead.
 const PENDING_COLUMNS =
-  'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, ' +
-  'services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, ' +
-  'client_org_id, sign_confirm_expires_at, pending_signature_name, pending_signature_method, ' +
-  'pending_signature_image, pending_signature_ip';
+  'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, client_org_id, sign_confirm_expires_at, pending_signature_name, pending_signature_method, pending_signature_image, pending_signature_ip';
+
+type ConfirmRaw = Omit<ConfirmRow, 'brackets' | 'addons'> & {
+  brackets: Json;
+  addons: Json;
+};
 
 interface ConfirmRow extends FinalizeSignRow {
   expires_at: string | null;
@@ -94,7 +113,14 @@ export async function POST(req: NextRequest) {
         { status: 404 },
       );
     }
-    row = data as unknown as ConfirmRow;
+    // The two `jsonb` columns arrive as `Json`; everything else is checked
+    // against the schema by this assignment. See lib/portal/proposalJson.ts.
+    const raw: ConfirmRaw = data;
+    row = {
+      ...raw,
+      brackets: bracketMapFromStored(raw.brackets, raw.id),
+      addons: addonSlugsFromStored(raw.addons, raw.id),
+    };
   } catch (err) {
     console.error('[SIGN/CONFIRM] lookup error:', err);
     return NextResponse.json(

@@ -41,7 +41,7 @@ async function loadPending(ctoken: string): Promise<LoadResult> {
     return { ok: false, reason: 'error' };
   }
   if (!data) return { ok: false, reason: 'invalid' };
-  const row = data as unknown as ConfirmRow;
+  const row: ConfirmRow = data;
 
   if (row.status === 'signed' || row.status === 'paid' || row.status === 'active') {
     return { ok: false, reason: 'signed' };

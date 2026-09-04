@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     if (!data) {
       return NextResponse.json({ error: 'Proposal not found.' }, { status: 404 });
     }
-    row = data as unknown as ProposalSignRow;
+    row = data;
   } catch (err) {
     console.error('[PROPOSALS/SIGN] lookup error:', err);
     return NextResponse.json({ error: 'Could not load this proposal. Please try again.' }, { status: 500 });
