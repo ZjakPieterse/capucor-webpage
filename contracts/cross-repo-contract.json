@@ -132,10 +132,10 @@
       {
         "path": "src/lib/proposalPricing.ts",
         "pairMode": "code",
-        "why": "Both repos price the same proposals off the same `brackets` table. It carried three sanctioned divergent lines until 2026-08-06 — capucor-os logged the bracket-fetch failure through `lib/log.ts`, capucor-web through console.error — and giving capucor-web the same `lib/log.ts` collapsed that to zero. A BOUNDED divergence still needs a reader to judge whether the bound is measuring the right thing; an equality does not.",
+        "why": "Both repos price the same proposals off the same `brackets` table. It carried three sanctioned divergent lines until 2026-08-06 — capucor-os logged the bracket-fetch failure through `lib/log.ts`, capucor-web through console.error — and giving capucor-web the same `lib/log.ts` collapsed that to zero. A BOUNDED divergence still needs a reader to judge whether the bound is measuring the right thing; an equality does not. ⛔ DIGEST RE-RECORDED 2026-09-04 (AE-07): the bracket fetch dropped `.returns<BracketRow[]>()` and assigns the PostgREST result instead. That override handed its type back verbatim when the select string failed to parse, so this file — which re-prices every proposal and every archived signed mandate — had an UNCHECKED six-column select list in both repos. Both copies moved together and still agree.",
         "digest": {
-          "web": "sha256:aef1a4e7a25ad2d9a8b127edbe13578eb0d957daf31815677e8f777ea971d960",
-          "os": "sha256:aef1a4e7a25ad2d9a8b127edbe13578eb0d957daf31815677e8f777ea971d960"
+          "web": "sha256:1a29b982f442580101f5c962a57e8e67d860c52b37a351fc0e92de868766c643",
+          "os": "sha256:1a29b982f442580101f5c962a57e8e67d860c52b37a351fc0e92de868766c643"
         }
       },
       {

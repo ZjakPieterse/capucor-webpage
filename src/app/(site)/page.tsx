@@ -48,14 +48,12 @@ async function getLandingData(): Promise<{
         .from('services')
         .select('*')
         .eq('active', true)
-        .order('display_order')
-        .returns<Service[]>(),
+        .order('display_order'),
       supabase
         .from('tiers')
         .select('*')
         .eq('active', true)
-        .order('display_order')
-        .returns<Tier[]>(),
+        .order('display_order'),
     ]);
 
     return {

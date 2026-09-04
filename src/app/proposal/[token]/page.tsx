@@ -21,6 +21,8 @@ import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/sch
 import { tierDisplayName } from '@/config/tiers';
 import { siteConfig } from '@/config/site';
 import { firstOfNextMonth } from '@/lib/utils';
+import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
+import type { Json } from '@/types/db';
 import {
   PROPOSAL_TERMS,
   INLINE_TERM_IDS,
@@ -32,6 +34,11 @@ import type { Bracket, BracketValue, Service, Tier } from '@/types';
 export const metadata: Metadata = {
   title: 'Your proposal | Capucor',
   robots: { index: false, follow: false },
+};
+
+type ProposalRaw = Omit<ProposalRow, 'brackets' | 'addons'> & {
+  brackets: Json;
+  addons: Json;
 };
 
 interface ProposalRow {
@@ -85,7 +92,14 @@ async function loadProposal(token: string): Promise<LoadResult> {
     return { ok: false, reason: 'error' };
   }
   if (!data) return { ok: false, reason: 'invalid' };
-  const row = data as unknown as ProposalRow;
+  // The two `jsonb` columns arrive as `Json`; everything else is checked
+  // against the schema by this assignment. See lib/portal/proposalJson.ts.
+  const raw: ProposalRaw = data;
+  const row: ProposalRow = {
+    ...raw,
+    brackets: bracketMapFromStored(raw.brackets, raw.id),
+    addons: addonSlugsFromStored(raw.addons, raw.id),
+  };
 
   const now = Date.now();
   // Only pre-signature proposals expire. Once signed, the link stays valid so

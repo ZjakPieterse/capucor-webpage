@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/db';
+import type { Database, Json } from '@/types/db';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { buildSignedProposalPdfPayload } from '@/lib/portal/proposalPdfPayload';
+import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
 import type { Bracket, Service } from '@/types';
 
 /**
@@ -19,6 +20,11 @@ import type { Bracket, Service } from '@/types';
  * set). With the env vars unset it silently no-ops, so the rest of the sign flow
  * works before the Apps Script is wired up.
  */
+
+type ProposalArchiveRaw = Omit<ProposalArchiveRow, 'brackets' | 'addons'> & {
+  brackets: Json;
+  addons: Json;
+};
 
 interface ProposalArchiveRow {
   id: string;
@@ -82,7 +88,14 @@ export async function archiveSignedProposal(
       .maybeSingle();
     if (error) throw error;
     if (!data) return { ok: false, error: 'Proposal not found.' };
-    const row = data as unknown as ProposalArchiveRow;
+    // The two `jsonb` columns arrive as `Json`; everything else is checked
+    // against the schema by this assignment. See lib/portal/proposalJson.ts.
+    const raw: ProposalArchiveRaw = data;
+    const row: ProposalArchiveRow = {
+      ...raw,
+      brackets: bracketMapFromStored(raw.brackets, raw.id),
+      addons: addonSlugsFromStored(raw.addons, raw.id),
+    };
 
     // Idempotent: already archived, or not signed yet → nothing to do.
     if (row.proposal_pdf_drive_id) {
