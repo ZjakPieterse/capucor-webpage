@@ -30,6 +30,12 @@ and the "Domain seam" section below.
 | Deployment | Cloudflare Workers via opennextjs-cloudflare |
 | Testing | Vitest |
 
+⛔ **The `shadcn` CLI is deliberately NOT a dependency** (removed 2026-09-04; it carried 30 of
+this repo's 39 Dependabot advisories and no release clears them). `components.json` stays, the
+required CSS is vendored into `src/app/globals.css`, and a component is added with
+`npx shadcn@latest add` — do not reinstall the package. See
+[`docs/deploy.md`](docs/deploy.md#-adding-a-shadcn-component-now) for the two checks that follow.
+
 ## Prerequisites
 
 - Node.js 24 (see `.nvmrc`; CI pins the same). Was Node 20 until 2026-08-03 — that reached end of
