@@ -12,6 +12,7 @@
 
 ```bash
 npm run build:cf     # Build for Cloudflare Workers
+npm run build:cf:offline  # The same build, with NO credentials — see below
 npm run preview:cf   # Build and run local Cloudflare preview
 npm run deploy:cf    # Build and deploy to Cloudflare Workers (see deploy rules below)
 ```
@@ -50,3 +51,61 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   should show the Supabase host in `connect-src`. `deploy.yml` runs this same check post-deploy.
   **Don't point it at capucor.app** — that is a different Worker from a different repo, so it would
   report capucor-os's health, not this deploy's.
+
+---
+
+## Proving a Cloudflare build without credentials
+
+> **Added 2026-09-04 (AE-03).** Everything above the `Deployment & operational rules` heading
+> is the extracted `AGENTS.md` text; this section is new work.
+
+```bash
+npm run build:cf:offline    # the whole OpenNext/Cloudflare build, no credentials involved
+```
+
+`npm run build:cf` reads `.env.local` on the dev box, so the credential-restricted sandbox that
+does most of the engineering here could never run it. That left the **most fragile step in this
+stack** — OpenNext bundling a Next build into a working worker — with no local proof at all: a
+dependency bump or a `next.config.ts` edit could only be found to break the bundle after it was
+pushed.
+
+[`scripts/build-cf-offline.mjs`](../scripts/build-cf-offline.mjs) closes that without relaxing the
+boundary. It copies the tree into a disposable OS-temp snapshot, runs `npm ci` and `build:cf`
+there with obviously-synthetic `.invalid` placeholder values, and deletes the snapshot on success
+**and** on failure.
+
+**Three independent guards keep credentials out**, because one of them failing silently is exactly
+the shape of bug that matters:
+
+1. **Structural** — the copy set is `git ls-files --cached --others --exclude-standard`. `.gitignore`
+   already excludes `.env*`, so those are excluded by construction rather than by a list somebody
+   has to keep current.
+2. **Explicit** — a deny-filter drops dotenv, `.dev.vars`, `.npmrc` and key material by name anyway,
+   including the tracked `.env.example`.
+3. **Asserted** — the snapshot is walked before *and* after the build and the run **fails** if any
+   dotenv-shaped file is present.
+
+The child environment is scrubbed too: every credential-shaped variable name is deleted before the
+placeholders are set, so an exported `SUPABASE_SERVICE_ROLE_KEY` cannot ride past the file guards.
+
+⚠️ **Hand-synced with `../capucor-os/scripts/build-cf-offline.mjs`** and its guards module beside
+it. Both repositories build the same way and need the same boundary.
+
+### ⚠️ What it proves, and what it does not
+
+- **It proves build compatibility.** The tree still compiles, bundles and packages into a worker.
+- **It proves nothing about production.** Not configuration, not real secrets, not Worker bindings,
+  not live behaviour. The values are fake, so the artefact is **not deployable** — and a Windows
+  build is runtime-broken regardless (see the deploy rules above). `build:cf` in
+  `.github/workflows/deploy.yml`, with real repository secrets, is still the only build that ships.
+- **It needs the npm registry**, because it runs `npm ci` in the snapshot. "Offline" here means
+  *credential-free*, not *network-free*.
+- **The client-bundle half of its final assertion is skipped in this repository, correctly.** The
+  browser Supabase client went to capucor-os with `/login` in Phase 3, so nothing here inlines the
+  Supabase URL into the client bundle — the same fact that removed the client-asset grep from this
+  repo's `deploy.yml`. The check arms itself if `src/lib/supabase/client.ts` ever appears. The
+  server-bundle half runs in both repositories, because `next.config.ts` bakes the Supabase URL
+  into the CSP.
+- **The static build logs three failed `[pricing]` fetches.** That is the placeholder Supabase host
+  refusing to resolve, which is the point of using a reserved `.invalid` domain. The page falls
+  back and the build completes; it is not a regression.

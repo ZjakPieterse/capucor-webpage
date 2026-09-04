@@ -20,7 +20,7 @@
     "is caught by the same command it belongs to. Edit the capucor-docs copy first."
   ],
   "version": 1,
-  "lastReviewed": "2026-08-26",
+  "lastReviewed": "2026-09-04",
   "canonical": "capucor-docs/contracts/cross-repo-contract.json",
   "repos": {
     "web": "capucor-web",
@@ -212,6 +212,11 @@
         "glob": "scripts/ci-silence.mjs",
         "pairMode": "byte",
         "why": "The CI-silence check (R-12b), byte-identical in both repos because each copy checks its own repo, selected from ciSilence.branches by GITHUB_REPOSITORY. A one-sided edit means one repo stops being watched for commits that landed with no validation run — caught here, cross-repo, with no digest to re-record every time the script is touched."
+      },
+      {
+        "glob": "scripts/{build-cf-offline,offline-build-guards}.mjs",
+        "pairMode": "code",
+        "why": "The credential-free Cloudflare build and the boundary that decides what may enter its disposable snapshot. Both repositories build the same way and both keep a real `.env.local` on the dev box, so a fix made in one and not the other leaves a live gap in the repo nobody looked at — and the failure is silent by construction, because a credential guard is correct exactly when nothing happens. The two files move together: the guards module IS the boundary and the build script is the only caller."
       },
       {
         "glob": ".github/workflows/watchdog.yml",
