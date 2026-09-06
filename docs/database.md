@@ -43,15 +43,47 @@ That matters here because marketing still initiates OS-owned provisioning at sig
 (`lib/portal/provision.ts` → `provision_from_signed_proposal`). See the **Schema seam** warning
 under "Domain seam" before changing the RPC or its four internal tables.
 
-Regenerate TypeScript types after a schema change:
+### ⛔ Types are NOT generated in this repo — corrected 2026-09-06 (AE-08)
 
-```bash
-# Replace YOUR_PROJECT_REF with your Supabase project reference ID
-npm run db:types
-```
+`src/types/db.ts` is generated in **capucor-os only**, by its `npm run db:types`, and lands here as
+a **byte-for-byte copy**. There is deliberately no `db:types` script in this repository any more.
 
-Generated types land in `src/types/db.ts` and are tracked. Regenerate and commit them after schema
-changes; CI rejects drift from the live schema.
+> **Corrected 2026-09-06 (AE-08). This page previously said:** *"Regenerate TypeScript types after
+> a schema change: `npm run db:types`. Generated types land in `src/types/db.ts` and are tracked.
+> Regenerate and commit them after schema changes; **CI rejects drift from the live schema**."*
+>
+> **The last clause was false in this repository.** Its `ci.yml` has never carried a types step —
+> the steps are Install, Lint, Type check, Test, Build (Cloudflare) and Assert Supabase env, and
+> nothing among them reads `src/types/db.ts`. The only thing watching this copy was
+> `npm run audit`, which needs all three checkouts side by side and therefore runs on a person’s
+> machine, never in CI. The surrounding advice to replace `YOUR_PROJECT_REF` was inert as well —
+> the script had the project ref hardcoded.
+
+**Why one generator and not two.** Two repositories independently generating a file that must be
+byte-identical turns the Supabase CLI pin into a cross-repo coupling that nothing enforces: a
+Dependabot bump on one side would leave two individually-green CIs and a drift no CI could see —
+the same class of silent drift, moved one level up. Arming a generation step here would also need
+`SUPABASE_ACCESS_TOKEN` in this repository’s secrets, and ⛔ **measured 2026-09-06, a
+project-scoped, read-only Supabase personal access token returns the project’s `service_role` JWT
+and both secret-class API keys in plaintext from a plain `GET /v1/projects/<ref>/api-keys`** —
+`?reveal=true` is not even required. That is a real key-revealing credential in a second
+repository, bought for nothing a digest does not already give.
+
+**What watches this copy instead.** `src/types/db.ts` is pinned by digest in
+`contracts/cross-repo-contract.json` under `handSynced`, and
+`src/__tests__/cross-repo-contract.test.ts` — which runs in this repo’s `npm test`, and therefore
+in CI — fails when the copy here moves. capucor-os’s own CI proves *its* copy still matches the
+live schema, so the chain is: live schema → capucor-os’s copy → the recorded digest → this copy.
+
+**After a schema change**, in order:
+
+1. In capucor-os: `npm run db:types`, and commit the result there.
+2. Copy `capucor-os/src/types/db.ts` over this repository’s copy. ⛔ Do not regenerate it here.
+3. In capucor-os: `npm run audit -- --print-digests`, and paste the `src/types/db.ts` digests into
+   **all three** copies of `contracts/cross-repo-contract.json`.
+4. ⚠️ **Read the audit report before you paste.** `--print-digests` reads the files on disk, so it
+   will happily emit a stale digest for this repository if step 2 was skipped. What catches that is
+   `duplicate-file` going red in the same audit run.
 
 ### Supabase clients — pick the right one (load-bearing)
 
