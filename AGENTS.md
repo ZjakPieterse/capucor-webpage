@@ -78,8 +78,13 @@ npm run build:cf:offline  # Full OpenNext/Cloudflare build with NO credentials �
 npm run test         # Run Vitest unit tests
 npm run test:watch   # Vitest in watch mode
 npm run test:ui      # Open Vitest browser UI
-npm run db:types     # Regenerate Supabase TypeScript types → src/types/db.ts
 ```
+
+⛔ **There is no `db:types` here, and that is deliberate — AE-08, 2026-09-06.**
+`src/types/db.ts` is generated in **capucor-os only** and lands here as a byte-for-byte copy.
+It is pinned by digest in `contracts/cross-repo-contract.json`, so `npm test` in this repo fails
+if the copy moves. The procedure after a schema change is in
+[`docs/database.md`](docs/database.md).
 
 ## Build and deploy (Cloudflare)
 

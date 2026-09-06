@@ -20,7 +20,7 @@
     "is caught by the same command it belongs to. Edit the capucor-docs copy first."
   ],
   "version": 1,
-  "lastReviewed": "2026-09-04",
+  "lastReviewed": "2026-09-06",
   "canonical": "capucor-docs/contracts/cross-repo-contract.json",
   "repos": {
     "web": "capucor-web",
@@ -164,11 +164,20 @@
           "web": "sha256:cc7bc83b272707079368f41f9f0a0e00f3af74599641f40684577028813282d3",
           "os": "sha256:cc7bc83b272707079368f41f9f0a0e00f3af74599641f40684577028813282d3"
         }
+      },
+      {
+        "path": "src/types/db.ts",
+        "pairMode": "byte",
+        "why": "The Supabase schema, as TypeScript, generated from ONE project. ⛔ ONLY capucor-os GENERATES IT. capucor-web holds a byte-for-byte COPY and, since AE-08 (2026-09-06), has no `db:types` script at all — two repos independently generating a file that must be byte-identical would have made the supabase CLI pin a silent cross-repo coupling that nothing enforced. ⚠️ THE DIGEST IS WHAT LETS ONE REPO'S CI ANSWER A CROSS-REPO QUESTION. The chain is: capucor-os's ci.yml regenerates and diffs against the LIVE schema, so capucor-os's copy is proved current; this digest pins that copy; the same digest pins capucor-web's. Each repo's own `npm test` therefore fails when its copy moves, and capucor-web needs no Supabase credential to run that test. ⛔ THE CREDENTIAL IS THE WHOLE POINT: MEASURED 2026-09-06, a PROJECT-SCOPED, READ-ONLY Supabase personal access token returns the project’s service_role JWT and both secret-class API keys in plaintext from a plain GET /v1/projects/<ref>/api-keys — `?reveal=true` is not even required. Mirroring the generation step into capucor-web would have put that token into a second repository’s secrets to buy what a digest buys for nothing. ⚠️ COST, STATED RATHER THAN HIDDEN: every schema change that moves this file is now a three-repo change plus a `npm run audit -- --print-digests` paste. --print-digests reads the files on disk, so it will happily emit a STALE capucor-web digest if the copy step was skipped — the thing that catches that is duplicate-file going red in the same audit run, which is why you read the report before you paste.",
+        "digest": {
+          "web": "sha256:9e7a90294b8815d1551fc9178e0278235a139e588068f8209f543ac6d4fa3a11",
+          "os": "sha256:9e7a90294b8815d1551fc9178e0278235a139e588068f8209f543ac6d4fa3a11"
+        }
       }
     ]
   },
   "knownDuplicates": {
-    "why": "Same-path files that are identical in both repos but are not worth the friction of a pinned digest — design primitives, thin client factories, and generated types. The audit still enforces the declared relationship across repos. Its real job is the INVERSE check: an identical same-path file that appears in neither this list nor handSynced is reported, so a new accidental duplicate has to be classified rather than quietly accumulate.",
+    "why": "Same-path files that are identical in both repos but are not worth the friction of a pinned digest — design primitives and thin client factories. ⚠️ GENERATED TYPES USED TO BE ON THAT LIST AND ARE NOT ANY MORE. src/types/db.ts moved to handSynced on 2026-09-06 (AE-08), reversing the friction judgement recorded here, because the judgement was made when NEITHER repo had a CI gate on it. DE-02 armed capucor-os's \"Check generated DB types are current\" step on 2026-09-06 and left capucor-web with nothing, so a declared relationship the audit can only check from a workspace with all three checkouts side by side became the ONLY thing watching capucor-web's copy — and that check never runs in CI. The digest costs one --print-digests paste per schema change and buys a gate inside each repo's own `npm test`. The audit still enforces the declared relationship across repos. Its real job is the INVERSE check: an identical same-path file that appears in neither this list nor handSynced is reported, so a new accidental duplicate has to be classified rather than quietly accumulate.",
     "entries": [
       {
         "glob": "src/components/ui/*.tsx",
@@ -249,11 +258,6 @@
         "glob": "src/lib/release.ts",
         "pairMode": "code",
         "why": "The release identifier both Workers report on their signed /api/health, and both deploy workflows compare to `github.sha` with a string equality. A divergence in what counts as a valid SHA would let one repository's deploy gate accept a value the other rejects — and the failure would surface as a deploy that cannot finish, on one repo only, for reasons that look nothing like a shared rule drifting."
-      },
-      {
-        "glob": "src/types/db.ts",
-        "pairMode": "byte",
-        "why": "Generated from ONE Supabase project by `npm run db:types`. If the two copies differ, one repo regenerated after a migration and the other did not — which is the only way this file can drift at all."
       },
       {
         "glob": "{eslint.config.mjs,postcss.config.mjs,next-env.d.ts}",

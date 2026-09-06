@@ -13,8 +13,7 @@
     "lint": "eslint src/",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "db:types": "supabase gen types typescript --project-id xupcjuciqhlumyxupsxd > src/types/db.ts"
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
