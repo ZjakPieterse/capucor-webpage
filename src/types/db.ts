@@ -95,6 +95,7 @@ export type Database = {
       audit_events: {
         Row: {
           action: string
+          actor_agent_id: string | null
           actor_email: string | null
           actor_kind: string
           client_org_id: string | null
@@ -108,6 +109,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          actor_agent_id?: string | null
           actor_email?: string | null
           actor_kind?: string
           client_org_id?: string | null
@@ -121,6 +123,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          actor_agent_id?: string | null
           actor_email?: string | null
           actor_kind?: string
           client_org_id?: string | null
@@ -133,6 +136,13 @@ export type Database = {
           subject_table?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "audit_events_actor_agent_id_fkey"
+            columns: ["actor_agent_id"]
+            isOneToOne: false
+            referencedRelation: "digital_employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audit_events_client_org_id_fkey"
             columns: ["client_org_id"]
@@ -198,6 +208,7 @@ export type Database = {
       }
       change_records: {
         Row: {
+          actor_agent_id: string | null
           actor_email: string | null
           actor_kind: string
           client_org_id: string | null
@@ -214,6 +225,7 @@ export type Database = {
           subject_table: string
         }
         Insert: {
+          actor_agent_id?: string | null
           actor_email?: string | null
           actor_kind?: string
           client_org_id?: string | null
@@ -230,6 +242,7 @@ export type Database = {
           subject_table: string
         }
         Update: {
+          actor_agent_id?: string | null
           actor_email?: string | null
           actor_kind?: string
           client_org_id?: string | null
@@ -246,6 +259,13 @@ export type Database = {
           subject_table?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "change_records_actor_agent_id_fkey"
+            columns: ["actor_agent_id"]
+            isOneToOne: false
+            referencedRelation: "digital_employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "change_records_client_org_id_fkey"
             columns: ["client_org_id"]
@@ -835,6 +855,104 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      digital_employee_capability_grants: {
+        Row: {
+          all_clients: boolean
+          autonomy_stage: number
+          capability_code: string
+          client_org_id: string | null
+          created_at: string
+          digital_employee_id: string
+          granted_at: string
+          granted_by: string
+          id: string
+          scope_note: string | null
+        }
+        Insert: {
+          all_clients?: boolean
+          autonomy_stage?: number
+          capability_code: string
+          client_org_id?: string | null
+          created_at?: string
+          digital_employee_id: string
+          granted_at?: string
+          granted_by: string
+          id?: string
+          scope_note?: string | null
+        }
+        Update: {
+          all_clients?: boolean
+          autonomy_stage?: number
+          capability_code?: string
+          client_org_id?: string | null
+          created_at?: string
+          digital_employee_id?: string
+          granted_at?: string
+          granted_by?: string
+          id?: string
+          scope_note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_employee_capability_grants_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digital_employee_capability_grants_digital_employee_id_fkey"
+            columns: ["digital_employee_id"]
+            isOneToOne: false
+            referencedRelation: "digital_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digital_employees: {
+        Row: {
+          agent_ref: string
+          created_at: string
+          display_name: string
+          escalation_owner_id: string
+          id: string
+          role_title: string
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          agent_ref: string
+          created_at?: string
+          display_name: string
+          escalation_owner_id: string
+          id?: string
+          role_title: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          agent_ref?: string
+          created_at?: string
+          display_name?: string
+          escalation_owner_id?: string
+          id?: string
+          role_title?: string
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_employees_escalation_owner_id_fkey"
+            columns: ["escalation_owner_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_deliveries: {
         Row: {
@@ -3333,12 +3451,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3362,11 +3480,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3387,11 +3505,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3412,11 +3530,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3429,11 +3547,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
