@@ -3198,7 +3198,7 @@ export type Database = {
           p_work_item_id: string
         }
         Returns: {
-          source_job_id: string | null
+          source_job_id: string
           work_event_id: string
           work_item_id: string
         }[]
