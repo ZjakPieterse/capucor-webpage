@@ -2995,6 +2995,7 @@ export type Database = {
           id: string
           open_approval_count: number
           period_key: string
+          source_job_id: string | null
           status: string
           updated_at: string
           work_ref: string | null
@@ -3008,6 +3009,7 @@ export type Database = {
           id?: string
           open_approval_count?: number
           period_key: string
+          source_job_id?: string | null
           status?: string
           updated_at?: string
           work_ref?: string | null
@@ -3021,6 +3023,7 @@ export type Database = {
           id?: string
           open_approval_count?: number
           period_key?: string
+          source_job_id?: string | null
           status?: string
           updated_at?: string
           work_ref?: string | null
@@ -3041,6 +3044,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_items_source_job_fk"
+            columns: ["source_job_id", "entity_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id", "entity_id"]
           },
         ]
       }
@@ -3188,6 +3198,7 @@ export type Database = {
           p_work_item_id: string
         }
         Returns: {
+          source_job_id: string | null
           work_event_id: string
           work_item_id: string
         }[]
