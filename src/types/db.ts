@@ -2989,48 +2989,67 @@ export type Database = {
       }
       work_items: {
         Row: {
+          assignee_user_id: string | null
           client_org_id: string
           created_at: string
           entity_id: string
           id: string
+          next_action: string | null
           open_approval_count: number
           period_key: string
           source_job_id: string | null
           status: string
           updated_at: string
+          version: number
           work_ref: string | null
           workflow_key: string
+          workflow_owner_user_id: string | null
           workflow_version: string | null
         }
         Insert: {
+          assignee_user_id?: string | null
           client_org_id: string
           created_at?: string
           entity_id: string
           id?: string
+          next_action?: string | null
           open_approval_count?: number
           period_key: string
           source_job_id?: string | null
           status?: string
           updated_at?: string
+          version?: number
           work_ref?: string | null
           workflow_key: string
+          workflow_owner_user_id?: string | null
           workflow_version?: string | null
         }
         Update: {
+          assignee_user_id?: string | null
           client_org_id?: string
           created_at?: string
           entity_id?: string
           id?: string
+          next_action?: string | null
           open_approval_count?: number
           period_key?: string
           source_job_id?: string | null
           status?: string
           updated_at?: string
+          version?: number
           work_ref?: string | null
           workflow_key?: string
+          workflow_owner_user_id?: string | null
           workflow_version?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "work_items_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "work_items_client_org_id_fkey"
             columns: ["client_org_id"]
@@ -3051,6 +3070,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "jobs"
             referencedColumns: ["id", "entity_id"]
+          },
+          {
+            foreignKeyName: "work_items_workflow_owner_user_id_fkey"
+            columns: ["workflow_owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
           },
         ]
       }
