@@ -1544,6 +1544,80 @@ export type Database = {
           },
         ]
       }
+      job_due_date_changes: {
+        Row: {
+          changed_at: string
+          changed_by_user_id: string
+          client_org_id: string
+          entity_id: string
+          id: string
+          job_id: string
+          job_type: string
+          new_due_date: string
+          new_source: string
+          previous_due_date: string
+          previous_source: string
+          reason: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by_user_id: string
+          client_org_id: string
+          entity_id: string
+          id?: string
+          job_id: string
+          job_type: string
+          new_due_date: string
+          new_source: string
+          previous_due_date: string
+          previous_source: string
+          reason: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by_user_id?: string
+          client_org_id?: string
+          entity_id?: string
+          id?: string
+          job_id?: string
+          job_type?: string
+          new_due_date?: string
+          new_source?: string
+          previous_due_date?: string
+          previous_source?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_due_date_changes_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_due_date_changes_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_due_date_changes_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_due_date_changes_job_client_entity_fkey"
+            columns: ["job_id", "client_org_id", "entity_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id", "client_org_id", "entity_id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           client_org_id: string
@@ -2929,6 +3003,161 @@ export type Database = {
         }
         Relationships: []
       }
+      work_allocations: {
+        Row: {
+          assignee_user_id: string
+          client_org_id: string
+          created_at: string
+          created_by_user_id: string
+          estimated_minutes: number | null
+          id: string
+          planned_date: string
+          updated_at: string
+          version: number
+          work_item_id: string
+          work_task_id: string | null
+        }
+        Insert: {
+          assignee_user_id: string
+          client_org_id: string
+          created_at?: string
+          created_by_user_id: string
+          estimated_minutes?: number | null
+          id?: string
+          planned_date: string
+          updated_at?: string
+          version?: number
+          work_item_id: string
+          work_task_id?: string | null
+        }
+        Update: {
+          assignee_user_id?: string
+          client_org_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          estimated_minutes?: number | null
+          id?: string
+          planned_date?: string
+          updated_at?: string
+          version?: number
+          work_item_id?: string
+          work_task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_allocations_assignee_user_id_fkey"
+            columns: ["assignee_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_allocations_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_allocations_task_work_client_fkey"
+            columns: ["work_task_id", "work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_tasks"
+            referencedColumns: ["id", "work_item_id", "client_org_id"]
+          },
+          {
+            foreignKeyName: "work_allocations_work_item_client_fkey"
+            columns: ["work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id", "client_org_id"]
+          },
+        ]
+      }
+      work_blockers: {
+        Row: {
+          category: string
+          client_org_id: string
+          follow_up_date: string
+          id: string
+          opened_at: string
+          opened_by_user_id: string
+          owner_user_id: string
+          reason: string
+          resolved_at: string | null
+          resolved_by_user_id: string | null
+          waiting_on_reference: string | null
+          waiting_on_staff_user_id: string | null
+          work_item_id: string
+        }
+        Insert: {
+          category: string
+          client_org_id: string
+          follow_up_date: string
+          id?: string
+          opened_at?: string
+          opened_by_user_id: string
+          owner_user_id: string
+          reason: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          waiting_on_reference?: string | null
+          waiting_on_staff_user_id?: string | null
+          work_item_id: string
+        }
+        Update: {
+          category?: string
+          client_org_id?: string
+          follow_up_date?: string
+          id?: string
+          opened_at?: string
+          opened_by_user_id?: string
+          owner_user_id?: string
+          reason?: string
+          resolved_at?: string | null
+          resolved_by_user_id?: string | null
+          waiting_on_reference?: string | null
+          waiting_on_staff_user_id?: string | null
+          work_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_blockers_opened_by_user_id_fkey"
+            columns: ["opened_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_blockers_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_blockers_resolved_by_user_id_fkey"
+            columns: ["resolved_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_blockers_waiting_on_staff_user_id_fkey"
+            columns: ["waiting_on_staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_blockers_work_item_client_fkey"
+            columns: ["work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id", "client_org_id"]
+          },
+        ]
+      }
       work_events: {
         Row: {
           actor_email: string | null
@@ -3327,6 +3556,26 @@ export type Database = {
       next_entity_ref: { Args: never; Returns: string }
       next_proposal_ref: { Args: never; Returns: string }
       next_work_ref: { Args: never; Returns: string }
+      open_work_blocker: {
+        Args: {
+          p_actor_email: string
+          p_category: string
+          p_client_org_id: string
+          p_expected_version: number
+          p_follow_up_date: string
+          p_opened_by_user_id: string
+          p_owner_user_id: string
+          p_reason: string
+          p_waiting_on_reference: string
+          p_waiting_on_staff_user_id: string
+          p_work_item_id: string
+        }
+        Returns: {
+          work_blocker_id: string
+          work_event_id: string
+          work_item_version: number
+        }[]
+      }
       provision_from_signed_proposal: {
         Args: { p_org_slug: string; p_proposal_id: string; p_user_id: string }
         Returns: {
@@ -3353,6 +3602,20 @@ export type Database = {
         Returns: {
           approval_id: string
           work_event_id: string
+        }[]
+      }
+      resolve_work_blocker: {
+        Args: {
+          p_actor_email: string
+          p_client_org_id: string
+          p_expected_version: number
+          p_resolved_by_user_id: string
+          p_work_blocker_id: string
+        }
+        Returns: {
+          work_blocker_id: string
+          work_event_id: string
+          work_item_version: number
         }[]
       }
       revoke_client_access: {
@@ -3405,6 +3668,21 @@ export type Database = {
           id: string
         }[]
       }
+      set_job_due_date_with_history: {
+        Args: {
+          p_actor_user_id: string
+          p_client_org_id: string
+          p_due_date: string
+          p_job_id: string
+          p_reason: string
+        }
+        Returns: {
+          due_date: string
+          due_date_change_id: string
+          due_date_source: string
+          job_id: string
+        }[]
+      }
       set_service_assignments: {
         Args: {
           p_actor_email: string
@@ -3443,6 +3721,24 @@ export type Database = {
           staff_email: string
           staff_id: string
           staff_role: string
+        }[]
+      }
+      set_work_allocation: {
+        Args: {
+          p_assignee_user_id: string
+          p_client_org_id: string
+          p_created_by_user_id: string
+          p_estimated_minutes: number
+          p_expected_allocation_version: number
+          p_expected_work_item_version: number
+          p_planned_date: string
+          p_work_item_id: string
+          p_work_task_id: string
+        }
+        Returns: {
+          allocation_version: number
+          work_allocation_id: string
+          work_item_version: number
         }[]
       }
       start_proposal_resend: {
