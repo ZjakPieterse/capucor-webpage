@@ -170,8 +170,8 @@
         "pairMode": "byte",
         "why": "The Supabase schema, as TypeScript, generated from ONE project. ⛔ ONLY capucor-os GENERATES IT. capucor-web holds a byte-for-byte COPY and, since AE-08 (2026-09-06), has no `db:types` script at all — two repos independently generating a file that must be byte-identical would have made the supabase CLI pin a silent cross-repo coupling that nothing enforced. ⚠️ THE DIGEST IS WHAT LETS ONE REPO'S CI ANSWER A CROSS-REPO QUESTION. The chain is: capucor-os's ci.yml regenerates and diffs against the LIVE schema, so capucor-os's copy is proved current; this digest pins that copy; the same digest pins capucor-web's. Each repo's own `npm test` therefore fails when its copy moves, and capucor-web needs no Supabase credential to run that test. ⛔ THE CREDENTIAL IS THE WHOLE POINT: MEASURED 2026-09-06, a PROJECT-SCOPED, READ-ONLY Supabase personal access token returns the project’s service_role JWT and both secret-class API keys in plaintext from a plain GET /v1/projects/<ref>/api-keys — `?reveal=true` is not even required. Mirroring the generation step into capucor-web would have put that token into a second repository’s secrets to buy what a digest buys for nothing. ⚠️ COST, STATED RATHER THAN HIDDEN: every schema change that moves this file is now a three-repo change plus a `npm run audit -- --print-digests` paste. --print-digests reads the files on disk, so it will happily emit a STALE capucor-web digest if the copy step was skipped — the thing that catches that is duplicate-file going red in the same audit run, which is why you read the report before you paste.",
         "digest": {
-          "web": "sha256:3311f8f8229c5706eb1a6a0bbca82b12ccfb567db68708b5416051508360aad9",
-          "os": "sha256:3311f8f8229c5706eb1a6a0bbca82b12ccfb567db68708b5416051508360aad9"
+          "web": "sha256:31792855c27a51652d0e77de3ab13405ce306d5f1431dbe3daa91fa5d452e45f",
+          "os": "sha256:31792855c27a51652d0e77de3ab13405ce306d5f1431dbe3daa91fa5d452e45f"
         }
       }
     ]
