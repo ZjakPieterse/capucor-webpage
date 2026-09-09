@@ -2818,6 +2818,60 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_todos: {
+        Row: {
+          assignee_staff_user_id: string | null
+          completed_at: string | null
+          created_at: string
+          due_on: string | null
+          id: string
+          owner_staff_user_id: string
+          status: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          assignee_staff_user_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          owner_staff_user_id: string
+          status?: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          assignee_staff_user_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          due_on?: string | null
+          id?: string
+          owner_staff_user_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_todos_assignee_staff_user_id_fkey"
+            columns: ["assignee_staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_todos_owner_staff_user_id_fkey"
+            columns: ["owner_staff_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           brackets: Json
@@ -3497,6 +3551,7 @@ export type Database = {
           reused: boolean
         }[]
       }
+      current_staff_id: { Args: { uid: string }; Returns: string }
       decide_request_item_match: {
         Args: { p_actor_email?: string; p_decision: string; p_match_id: string }
         Returns: boolean
