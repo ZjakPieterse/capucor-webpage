@@ -3223,11 +3223,13 @@ export type Database = {
           created_at: string
           entity_id: string
           id: string
+          kind: string
           next_action: string | null
           open_approval_count: number
-          period_key: string
+          period_key: string | null
           source_job_id: string | null
           status: string
+          subject: string | null
           updated_at: string
           version: number
           work_ref: string | null
@@ -3241,11 +3243,13 @@ export type Database = {
           created_at?: string
           entity_id: string
           id?: string
+          kind?: string
           next_action?: string | null
           open_approval_count?: number
-          period_key: string
+          period_key?: string | null
           source_job_id?: string | null
           status?: string
+          subject?: string | null
           updated_at?: string
           version?: number
           work_ref?: string | null
@@ -3259,11 +3263,13 @@ export type Database = {
           created_at?: string
           entity_id?: string
           id?: string
+          kind?: string
           next_action?: string | null
           open_approval_count?: number
-          period_key?: string
+          period_key?: string | null
           source_job_id?: string | null
           status?: string
+          subject?: string | null
           updated_at?: string
           version?: number
           work_ref?: string | null
