@@ -3220,6 +3220,7 @@ export type Database = {
         Row: {
           assignee_user_id: string | null
           client_org_id: string
+          commercial_state: string | null
           created_at: string
           entity_id: string
           id: string
@@ -3240,6 +3241,7 @@ export type Database = {
         Insert: {
           assignee_user_id?: string | null
           client_org_id: string
+          commercial_state?: string | null
           created_at?: string
           entity_id: string
           id?: string
@@ -3260,6 +3262,7 @@ export type Database = {
         Update: {
           assignee_user_id?: string | null
           client_org_id?: string
+          commercial_state?: string | null
           created_at?: string
           entity_id?: string
           id?: string
