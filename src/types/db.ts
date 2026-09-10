@@ -3854,24 +3854,6 @@ export type Database = {
           staff_role: string
         }[]
       }
-      set_work_item_commitment: {
-        Args: {
-          p_changed_by_user_id: string
-          p_client_org_id: string
-          p_commitment_type: string
-          p_due_date: string
-          p_expected_version: number
-          p_reason: string
-          p_work_item_id: string
-        }
-        Returns: {
-          commitment_change_id: string
-          commitment_due_date: string
-          commitment_type: string
-          work_item_id: string
-          work_item_version: number
-        }[]
-      }
       set_work_allocation: {
         Args: {
           p_assignee_user_id: string
@@ -3887,6 +3869,24 @@ export type Database = {
         Returns: {
           allocation_version: number
           work_allocation_id: string
+          work_item_version: number
+        }[]
+      }
+      set_work_item_commitment: {
+        Args: {
+          p_changed_by_user_id: string
+          p_client_org_id: string
+          p_commitment_type: string
+          p_due_date: string
+          p_expected_version: number
+          p_reason: string
+          p_work_item_id: string
+        }
+        Returns: {
+          commitment_change_id: string
+          commitment_due_date: string
+          commitment_type: string
+          work_item_id: string
           work_item_version: number
         }[]
       }
