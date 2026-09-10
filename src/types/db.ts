@@ -3270,11 +3270,74 @@ export type Database = {
           },
         ]
       }
+      work_item_commitment_changes: {
+        Row: {
+          changed_at: string
+          changed_by_user_id: string
+          client_org_id: string
+          id: string
+          new_due_date: string | null
+          new_type: string | null
+          previous_due_date: string | null
+          previous_type: string | null
+          reason: string
+          work_item_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by_user_id: string
+          client_org_id: string
+          id?: string
+          new_due_date?: string | null
+          new_type?: string | null
+          previous_due_date?: string | null
+          previous_type?: string | null
+          reason: string
+          work_item_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by_user_id?: string
+          client_org_id?: string
+          id?: string
+          new_due_date?: string | null
+          new_type?: string | null
+          previous_due_date?: string | null
+          previous_type?: string | null
+          reason?: string
+          work_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_item_commitment_changes_changed_by_user_id_fkey"
+            columns: ["changed_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "internal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_item_commitment_changes_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "client_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_item_commitment_changes_work_client_fkey"
+            columns: ["work_item_id", "client_org_id"]
+            isOneToOne: false
+            referencedRelation: "work_items"
+            referencedColumns: ["id", "client_org_id"]
+          },
+        ]
+      }
       work_items: {
         Row: {
           assignee_user_id: string | null
           client_org_id: string
           commercial_state: string | null
+          commitment_due_date: string | null
+          commitment_type: string | null
           created_at: string
           entity_id: string
           id: string
@@ -3296,6 +3359,8 @@ export type Database = {
           assignee_user_id?: string | null
           client_org_id: string
           commercial_state?: string | null
+          commitment_due_date?: string | null
+          commitment_type?: string | null
           created_at?: string
           entity_id: string
           id?: string
@@ -3317,6 +3382,8 @@ export type Database = {
           assignee_user_id?: string | null
           client_org_id?: string
           commercial_state?: string | null
+          commitment_due_date?: string | null
+          commitment_type?: string | null
           created_at?: string
           entity_id?: string
           id?: string
@@ -3802,6 +3869,24 @@ export type Database = {
         Returns: {
           allocation_version: number
           work_allocation_id: string
+          work_item_version: number
+        }[]
+      }
+      set_work_item_commitment: {
+        Args: {
+          p_changed_by_user_id: string
+          p_client_org_id: string
+          p_commitment_type: string
+          p_due_date: string
+          p_expected_version: number
+          p_reason: string
+          p_work_item_id: string
+        }
+        Returns: {
+          commitment_change_id: string
+          commitment_due_date: string
+          commitment_type: string
+          work_item_id: string
           work_item_version: number
         }[]
       }
