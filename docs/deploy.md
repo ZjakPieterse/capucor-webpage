@@ -37,14 +37,14 @@ These are hard-won and load-bearing — ignoring them has taken production down:
 - **The build is pinned to webpack** (`next build --webpack`), not Turbopack — OpenNext-for-
   Cloudflare cannot bundle a Turbopack build into a working worker.
 - **The coupled runtime is pinned exact:** Next.js / `eslint-config-next` **16.3.4**,
-  `@opennextjs/cloudflare` **1.20.6** and Wrangler **4.129.0** (moved together 2026-09-04, AE-04;
-  previously 16.3.0 / 1.20.2 / 4.86.0). Move them together and verify a full `build:cf`; a caret on
+  `@opennextjs/cloudflare` **1.20.6** and Wrangler **4.131.0** (Next and OpenNext moved together 2026-09-04, AE-04;
+  previously 16.3.0 / 1.20.2 / 4.86.0). Wrangler alone then moved 4.129.0 → 4.131.0 on 2026-09-11 (EH-12) to clear the sharp advisory GHSA-rgj7-g3m4-5g8c (libheif, sharp < 0.35.4) reached through `miniflare`; OpenNext 1.20.6’s `^4.125.0` peer range already admitted 4.131.0, so Next and OpenNext did NOT have to move with it. Move them together and verify a full `build:cf`; a caret on
   OpenNext previously allowed a clean install to select an adapter whose Next peer range the app
   did not satisfy.
   **The peer ranges are now tight in BOTH directions:** OpenNext 1.20.6 requires Next `>=16.3.3`
   *and* Wrangler `^4.125.0`, where 1.20.2 accepted Wrangler `^4.86.0`. Bumping Wrangler for a
   security fix therefore drags OpenNext, and OpenNext drags Next.
-  ⚠️ Wrangler 4.129.0 depends on `miniflare@5.x-alpha`. That is what Cloudflare ships on the
+  ⚠️ Wrangler 4.131.0 depends on `miniflare@5.x-alpha`. That is what Cloudflare ships on the
   `latest` tag, not something we opted into; Miniflare is the LOCAL simulator behind
   `wrangler dev` and `preview:cf`, and `wrangler deploy` does not run it.
 - **No edge-runtime routes.** Cloudflare Workers are already edge; do not add
