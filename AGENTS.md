@@ -8,6 +8,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > Antigravity, Cursor, and any future tool — should read this file. `CLAUDE.md` and `GEMINI.md`
 > are thin pointers to it; **edit this file, not them.**
 
+> ⚠️ **Status 2026-10-05.** `capucor-docs` is archived (read-only) and the old
+> `capucor-workspace` root is retired. Planning, decisions and cross-product brand/voice knowledge
+> now live in the owner's private workspace. Links into `../capucor-docs/` below are historical
+> references, not live rules; `npm run audit` in capucor-os no longer applies. Direction: this repo
+> becomes a stand-alone product (site, pricing calculator, proposals).
+
 # Capucor Web — Project Reference
 
 Capucor Business Solutions public website and sales funnel — capucor.com. South African outsourced
