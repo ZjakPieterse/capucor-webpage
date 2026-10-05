@@ -7,16 +7,16 @@ import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
-  title: 'Payroll for SA Businesses',
+  title: 'Payroll for SA employers',
   description:
-    'Accurate, compliant payroll for South African staff teams of any size. PAYE, UIF, and IRP5s handled.',
+    'Monthly payroll for South African employers: payslips, EMP201, EMP501, UIF, COIDA and IRP5s, on one fixed monthly subscription.',
   alternates: { canonical: `${siteConfig.marketingUrl}/payroll` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.marketingUrl}/payroll`,
     description:
-      'Accurate, compliant payroll for South African staff teams of any size. PAYE, UIF, and IRP5s handled.',
+      'Monthly payroll for South African employers: payslips, EMP201, EMP501, UIF, COIDA and IRP5s, on one fixed monthly subscription.',
     images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
@@ -61,10 +61,10 @@ export default function PayrollPage() {
                 Payroll
               </p>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Payslips, EMP201 and IRP5s done before SARS comes asking
+                Payroll for employers: payslips, EMP201, UIF and COIDA on their cycles
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Every payslip calculated, every PAYE and UIF submission filed by the seventh, COIDA Return of Earnings filed annually. IRP5 certificates ready before the May deadline.
+                Every payslip calculated and every EMP201 filed by the 7th. UIF declarations, the EMP501 reconciliation with IRP5s, and the COIDA Return of Earnings each done on their own cycle, next to your VAT and provisional tax.
               </p>
               <Link
                 href="/pricing"

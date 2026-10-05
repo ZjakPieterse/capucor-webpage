@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import {
-  BookOpen,
   AlertCircle,
   Unplug,
   Clock,
   CheckCircle2,
   CalendarCheck,
   Link2,
+  Users,
   Zap,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -19,39 +19,39 @@ import { cn } from "@/lib/utils";
 
 const PROBLEMS = [
   {
-    icon: BookOpen,
-    title: "Messy, outdated books",
-    body: "It's the 15th. The bank wants management accounts for a facility review. You're categorising 400 bank lines by hand, guessing what receipts were for. The weekend is gone.",
+    icon: Unplug,
+    title: "Your accountant has gone quiet",
+    body: "It's the 15th. The bank wants management accounts for a facility review. You've emailed your accountant twice this week. The last thing you heard from them was the year-end invoice.",
     solution: {
       icon: CheckCircle2,
-      title: "Current books. Clear answers.",
-      body: "By day 7 the month is closed. When the bank asks for numbers, you pull a clean reconciled report in 30 seconds. The weekend stays yours.",
+      title: "You hear from us on a schedule.",
+      body: "Each month is closed and reconciled before the next one gets busy. When the bank asks for numbers, they're already there, and you didn't have to chase anyone for them.",
     },
   },
   {
     icon: AlertCircle,
-    title: "Deadline pressure",
-    body: "A SARS penalty letter arrives for a missed EMP201. You thought it was filed. It wasn't. Now you're paying for a mistake that should never have reached your desk.",
+    title: "A letter from SARS",
+    body: "A penalty notice arrives for a missed EMP201. You thought it was filed. It wasn't. Now you're paying for a mistake that should never have reached your desk.",
     solution: {
       icon: CalendarCheck,
       title: "Deadlines that don’t depend on memory.",
-      body: "EMP201, VAT and CIPC sit on a workflow with named owners and review dates. Filed on time, every cycle. No more penalty letters.",
+      body: "EMP201, VAT201, provisional tax and CIPC sit on one calendar with review dates. Each return is prepared, checked and filed on its own cycle, and you can see that it's done.",
     },
   },
   {
-    icon: Unplug,
-    title: "Disconnected tools",
-    body: "You check the bank for cash, a spreadsheet for payroll, and email for invoices. None of it agrees. You can't get a straight answer about your own business.",
+    icon: Users,
+    title: "More staff, more submissions",
+    body: "You've just hired your twelfth person and registered for VAT. Payroll lives in a spreadsheet, the EMP201 is due on the 7th, and the UIF and COIDA paperwork keeps piling up.",
     solution: {
       icon: Link2,
-      title: "One ledger, one source of truth.",
-      body: "Receipts flow into Xero automatically. Payroll connects through. You see one true cash position, not three approximations.",
+      title: "Payroll on the same rhythm as your books.",
+      body: "Payslips, EMP201, UIF and COIDA run on their cycles next to your VAT201. New hires and the VAT registration are set up properly from the start, and EMP501 is ready when it's due.",
     },
   },
   {
     icon: Clock,
     title: "Too much owner involvement",
-    body: "You spend 15 hours a month chasing slips and answering basic finance questions. The work doesn't stop. The growth does.",
+    body: "Your evenings go on chasing slips and answering basic finance questions. The work doesn't stop. The growth does.",
     solution: {
       icon: Zap,
       title: "A finance rhythm that runs without you.",
@@ -84,8 +84,8 @@ export function ProblemCards() {
         <ScrollReveal>
           <SectionHeading
             eyebrow="The reality"
-            title="Your business has outgrown its finance function"
-            subtitle="Late submissions, unclear numbers, reactive accounting. While you focus on growth, the books fall behind."
+            title="Your business has outgrown a year-end accountant"
+            subtitle="You hear from them once a year, with a bill. Meanwhile EMP201, VAT201 and provisional tax keep coming, and you're the one chasing."
           />
         </ScrollReveal>
 

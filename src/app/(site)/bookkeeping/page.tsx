@@ -7,16 +7,16 @@ import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
-  title: 'Bookkeeping for SA SMEs',
+  title: 'Monthly bookkeeping for SA businesses',
   description:
-    'Real-time bookkeeping for South African SMEs. Monthly reconciliations, management accounts, and Xero included.',
+    'Monthly bookkeeping for owner-run South African businesses. Bank reconciliations, management accounts and Xero included.',
   alternates: { canonical: `${siteConfig.marketingUrl}/bookkeeping` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.marketingUrl}/bookkeeping`,
     description:
-      'Real-time bookkeeping for South African SMEs. Monthly reconciliations, management accounts, and Xero included.',
+      'Monthly bookkeeping for owner-run South African businesses. Bank reconciliations, management accounts and Xero included.',
     images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
@@ -35,7 +35,7 @@ const INCLUDED = [
   {
     title: 'Monthly bank reconciliations',
     description:
-      'Every bank account and credit card reconciled against your actual statements each month. By the time the new month starts, your books match your bank, and any discrepancies have already been investigated.',
+      'Every bank account and credit card reconciled against your actual statements each month. Each month, your books match your bank, and any differences have already been investigated.',
   },
   {
     title: 'Monthly management accounts',
@@ -61,10 +61,10 @@ export default function BookkeepingPage() {
                 Bookkeeping
               </p>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Your ledger, reconciled before the new month starts
+                Your ledger reconciled every month, with numbers you can act on
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Every transaction processed, categorised and reconciled against your bank statements each month. By the time the new month begins, your P&amp;L and balance sheet are already there.
+                Every transaction processed, categorised and reconciled against your bank statements each month. Your P&amp;L and balance sheet arrive on a schedule, and your accountant talks you through them.
               </p>
               <Link
                 href="/pricing"

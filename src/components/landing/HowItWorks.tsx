@@ -23,7 +23,7 @@ const STEPS = [
   {
     number: "03",
     title: "Review",
-    body: "A senior accountant checks the numbers before they reach you. You receive a clear monthly report showing performance, cash flow, debtors and anything that needs attention.",
+    body: "Your accountant checks the numbers before they reach you. You receive a clear monthly report showing performance, cash flow, debtors and anything that needs attention.",
     deliverable:
       "A concise monthly view of revenue, expenses, cash flow, debtors and anything unusual that deserves attention.",
   },

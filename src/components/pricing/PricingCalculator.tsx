@@ -30,7 +30,7 @@ const TRUST_ITEMS = [
   'SARS Registered',
   'Fixed Monthly Pricing',
   'No Lock-in Contracts',
-  'Dedicated Finance Team',
+  'Your Own Accountant',
   "Cancel with 30 Days’ Notice",
 ];
 
