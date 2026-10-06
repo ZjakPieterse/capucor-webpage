@@ -7,7 +7,8 @@
  * come from config/serviceScope.ts. One source of truth, no re-typed lists.
  */
 
-import { TIER_HIGHLIGHTS, PACKAGE_COMMON_ITEMS } from '@/config/tiers';
+import { TIER_HIGHLIGHTS, packageCommonItemsFor } from '@/config/tiers';
+import { notVatRegistered } from '@/lib/pricing';
 import {
   FAIR_USAGE,
   ALWAYS_OUT_OF_SCOPE,
@@ -36,12 +37,18 @@ const SERVICE_TIED_TEXTS = new Set(
  * Cumulative "what's included" lines for the chosen services + tier. Package-
  * wide items first (only the genuinely universal ones), then the tier highlights
  * that apply to a selected service, accumulating up to the chosen tier.
+ * `addons` is the proposal's add-on tokens: a not-VAT-registered scope flag
+ * there drops VAT201 from the core items.
  */
-export function cumulativeInclusions(selectedServices: string[], tierSlug: string): string[] {
+export function cumulativeInclusions(
+  selectedServices: string[],
+  tierSlug: string,
+  addons: string[] = [],
+): string[] {
   const sel = new Set(selectedServices);
   const out: string[] = [];
 
-  for (const item of PACKAGE_COMMON_ITEMS) {
+  for (const item of packageCommonItemsFor(!notVatRegistered(addons))) {
     if (!SERVICE_TIED_TEXTS.has(item.text)) out.push(item.text);
   }
 
@@ -82,11 +89,16 @@ export interface FairUsageLine extends ServiceFairUsage {
   bracketLabel: string | null;
 }
 
-/** Per-selected-service fair-usage rows, resolving the chosen bracket's label. */
+/**
+ * Per-selected-service fair-usage rows, resolving the chosen bracket's label.
+ * A service whose allowance differs by package (bookkeeping: Basic counts bank
+ * lines and journals only) uses the chosen tier's wording.
+ */
 export function buildFairUsage(
   selectedServices: string[],
   selectedBrackets: Record<string, BracketValue>,
   brackets: Pick<Bracket, 'service_slug' | 'ordinal' | 'label'>[],
+  tierSlug?: string,
 ): FairUsageLine[] {
   const lines: FairUsageLine[] = [];
   for (const slug of selectedServices) {
@@ -97,7 +109,8 @@ export function buildFairUsage(
     if (typeof sel === 'number') {
       bracketLabel = brackets.find((b) => b.service_slug === slug && b.ordinal === sel)?.label ?? null;
     }
-    lines.push({ slug, bracketLabel, ...fu });
+    const allowance = (tierSlug && fu.allowanceByTier?.[tierSlug]) || fu.allowance;
+    lines.push({ slug, bracketLabel, ...fu, allowance });
   }
   return lines;
 }

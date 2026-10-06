@@ -22,6 +22,7 @@ import {
   addonTotal,
   addonsForTier,
   buildAddonLineItems,
+  foldAddonsIntoLines,
   type ProposalLineItem,
 } from '@/lib/pricing';
 import { logError } from '@/lib/log';
@@ -97,8 +98,11 @@ export async function priceProposalSelection(
   const totalChargeZAR = monthlyTotalZAR;
 
   const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
+  // A folded add-on (the Xero invoicing charge on Basic) is priced inside its
+  // service's line, so the lines still sum to the total.
+  const serviceLines = buildLineItems(input.services, input.brackets, input.tierSlug, serviceCatalogue, bracketRows);
   const lineItems = [
-    ...buildLineItems(input.services, input.brackets, input.tierSlug, serviceCatalogue, bracketRows),
+    ...foldAddonsIntoLines(serviceLines, addonSlugs, input.tierSlug),
     ...buildAddonLineItems(addonSlugs, input.tierSlug),
   ];
 

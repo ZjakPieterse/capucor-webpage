@@ -1,3 +1,10 @@
+// ⚠️ HAND-SYNCED with capucor-os/src/config/tiers.ts and pinned by digest in
+// contracts/cross-repo-contract.json. Change both copies together.
+//
+// Package content follows the calculator-v2 decisions (2026-10-06): one core
+// service in every package, tiers defined by processing rhythm (Basic monthly,
+// Pro weekly, Premium daily), Premium sold by booking a call.
+
 export interface TierHighlightItem {
   text: string;
   services: string[];
@@ -8,29 +15,19 @@ export interface TierHighlightItem {
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
     {
-      text: 'Annual Financial Statements',
-      services: ['accounting'],
-      tooltip: 'Year-end financial statements prepared for compliance, SARS, banks, and other stakeholders.',
-    },
-    {
-      text: 'SARS & CIPC Compliance',
-      services: ['accounting'],
-      tooltip: 'Annual tax and company-compliance requirements handled for you.',
-    },
-    {
-      text: 'VAT Reporting & Submission',
-      services: ['accounting'],
-      tooltip: 'VAT returns prepared and submitted accurately for each applicable cycle.',
-    },
-    {
-      text: 'Bookkeeping & Monthly Close',
+      text: 'Transactions Processed Monthly',
       services: ['bookkeeping'],
-      tooltip: 'Transactions processed, reconciled, and closed off through a structured monthly workflow.',
+      tooltip: 'Your bank transactions are processed and reconciled once a month, at the monthly close.',
     },
     {
-      text: 'Core Monthly Financials',
+      text: 'Basic Monthly Reports',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'Receive regular financial reports to stay informed about business performance.',
+      tooltip: 'A profit and loss statement and balance sheet after each monthly close.',
+    },
+    {
+      text: 'Quarterly Performance Review',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A review every quarter of how the business is performing and what needs attention.',
     },
     {
       text: 'Payroll Processing & Payslips',
@@ -47,14 +44,14 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
   pro: [
     {
-      text: 'Quarterly Review Meeting',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'A structured quarterly review to discuss performance, key concerns, and areas requiring attention.',
+      text: 'Transactions Processed Weekly',
+      services: ['bookkeeping'],
+      tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
     },
     {
-      text: 'Accounts Payable Management',
-      services: ['bookkeeping'],
-      tooltip: 'Supplier invoices captured and processed, keeping supplier balances accurate and easy to track.',
+      text: 'Monthly Performance Review',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A review every month, in place of the quarterly review, covering performance, key concerns and next steps.',
     },
     {
       text: 'Monthly Insights Report',
@@ -67,9 +64,14 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
     {
+      text: 'Supplier Processing & Review',
+      services: ['bookkeeping'],
+      tooltip: 'Supplier bills captured and reviewed, so supplier and customer balances are tracked in Xero.',
+    },
+    {
       text: 'Dext with AI Assist Included',
       services: ['bookkeeping'],
-      tooltip: 'Dext software access, AI Assist included, as part of your package: snap receipts and invoices and they flow straight into your books.',
+      tooltip: 'Dext software access, AI Assist included, as part of your package: snap receipts and supplier bills and we process them into your books.',
     },
     {
       text: 'Employee Self-Service Portal',
@@ -80,24 +82,29 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
   premium: [
     {
-      text: 'Monthly Strategy Session',
+      text: 'Transactions Processed Daily',
+      services: ['bookkeeping'],
+      tooltip: 'We process what is available every business day, so your numbers are close to live.',
+    },
+    {
+      text: 'Weekly Reports & Review',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A monthly discussion focused on performance, financial priorities, and practical next steps.',
+      tooltip: 'A short report and review every week, so decisions are made on current numbers.',
+    },
+    {
+      text: 'Monthly Tax & Financial Planning',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A monthly planning cycle covering tax position, cash flow and the decisions ahead.',
+    },
+    {
+      text: 'On-call Partner Support',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A direct line to your partner, with a reply the same business day.',
     },
     {
       text: 'Budget vs Actual Reporting',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Compare actual financial performance against budget and identify areas requiring attention.',
-    },
-    {
-      text: 'Advanced KPI Dashboard',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'Access a broader KPI dashboard with deeper financial and operational performance insights.',
-    },
-    {
-      text: 'Benchmark Analysis',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'See how your key numbers compare against similar businesses, showing where you lead and where there is room to improve.',
     },
     {
       text: 'Payroll Payment Files Prepared',
@@ -109,10 +116,22 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
 };
 
 export const TIER_CUMULATIVE_LABELS: Record<string, string> = {
-  basic: 'Your compliance foundation:',
+  basic: 'On top of the core services:',
   pro: 'Everything in Basic, plus:',
   premium: 'Everything in Pro, plus:',
 };
+
+// The processing rhythm that defines each package, shown under its name.
+export const TIER_RHYTHM_LABELS: Record<string, string> = {
+  basic: 'Monthly rhythm',
+  pro: 'Weekly rhythm',
+  premium: 'Daily rhythm',
+};
+
+// Packages sold by booking a call rather than self-serve acceptance. The
+// calculator shows a "from" price and a booking link; /api/proposals refuses
+// them. Staff can still prepare and amend a proposal on capucor.app.
+export const TIERS_BY_APPLICATION: readonly string[] = ['premium'];
 
 // Canonical display names for the three package slugs. The Supabase `tiers`
 // table carries its own `name`, but the proposal PDF and emails are rendered
@@ -139,28 +158,67 @@ export function tierDisplayName(slug: string): string {
   );
 }
 
-export const PACKAGE_COMMON_ITEMS = [
+// The core services, included in every package and shown above the cards.
+// `vatOnly` items show only for a VAT-registered business.
+export interface PackageCommonItem {
+  text: string;
+  tooltip: string;
+  vatOnly?: boolean;
+}
+
+export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
   { text: 'Your Own Accountant', tooltip: 'One accountant who knows your business and runs your month.' },
-  { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
   { text: 'Xero Software Included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
+  { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
+  {
+    text: 'Annual Financial Statements',
+    tooltip: 'Year-end financial statements prepared for compliance, SARS, banks, and other stakeholders.',
+  },
+  {
+    text: 'VAT Returns (VAT201)',
+    tooltip: 'VAT returns prepared and submitted accurately for each applicable cycle.',
+    vatOnly: true,
+  },
+  {
+    text: 'Bookkeeping & Monthly Close',
+    tooltip: 'Transactions reconciled and closed off every month. Bank statements are requested at every monthly close.',
+  },
   { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant all year, not only at year-end.' },
 ];
+
+/** The core items for a business, hiding VAT201 when it is not VAT-registered. */
+export function packageCommonItemsFor(vatRegistered: boolean): PackageCommonItem[] {
+  return PACKAGE_COMMON_ITEMS.filter((item) => vatRegistered || !item.vatOnly);
+}
 
 // Package slugs from lowest to highest. An add-on included "from" a tier is
 // included in that tier and every tier after it.
 export const TIER_ORDER: readonly string[] = ['basic', 'pro', 'premium'];
 
-// Optional add-ons available with every package in the pricing calculator.
-// Flat monthly fees added on top of the bracket-based tier price, unless the
-// chosen package includes the add-on (includedFromTier), in which case it is
-// carried at no charge. Server-side proposal pricing reads from this same
-// list, so a slug here is the whitelist for /api/proposals.
+// Add-ons, flat monthly fees added on top of the bracket-based package price,
+// unless the chosen package includes the add-on (includedFromTier), in which
+// case it is carried at no charge. Server-side proposal pricing reads from this
+// same list, so a slug here is the whitelist for /api/proposals and the staff
+// amend form.
+//
+// A proposal stores add-ons as a list of tokens in proposals.addons: the slug,
+// or "slug:count" for a per-unit add-on (e.g. "personal-tax:3"). See
+// parseAddonToken in lib/pricing.ts.
 export interface PricingAddon {
   slug: string;
   name: string;
+  /** Monthly price; per unit for a per-unit add-on. */
   priceZAR: number;
   description: string;
   includedFromTier?: string;
+  /** Not offered as a choice on the add-ons step; set from a calculator answer. */
+  hidden?: boolean;
+  /** Priced per unit per month; the stored token carries the count. */
+  unit?: { singular: string; plural: string; max: number };
+  /** Charged inside this service's line rather than as its own line. */
+  foldIntoService?: string;
+  /** A zero-price scope marker that travels with the proposal; never a line. */
+  scopeFlag?: boolean;
 }
 
 /** True when the package includes this add-on at no charge. */
@@ -180,10 +238,48 @@ export const PRICING_ADDONS: PricingAddon[] = [
       'Snap receipts and invoices with the Dext app, AI Assist included, and they flow straight into your books.',
     includedFromTier: 'pro',
   },
+  {
+    slug: 'whatsapp-support',
+    name: 'WhatsApp Support Channel',
+    priceZAR: 750,
+    description: 'A dedicated WhatsApp channel to your accountant for quick questions and document requests.',
+  },
+  {
+    slug: 'category-tracking',
+    name: 'Category Tracking',
+    priceZAR: 1200,
+    description:
+      'Xero tracking categories set up for your branches, projects or departments, with every transaction coded to them so your reports split by category.',
+  },
+  {
+    slug: 'personal-tax',
+    name: 'Personal Tax Returns',
+    priceZAR: 75,
+    description:
+      'An annual personal income tax return (ITR12) prepared and submitted for each person: R 900.00 a year per person, billed monthly.',
+    unit: { singular: 'person', plural: 'people', max: 10 },
+  },
+  {
+    slug: 'xero-invoicing',
+    name: 'Xero Plan with Customer Invoicing',
+    priceZAR: 200,
+    description: 'A Xero plan that supports customer invoicing and payment tracking. Included from Pro.',
+    includedFromTier: 'pro',
+    hidden: true,
+    foldIntoService: 'accounting',
+  },
+  {
+    slug: 'not-vat-registered',
+    name: 'Not VAT-registered',
+    priceZAR: 0,
+    description: 'The business is not registered for VAT, so VAT201 returns are not part of the schedule.',
+    hidden: true,
+    scopeFlag: true,
+  },
 ];
 
 export const TIER_BUYER_FIT: Record<string, string> = {
-  basic: 'For businesses that need the essentials done properly.',
-  pro: 'For businesses that want monthly visibility and a more active finance rhythm.',
-  premium: 'For businesses that want closer advisory, live KPIs and deeper monthly planning.',
+  basic: 'For businesses that want the essentials done properly, once a month.',
+  pro: 'For businesses that want their books current every week and a monthly review.',
+  premium: 'For businesses that want daily processing, weekly reporting and a partner on call.',
 };

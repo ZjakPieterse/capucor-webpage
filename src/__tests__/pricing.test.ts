@@ -3,9 +3,14 @@ import {
   addonTotal,
   addonsForTier,
   bracketPrice,
+  addonToken,
   buildAddonLineItems,
+  foldAddonsIntoLines,
   monthlyTotal,
   hasEnterpriseService,
+  notVatRegistered,
+  parseAddonToken,
+  resolveAddons,
 } from '@/lib/pricing';
 import { formatZAR } from '@/lib/utils';
 
@@ -229,5 +234,112 @@ describe('formatZAR', () => {
 
   it('uses comma-thousands and period-decimal (SA accounting convention)', () => {
     expect(formatZAR(1234567.89)).toBe('R 1,234,567.89');
+  });
+});
+
+// ─── calculator-v2 Phase 0 add-ons (2026-10-06) ─────────────────────────────
+
+describe('add-on tokens', () => {
+  it('reads a bare slug as a count of 1, and "slug:n" as n', () => {
+    expect(parseAddonToken('dext')).toEqual({ slug: 'dext', quantity: 1 });
+    expect(parseAddonToken('personal-tax:3')).toEqual({ slug: 'personal-tax', quantity: 3 });
+  });
+
+  it('treats a missing, zero, negative or fractional count as 1', () => {
+    for (const t of ['personal-tax:', 'personal-tax:0', 'personal-tax:-2', 'personal-tax:1.5', 'personal-tax:x']) {
+      expect(parseAddonToken(t).quantity).toBe(1);
+    }
+  });
+
+  it('writes a count only for a per-unit add-on', () => {
+    expect(addonToken('personal-tax', 2)).toBe('personal-tax:2');
+    expect(addonToken('dext', 2)).toBe('dext');
+  });
+
+  it('caps a per-unit count at the add-on maximum and keeps the largest repeat', () => {
+    const [sel] = resolveAddons(['personal-tax:2', 'personal-tax:99']);
+    expect(sel!.quantity).toBe(10);
+  });
+});
+
+describe('new add-on figures', () => {
+  it('prices WhatsApp at R750 and Category Tracking at R1 200 a month on every package', () => {
+    for (const tier of ['basic', 'pro', 'premium']) {
+      expect(addonTotal(['whatsapp-support'], tier)).toBe(750);
+      expect(addonTotal(['category-tracking'], tier)).toBe(1200);
+    }
+  });
+
+  it('prices personal tax returns at R75 a month per person (R900 a year)', () => {
+    expect(addonTotal(['personal-tax:1'], 'basic')).toBe(75);
+    expect(addonTotal(['personal-tax:3'], 'pro')).toBe(225);
+    expect(addonTotal(['personal-tax:3'], 'pro') * 12).toBe(3 * 900);
+  });
+
+  it('labels a per-unit line with its count', () => {
+    expect(buildAddonLineItems(['personal-tax:2'], 'basic')).toEqual([
+      { slug: 'personal-tax', name: 'Personal Tax Returns', label: '2 people', price: 150 },
+    ]);
+    expect(buildAddonLineItems(['personal-tax:1'], 'basic')[0]!.label).toBe('1 person');
+  });
+});
+
+describe('Xero invoicing charge (hidden, folded into Accounting on Basic)', () => {
+  const lines = [
+    { slug: 'accounting', name: 'Accounting', label: '0–1 Mil', price: 725 },
+    { slug: 'bookkeeping', name: 'Bookkeeping', label: 'Up to 50', price: 450 },
+  ];
+
+  it('adds R200 on Basic and nothing from Pro up', () => {
+    expect(addonTotal(['xero-invoicing'], 'basic')).toBe(200);
+    expect(addonTotal(['xero-invoicing'], 'pro')).toBe(0);
+    expect(addonTotal(['xero-invoicing'], 'premium')).toBe(0);
+  });
+
+  it('gets no line of its own; the Accounting line carries it, so lines still sum to the total', () => {
+    const addons = ['xero-invoicing', 'dext'];
+    expect(buildAddonLineItems(addons, 'basic').map((l) => l.slug)).toEqual(['dext']);
+    const folded = foldAddonsIntoLines(lines, addons, 'basic');
+    expect(folded[0]).toEqual({ ...lines[0], price: 925 });
+    expect(folded[1]).toEqual(lines[1]);
+    const sum = [...folded, ...buildAddonLineItems(addons, 'basic')].reduce((s, l) => s + l.price, 0);
+    expect(sum).toBe(725 + 450 + addonTotal(addons, 'basic'));
+  });
+
+  it('does not change the lines from Pro up', () => {
+    expect(foldAddonsIntoLines(lines, ['xero-invoicing'], 'pro')).toEqual(lines);
+  });
+
+  it('falls back to its own line when there is no Accounting line', () => {
+    const folded = foldAddonsIntoLines([lines[1]!], ['xero-invoicing'], 'basic');
+    expect(folded.map((l) => [l.slug, l.price])).toEqual([
+      ['bookkeeping', 450],
+      ['xero-invoicing', 200],
+    ]);
+  });
+
+  it('is dropped from the stored add-ons where the package includes it', () => {
+    expect(addonsForTier(['xero-invoicing'], 'basic')).toEqual(['xero-invoicing']);
+    expect(addonsForTier(['xero-invoicing'], 'pro')).toEqual(['dext']);
+  });
+
+  it('is never added by the package alone', () => {
+    expect(addonsForTier([], 'basic')).toEqual([]);
+    expect(addonsForTier([], 'premium')).toEqual(['dext']);
+  });
+});
+
+describe('not-VAT-registered scope flag', () => {
+  it('is kept on every package, costs nothing and has no line', () => {
+    for (const tier of ['basic', 'pro', 'premium']) {
+      expect(addonsForTier(['not-vat-registered'], tier)).toContain('not-vat-registered');
+      expect(addonTotal(['not-vat-registered'], tier)).toBe(0);
+      expect(buildAddonLineItems(['not-vat-registered'], tier)).toEqual([]);
+    }
+  });
+
+  it('is what notVatRegistered reads', () => {
+    expect(notVatRegistered(['dext', 'not-vat-registered'])).toBe(true);
+    expect(notVatRegistered(['dext'])).toBe(false);
   });
 });

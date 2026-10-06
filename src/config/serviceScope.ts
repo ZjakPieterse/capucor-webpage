@@ -22,6 +22,8 @@ export interface ServiceFairUsage {
   unit: string;
   /** How the included allowance is framed against the client's bracket label. */
   allowance: string;
+  /** Package-specific allowance wording, keyed by tier slug; falls back to `allowance`. */
+  allowanceByTier?: Record<string, string>;
   /** How work beyond the allowance is handled. null = no per-unit overage. */
   overage: string | null;
 }
@@ -41,6 +43,11 @@ export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
     unit: 'monthly transactions',
     allowance:
       'Your processing allowance is the transaction count in your selected bracket, measured per month (bank lines, invoices, bills and journals).',
+    // Basic has no supplier processing, so supplier bills are not counted.
+    allowanceByTier: {
+      basic:
+        'Your processing allowance is the transaction count in your selected bracket, measured per month (bank lines and journals; Basic does not include supplier processing).',
+    },
     overage:
       'Months that run over the allowance are billed at R200 per extra 25 transactions. We measure this on the quarterly review against your rolling average, not on a single busy month.',
   },

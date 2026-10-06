@@ -1,5 +1,12 @@
 import { cn, formatZAR } from '@/lib/utils';
-import { addonTotal, addonsForTier, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
+import {
+  addonTotal,
+  addonsForTier,
+  buildAddonLineItems,
+  buildLineItems,
+  foldAddonsIntoLines,
+  monthlyTotal,
+} from '@/lib/pricing';
 import { tierDisplayName } from '@/config/tiers';
 import { mergeCoreLines } from '@/lib/calculatorFlow';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
@@ -44,7 +51,13 @@ export function ProposalSummary({
   const tierName = tier?.name ?? tierDisplayName(tierSlug);
   // Same add-on rule as the server: the package's included add-ons are listed too.
   const addons = addonsForTier(selectedAddons, tierSlug);
-  const serviceLines = buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets);
+  // Same as the server: a folded add-on (Xero invoicing on Basic) is priced
+  // inside the Accounting line rather than shown on its own.
+  const serviceLines = foldAddonsIntoLines(
+    buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
+    addons,
+    tierSlug,
+  );
   const lineItems = [
     ...(mergeCore ? mergeCoreLines(serviceLines) : serviceLines),
     ...buildAddonLineItems(addons, tierSlug),
