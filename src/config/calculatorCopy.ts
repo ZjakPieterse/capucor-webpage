@@ -23,6 +23,8 @@ export const ANSWER_LABELS = {
 } as const;
 
 export const CORE_SERVICES_HEADING = 'Core services';
+// Above the packages: the visitor's answers as tap-to-change chips.
+export const ANSWER_RECAP_HEADING = 'Priced for:';
 export const CORE_SERVICES_BADGE = 'In every package';
 
 // The pill under each package's price: a nudge, not a cumulative label
@@ -67,26 +69,22 @@ export interface RhythmRow {
 
 export const RHYTHM_ROWS: RhythmRow[] = [
   {
-    label: 'Processing rhythm',
+    label: 'Processing',
     tooltip: 'How often we process what is available. Bank statements are still requested at every monthly close.',
     values: { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' },
-    replaces: ['Processing Rhythm: Monthly', 'Processing Rhythm: Weekly', 'Processing Rhythm: Daily'],
+    replaces: ['Monthly Processing', 'Weekly Processing', 'Daily Processing'],
   },
   {
-    label: 'Reports',
-    tooltip: 'What you receive after each cycle.',
-    values: {
-      basic: 'Monthly: profit and loss, balance sheet',
-      pro: 'Monthly insights report and 5-minute video',
-      premium: 'Weekly reports',
-    },
-    replaces: ['Monthly Basic Reports', 'Monthly Insights Report', 'Monthly 5-Minute Video Explainer'],
+    label: 'Insights report',
+    tooltip: 'A report with the key numbers and what they mean for the business.',
+    values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
+    replaces: ['Quarterly Insights Report', 'Monthly Insights Report', 'Weekly Insights Report'],
   },
   {
     label: 'Performance review',
     tooltip: 'A review with you of how the business is performing and what needs attention.',
     values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
-    replaces: ['Quarterly Performance Review', 'Monthly Performance Review', 'Weekly Reports & Review'],
+    replaces: ['Quarterly Performance Review', 'Monthly Performance Review', 'Weekly Performance Review'],
   },
 ];
 

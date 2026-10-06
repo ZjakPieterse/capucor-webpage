@@ -7,7 +7,7 @@
  * come from config/serviceScope.ts. One source of truth, no re-typed lists.
  */
 
-import { TIER_HIGHLIGHTS, packageCommonItemsFor } from '@/config/tiers';
+import { TIER_HIGHLIGHTS, scheduleCommonItemsFor } from '@/config/tiers';
 import { formatBandLabel, notVatRegistered } from '@/lib/pricing';
 import {
   FAIR_USAGE,
@@ -48,7 +48,7 @@ export function cumulativeInclusions(
   const sel = new Set(selectedServices);
   const out: string[] = [];
 
-  for (const item of packageCommonItemsFor(!notVatRegistered(addons))) {
+  for (const item of scheduleCommonItemsFor(!notVatRegistered(addons))) {
     if (!SERVICE_TIED_TEXTS.has(item.text)) out.push(item.text);
   }
 

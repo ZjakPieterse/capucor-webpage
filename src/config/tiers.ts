@@ -1,9 +1,10 @@
 // ⚠️ HAND-SYNCED with capucor-os/src/config/tiers.ts and pinned by digest in
 // contracts/cross-repo-contract.json. Change both copies together.
 //
-// Package content follows the calculator-v2 decisions (2026-10-06): one core
-// service in every package, tiers defined by processing rhythm (Basic monthly,
-// Pro weekly, Premium daily), Premium sold by booking a call.
+// Package content follows the package simplification (2026-10-06): a
+// bare-minimum baseline of five core services in every package, tiers defined
+// by processing rhythm (Basic monthly, Pro weekly, Premium daily), Premium sold
+// by application.
 
 export interface TierHighlightItem {
   text: string;
@@ -21,50 +22,43 @@ export interface TierHighlightItem {
 }
 
 // Each card lists its package in full, starting with the core services and the
-// processing rhythm (tweaks round 1, 2026-10-06). Premium does not repeat Pro's
-// extras; the comparison table and the schedule carry them cumulatively.
-// Payroll is flat across packages, so its lines repeat on every card.
+// processing rhythm (package simplification, 2026-10-06). Payroll is flat
+// across packages, so its one line repeats on every card when payroll is chosen.
 const CORE_SERVICES_INCLUDED: TierHighlightItem = {
   text: 'Core Services Included',
   services: ['accounting', 'bookkeeping'],
-  tooltip: 'Everything in the core services: your own accountant, SARS and CIPC compliance, annual financial statements, bookkeeping and the monthly close, and year-round support.',
+  tooltip: 'Everything in the core services: a dedicated finance team, annual financials, SARS and CIPC submissions, your accounting software and year-round support.',
   summary: true,
 };
 
-const PAYROLL_PROCESSING: TierHighlightItem = {
-  text: 'Payroll Processing & Payslips',
+// The statutory basics only (decision 2026-10-06): no employee self-service
+// portal or payment files on any package.
+const PAYROLL_SERVICES: TierHighlightItem = {
+  text: 'Payroll Services',
   services: ['payroll'],
-  tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time, with EMP201 and EMP501 submissions lodged on their cycles and UIF declarations handled when needed.',
+  tooltip: 'Monthly payroll and payslips, with EMP201, EMP501, UIF and COIDA submissions handled on their cycles.',
   calculatorOnly: true,
 };
 
-const COIDA_SUBMISSION: TierHighlightItem = {
-  text: 'COIDA Annual Submission',
-  services: ['payroll'],
-  tooltip: 'Annual COIDA Return of Earnings information prepared and submitted for compliance purposes.',
-  calculatorOnly: true,
-};
-
-const EMPLOYEE_PORTAL: TierHighlightItem = {
-  text: 'Employee Self-Service Portal',
-  services: ['payroll'],
-  tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
-  calculatorOnly: true,
+const SUPPLIER_PROCESSING: TierHighlightItem = {
+  text: 'Supplier Processing & Review',
+  services: ['bookkeeping'],
+  tooltip: 'Supplier bills captured and reviewed, so what you owe suppliers and what customers owe you is always up to date.',
 };
 
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
     CORE_SERVICES_INCLUDED,
     {
-      text: 'Processing Rhythm: Monthly',
+      text: 'Monthly Processing',
       services: ['bookkeeping'],
-      tooltip: 'Your bank transactions are processed and reconciled once a month, at the monthly close.',
+      tooltip: 'Your transactions are processed and reconciled once a month, at the monthly close.',
       group: 'rhythm',
     },
     {
-      text: 'Monthly Basic Reports',
+      text: 'Quarterly Insights Report',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A profit and loss statement and balance sheet after each monthly close.',
+      tooltip: 'A report every quarter with the key numbers and what they mean for the business.',
       group: 'reports',
     },
     {
@@ -73,13 +67,12 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'A review every quarter of how the business is performing and what needs attention.',
       group: 'review',
     },
-    PAYROLL_PROCESSING,
-    COIDA_SUBMISSION,
+    PAYROLL_SERVICES,
   ],
   pro: [
     CORE_SERVICES_INCLUDED,
     {
-      text: 'Processing Rhythm: Weekly',
+      text: 'Weekly Processing',
       services: ['bookkeeping'],
       tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
       group: 'rhythm',
@@ -87,67 +80,50 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
     {
       text: 'Monthly Insights Report',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A monthly report covering selected business metrics for a clearer snapshot of financial performance.',
+      tooltip: 'A report every month with the key numbers and what they mean for the business.',
       group: 'reports',
     },
     {
       text: 'Monthly Performance Review',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A review every month, in place of the quarterly review, covering performance, key concerns and next steps.',
+      tooltip: 'A review every month covering performance, key concerns and next steps.',
       group: 'review',
     },
-    {
-      text: 'Monthly 5-Minute Video Explainer',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
-    },
-    {
-      text: 'Supplier Processing & Review',
-      services: ['bookkeeping'],
-      tooltip: 'Supplier bills captured and reviewed, so what you owe suppliers and what customers owe you is always up to date.',
-    },
-    PAYROLL_PROCESSING,
-    COIDA_SUBMISSION,
-    EMPLOYEE_PORTAL,
+    SUPPLIER_PROCESSING,
+    PAYROLL_SERVICES,
   ],
   premium: [
     CORE_SERVICES_INCLUDED,
     {
-      text: 'Processing Rhythm: Daily',
+      text: 'Daily Processing',
       services: ['bookkeeping'],
       tooltip: 'We process what is available every business day, so your numbers are close to live.',
       group: 'rhythm',
     },
     {
-      text: 'Weekly Reports & Review',
+      text: 'Weekly Insights Report',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A short report and review every week, so decisions are made on current numbers.',
+      tooltip: 'A report every week with the key numbers, so decisions are made on current figures.',
+      group: 'reports',
+    },
+    {
+      text: 'Weekly Performance Review',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A short review every week covering performance, key concerns and next steps.',
       group: 'review',
     },
+    SUPPLIER_PROCESSING,
     {
-      text: 'Monthly Tax & Financial Planning',
+      text: 'Monthly Tax Strategy & Planning',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A monthly planning cycle covering tax position, cash flow and the decisions ahead.',
+      tooltip: 'A monthly planning cycle covering your tax position, cash flow and the decisions ahead.',
     },
     {
-      text: 'Budget vs Actual Reporting',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'Compare actual financial performance against budget and identify areas requiring attention.',
-    },
-    {
-      text: 'On-Call Partner Support',
+      text: 'On-call Partner Support',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A direct line to your partner, with a reply the same business day.',
     },
-    PAYROLL_PROCESSING,
-    COIDA_SUBMISSION,
-    EMPLOYEE_PORTAL,
-    {
-      text: 'Payroll Payment Files Prepared',
-      services: ['payroll'],
-      tooltip: 'A bank-upload salary-payment file is prepared after payroll finalisation to simplify the payment process.',
-      calculatorOnly: true,
-    },
+    PAYROLL_SERVICES,
   ],
 };
 
@@ -183,35 +159,44 @@ export function tierDisplayName(slug: string): string {
 }
 
 // The core services, included in every package and shown above the cards.
-// `vatOnly` items show only for a VAT-registered business.
+// `vatOnly` items apply only to a VAT-registered business; `scheduleOnly` items
+// are spelled out on the signed schedule but not shown on the site.
 export interface PackageCommonItem {
   text: string;
   tooltip: string;
   vatOnly?: boolean;
+  scheduleOnly?: boolean;
 }
 
 export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
-  { text: 'Your own accountant', tooltip: 'One accountant who knows your business and runs your month.' },
-  { text: 'Xero software included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
-  { text: 'SARS & CIPC compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
+  { text: 'Dedicated Finance Team', tooltip: 'A team that knows your business and runs your month, led by your own accountant.' },
   {
-    text: 'Annual financial statements',
-    tooltip: 'Year-end financial statements prepared for compliance, SARS, banks, and other stakeholders.',
+    text: 'Annual Financials',
+    tooltip: 'Year-end financial statements prepared for compliance, SARS, banks and other stakeholders.',
   },
+  {
+    text: 'SARS & CIPC Submission',
+    tooltip: 'Tax returns and annual CIPC filings submitted on time, including VAT returns if you are VAT-registered.',
+  },
+  { text: 'Xero Accounting Software', tooltip: 'Xero accounting software included in your monthly fee.' },
+  { text: 'Year-round Support', tooltip: 'Ongoing guidance from your team all year, not only at year-end.' },
+  // Part of "SARS & CIPC Submission" on the site; named on the schedule so the
+  // signed scope stays explicit (package simplification, 2026-10-06).
   {
     text: 'VAT returns (VAT201)',
-    tooltip: 'VAT returns prepared and submitted accurately for each applicable cycle.',
+    tooltip: 'VAT returns prepared and submitted for each applicable cycle.',
     vatOnly: true,
+    scheduleOnly: true,
   },
-  {
-    text: 'Bookkeeping & monthly close',
-    tooltip: 'Transactions reconciled and closed off every month. Bank statements are requested at every monthly close.',
-  },
-  { text: 'Year-round support', tooltip: 'Ongoing guidance from your accountant all year, not only at year-end.' },
 ];
 
-/** The core items for a business, hiding VAT201 when it is not VAT-registered. */
+/** The core items shown on the site, for every package. */
 export function packageCommonItemsFor(vatRegistered: boolean): PackageCommonItem[] {
+  return PACKAGE_COMMON_ITEMS.filter((item) => !item.scheduleOnly && (vatRegistered || !item.vatOnly));
+}
+
+/** The core items on the signed schedule, hiding VAT201 when not VAT-registered. */
+export function scheduleCommonItemsFor(vatRegistered: boolean): PackageCommonItem[] {
   return PACKAGE_COMMON_ITEMS.filter((item) => vatRegistered || !item.vatOnly);
 }
 

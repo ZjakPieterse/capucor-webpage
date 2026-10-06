@@ -29,7 +29,7 @@ import { ReviewStep, type ProposalAction } from './ReviewStep';
 import { ActivateProposalModal } from './ActivateProposalModal';
 import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
-import type { PricingData, Testimonial } from '@/types';
+import type { CalculatorStep, PricingData, Testimonial } from '@/types';
 
 // Amend mode was removed in Phase 3 of the OS split. Staff amend a proposal on
 // capucor.app now, through a plain form in the capucor-os repo — this calculator
@@ -46,7 +46,7 @@ const TRUST_ITEMS = [
   'SARS Registered',
   'Fixed Monthly Pricing',
   'No Lock-in Contracts',
-  'Your Own Accountant',
+  'Dedicated Finance Team',
   "Cancel with 30 Days’ Notice",
 ];
 
@@ -97,6 +97,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     markCompleted,
     goNext,
     goBack,
+    setStep,
     setBracket,
     setAnswer,
     setTier,
@@ -114,15 +115,31 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     setModalOpen(true);
   };
 
+  // Set when the visitor taps an answer chip on the package step: once the
+  // changed answer is confirmed, the calculator returns to the packages
+  // instead of walking every later question again.
+  const [returnToPackages, setReturnToPackages] = useState(false);
+
   const scrollToTop = () => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'auto' });
     }
   };
 
+  const isQuestion = (s: CalculatorStep) => !['package', 'addons', 'review'].includes(s);
+  const advance = () => {
+    goNext(returnToPackages && isQuestion(state.step) ? 'package' : undefined);
+    scrollToTop();
+  };
+
   const next = () => {
     if (!canProceedCurrent) return;
-    goNext();
+    advance();
+  };
+
+  const editAnswer = (target: CalculatorStep) => {
+    setReturnToPackages(true);
+    setStep(target);
     scrollToTop();
   };
 
@@ -131,11 +148,17 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     scrollToTop();
   };
 
-  // Yes / No questions move straight on once answered.
+  // Every question moves straight on once answered (package simplification,
+  // 2026-10-06): a Yes / No tap or a pick from a dropdown. Continue stays for
+  // a screen revisited with its answer already set.
   const answerAndNext = (key: 'vatRegistered' | 'needsPayroll', value: boolean) => {
     setAnswer(key, value);
-    goNext();
-    scrollToTop();
+    advance();
+  };
+
+  const pickAndNext = (slug: string, value: number) => {
+    setBracket(slug, value);
+    advance();
   };
 
   const { step, selectedBrackets, answers, selectedTier } = state;
@@ -173,7 +196,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             serviceSlug={slug}
             brackets={brackets}
             value={bracketValue(slug)}
-            onChange={(v) => setBracket(slug, v)}
+            onChange={(v) => pickAndNext(slug, v)}
             onNext={next}
             onBack={step === 'revenue' ? undefined : back}
             showFitCall
@@ -209,6 +232,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedTier={selectedTier}
             pricedAddons={pricedAddons}
             vatRegistered={answers.vatRegistered !== false}
+            answers={answers}
+            onEditAnswer={editAnswer}
             byCall={byCall}
             onTierSelect={setTier}
             onBack={back}

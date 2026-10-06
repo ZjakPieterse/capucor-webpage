@@ -1,11 +1,12 @@
 'use client';
 
-import { CalendarClock, Check, Plus, Sparkles } from 'lucide-react';
+import { CalendarClock, Check, Layers, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
 import { CoreServicesPanel } from './CoreServicesPanel';
+import { AnswerRecap } from './AnswerRecap';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
@@ -18,7 +19,15 @@ import {
   packageCommonItemsFor,
 } from '@/config/tiers';
 import { REVENUE_CALL_COPY, TIER_NUDGES } from '@/config/calculatorCopy';
-import type { Bracket, Service, Tier, BracketValue, Testimonial } from '@/types';
+import type {
+  Bracket,
+  Service,
+  Tier,
+  BracketValue,
+  CalculatorAnswers,
+  CalculatorStep,
+  Testimonial,
+} from '@/types';
 
 interface Step2TiersProps {
   services: Service[];
@@ -31,6 +40,9 @@ interface Step2TiersProps {
   pricedAddons: string[];
   /** False only on a VAT "No": hides VAT201 from the core services. */
   vatRegistered: boolean;
+  /** The visitor's answers, shown as tap-to-change chips. */
+  answers: CalculatorAnswers;
+  onEditAnswer: (step: CalculatorStep) => void;
   /** Revenue above R50m: every package goes to a call, none is selectable. */
   byCall?: boolean;
   onTierSelect: (slug: string) => void;
@@ -48,6 +60,8 @@ export function Step2Tiers({
   selectedTier,
   pricedAddons,
   vatRegistered,
+  answers,
+  onEditAnswer,
   byCall = false,
   onTierSelect,
   onBack,
@@ -69,6 +83,13 @@ export function Step2Tiers({
           Every package includes the core services. They differ in how often we process, report and review.
         </p>
       </div>
+
+      <AnswerRecap
+        brackets={brackets}
+        selectedBrackets={selectedBrackets}
+        answers={answers}
+        onEdit={onEditAnswer}
+      />
 
       <CoreServicesPanel items={packageCommonItemsFor(vatRegistered)} />
 
@@ -169,12 +190,21 @@ export function Step2Tiers({
               <div className="pricing-card-features flex-grow flex flex-col gap-5">
                 {filteredItems.length > 0 && (
                   <ul className="space-y-2.5">
-                    {filteredItems.map((item) => (
-                      <li key={item.text} className="flex items-start gap-2.5 text-xs">
-                        <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                        <span className="text-muted-foreground leading-normal">{item.text}</span>
-                      </li>
-                    ))}
+                    {filteredItems.map((item) =>
+                      // The summary line points back to the core services panel,
+                      // with the panel's icon, so it reads as the foundation.
+                      item.summary ? (
+                        <li key={item.text} className="flex items-start gap-2.5 text-xs">
+                          <Layers className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                          <span className="font-semibold text-foreground leading-normal">{item.text}</span>
+                        </li>
+                      ) : (
+                        <li key={item.text} className="flex items-start gap-2.5 text-xs">
+                          <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                          <span className="text-muted-foreground leading-normal">{item.text}</span>
+                        </li>
+                      )
+                    )}
                   </ul>
                 )}
               </div>

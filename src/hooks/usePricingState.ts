@@ -8,6 +8,7 @@ import {
   nextStep,
   prevStep,
   revertStepFields,
+  scopeComplete,
 } from '@/lib/calculatorFlow';
 import { addonToken, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
@@ -108,12 +109,15 @@ export function usePricingState(seed?: PricingSeed) {
   const markCompleted = useCallback(() => setCompleted(true), []);
 
   // Continue: advance only when the current screen is answered. What the
-  // visitor chose here is now confirmed.
-  const goNext = useCallback(() => {
+  // visitor chose here is now confirmed. `returnTo` jumps straight there once
+  // every question up to the packages is answered (a change made from the
+  // answer chips on the package step).
+  const goNext = useCallback((returnTo?: CalculatorStep) => {
     setBox((b) => {
       const s = b.current;
       if (!canProceed(s.step, s)) return b;
-      const next = { ...s, step: nextStep(s.step, s) };
+      const step = returnTo && scopeComplete(s) ? returnTo : nextStep(s.step, s);
+      const next = { ...s, step };
       return { current: next, entry: next };
     });
   }, []);

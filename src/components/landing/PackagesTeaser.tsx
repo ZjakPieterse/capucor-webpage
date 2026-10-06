@@ -7,7 +7,7 @@ import { SectionDivider } from "@/components/ui/SectionDivider";
 import { cn } from "@/lib/utils";
 import {
   TIER_HIGHLIGHTS,
-  PACKAGE_COMMON_ITEMS,
+  packageCommonItemsFor,
   TIER_BUYER_FIT,
 } from "@/config/tiers";
 import { TIER_NUDGES } from "@/config/calculatorCopy";
@@ -52,8 +52,8 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
             </p>
             {/* Constrained + centered so the items cluster toward the middle of
                 the strip, leading the eye down to the "Recommended" card. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4 max-w-4xl mx-auto">
-              {PACKAGE_COMMON_ITEMS.map((item) => {
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-4 max-w-5xl mx-auto">
+              {packageCommonItemsFor(true).map((item) => {
                 const Icon = commonItemIcon(item.text);
                 return (
                   <div
