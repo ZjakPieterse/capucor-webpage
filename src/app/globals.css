@@ -1332,6 +1332,21 @@
   .scope-card:active {
     transform: scale(0.995);
   }
+
+  .tier-compare-toggle:active {
+    background-color: color-mix(in oklch, var(--muted) 30%, transparent);
+  }
+}
+
+/* "See all packages side by side" toggle (TierComparison.tsx). */
+.tier-compare-toggle {
+  transition: background-color 200ms ease;
+}
+
+@media all {
+  .tier-compare-toggle:hover {
+    background-color: color-mix(in oklch, var(--muted) 30%, transparent);
+  }
 }
 
 /* ─── Animated price first-reveal glow ───────────────────────────────────── */

@@ -15,12 +15,15 @@ interface MobileTotalBarProps {
   tiers: Tier[];
   brackets: Bracket[];
   summaryAnchorId: string;
+  /** Small caption after the package name; defaults to "monthly total". */
+  caption?: string;
   /** Optional button on the right, e.g. "Review" on the add-ons step. */
   action?: { label: string; onClick: () => void };
 }
 
-// Running total for phones. calculator-v2 shows it from the add-ons step on
-// (the parent decides when to render it), so a package is always chosen here.
+// Running total for phones. calculator-v2 shows it from the package step on,
+// once a package is tapped (the parent decides when to render it), so a
+// package is always chosen here.
 
 export function MobileTotalBar({
   selectedServices,
@@ -30,6 +33,7 @@ export function MobileTotalBar({
   tiers,
   brackets,
   summaryAnchorId,
+  caption = 'monthly total',
   action,
 }: MobileTotalBarProps) {
   const activeSlugs = [...selectedServices];
@@ -60,7 +64,7 @@ export function MobileTotalBar({
           className="min-w-0 flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-primary/5"
         >
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-            {tier.name} package · monthly total
+            {tier.name} package · {caption}
           </p>
           <motion.div
             initial={{ scale: 0.95, opacity: 0.5 }}
@@ -73,7 +77,7 @@ export function MobileTotalBar({
         </button>
 
         {action && (
-          <Button size="sm" onClick={action.onClick} className="shrink-0 shadow-lg shadow-primary/20">
+          <Button onClick={action.onClick} className="h-11 shrink-0 px-5 shadow-lg shadow-primary/20">
             {action.label}
           </Button>
         )}

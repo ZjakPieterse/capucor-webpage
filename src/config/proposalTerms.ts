@@ -27,7 +27,7 @@ export const RESPONSIBILITIES_OURS: string[] = [
 /** Footnotes shown under the fee total (proposal document + archived PDF). */
 export const FEES_NOTES: string[] = [
   'Billed monthly in advance. Your first close runs in the following new month.',
-  'The figure above is the all-inclusive monthly price. VAT, where it applies, is shown on your Xero invoice, not here.',
+  'This is the full monthly price. No VAT is added.',
   'Work for the 3 months before you accept this proposal is included, provided it would have been in scope then. Older periods are catch-up work, quoted before we begin or billed at our standard hourly rate.',
 ];
 

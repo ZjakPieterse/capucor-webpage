@@ -7,9 +7,11 @@ import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, bracketPrice } from '@/lib/pricing';
 import {
   TIER_HIGHLIGHTS,
+  TIERS_BY_APPLICATION,
   packageCommonItemsFor,
   type TierHighlightItem,
 } from '@/config/tiers';
+import { RHYTHM_ROWS } from '@/config/calculatorCopy';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import type { Bracket, Tier, BracketValue } from '@/types';
 
@@ -18,7 +20,7 @@ interface TierComparisonProps {
   brackets: Bracket[];
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
-  /** Selected optional add-on slugs — included in the footer totals so they match the tier cards. */
+  /** Selected optional add-on slugs — included in the footer totals so they match the package cards. */
   selectedAddons?: string[];
   /** False only on a VAT "No": hides VAT201 from the core rows. */
   vatRegistered?: boolean;
@@ -26,11 +28,13 @@ interface TierComparisonProps {
 
 type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
 
-interface MatrixRow {
-  text: string;
-  tooltip: string;
-  lowestTier: LowestTier;
-}
+// A row is either ticked from the lowest package that includes it, or (for
+// the rhythm rows) carries a different value per package.
+type MatrixRow =
+  | { kind: 'tick'; text: string; tooltip: string; lowestTier: LowestTier }
+  | { kind: 'value'; text: string; tooltip: string; values: Record<string, string> };
+
+const RHYTHM_TEXTS = new Set(RHYTHM_ROWS.flatMap((r) => r.replaces));
 
 export function TierComparison({
   tiers,
@@ -53,28 +57,35 @@ export function TierComparison({
     const result: MatrixRow[] = [];
     const seen = new Set<string>();
 
-    // Common items first
+    // Core services first: in every package.
     for (const item of packageCommonItemsFor(vatRegistered)) {
       if (seen.has(item.text)) continue;
       seen.add(item.text);
-      result.push({ text: item.text, tooltip: item.tooltip, lowestTier: 'common' });
+      result.push({ kind: 'tick', text: item.text, tooltip: item.tooltip, lowestTier: 'common' });
     }
 
+    // Then the rhythm, one value per package.
+    for (const r of RHYTHM_ROWS) {
+      result.push({ kind: 'value', text: r.label, tooltip: r.tooltip, values: r.values });
+    }
+
+    // Then what each package adds, ticked from the package that adds it.
     const tierOrder: LowestTier[] = ['basic', 'pro', 'premium'];
     for (const tierSlug of tierOrder) {
       const highlights: TierHighlightItem[] = TIER_HIGHLIGHTS[tierSlug] ?? [];
       for (const h of highlights) {
+        if (RHYTHM_TEXTS.has(h.text)) continue;
         if (h.services.length > 0 && !h.services.some((s) => selectedServices.has(s))) continue;
         if (seen.has(h.text)) continue;
         seen.add(h.text);
-        result.push({ text: h.text, tooltip: h.tooltip, lowestTier: tierSlug });
+        result.push({ kind: 'tick', text: h.text, tooltip: h.tooltip, lowestTier: tierSlug });
       }
     }
     return result;
   }, [selectedServices, vatRegistered]);
 
-  // Per-tier total for the footer row. Includes the flat add-on fee so the
-  // figures match the tier cards above.
+  // Per-package total for the footer row. Includes the answer-driven add-ons
+  // so the figures match the package cards above.
   const tierTotals = useMemo(() => {
     const out: Record<string, { total: number }> = {};
     for (const tier of sortedTiers) {
@@ -98,6 +109,20 @@ export function TierComparison({
     return (tierRank[tierSlug] ?? 0) >= (tierRank[lowestTier] ?? 0);
   }
 
+  // Price for a package; "From" for one sold by booking a call, as on its card.
+  function price(tierSlug: string) {
+    const { total } = tierTotals[tierSlug] ?? { total: 0 };
+    if (total <= 0) return <span className="text-xs text-muted-foreground">—</span>;
+    return (
+      <span className="inline-flex items-baseline gap-1">
+        {TIERS_BY_APPLICATION.includes(tierSlug) && (
+          <span className="text-[11px] font-normal text-muted-foreground">From</span>
+        )}
+        <AnimatedPrice amount={total} className="text-sm font-bold" />
+      </span>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       <button
@@ -105,12 +130,12 @@ export function TierComparison({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls="tier-comparison-table"
-        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+        className="tier-compare-toggle w-full flex items-center justify-between gap-3 px-5 py-4 text-left focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
       >
         <div>
-          <p className="font-semibold text-sm">See all tiers side by side</p>
+          <p className="font-semibold text-sm">See all packages side by side</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Compare what&apos;s included at every plan for your selected services.
+            Compare what each package includes for your business.
           </p>
         </div>
         <ChevronDown
@@ -123,32 +148,37 @@ export function TierComparison({
 
       {open && (
         <div id="tier-comparison-table" className="border-t border-border">
-          {/* Mobile: card-per-tier stack (no horizontal scroll) */}
+          {/* Mobile: card-per-package stack (no horizontal scroll) */}
           <div className="md:hidden divide-y divide-border">
-            {sortedTiers.map((t) => {
-              const { total } = tierTotals[t.slug] ?? { total: 0 };
-              return (
-                <div key={t.slug} className="px-5 py-4">
-                  <div className="flex items-baseline justify-between mb-3">
-                    <p className="text-sm font-semibold uppercase tracking-wider">{t.name}</p>
-                    {total > 0 ? (
-                      <AnimatedPrice amount={total} className="text-sm font-bold" />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </div>
-                  <ul className="space-y-1.5">
-                    {rows.map((row) => (
+            {sortedTiers.map((t) => (
+              <div key={t.slug} className="px-5 py-4">
+                <div className="flex items-baseline justify-between mb-3">
+                  <p className="text-sm font-semibold uppercase tracking-wider">{t.name}</p>
+                  {price(t.slug)}
+                </div>
+                <ul className="space-y-1.5">
+                  {rows.map((row) => {
+                    if (row.kind === 'value') {
+                      return (
+                        <li key={row.text} className="flex items-start gap-2 text-xs text-foreground">
+                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/80" />
+                          <span>
+                            {row.text}: <span className="font-medium">{row.values[t.slug] ?? '—'}</span>
+                            {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
+                          </span>
+                        </li>
+                      );
+                    }
+                    const covered = isCovered(t.slug, row.lowestTier);
+                    return (
                       <li
                         key={row.text}
                         className={cn(
                           'flex items-start gap-2 text-xs',
-                          isCovered(t.slug, row.lowestTier)
-                            ? 'text-foreground'
-                            : 'text-muted-foreground/60'
+                          covered ? 'text-foreground' : 'text-muted-foreground/60'
                         )}
                       >
-                        {isCovered(t.slug, row.lowestTier) ? (
+                        {covered ? (
                           <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/80" />
                         ) : (
                           <Minus className="h-3 w-3 shrink-0 mt-1 text-muted-foreground/40" />
@@ -158,11 +188,11 @@ export function TierComparison({
                           {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
                         </span>
                       </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })}
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </div>
 
           {/* Tablet/desktop: comparison table */}
@@ -171,7 +201,7 @@ export function TierComparison({
               <thead className="bg-muted/30">
                 <tr>
                   <th className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground px-5 py-3">
-                    Inclusion
+                    What&apos;s included
                   </th>
                   {sortedTiers.map((t) => (
                     <th
@@ -198,10 +228,12 @@ export function TierComparison({
                     </td>
                     {sortedTiers.map((t) => (
                       <td key={t.slug} className="px-3 py-2.5 text-center">
-                        {isCovered(t.slug, row.lowestTier) ? (
-                          <Check className="inline h-4 w-4 text-foreground/70" />
+                        {row.kind === 'value' ? (
+                          <span className="text-xs font-medium">{row.values[t.slug] ?? '—'}</span>
+                        ) : isCovered(t.slug, row.lowestTier) ? (
+                          <Check className="inline h-4 w-4 text-foreground/70" aria-label="Included" />
                         ) : (
-                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/40" />
+                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/40" aria-label="Not included" />
                         )}
                       </td>
                     ))}
@@ -211,18 +243,11 @@ export function TierComparison({
                   <td className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Monthly price
                   </td>
-                  {sortedTiers.map((t) => {
-                    const { total } = tierTotals[t.slug] ?? { total: 0 };
-                    return (
-                      <td key={t.slug} className="px-3 py-3 text-center">
-                        {total > 0 ? (
-                          <AnimatedPrice amount={total} className="text-sm font-bold" />
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </td>
-                    );
-                  })}
+                  {sortedTiers.map((t) => (
+                    <td key={t.slug} className="px-3 py-3 text-center">
+                      {price(t.slug)}
+                    </td>
+                  ))}
                 </tr>
               </tbody>
             </table>

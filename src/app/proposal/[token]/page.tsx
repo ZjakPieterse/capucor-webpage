@@ -287,8 +287,8 @@ export default async function ProposalPage({
                 target="_blank"
               >
                 full engagement terms
-              </Link>{' '}
-              — signing accepts them in full.
+              </Link>
+              . Signing accepts them in full.
             </p>
           </div>
 

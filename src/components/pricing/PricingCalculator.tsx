@@ -1,11 +1,19 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
 import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
-import { effectiveAddons, scopeComplete } from '@/lib/calculatorFlow';
-import { CALCULATOR_STAGE_OF, CALCULATOR_STAGES, QUESTION_COPY } from '@/config/calculatorCopy';
+import { ANSWER_ADDON_SLUGS, effectiveAddons, questionPosition, scopeComplete } from '@/lib/calculatorFlow';
+import { parseAddonToken } from '@/lib/pricing';
+import {
+  CALCULATOR_STAGE_OF,
+  CALCULATOR_STAGES,
+  PRICING_PAGE_HEADING,
+  PRICING_PAGE_INTRO,
+  QUESTION_COPY,
+  TRANSACTIONS_FIT_CALL_PROMPT,
+} from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
@@ -17,7 +25,7 @@ import { ReviewStep, type ProposalAction } from './ReviewStep';
 import { ActivateProposalModal } from './ActivateProposalModal';
 import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
-import type { CalculatorStep, PricingData, Testimonial } from '@/types';
+import type { PricingData, Testimonial } from '@/types';
 
 // Amend mode was removed in Phase 3 of the OS split. Staff amend a proposal on
 // capucor.app now, through a plain form in the capucor-os repo — this calculator
@@ -74,13 +82,6 @@ function BottomCTA() {
 }
 
 const SCREEN_TRANSITION = { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const };
-
-// Position line above each question, e.g. "Your business · 2 of 4".
-const BUSINESS_QUESTIONS: CalculatorStep[] = ['revenue', 'transactions', 'vat', 'invoicing'];
-function questionPosition(step: CalculatorStep): string {
-  const i = BUSINESS_QUESTIONS.indexOf(step);
-  return i >= 0 ? `Your business · ${i + 1} of ${BUSINESS_QUESTIONS.length}` : 'Payroll';
-}
 
 function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalculatorProps) {
   const { services, brackets, tiers } = data;
@@ -142,6 +143,11 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   // the package step) a package. Normal navigation guarantees both.
   const pricedStepsReady = scopeComplete(state);
   const showTotal = (step === 'addons' || step === 'review') && pricedStepsReady && !!selectedTier;
+  // On the package step, once a package is tapped, phones get the bottom bar
+  // with that package's price and a Continue button (the step is long at
+  // 375 px). Only the answer-driven add-ons belong in that price, as on the card.
+  const showPackageBar = step === 'package' && pricedStepsReady && !!selectedTier;
+  const packageAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
 
   const bracketValue = (slug: string) => {
     const v = selectedBrackets[slug];
@@ -164,7 +170,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             onChange={(v) => setBracket(slug, v)}
             onNext={next}
             onBack={step === 'revenue' ? undefined : back}
-            showFitCall={step === 'revenue' || step === 'employees'}
+            showFitCall
+            fitCallPrompt={step === 'transactions' ? TRANSACTIONS_FIT_CALL_PROMPT : undefined}
           />
         );
       }
@@ -235,7 +242,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <PageCursorGlow>
         {/* Merged entry + steps — eyebrow and StepIndicator sit at the top of the calculator section */}
         <section
@@ -243,9 +250,13 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
           className="premium-section relative pt-14 lg:pt-20 pb-4 lg:pb-6"
         >
           <div className="max-w-[1090px] mx-auto px-6">
-            <p className="text-xs font-medium uppercase tracking-widest text-primary mb-6 text-center">
-              {CALCULATOR_STAGES.length} steps to your proposal
-            </p>
+            <div className="mb-6 text-center">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{PRICING_PAGE_HEADING}</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">{PRICING_PAGE_INTRO}</p>
+              <p className="mt-4 text-xs font-medium uppercase tracking-widest text-primary">
+                {CALCULATOR_STAGES.length} steps to your proposal
+              </p>
+            </div>
             <StepIndicator currentStep={CALCULATOR_STAGE_OF[step]} completed={completed} />
             <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">
               <AnimatePresence mode="wait">
@@ -273,6 +284,20 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
 
         <BottomCTA />
       </PageCursorGlow>
+
+      {showPackageBar && (
+        <MobileTotalBar
+          selectedServices={state.selectedServices}
+          selectedBrackets={selectedBrackets}
+          selectedTierSlug={selectedTier}
+          selectedAddons={packageAddons}
+          tiers={tiers}
+          brackets={brackets}
+          summaryAnchorId="pricing-summary"
+          caption="monthly price"
+          action={{ label: 'Continue', onClick: next }}
+        />
+      )}
 
       {showTotal && (
         <>
@@ -314,7 +339,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         answers={answers}
         onSuccess={markCompleted}
       />
-    </>
+    </MotionConfig>
   );
 }
 

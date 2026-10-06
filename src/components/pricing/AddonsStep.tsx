@@ -197,6 +197,7 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
               size="sm"
               variant="outline"
               aria-label={`Fewer ${addon.unit.plural}`}
+              className="h-11 w-11 p-0"
               disabled={quantity <= 1}
               onClick={() => onSetQuantity(quantity - 1)}
             >
@@ -210,6 +211,7 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
               size="sm"
               variant="outline"
               aria-label={`More ${addon.unit.plural}`}
+              className="h-11 w-11 p-0"
               disabled={quantity >= addon.unit.max}
               onClick={() => onSetQuantity(quantity + 1)}
             >

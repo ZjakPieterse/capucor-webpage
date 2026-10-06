@@ -192,7 +192,7 @@ export function ActivateProposalModal({
               <DialogDescription className="text-center">
                 {delivery.deliveryStatus === 'accepted' ? (
                   <>
-                    The email provider accepted your proposal for{' '}
+                    We have emailed your proposal to{' '}
                     <span className="font-medium text-foreground">{delivery.email}</span>. Open it to review the details
                     and sign electronically. No payment needed yet.
                   </>
@@ -200,7 +200,7 @@ export function ActivateProposalModal({
                   <>
                     Your proposal was created, but we could not confirm email delivery to{' '}
                     <span className="font-medium text-foreground">{delivery.email}</span>. You can open it safely below
-                    while our team follows up.
+                    while we follow up.
                   </>
                 )}
               </DialogDescription>
@@ -343,7 +343,9 @@ export function ActivateProposalModal({
 
             <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
               <Check className="h-3 w-3 text-primary" />
-              Review and sign at your own pace · cancel any time with 30 days notice
+              {isAccept
+                ? 'You sign on the next page. No payment yet.'
+                : 'Review and sign at your own pace · cancel any time with 30 days’ notice'}
             </p>
           </form>
         )}

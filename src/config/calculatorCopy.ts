@@ -86,6 +86,54 @@ export const DEXT_ACCESS_COPY = {
 } as const;
 
 export const FIT_CALL_PROMPT = 'Only need payroll, or not sure what fits?';
+// The transactions list stops at 1,500 a month; above that is a conversation.
+export const TRANSACTIONS_FIT_CALL_PROMPT = 'More than 1,500 a month?';
+
+// Page heading and intro above the stepper on /pricing.
+export const PRICING_PAGE_HEADING = 'See your monthly price';
+export const PRICING_PAGE_INTRO = 'About a minute, one question at a time. No call needed.';
+
+// The packages differ by rhythm, so the side-by-side table shows these rows
+// as a value per package instead of cumulative ticks (a tick for Premium on
+// "processed monthly" and "processed weekly" read as all three at once).
+// `replaces` lists the TIER_HIGHLIGHTS texts these rows stand in for; the
+// table drops those from its tick rows. Web-only (tiers.ts is paired).
+export interface RhythmRow {
+  label: string;
+  tooltip: string;
+  values: Record<'basic' | 'pro' | 'premium', string>;
+  replaces: string[];
+}
+
+export const RHYTHM_ROWS: RhythmRow[] = [
+  {
+    label: 'Transaction processing',
+    tooltip: 'How often we process what is available. Bank statements are still requested at every monthly close.',
+    values: { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' },
+    replaces: ['Transactions Processed Monthly', 'Transactions Processed Weekly', 'Transactions Processed Daily'],
+  },
+  {
+    label: 'Reports',
+    tooltip: 'What you receive after each cycle.',
+    values: {
+      basic: 'Monthly: profit and loss, balance sheet',
+      pro: 'Monthly insights report and 5-minute video',
+      premium: 'Weekly reports',
+    },
+    replaces: ['Basic Monthly Reports', 'Monthly Insights Report', 'Monthly 5-Min Video Explainer'],
+  },
+  {
+    label: 'Performance review',
+    tooltip: 'A review with you of how the business is performing and what needs attention.',
+    values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
+    replaces: ['Quarterly Performance Review', 'Monthly Performance Review', 'Weekly Reports & Review'],
+  },
+];
+
+// Shown on the Basic card (Phase 0 inclusions: Basic has no supplier
+// processing). Web-only for now; move into TIER_HIGHLIGHTS in tiers.ts at the
+// next paired change.
+export const BASIC_SUPPLIER_NOTE = 'Supplier bills are not processed. Dext access is available as an add-on.';
 
 // Premium is sold by booking a call (decision 2026-10-06, Phase 0).
 export const PREMIUM_APPLY_COPY = {
