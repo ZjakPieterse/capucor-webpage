@@ -120,7 +120,7 @@ const STATE_ADVICE = {
  * failing run is already emailed. Cancelled and startup_failure runs do not
  * count — they never reached the steps.
  */
-export function evaluate({ declared, workflow, newestRun, newestSuccess, newestFired, maxAgeDays, now }) {
+export function evaluate({ declared, workflow, newestRun, newestSuccess, newestFired = null, maxAgeDays, now }) {
   const base = { file: declared.file, why: declared.why, maxAgeDays, state: workflow?.state ?? null };
   const firedIsEnough = Boolean(declared.event);
   const evidence = firedIsEnough ? newestFired : newestSuccess;
