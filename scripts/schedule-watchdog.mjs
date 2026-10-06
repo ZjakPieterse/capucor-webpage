@@ -107,9 +107,24 @@ const STATE_ADVICE = {
  * failing crosses the staleness threshold on its own within maxAgeDays. Failing
  * here as well would also mean the R2 fire drill left every subsequent push red
  * until the next nightly run, which is how a gate gets switched off.
+ *
+ * ⚠️ AN ENTRY WITH `event` IS ASKED "DID IT FIRE", NOT "DID IT SUCCEED", AND
+ * WITHOUT THAT THE WATCHDOG LATCHES ITSELF RED FOREVER. The only such entry is
+ * watchdog.yml watching its own schedule, and its scheduled run executes THIS
+ * check. Once any other step kept the schedule red for maxAgeDays (deploy drift,
+ * 2026-09-15 → 09-18), every later scheduled run failed on "the schedule has not
+ * succeeded" — which only a successful scheduled run could clear. capucor-webpage
+ * sat red for three weeks with every schedule firing on time. `newestFired` is
+ * the newest run that completed as success OR failure: both prove the dispatch
+ * path is alive, which is the question eventWhy says this entry asks, and a
+ * failing run is already emailed. Cancelled and startup_failure runs do not
+ * count — they never reached the steps.
  */
-export function evaluate({ declared, workflow, newestRun, newestSuccess, maxAgeDays, now }) {
+export function evaluate({ declared, workflow, newestRun, newestSuccess, newestFired = null, maxAgeDays, now }) {
   const base = { file: declared.file, why: declared.why, maxAgeDays, state: workflow?.state ?? null };
+  const firedIsEnough = Boolean(declared.event);
+  const evidence = firedIsEnough ? newestFired : newestSuccess;
+  const verb = firedIsEnough ? 'fired' : 'succeeded';
 
   if (!workflow) {
     return {
@@ -129,7 +144,7 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, maxAgeD
     };
   }
 
-  if (!newestSuccess) {
+  if (!evidence) {
     // ⚠️ A NEWLY DECLARED WORKFLOW HAS NOT RUN YET, AND THAT IS NOT A FAILURE —
     // for a bounded time, stated as a date in the contract. Without this, the
     // push that MERGES a new cron turns every subsequent push red until the
@@ -151,19 +166,21 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, maxAgeD
       ...base,
       ok: false,
       reason:
-        `it has never completed successfully. Either it has only ever failed, or it has never ` +
-        `been triggered — both mean the job this workflow exists to do is not being done.` +
+        (firedIsEnough
+          ? `it has never fired on its ${declared.event} trigger, so that dispatch path is not running it.`
+          : `it has never completed successfully. Either it has only ever failed, or it has never ` +
+            `been triggered — both mean the job this workflow exists to do is not being done.`) +
         (declared.notBefore ? ` Its first run was expected by ${declared.notBefore} and has not happened.` : ''),
     };
   }
 
-  const ageDays = (now.getTime() - new Date(newestSuccess.updated_at).getTime()) / DAY_MS;
+  const ageDays = (now.getTime() - new Date(evidence.updated_at).getTime()) / DAY_MS;
   const shared = {
     ...base,
     ageDays,
-    lastSuccess: newestSuccess.updated_at,
+    lastSuccess: evidence.updated_at,
     lastRunConclusion: newestRun?.conclusion ?? null,
-    url: newestSuccess.html_url ?? null,
+    url: evidence.html_url ?? null,
   };
 
   if (ageDays > maxAgeDays) {
@@ -171,13 +188,13 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, maxAgeD
       ...shared,
       ok: false,
       reason:
-        `last succeeded ${ageDays.toFixed(1)} days ago, and the contract allows ${maxAgeDays}. ` +
+        `last ${verb} ${ageDays.toFixed(1)} days ago, and the contract allows ${maxAgeDays}. ` +
         `${declared.why} Check the Actions tab: a schedule that has gone quiet, an expired ` +
         `secret and an exhausted minutes allowance all look identical from here.`,
     };
   }
 
-  return { ...shared, ok: true, reason: `last succeeded ${ageDays.toFixed(1)} days ago (limit ${maxAgeDays})` };
+  return { ...shared, ok: true, reason: `last ${verb} ${ageDays.toFixed(1)} days ago (limit ${maxAgeDays})` };
 }
 
 /** Which declared workflows belong to the repo we are running in. */
@@ -223,7 +240,7 @@ async function gh(path, token) {
 async function observe(declared, repoSlug, token) {
   const base = `/repos/${repoSlug}/actions/workflows/${declared.file}`;
   const workflow = await gh(base, token);
-  if (!workflow) return { declared, workflow: null, newestRun: null, newestSuccess: null };
+  if (!workflow) return { declared, workflow: null, newestRun: null, newestSuccess: null, newestFired: null };
 
   // ⚠️ OPTIONAL `event` FILTER, AND IT IS LOAD-BEARING ON EXACTLY ONE ENTRY.
   // The four cron files are only ever run by their schedule, so an unfiltered
@@ -237,17 +254,22 @@ async function observe(declared, repoSlug, token) {
   // Two exact queries rather than one paged window: "the newest run" and "the
   // newest SUCCESSFUL run" are different questions, and deriving the second
   // from a page of the first quietly assumes the success is on that page.
-  const [runs, successes] = await Promise.all([
+  //
+  // An `event` entry also needs the newest FAILED run, because for it a failure
+  // still proves the trigger fired — see evaluate(). Again an exact query, not
+  // a page of completed runs that may be all cancellations.
+  const [runs, successes, failures] = await Promise.all([
     gh(`${base}/runs?per_page=1&exclude_pull_requests=true${event}`, token),
     gh(`${base}/runs?status=success&per_page=1&exclude_pull_requests=true${event}`, token),
+    declared.event ? gh(`${base}/runs?status=failure&per_page=1&exclude_pull_requests=true${event}`, token) : null,
   ]);
 
-  return {
-    declared,
-    workflow,
-    newestRun: runs?.workflow_runs?.[0] ?? null,
-    newestSuccess: successes?.workflow_runs?.[0] ?? null,
-  };
+  const newestSuccess = successes?.workflow_runs?.[0] ?? null;
+  const newestFailure = failures?.workflow_runs?.[0] ?? null;
+  const newestFired =
+    [newestSuccess, newestFailure].filter(Boolean).sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))[0] ?? null;
+
+  return { declared, workflow, newestRun: runs?.workflow_runs?.[0] ?? null, newestSuccess, newestFired };
 }
 
 // ---------------------------------------------------------------------------
