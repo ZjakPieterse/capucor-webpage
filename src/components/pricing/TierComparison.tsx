@@ -73,7 +73,6 @@ export function TierComparison({
   // Per-tier total for the footer row. Includes the flat add-on fee so the
   // figures match the tier cards above.
   const tierTotals = useMemo(() => {
-    const addonsZAR = addonTotal(selectedAddons);
     const out: Record<string, { total: number }> = {};
     for (const tier of sortedTiers) {
       let total = 0;
@@ -83,7 +82,7 @@ export function TierComparison({
         const b = brackets.find((x) => x.service_slug === slug && x.ordinal === bv);
         if (b) total += bracketPrice(b, tier.slug);
       }
-      out[tier.slug] = { total: total > 0 ? total + addonsZAR : 0 };
+      out[tier.slug] = { total: total > 0 ? total + addonTotal(selectedAddons, tier.slug) : 0 };
     }
     return out;
   }, [sortedTiers, selectedServices, selectedBrackets, brackets, selectedAddons]);

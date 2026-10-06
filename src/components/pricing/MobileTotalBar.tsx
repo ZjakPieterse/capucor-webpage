@@ -32,7 +32,7 @@ export function MobileTotalBar({
   const activeSlugs = [...selectedServices];
   const tier = tiers.find((t) => t.slug === selectedTierSlug) ?? null;
   const total = tier
-    ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets) + addonTotal(selectedAddons)
+    ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets) + addonTotal(selectedAddons, tier.slug)
     : 0;
 
   const scrollToSummary = useCallback(() => {

@@ -28,7 +28,7 @@ export const RESPONSIBILITIES_OURS: string[] = [
 export const FEES_NOTES: string[] = [
   'Billed monthly in advance. Your first close runs in the following new month.',
   'The figure above is the all-inclusive monthly price. VAT, where it applies, is shown on your Xero invoice, not here.',
-  'Processing for the 3 months before your start date is included. Older periods are considered catch-up work and will be billed separately.',
+  'Work for the 3 months before you accept this proposal is included, provided it would have been in scope then. Older periods are catch-up work, quoted before we begin or billed at our standard hourly rate.',
 ];
 
 /** What the client does. */
@@ -57,7 +57,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     heading: 'Fair usage and what falls outside it',
     paragraphs: [
       'Each service in your schedule has an allowance tied to the bracket you chose (your turnover band, transaction count or headcount). Work within that allowance is covered by your monthly fee.',
-      'Processing for the 3 months before your start date is included free of charge. Anything older than that is out of scope, treated as catch-up work, and quoted separately before we begin it.',
+      'Work for the 3 months before you accept this proposal is included free of charge, provided it would have been in scope for those months. Anything older is out of scope and treated as catch-up work: we quote it before we begin, or bill it at our standard hourly rate (available on request).',
       'When work runs beyond your allowance, we measure it on the quarterly review against your rolling average rather than reacting to a single month, then adjust by agreement.',
     ],
   },

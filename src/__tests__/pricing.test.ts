@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addonTotal,
+  addonsForTier,
   bracketPrice,
   buildAddonLineItems,
   monthlyTotal,
@@ -138,29 +139,52 @@ describe('monthlyTotal', () => {
 // ─── add-ons ──────────────────────────────────────────────────────────────────
 
 describe('addonTotal', () => {
-  it('prices the Dext add-on at a flat R375', () => {
-    expect(addonTotal(['dext'])).toBe(375);
+  it('prices the Dext add-on at a flat R375 on Basic', () => {
+    expect(addonTotal(['dext'], 'basic')).toBe(375);
+  });
+
+  it('charges nothing for Dext from Pro up (included in the package)', () => {
+    expect(addonTotal(['dext'], 'pro')).toBe(0);
+    expect(addonTotal(['dext'], 'premium')).toBe(0);
   });
 
   it('ignores unknown add-on slugs', () => {
-    expect(addonTotal(['dext', 'mystery-addon'])).toBe(375);
+    expect(addonTotal(['dext', 'mystery-addon'], 'basic')).toBe(375);
   });
 
   it('returns 0 for an empty selection', () => {
-    expect(addonTotal([])).toBe(0);
+    expect(addonTotal([], 'basic')).toBe(0);
+  });
+});
+
+describe('addonsForTier', () => {
+  it('keeps only whitelisted, de-duplicated slugs on Basic', () => {
+    expect(addonsForTier(['dext', 'dext', 'mystery-addon'], 'basic')).toEqual(['dext']);
+    expect(addonsForTier([], 'basic')).toEqual([]);
+  });
+
+  it('adds Dext from Pro up even when it was not selected', () => {
+    expect(addonsForTier([], 'pro')).toEqual(['dext']);
+    expect(addonsForTier(['dext'], 'premium')).toEqual(['dext']);
   });
 });
 
 describe('buildAddonLineItems', () => {
-  it('builds a flat-fee line for the Dext add-on', () => {
-    expect(buildAddonLineItems(['dext'])).toEqual([
+  it('builds a flat-fee line for the Dext add-on on Basic', () => {
+    expect(buildAddonLineItems(['dext'], 'basic')).toEqual([
       { slug: 'dext', name: 'Dext Software Access', label: null, price: 375 },
     ]);
   });
 
+  it('shows Dext as included at no charge from Pro up', () => {
+    expect(buildAddonLineItems(['dext'], 'pro')).toEqual([
+      { slug: 'dext', name: 'Dext Software Access', label: 'Included in Pro', price: 0 },
+    ]);
+  });
+
   it('skips unknown slugs and returns nothing for an empty selection', () => {
-    expect(buildAddonLineItems(['mystery-addon'])).toEqual([]);
-    expect(buildAddonLineItems([])).toEqual([]);
+    expect(buildAddonLineItems(['mystery-addon'], 'basic')).toEqual([]);
+    expect(buildAddonLineItems([], 'basic')).toEqual([]);
   });
 });
 

@@ -60,7 +60,7 @@ export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
  * time — it's the master "always excluded" register.
  */
 export const ALWAYS_OUT_OF_SCOPE: string[] = [
-  'Catch-up or prior-period processing older than the 3 months before your start date',
+  'Catch-up or prior-period work older than the 3 months before you accept the proposal',
   'VAT registration itself (ongoing VAT returns are included where you selected accounting)',
   'COIDA / Workmen’s Compensation registration',
   'PAYE, UIF or SDL employer registration with SARS',

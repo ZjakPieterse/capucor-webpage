@@ -8,6 +8,8 @@ const anonMock = {
   from: () => ({
     select: () => ({
       eq: () => ({ order: async () => ({ data: [], error: null }) }),
+      // Brackets are read without the active filter (retired rows included).
+      order: async () => ({ data: [], error: null }),
     }),
   }),
 };

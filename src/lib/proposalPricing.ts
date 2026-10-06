@@ -20,10 +20,10 @@ import {
   monthlyTotal,
   buildLineItems,
   addonTotal,
+  addonsForTier,
   buildAddonLineItems,
   type ProposalLineItem,
 } from '@/lib/pricing';
-import { PRICING_ADDONS } from '@/config/tiers';
 import { logError } from '@/lib/log';
 import type { Bracket } from '@/types';
 
@@ -76,11 +76,10 @@ export async function priceProposalSelection(
     return { ok: false, error: 'Could not price your proposal. Please try again.', status: 500 };
   }
 
-  // Add-ons: whitelist against the shared config before pricing. The bracket
-  // total alone must clear the > 0 guard — an add-on can't carry a proposal.
-  const addonSlugs = [...new Set(input.addons)].filter((slug) =>
-    PRICING_ADDONS.some((a) => a.slug === slug),
-  );
+  // Add-ons: whitelist against the shared config before pricing, and add any
+  // the package includes. The bracket total alone must clear the > 0 guard —
+  // an add-on can't carry a proposal.
+  const addonSlugs = addonsForTier(input.addons, input.tierSlug);
 
   const bracketTotalZAR = monthlyTotal(input.services, input.brackets, input.tierSlug, bracketRows);
   if (bracketTotalZAR <= 0) {
@@ -91,7 +90,7 @@ export async function priceProposalSelection(
     };
   }
 
-  const monthlyTotalZAR = bracketTotalZAR + addonTotal(addonSlugs);
+  const monthlyTotalZAR = bracketTotalZAR + addonTotal(addonSlugs, input.tierSlug);
   // The configured price is the final, all-in monthly price. VAT is handled in
   // Xero (the billing pipeline), not on-site, so the site records no VAT split.
   const vatZAR = 0;
@@ -100,7 +99,7 @@ export async function priceProposalSelection(
   const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
   const lineItems = [
     ...buildLineItems(input.services, input.brackets, input.tierSlug, serviceCatalogue, bracketRows),
-    ...buildAddonLineItems(addonSlugs),
+    ...buildAddonLineItems(addonSlugs, input.tierSlug),
   ];
 
   return {

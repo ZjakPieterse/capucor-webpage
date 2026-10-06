@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 
 // Onboarding steps (website-v2, message pillar 4: switch in any month).
-// How catch-up is charged is part of the open pricing decision, so no amounts
-// or durations appear here until that is settled.
+// Catch-up rule (pricing figures decision, 2026-10-06): the 3 months before
+// acceptance are included; older work is quoted or billed hourly. No amounts.
 const STEPS = [
   {
     number: "01",
@@ -27,7 +27,7 @@ const STEPS = [
     number: "03",
     icon: History,
     title: "Catch-up",
-    body: "We bring the backlog up to date and check what's outstanding with SARS.",
+    body: "The 3 months before you sign are included. Anything older we quote upfront, and we check what's outstanding with SARS.",
   },
   {
     number: "04",

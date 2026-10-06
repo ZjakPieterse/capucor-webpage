@@ -67,6 +67,11 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
     {
+      text: 'Dext with AI Assist Included',
+      services: ['bookkeeping'],
+      tooltip: 'Dext software access, AI Assist included, as part of your package: snap receipts and invoices and they flow straight into your books.',
+    },
+    {
       text: 'Employee Self-Service Portal',
       services: ['payroll'],
       tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
@@ -135,21 +140,35 @@ export function tierDisplayName(slug: string): string {
 }
 
 export const PACKAGE_COMMON_ITEMS = [
-  { text: 'Dedicated Finance Team', tooltip: 'A named team that knows your business.' },
+  { text: 'Your Own Accountant', tooltip: 'One accountant who knows your business and runs your month.' },
   { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
   { text: 'Xero Software Included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
   { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant all year, not only at year-end.' },
 ];
 
+// Package slugs from lowest to highest. An add-on included "from" a tier is
+// included in that tier and every tier after it.
+export const TIER_ORDER: readonly string[] = ['basic', 'pro', 'premium'];
+
 // Optional add-ons available with every package in the pricing calculator.
-// Flat monthly fees added on top of the bracket-based tier price.
-// Server-side proposal pricing reads from this same list, so a slug here is
-// the whitelist for /api/proposals.
+// Flat monthly fees added on top of the bracket-based tier price, unless the
+// chosen package includes the add-on (includedFromTier), in which case it is
+// carried at no charge. Server-side proposal pricing reads from this same
+// list, so a slug here is the whitelist for /api/proposals.
 export interface PricingAddon {
   slug: string;
   name: string;
   priceZAR: number;
   description: string;
+  includedFromTier?: string;
+}
+
+/** True when the package includes this add-on at no charge. */
+export function addonIncludedInTier(addon: PricingAddon, tierSlug: string): boolean {
+  if (!addon.includedFromTier) return false;
+  const from = TIER_ORDER.indexOf(addon.includedFromTier);
+  const at = TIER_ORDER.indexOf(tierSlug);
+  return from >= 0 && at >= from;
 }
 
 export const PRICING_ADDONS: PricingAddon[] = [
@@ -158,7 +177,8 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'Dext Software Access',
     priceZAR: 375,
     description:
-      'Snap receipts and invoices with the Dext app and they flow straight into your books.',
+      'Snap receipts and invoices with the Dext app, AI Assist included, and they flow straight into your books.',
+    includedFromTier: 'pro',
   },
 ];
 
