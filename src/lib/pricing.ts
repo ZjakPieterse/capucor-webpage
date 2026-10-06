@@ -44,6 +44,94 @@ export interface ProposalLineItem {
   price: number;
 }
 
+// ── The core service ─────────────────────────────────────────────────────────
+//
+// Accounting and bookkeeping are the core of every package (calculator-v2).
+// Proposals still store and price them as two services on their own ladders;
+// every surface shows them as one "Monthly accounting" line (decision
+// 2026-10-06, calculator review answers).
+
+export const CORE_SERVICE_SLUGS = ['accounting', 'bookkeeping'] as const;
+export const CORE_LINE_SLUG = 'core';
+export const CORE_LINE_NAME = 'Monthly accounting';
+
+/**
+ * Null when the selection carries the core service (accounting and
+ * bookkeeping, each with a priced bracket), else the message to show. Shared
+ * by /api/proposals and the staff amend form so neither accepts a proposal
+ * without it.
+ */
+export function coreServiceError(
+  services: string[],
+  brackets: Record<string, BracketValue>,
+): string | null {
+  const missing = CORE_SERVICE_SLUGS.some(
+    (slug) => !services.includes(slug) || typeof brackets[slug] !== 'number',
+  );
+  return missing
+    ? 'Monthly accounting (a revenue band and a transaction band) is part of every package. Choose both to continue.'
+    : null;
+}
+
+/**
+ * Shows accounting and bookkeeping as one "Monthly accounting" line, summing
+ * their prices (a folded add-on already inside either is kept) and joining
+ * their band labels. Other lines pass through in order; the core line takes
+ * the first core line's place. With only one core line present it is renamed
+ * in place, so a proposal never shows the two-service split.
+ */
+export function mergeCoreLines(items: ProposalLineItem[]): ProposalLineItem[] {
+  const isCore = (i: ProposalLineItem) => (CORE_SERVICE_SLUGS as readonly string[]).includes(i.slug);
+  const core = items.filter(isCore);
+  if (core.length === 0) return items;
+  const merged: ProposalLineItem = {
+    slug: CORE_LINE_SLUG,
+    name: CORE_LINE_NAME,
+    label: core.map((i) => i.label).filter(Boolean).join(' · ') || null,
+    price: core.reduce((sum, i) => sum + i.price, 0),
+  };
+  const out: ProposalLineItem[] = [];
+  for (const item of items) {
+    if (!isCore(item)) out.push(item);
+    else if (item === core[0]) out.push(merged);
+  }
+  return out;
+}
+
+// "10 Mil – 15 Mil" → "R10m to R15m"; "350 Mil+" → "R350m+"; "0 – 1 Mil" → "R0 to R1m".
+function revenueBand(label: string): string {
+  if (/^dormant$/i.test(label.trim())) return 'Dormant';
+  const amount = (s: string) => {
+    const m = s.trim().match(/^([\d.]+)\s*(Mil)?\s*(\+)?$/i);
+    return m ? `R${m[1]}${m[2] ? 'm' : ''}${m[3] ?? ''}` : null;
+  };
+  const parts = label.split(/\s*[–-]\s*/);
+  const formatted = parts.map(amount);
+  if (formatted.some((p) => p === null)) return label;
+  return formatted.join(' to ');
+}
+
+/**
+ * A bracket label in plain form for the client (F17, October 2026 review).
+ * The rows in `brackets.label` stay as they are; this only changes display.
+ * Unrecognised labels pass through unchanged.
+ */
+export function formatBandLabel(serviceSlug: string, label: string | null): string | null {
+  if (!label) return label;
+  const raw = label.trim();
+  if (serviceSlug === 'accounting') return revenueBand(raw);
+  if (serviceSlug === 'bookkeeping') {
+    if (/^dormant$/i.test(raw)) return 'no transactions';
+    const m = raw.match(/^up to\s+([\d,]+)$/i);
+    return m ? `up to ${Number(m[1]!.replace(/,/g, '')).toLocaleString('en-US')} transactions` : raw;
+  }
+  if (serviceSlug === 'payroll') {
+    const m = raw.match(/^employees:\s*(\d+)$/i);
+    if (m) return `${m[1]} ${m[1] === '1' ? 'employee' : 'employees'}`;
+  }
+  return raw;
+}
+
 // One priced line per selected service, for the proposal summary, email, and
 // proposal page. Enterprise / unconfigured selections are skipped (they carry
 // no self-serve price). Shares its price source with monthlyTotal so the lines
@@ -64,7 +152,7 @@ export function buildLineItems(
     items.push({
       slug,
       name: services.find((s) => s.slug === slug)?.name ?? slug,
-      label: bracket.label ?? null,
+      label: formatBandLabel(slug, bracket.label ?? null),
       price: bracketPrice(bracket, tierSlug),
     });
   }
@@ -116,7 +204,8 @@ export function resolveAddons(tokens: string[]): AddonSelection[] {
 // The add-on tokens a proposal carries for a package: the selected ones on the
 // PRICING_ADDONS whitelist, plus every offered add-on the package includes (Dext
 // from Pro up). A hidden add-on the package includes is dropped (the Xero
-// invoicing charge means nothing from Pro up); a scope flag is always kept.
+// invoicing charge, retired 2026-10-06, means nothing from Pro up); a scope
+// flag is always kept.
 export function addonsForTier(selectedAddons: string[], tierSlug: string): string[] {
   const selected = new Map(resolveAddons(selectedAddons).map((s) => [s.addon.slug, s.quantity]));
   const out: string[] = [];
@@ -149,7 +238,8 @@ export function addonTotal(selectedAddons: string[], tierSlug: string): number {
 // One line per add-on, appended after the service lines in the proposal
 // summary, email, and proposal page. An add-on the package includes shows at
 // R 0.00 with an "Included in <package>" label; a per-unit add-on shows its
-// count. Scope flags and folded add-ons (see foldAddonsIntoLines) get no line.
+// count; one with a `chargedLabel` (Dext on Basic) shows that when charged.
+// Scope flags and folded add-ons (see foldAddonsIntoLines) get no line.
 export function buildAddonLineItems(selectedAddons: string[], tierSlug: string): ProposalLineItem[] {
   const items: ProposalLineItem[] = [];
   for (const sel of resolveAddons(selectedAddons)) {
@@ -160,7 +250,7 @@ export function buildAddonLineItems(selectedAddons: string[], tierSlug: string):
     items.push({
       slug: addon.slug,
       name: addon.name,
-      label: included ? `Included in ${tierDisplayName(tierSlug)}` : count,
+      label: included ? `Included in ${tierDisplayName(tierSlug)}` : (count ?? addon.chargedLabel ?? null),
       price: selectionPrice(sel, tierSlug),
     });
   }
@@ -168,7 +258,8 @@ export function buildAddonLineItems(selectedAddons: string[], tierSlug: string):
 }
 
 // Adds each folded add-on's price into the line of the service it folds into
-// (the Xero invoicing charge into Accounting on Basic), so the lines still sum
+// (the retired Xero invoicing charge into Accounting on Basic, on proposals
+// sent before 2026-10-06), so the lines still sum
 // to the total without a separate line. If that service has no line, the
 // add-on gets its own line rather than vanishing from the breakdown.
 export function foldAddonsIntoLines(
@@ -203,7 +294,3 @@ export function hasEnterpriseService(
   return selectedSlugs.some((slug) => brackets[slug] === 'enterprise');
 }
 
-// hasEnterpriseService → true  → primary CTA = "Get a Custom Quote", source = 'enterprise'
-// hasEnterpriseService → false → primary CTA = "Sign Up",             source = 'signup'
-// monthlyTotal always excludes enterprise lines; a non-zero total is shown alongside
-// "Custom" in mixed state (e.g. "From R 1,528/month + custom pricing").

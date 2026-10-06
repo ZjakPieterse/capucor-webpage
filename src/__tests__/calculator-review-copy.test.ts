@@ -40,7 +40,8 @@ describe('fee notes (F04)', () => {
 
 describe('question position line (F32)', () => {
   it('counts the payroll questions like the business ones', () => {
-    expect(questionPosition('revenue')).toBe('Your business · 1 of 4');
+    expect(questionPosition('revenue')).toBe('Your business · 1 of 3');
+    expect(questionPosition('vat')).toBe('Your business · 3 of 3');
     expect(questionPosition('payroll')).toBe('Payroll · 1 of 2');
     expect(questionPosition('employees')).toBe('Payroll · 2 of 2');
   });

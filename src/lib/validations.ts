@@ -68,8 +68,10 @@ export const ProposalRequestSchema = z.object({
     .max(10)
     .optional()
     .default([]),
-  // Calculator-v2 scope answers. Phase 1 changes neither price nor scope with
-  // them: the route stores them in leads.config for Capucor's reference.
+  // Calculator-v2 scope answers. A VAT No hides VAT201 (the route adds the
+  // scope flag); the route stores the answer in leads.config. xeroInvoicing was
+  // withdrawn on 2026-10-06: still accepted, so a page loaded before the deploy
+  // can submit, and ignored.
   answers: z
     .object({
       vatRegistered: z.boolean().optional(),

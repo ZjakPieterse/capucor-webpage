@@ -21,7 +21,7 @@ interface AddonsStepProps {
   selectedTier: string;
   /** The visitor's own add-on choices (tokens), for the toggles. */
   selectedAddons: string[];
-  /** The same plus the answer-driven tokens (Xero invoicing), for the total. */
+  /** The same plus the answer-driven token (the VAT flag), for the total. */
   pricedAddons: string[];
   onToggleAddon: (slug: string) => void;
   onSetQuantity: (slug: string, quantity: number) => void;
@@ -36,7 +36,7 @@ const ICONS: Record<string, React.ElementType> = {
   'personal-tax': UserRound,
 };
 
-// Hidden add-ons (Xero invoicing, the VAT flag) come from answers, not choices.
+// Hidden add-ons (the VAT flag, the retired Xero charge) are never offered.
 const OFFERED = PRICING_ADDONS.filter((a) => !a.hidden);
 
 export function AddonsStep({

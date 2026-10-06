@@ -55,7 +55,8 @@ export function buildSignedProposalPdfPayload(
     version: row.version,
     sentAt: row.sent_at,
     expiresAt: row.expires_at,
-    firstDebitFrom: row.sent_at ?? row.signed_at,
+    // Dated from the signature, as the signing page showed it that day (F23).
+    firstDebitFrom: row.signed_at ?? row.sent_at,
     signedAt: row.signed_at,
     signatureName: row.signature_name,
     signatureMethod: row.signature_method,

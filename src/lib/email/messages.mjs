@@ -156,10 +156,17 @@ export function renderDataRequestConfirmedOwnerText(d) {
 }
 
 export function renderCreatedProposalClientEmail(d) {
+  // The signing page and the signed PDF date the first debit from the day the
+  // client signs, so the email states that rule and gives the date for signing
+  // this month, rather than a fixed date that a later signature would move.
   const firstDebitDate = firstOfNextMonth(d.firstDebitFrom).toLocaleDateString('en-ZA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
+  });
+  const signingMonth = new Date(d.firstDebitFrom).toLocaleDateString('en-ZA', {
+    month: 'long',
     timeZone: 'UTC',
   });
   const rows = d.lineItems
@@ -186,7 +193,7 @@ export function renderCreatedProposalClientEmail(d) {
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
         <tr><td style="padding:8px 0;color:#111827;font-size:16px;font-weight:700;">Total monthly charge</td><td style="padding:8px 0;text-align:right;color:#111827;font-size:16px;font-weight:700;">${formatZAR(d.totalChargeZAR)}</td></tr>
       </table>
-      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">Your first debit order will be on <strong>${firstDebitDate}</strong>.</p>
+      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">Your first debit order is on the 1st of the month after you sign: <strong>${firstDebitDate}</strong> if you sign in ${signingMonth}.</p>
       ${button(d.proposalUrl, 'View &amp; sign your proposal')}
       <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-align:center;">Billed monthly in advance · cancel any time with 30 days&rsquo; notice</p>
       <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;text-align:center;">This proposal link is valid for 7 days.</p>`);
@@ -224,21 +231,19 @@ function signedAlertBlock(businessName, signedAt) {
   return `<p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:16px;">This proposal for <strong>${escapeHtml(businessName)}</strong> was signed on ${escapeHtml(formatSast(signedAt))} (SAST). If this wasn&rsquo;t you, reply to this email right away.</p>`;
 }
 
+// Sent once the signed proposal is provisioned. New clients are not pointed at
+// the capucor.app portal while it is being sunset (decision 2026-10-06): the
+// email confirms the signature and says Zjak will be in touch. `loginUrl` is
+// still accepted, and ignored, so queued events rebuild unchanged.
 export function renderProvisionedClientEmail(d) {
-  return clientShell(`${brand()}
-      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Your portal is ready, ${escapeHtml(d.firstName)}</h1>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We&rsquo;ve recorded your acceptance of the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong> and set up your client portal. You can sign in any time to see your plan, key dates and documents.</p>
-      ${button(d.loginUrl, 'Sign in to your portal')}
-      <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;text-align:center;">Use this email address to sign in. No password needed.</p>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Someone from our team will be in touch shortly to set up your onboarding and get your first month underway. Questions in the meantime? Just reply to this email.</p>
-      ${signedAlertBlock(d.businessName, d.signedAt)}`);
+  return renderSignedClientEmail(d);
 }
 
 export function renderSignedClientEmail(d) {
   return clientShell(`${brand()}
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">That&rsquo;s signed, ${escapeHtml(d.firstName)}</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We&rsquo;ve recorded your acceptance of the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>. There&rsquo;s nothing more you need to do right now.</p>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Someone from our team will be in touch shortly to set up your onboarding and get your first month underway.</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Zjak will be in touch shortly to set up your onboarding and get your first month underway. Questions in the meantime? Just reply to this email.</p>
       ${signedAlertBlock(d.businessName, d.signedAt)}`);
 }
 

@@ -41,13 +41,10 @@ export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
   bookkeeping: {
     name: 'Bookkeeping & monthly processing',
     unit: 'monthly transactions',
+    // One overall count on every package (decision 2026-10-06): everything we
+    // process in a month counts, whatever the package includes.
     allowance:
-      'Your processing allowance is the transaction count in your selected bracket, measured per month (bank lines, invoices, bills and journals).',
-    // Basic has no supplier processing, so supplier bills are not counted.
-    allowanceByTier: {
-      basic:
-        'Your processing allowance is the transaction count in your selected bracket, measured per month (bank lines and journals; Basic does not include supplier processing).',
-    },
+      'Your processing allowance is the transaction count in your selected bracket, measured per month: every bank line, invoice, supplier bill and journal we process.',
     overage:
       'Months that run over the allowance are billed at R200 per extra 25 transactions. We measure this on the quarterly review against your rolling average, not on a single busy month.',
   },

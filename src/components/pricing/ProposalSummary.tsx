@@ -5,10 +5,10 @@ import {
   buildAddonLineItems,
   buildLineItems,
   foldAddonsIntoLines,
+  mergeCoreLines,
   monthlyTotal,
 } from '@/lib/pricing';
 import { tierDisplayName } from '@/config/tiers';
-import { mergeCoreLines } from '@/lib/calculatorFlow';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 interface ProposalSummaryProps {
@@ -22,12 +22,6 @@ interface ProposalSummaryProps {
   selectedAddons?: string[];
   /** Server-stored total — pass to display the figure locked in at send time. */
   monthlyZAR?: number;
-  /**
-   * Show accounting and bookkeeping as one core line (the calculator's review
-   * step and details modal). The signing page leaves it off so it matches the
-   * PDF and email, which list the two services the proposal stores.
-   */
-  mergeCore?: boolean;
   className?: string;
 }
 
@@ -44,22 +38,22 @@ export function ProposalSummary({
   tierSlug,
   selectedAddons = [],
   monthlyZAR,
-  mergeCore = false,
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
   const tierName = tier?.name ?? tierDisplayName(tierSlug);
   // Same add-on rule as the server: the package's included add-ons are listed too.
   const addons = addonsForTier(selectedAddons, tierSlug);
-  // Same as the server: a folded add-on (Xero invoicing on Basic) is priced
-  // inside the Accounting line rather than shown on its own.
+  // Same as the server: a folded add-on (the retired Xero invoicing charge on
+  // older proposals) is priced inside its service line, and accounting plus
+  // bookkeeping show as one "Monthly accounting" line on every surface.
   const serviceLines = foldAddonsIntoLines(
     buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
     addons,
     tierSlug,
   );
   const lineItems = [
-    ...(mergeCore ? mergeCoreLines(serviceLines) : serviceLines),
+    ...mergeCoreLines(serviceLines),
     ...buildAddonLineItems(addons, tierSlug),
   ];
 

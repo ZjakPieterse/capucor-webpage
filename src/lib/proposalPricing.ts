@@ -23,6 +23,7 @@ import {
   addonsForTier,
   buildAddonLineItems,
   foldAddonsIntoLines,
+  mergeCoreLines,
   type ProposalLineItem,
 } from '@/lib/pricing';
 import { logError } from '@/lib/log';
@@ -92,17 +93,19 @@ export async function priceProposalSelection(
   }
 
   const monthlyTotalZAR = bracketTotalZAR + addonTotal(addonSlugs, input.tierSlug);
-  // The configured price is the final, all-in monthly price. VAT is handled in
-  // Xero (the billing pipeline), not on-site, so the site records no VAT split.
+  // The configured price is the final, all-in monthly price. Capucor is not
+  // VAT-registered, so no VAT is added and the site records no VAT split.
   const vatZAR = 0;
   const totalChargeZAR = monthlyTotalZAR;
 
   const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
-  // A folded add-on (the Xero invoicing charge on Basic) is priced inside its
-  // service's line, so the lines still sum to the total.
+  // A folded add-on (the retired Xero invoicing charge, on proposals sent
+  // before 2026-10-06) is priced inside its service line, and accounting plus
+  // bookkeeping show as one "Monthly accounting" line on every surface. The
+  // lines still sum to the total.
   const serviceLines = buildLineItems(input.services, input.brackets, input.tierSlug, serviceCatalogue, bracketRows);
   const lineItems = [
-    ...foldAddonsIntoLines(serviceLines, addonSlugs, input.tierSlug),
+    ...mergeCoreLines(foldAddonsIntoLines(serviceLines, addonSlugs, input.tierSlug)),
     ...buildAddonLineItems(addonSlugs, input.tierSlug),
   ];
 

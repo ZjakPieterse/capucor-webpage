@@ -1,8 +1,8 @@
 // Pure navigation and derivation rules for the calculator-v2 wizard. No React,
 // so the rules are unit-tested directly (src/__tests__/calculator-flow.test.ts).
 
-import { CORE_LINE_NAME, CORE_SERVICE_SLUGS } from '@/config/calculatorCopy';
-import { parseAddonToken, type ProposalLineItem } from '@/lib/pricing';
+import { REVENUE_CALL_FROM_ORDINAL } from '@/config/calculatorCopy';
+import { CORE_SERVICE_SLUGS, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep } from '@/types';
 
 export const FIRST_STEP: CalculatorStep = 'revenue';
@@ -41,8 +41,6 @@ export function canProceed(step: CalculatorStep, s: FlowState): boolean {
       return typeof s.selectedBrackets.bookkeeping === 'number';
     case 'vat':
       return s.answers.vatRegistered !== null;
-    case 'invoicing':
-      return s.answers.xeroInvoicing !== null;
     case 'payroll':
       return s.answers.needsPayroll !== null;
     case 'employees':
@@ -64,8 +62,6 @@ export function nextStep(step: CalculatorStep, s: Pick<FlowState, 'answers'>): C
     case 'transactions':
       return 'vat';
     case 'vat':
-      return 'invoicing';
-    case 'invoicing':
       return 'payroll';
     case 'payroll':
       return s.answers.needsPayroll ? 'employees' : 'package';
@@ -87,10 +83,8 @@ export function prevStep(step: CalculatorStep, s: Pick<FlowState, 'answers'>): C
       return 'revenue';
     case 'vat':
       return 'transactions';
-    case 'invoicing':
-      return 'vat';
     case 'payroll':
-      return 'invoicing';
+      return 'vat';
     case 'employees':
       return 'payroll';
     case 'package':
@@ -102,9 +96,9 @@ export function prevStep(step: CalculatorStep, s: Pick<FlowState, 'answers'>): C
   }
 }
 
-// Position line above each question, e.g. "Your business · 2 of 4" or
+// Position line above each question, e.g. "Your business · 2 of 3" or
 // "Payroll · 1 of 2" (the headcount only follows a payroll Yes).
-const BUSINESS_QUESTIONS: CalculatorStep[] = ['revenue', 'transactions', 'vat', 'invoicing'];
+const BUSINESS_QUESTIONS: CalculatorStep[] = ['revenue', 'transactions', 'vat'];
 const PAYROLL_QUESTIONS: CalculatorStep[] = ['payroll', 'employees'];
 export function questionPosition(step: CalculatorStep): string {
   const i = BUSINESS_QUESTIONS.indexOf(step);
@@ -117,53 +111,35 @@ export function questionPosition(step: CalculatorStep): string {
  * package, add-ons and review screens against an incomplete selection.
  */
 export function scopeComplete(s: FlowState): boolean {
-  const order: CalculatorStep[] = ['revenue', 'transactions', 'vat', 'invoicing', 'payroll'];
+  const order: CalculatorStep[] = ['revenue', 'transactions', 'vat', 'payroll'];
   if (!order.every((step) => canProceed(step, s))) return false;
   return s.answers.needsPayroll ? canProceed('employees', s) : true;
 }
 
 /**
- * Shows accounting and bookkeeping as one core line (calculator-v2), summing
- * their prices and joining their band labels. Other lines pass through in
- * order; the core line takes the first core line's place. Presentation only:
- * proposals still store and price the two services separately.
- */
-export function mergeCoreLines(items: ProposalLineItem[]): ProposalLineItem[] {
-  const core = items.filter((i) => (CORE_SERVICE_SLUGS as readonly string[]).includes(i.slug));
-  if (core.length < 2) return items;
-  const merged: ProposalLineItem = {
-    slug: 'core',
-    name: CORE_LINE_NAME,
-    label: core.map((i) => i.label).filter(Boolean).join(' · ') || null,
-    price: core.reduce((sum, i) => sum + i.price, 0),
-  };
-  const out: ProposalLineItem[] = [];
-  for (const item of items) {
-    if (core.includes(item)) {
-      if (item === core[0]) out.push(merged);
-    } else {
-      out.push(item);
-    }
-  }
-  return out;
-}
-
-/**
- * The add-on tokens a selection carries once the answers are applied: a Xero
- * invoicing Yes adds the hidden Xero plan charge (R 200.00 on Basic, folded
- * into the accounting line; included from Pro), and a VAT No adds the scope
- * flag that hides VAT201. Hidden tokens the visitor could not have chosen are
- * stripped first, so only the answers decide them. /api/proposals applies the
- * same rule server-side.
+ * The add-on tokens a selection carries once the answers are applied: a VAT No
+ * adds the scope flag that hides VAT201. Answer-driven tokens the visitor could
+ * not have chosen are stripped first, so only the answers decide them; that
+ * includes the retired `xero-invoicing` token, which nothing adds any more
+ * (decision 2026-10-06). /api/proposals applies the same rule server-side.
  */
 export function effectiveAddons(
   selectedAddons: string[],
-  answers: Pick<CalculatorAnswers, 'vatRegistered' | 'xeroInvoicing'>,
+  answers: Pick<CalculatorAnswers, 'vatRegistered'>,
 ): string[] {
   const out = selectedAddons.filter((t) => !ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
-  if (answers.xeroInvoicing === true) out.push('xero-invoicing');
   if (answers.vatRegistered === false) out.push('not-vat-registered');
   return out;
 }
 
 export const ANSWER_ADDON_SLUGS: ReadonlySet<string> = new Set(['xero-invoicing', 'not-vat-registered']);
+
+/**
+ * True when the revenue band goes to a call rather than self-serve acceptance
+ * (above R50m, decision 2026-10-06). The calculator shows "Book a call" on
+ * every package and /api/proposals refuses the selection.
+ */
+export function revenueNeedsCall(brackets: Record<string, BracketValue | number>): boolean {
+  const revenue = brackets.accounting;
+  return typeof revenue === 'number' && revenue >= REVENUE_CALL_FROM_ORDINAL;
+}

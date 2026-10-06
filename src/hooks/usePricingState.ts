@@ -6,13 +6,13 @@ import { addonToken, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
 
 // Bumped to v4 for the calculator-v2 wizard: one screen per question, named
-// steps instead of 1 | 2, and the VAT / Xero-invoicing / payroll answers.
+// steps instead of 1 | 2, and the VAT and payroll answers (the Xero-invoicing
+// answer was withdrawn on 2026-10-06).
 // v3 drafts carry a numeric step and no answers, which no longer fit the shape.
 const STORAGE_KEY = 'capucor.pricing.draft.v4';
 
 const EMPTY_ANSWERS: CalculatorAnswers = {
   vatRegistered: null,
-  xeroInvoicing: null,
   needsPayroll: null,
 };
 

@@ -219,6 +219,8 @@ export interface PricingAddon {
   foldIntoService?: string;
   /** A zero-price scope marker that travels with the proposal; never a line. */
   scopeFlag?: boolean;
+  /** Line label when the package charges for it (e.g. Dext on Basic). */
+  chargedLabel?: string;
 }
 
 /** True when the package includes this add-on at no charge. */
@@ -232,11 +234,13 @@ export function addonIncludedInTier(addon: PricingAddon, tierSlug: string): bool
 export const PRICING_ADDONS: PricingAddon[] = [
   {
     slug: 'dext',
-    name: 'Dext Software Access',
+    name: 'Dext with AI Assist',
     priceZAR: 375,
     description:
       'Snap receipts and invoices with the Dext app, AI Assist included, and they flow straight into your books.',
     includedFromTier: 'pro',
+    // Basic has no supplier processing, so on Basic the client does the processing.
+    chargedLabel: 'Software access, you process the items',
   },
   {
     slug: 'whatsapp-support',
@@ -259,6 +263,11 @@ export const PRICING_ADDONS: PricingAddon[] = [
       'An annual personal income tax return (ITR12) prepared and submitted for each person: R 900.00 a year per person, billed monthly.',
     unit: { singular: 'person', plural: 'people', max: 10 },
   },
+  // RETIRED 2026-10-06 (calculator review answers): the Xero-invoicing question
+  // and the R 200 Basic charge are withdrawn. Nothing offers or derives this
+  // token any more, and /api/proposals strips it. It stays here, unchanged, so
+  // proposals already sent with it still price and render exactly as signed
+  // (signing and the PDF re-price from the stored tokens).
   {
     slug: 'xero-invoicing',
     name: 'Xero Plan with Customer Invoicing',

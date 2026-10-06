@@ -24,6 +24,7 @@ import {
   CORE_SERVICES_HEADING,
   CORE_SERVICES_SUBHEADING,
   PREMIUM_APPLY_COPY,
+  REVENUE_CALL_COPY,
 } from '@/config/calculatorCopy';
 import type { Bracket, Service, Tier, BracketValue, Testimonial } from '@/types';
 
@@ -34,10 +35,12 @@ interface Step2TiersProps {
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
-  /** Add-on tokens including the answer-driven ones (the Basic Xero charge). */
+  /** Add-on tokens including the answer-driven one (the not-VAT-registered flag). */
   pricedAddons: string[];
   /** False only on a VAT "No": hides VAT201 from the core services. */
   vatRegistered: boolean;
+  /** Revenue above R50m: every package goes to a call, none is selectable. */
+  byCall?: boolean;
   onTierSelect: (slug: string) => void;
   onBack: () => void;
   onNext: () => void;
@@ -53,6 +56,7 @@ export function Step2Tiers({
   selectedTier,
   pricedAddons,
   vatRegistered,
+  byCall = false,
   onTierSelect,
   onBack,
   onNext,
@@ -61,8 +65,8 @@ export function Step2Tiers({
   const sortedTiers = [...tiers].sort((a, b) => a.display_order - b.display_order);
   const activeServices = services.filter((s) => selectedServices.has(s.slug));
   const containerRef = useCursorGlow<HTMLDivElement>();
-  // Only the answer-driven add-ons belong in the card price (the Xero charge is
-  // part of Basic's price); chosen add-ons wait for the next step.
+  // Only the answer-driven add-ons belong in the card price (today only the
+  // zero-price VAT flag); chosen add-ons wait for the next step.
   const answerAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
 
   return (
@@ -81,6 +85,24 @@ export function Step2Tiers({
         <RiskReducerStrip items={packageCommonItemsFor(vatRegistered)} />
       </div>
 
+      {byCall && (
+        <div
+          role="note"
+          className="rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p className="text-sm text-foreground/90">{REVENUE_CALL_COPY.note}</p>
+          <Button
+            nativeButton={false}
+            variant="outline"
+            className="shrink-0 gap-2"
+            render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
+          >
+            <CalendarClock className="h-4 w-4" />
+            {REVENUE_CALL_COPY.action}
+          </Button>
+        </div>
+      )}
+
       <div
         ref={containerRef}
         className="cursor-glow grid grid-cols-1 gap-4 sm:gap-6 sm:pt-5 pricing-grid-container"
@@ -96,7 +118,7 @@ export function Step2Tiers({
             return sum + (b ? bracketPrice(b, tier.slug) : 0);
           }, 0);
           // All-in monthly price for the package: core plus payroll, plus the
-          // Xero invoicing charge on Basic. Chosen add-ons come on the next step.
+          // answer-driven add-ons. Chosen add-ons come on the next step.
           const displayTotal = regularTotal + addonTotal(answerAddons, tier.slug);
 
           const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
@@ -194,8 +216,9 @@ export function Step2Tiers({
             </>
           );
 
-          // A package sold by application is not selectable here.
-          if (byApplication) {
+          // A package sold by application is not selectable here, and above
+          // R50m in revenue no package is.
+          if (byApplication || byCall) {
             return (
               <div
                 key={tier.slug}
@@ -260,13 +283,24 @@ export function Step2Tiers({
         <Button variant="outline" onClick={onBack}>
           ← Back
         </Button>
-        <Button
-          onClick={onNext}
-          disabled={!selectedTier}
-          className={cn('gap-2', selectedTier && 'cta-armed')}
-        >
-          Continue to add-ons →
-        </Button>
+        {byCall ? (
+          <Button
+            nativeButton={false}
+            className="gap-2 cta-armed"
+            render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
+          >
+            <CalendarClock className="h-4 w-4" />
+            {REVENUE_CALL_COPY.action}
+          </Button>
+        ) : (
+          <Button
+            onClick={onNext}
+            disabled={!selectedTier}
+            className={cn('gap-2', selectedTier && 'cta-armed')}
+          >
+            Continue to add-ons →
+          </Button>
+        )}
       </div>
     </div>
   );

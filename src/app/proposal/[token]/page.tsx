@@ -19,7 +19,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
 import { tierDisplayName } from '@/config/tiers';
-import { siteConfig } from '@/config/site';
 import { firstOfNextMonth } from '@/lib/utils';
 import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
 import type { Json } from '@/types/db';
@@ -156,7 +155,7 @@ export default async function ProposalPage({
   // Once signed, the public token view is intentionally minimal: a leaked link
   // must not expose the full document, fees, or the signature image (those live
   // in the client portal, the owner email, and the Drive archive). Just confirm
-  // acceptance and point to the portal.
+  // acceptance and say what happens next.
   if (SIGNED_STATUSES.has(row.status)) {
     return (
       <div className="mx-auto max-w-2xl px-6 py-16 lg:py-24">
@@ -200,12 +199,14 @@ export default async function ProposalPage({
   const inlineIds = INLINE_TERM_IDS as readonly string[];
   const inlineTerms = PROPOSAL_TERMS.filter((b) => inlineIds.includes(b.id));
 
-  // Billing starts on the 1st of the next calendar month (see firstOfNextMonth);
-  // show that first-debit date so the client knows when collection begins.
+  // Billing starts on the 1st of the month after signing (see firstOfNextMonth),
+  // so date it from today, the day the client would sign. The proposal email
+  // and the signed PDF use the same rule (F23, October 2026 review).
   const firstDebitDate = firstOfNextMonth().toLocaleDateString('en-ZA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
   });
 
   return (
@@ -336,27 +337,12 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
         </div>
       </div>
 
-      {row.status === 'active' ? (
-        <>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Thanks, that&rsquo;s accepted. Your client portal is ready. Sign in any time to see your
-            plan, key dates and documents. Someone from the Capucor team will be in touch shortly to
-            set up your onboarding.
-          </p>
-          <Button
-            nativeButton={false}
-            className="mt-5"
-            render={<Link href={`${siteConfig.appUrl}/login?next=/portal`} />}
-          >
-            Sign in to your portal
-          </Button>
-        </>
-      ) : (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Thanks, there&rsquo;s nothing more you need to do right now. Someone from the Capucor team
-          will be in touch shortly to set up your onboarding.
-        </p>
-      )}
+      {/* No capucor.app portal link for new clients while the portal is being
+          sunset (decision 2026-10-06). Provisioning itself is unchanged. */}
+      <p className="mt-4 text-sm text-muted-foreground">
+        Thanks, that&rsquo;s accepted and there&rsquo;s nothing more you need to do right now.
+        Zjak will be in touch shortly to set up your onboarding.
+      </p>
     </div>
   );
 }

@@ -8,7 +8,7 @@
  */
 
 import { TIER_HIGHLIGHTS, packageCommonItemsFor } from '@/config/tiers';
-import { notVatRegistered } from '@/lib/pricing';
+import { formatBandLabel, notVatRegistered } from '@/lib/pricing';
 import {
   FAIR_USAGE,
   ALWAYS_OUT_OF_SCOPE,
@@ -91,8 +91,9 @@ export interface FairUsageLine extends ServiceFairUsage {
 
 /**
  * Per-selected-service fair-usage rows, resolving the chosen bracket's label.
- * A service whose allowance differs by package (bookkeeping: Basic counts bank
- * lines and journals only) uses the chosen tier's wording.
+ * A service whose allowance differs by package uses the chosen tier's wording
+ * (none does since 2026-10-06, when every package counts all transactions).
+ * Band labels are shown in plain form (formatBandLabel).
  */
 export function buildFairUsage(
   selectedServices: string[],
@@ -107,7 +108,10 @@ export function buildFairUsage(
     const sel = selectedBrackets[slug];
     let bracketLabel: string | null = null;
     if (typeof sel === 'number') {
-      bracketLabel = brackets.find((b) => b.service_slug === slug && b.ordinal === sel)?.label ?? null;
+      bracketLabel = formatBandLabel(
+        slug,
+        brackets.find((b) => b.service_slug === slug && b.ordinal === sel)?.label ?? null,
+      );
     }
     const allowance = (tierSlug && fu.allowanceByTier?.[tierSlug]) || fu.allowance;
     lines.push({ slug, bracketLabel, ...fu, allowance });

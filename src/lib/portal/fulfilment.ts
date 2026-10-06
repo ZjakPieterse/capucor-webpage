@@ -250,7 +250,7 @@ export async function processProposalFulfilment(
             from: siteConfig.email.sender,
             replyTo: siteConfig.email.replyTo,
             to: proposal.email,
-            subject: 'Your Capucor portal is ready',
+            subject: 'Your Capucor proposal is signed',
             html: renderProvisionedClientEmail({
               firstName: proposal.first_name,
               businessName: proposal.business_name,
