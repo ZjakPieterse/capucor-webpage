@@ -108,24 +108,21 @@ function FinanceCommandCentre() {
       <div className="fcc-header flex items-center justify-between mb-4 relative z-20">
         <div>
           <div className="text-sm font-bold tracking-tight">
-            Finance Command Centre
+            Your month at a glance
           </div>
           <div
             className="text-xs mt-0.5"
             style={{ color: "rgba(255,255,255,.55)" }}
             suppressHydrationWarning
           >
-            {dates.closeMonth} close complete. Three items flagged for review.
+            {dates.closeMonth} closed. Three points to discuss at your review.
           </div>
         </div>
-        {/* This panel is a design mockup — every figure in it is hardcoded, and
-            the "Live" badge is a visual device, not a data binding. Presenting
-            it as real is deliberate (Zjak, 2026-08-06): capucor.com has no
-            traffic driven to it yet and every proposal in the database is a
-            test mockup, so there is no one to mislead. ⚡ Revisit the label when
-            real traffic starts — the portal's finance page still reads "Connect
-            Xero (coming soon)", so a prospect who signs today cannot see any of
-            these numbers. */}
+        {/* This panel is a design mockup: every figure in it is hardcoded. The
+            figures stay hard-coded by decision, and since 2026-10-05 the badge
+            reads "Example" rather than "Live" (website-v2 positioning, Zjak).
+            It no longer frames itself as a portal view, because capucor.app is
+            being sunset. Panel redesign belongs to the website-v2 design step. */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
           style={{ background: "rgba(34,211,238,.12)", color: "var(--brand-cyan)" }}
@@ -139,7 +136,7 @@ function FinanceCommandCentre() {
             animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           />
-          Live
+          Example
         </div>
       </div>
 
@@ -237,7 +234,7 @@ function FinanceCommandCentre() {
             </span>
           </div>
           <div className="text-[10px] text-muted-foreground mt-1.5">
-            Senior accountant sign-off
+            Reviewed before it reaches you
           </div>
         </div>
 

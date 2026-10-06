@@ -7,16 +7,16 @@ import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
-  title: 'Outsourced Accounting for SMEs',
+  title: 'Outsourced accounting for SA businesses',
   description:
-    'Annual financial statements, tax returns, and CIPC compliance for South African SMEs. Done properly, on time.',
+    'Annual financial statements, income and provisional tax, VAT201 and CIPC returns for owner-run South African businesses, on one fixed monthly subscription.',
   alternates: { canonical: `${siteConfig.marketingUrl}/accounting` },
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
     url: `${siteConfig.marketingUrl}/accounting`,
     description:
-      'Annual financial statements, tax returns, and CIPC compliance for South African SMEs. Done properly, on time.',
+      'Annual financial statements, income and provisional tax, VAT201 and CIPC returns for owner-run South African businesses, on one fixed monthly subscription.',
     images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
@@ -64,7 +64,7 @@ export default function AccountingPage() {
                 Financial statements, tax returns and CIPC, handled before the deadlines move
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Annual financials, provisional and income tax, VAT201 and CIPC annual returns. A SAICA-registered accountant signs off on the file before anything reaches SARS.
+                Annual financials, provisional and income tax, VAT201 and CIPC annual returns, prepared on a calendar and checked before anything reaches SARS. It runs on the same monthly rhythm as your books and payroll.
               </p>
               <Link
                 href="/pricing"

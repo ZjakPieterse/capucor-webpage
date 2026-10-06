@@ -43,14 +43,14 @@ const SERVICES = [
     icon: Users,
     title: "Payroll",
     pitch:
-      "Pay staff correctly and keep monthly submissions off your worry list.",
+      "Your staff paid correctly, and every payroll submission made on its own cycle.",
     bestFor:
-      "Employers that want payroll handled correctly, confidentially and on time.",
+      "Owner-run businesses with staff, from the first hires to a team of around 30.",
     bullets: [
       "Payroll processing and payslips",
-      "PAYE and UIF submissions",
-      "COIDA compliance",
-      "IRP5 certificates",
+      "EMP201 every month: PAYE and UIF",
+      "EMP501 reconciliation and IRP5s",
+      "UIF declarations and COIDA returns",
     ],
     href: "/payroll",
     ctaLabel: "View payroll support",
@@ -88,7 +88,7 @@ export function ServicePillars() {
           <SectionHeading
             eyebrow="What we do"
             title="Three disciplines. One subscription."
-            subtitle="Accounting, bookkeeping, and payroll. All on one flat monthly subscription."
+            subtitle="Accounting, bookkeeping and payroll for employers, on one fixed monthly subscription."
           />
         </ScrollReveal>
 

@@ -20,14 +20,14 @@ export const revalidate = 3600;
 
 export function generateMetadata(): Metadata {
   return {
-    title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },
+    title: { absolute: 'Capucor Business Solutions | Monthly accounting and payroll for employers' },
     description: siteConfig.description,
     alternates: { canonical: siteConfig.marketingUrl },
     openGraph: {
       type: 'website',
       locale: 'en_ZA',
       url: siteConfig.marketingUrl,
-      title: { absolute: 'Capucor Business Solutions | Outsourced Finance for SMEs' },
+      title: { absolute: 'Capucor Business Solutions | Monthly accounting and payroll for employers' },
       description: siteConfig.description,
       siteName: siteConfig.name,
       images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
