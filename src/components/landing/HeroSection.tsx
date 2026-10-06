@@ -9,6 +9,7 @@ import {
   TrendingDown,
   CheckCircle2,
   Clock,
+  Info,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -76,14 +77,33 @@ const VAT_STATUS_STYLES: Record<VatStatus, { bg: string; color: string }> = {
   red: { bg: "var(--destructive-soft)", color: "var(--destructive)" },
 };
 
-// ── Finance Command Centre ────────────────────────────────────────────────────────
+// ── Your month at a glance (hero example panel) ──────────────────────────────────
+// An illustration of one month on the rhythm, not a product screen. Every figure
+// is hard-coded by decision (website-v2, Zjak, 2026-10-05) and the panel says so
+// twice: the static "Example" badge and the footnote. No pulsing or "live" cues,
+// and no portal framing, because capucor.app is being sunset.
 
-function FinanceCommandCentre() {
+type RhythmState = "done" | "due";
+
+interface RhythmItem {
+  label: string;
+  detail: string;
+  state: RhythmState;
+}
+
+function MonthAtAGlance() {
   const dates = computeDashboardDates();
   const vatStyle = VAT_STATUS_STYLES[dates.vatStatus];
   const prefersReducedMotion = useReducedMotion();
   const { ref: tiltRef, rotateX, rotateY, lift, scale, onMouseMove, onMouseLeave } =
     use3DTilt<HTMLDivElement>();
+
+  const rhythm: RhythmItem[] = [
+    { label: "Books closed", detail: `${dates.closeMonth} reconciled`, state: "done" },
+    { label: "Payroll", detail: "Payslips out, EMP201 submitted", state: "done" },
+    { label: "Report", detail: "Reviewed before it reaches you", state: "done" },
+    { label: "VAT201", detail: `Due ${dates.vatDateStr}`, state: "due" },
+  ];
 
   return (
     <motion.div
@@ -98,14 +118,17 @@ function FinanceCommandCentre() {
         transformPerspective: 1200,
         transformStyle: "preserve-3d",
       }}
-      className="fcc-container tilt-card premium-card relative rounded-2xl border-[0.5px] border-white/10 bg-card/80 shadow-2xl p-4 sm:p-5 overflow-hidden min-h-[340px] sm:min-h-[380px] lg:min-h-[420px] transition-[border-color,box-shadow,background-color] duration-500">
+      className="fcc-container tilt-card premium-card relative rounded-2xl border-[0.5px] border-white/10 bg-card/80 shadow-2xl p-4 sm:p-5 overflow-hidden transition-[border-color,box-shadow,background-color] duration-500"
+      role="figure"
+      aria-label="Example of a month on the Capucor rhythm. Figures are for illustration."
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute -inset-16 z-0 rounded-full bg-primary/10 blur-3xl"
       />
 
       {/* Header */}
-      <div className="fcc-header flex items-center justify-between mb-4 relative z-20">
+      <div className="flex items-start justify-between gap-3 mb-4 relative z-20">
         <div>
           <div className="text-sm font-bold tracking-tight">
             Your month at a glance
@@ -118,182 +141,118 @@ function FinanceCommandCentre() {
             {dates.closeMonth} closed. Three points to discuss at your review.
           </div>
         </div>
-        {/* This panel is a design mockup: every figure in it is hardcoded. The
-            figures stay hard-coded by decision, and since 2026-10-05 the badge
-            reads "Example" rather than "Live" (website-v2 positioning, Zjak).
-            It no longer frames itself as a portal view, because capucor.app is
-            being sunset. Panel redesign belongs to the website-v2 design step. */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-          style={{ background: "rgba(34,211,238,.12)", color: "var(--brand-cyan)" }}
-        >
-          <motion.div
-            className="w-1.5 h-1.5 rounded-full"
-            style={{
-              background: "var(--brand-cyan)",
-              boxShadow: "0 0 5px var(--brand-cyan)",
-            }}
-            animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          />
+        <div className="shrink-0 px-2.5 py-1 rounded-md border border-white/15 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Example
         </div>
       </div>
 
-      {/* Tile grid */}
-      <div className="fcc-grid grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 relative z-20">
-        {/* Cash Runway */}
-        <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Cash Runway
-          </div>
-          <div className="gradient-stat font-mono font-bold text-xl leading-none">
-            4.2
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5">months</div>
-          <div
-            className="mt-2.5 h-1.5 rounded-full overflow-hidden"
-            style={{ background: "rgba(255,255,255,.08)" }}
-          >
-            <motion.div
-              className="h-full rounded-full"
-              style={{
-                background:
-                  "linear-gradient(to right, var(--brand-cyan), var(--success))",
-              }}
-              initial={prefersReducedMotion ? false : { width: 0 }}
-              animate={{ width: "35%" }}
-              transition={{ delay: 1.4, duration: 0.9, ease: "easeOut" }}
-            />
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-1">
-            of 12 months
-          </div>
-          <div
-            className="text-[10px] mt-1 font-medium"
-            style={{ color: "var(--warning)" }}
-          >
-            Watch: below 6-month target
-          </div>
+      {/* This month's rhythm */}
+      <div className="relative z-20">
+        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          This month
         </div>
-
-        {/* Debtor Days */}
-        <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Debtor Days
-          </div>
-          <div className="font-mono font-bold text-xl leading-none">32</div>
-          <div className="text-xs text-muted-foreground mt-0.5">days</div>
-          <div className="flex items-center gap-1 mt-2">
-            <TrendingDown
-              className="h-3.5 w-3.5 shrink-0 text-success"
-            />
-            <span className="text-[11px] font-medium text-success">
-              −4 vs last month
-            </span>
-          </div>
-        </div>
-
-        {/* VAT Due Date */}
-        <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            VAT Due
-          </div>
-          <div
-            className="font-mono font-bold text-sm leading-tight"
-            suppressHydrationWarning
-          >
-            {dates.vatDateStr}
-          </div>
-          <div className="mt-2">
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
-              style={{ background: vatStyle.bg, color: vatStyle.color }}
-              suppressHydrationWarning
+        <ol className="fcc-grid grid gap-1.5">
+          {rhythm.map((item) => (
+            <li
+              key={item.label}
+              className="fcc-tile premium-glass flex items-center gap-3 rounded-xl border-[0.5px] border-white/10 bg-background/40 px-3.5 py-2.5"
             >
-              <AlertCircle className="h-3 w-3" />
-              {dates.vatDays} days
-            </span>
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-1.5">
-            Prepared before deadline
-          </div>
-        </div>
+              {item.state === "done" ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+              ) : (
+                <Clock className="h-4 w-4 shrink-0" style={{ color: "var(--brand-cyan)" }} />
+              )}
+              <span className="text-xs font-semibold whitespace-nowrap">{item.label}</span>
+              <span
+                className="ml-auto text-right text-[11px] text-muted-foreground"
+                suppressHydrationWarning
+              >
+                {item.detail}
+              </span>
+              {item.state === "due" && (
+                <span
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                  style={{ background: vatStyle.bg, color: vatStyle.color }}
+                  suppressHydrationWarning
+                >
+                  <AlertCircle className="h-3 w-3" />
+                  {dates.vatDays} days
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
 
-        {/* Monthly Close */}
-        <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Monthly Close
-          </div>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2
-              className="h-4 w-4 shrink-0 text-success"
-            />
-            <span className="text-xs font-semibold" suppressHydrationWarning>
-              {dates.closeMonth}: reviewed
-            </span>
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-1.5">
-            Reviewed before it reaches you
-          </div>
+      {/* Three points to discuss */}
+      <div className="relative z-20 mt-4">
+        <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          To discuss at your review
         </div>
-
-        {/* Payroll */}
-        <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Payroll
-          </div>
-          <div className="flex items-center gap-1.5">
-            <motion.div
-              className="w-2 h-2 rounded-full shrink-0 bg-success"
-              animate={prefersReducedMotion ? undefined : { opacity: [1, 0.4, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-            <span className="text-xs font-semibold text-success">
-              EMP201 submitted
-            </span>
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-1.5">
-            Payslips delivered
-          </div>
-        </div>
-
-        {/* Management Report */}
-        <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Management Report
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock
-              className="h-3.5 w-3.5 shrink-0"
-              style={{ color: "var(--brand-cyan)" }}
-            />
-            <span
-              className="text-[11px] font-semibold"
-              style={{ color: "var(--brand-cyan)" }}
+        <div className="fcc-grid grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
+          {/* Cash runway */}
+          <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
+            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Cash runway
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="gradient-stat font-mono font-bold text-xl leading-none">4.2</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">months</span>
+            </div>
+            <div
+              className="mt-2.5 h-1.5 rounded-full overflow-hidden"
+              style={{ background: "rgba(255,255,255,.08)" }}
             >
-              Ready for review
-            </span>
+              <motion.div
+                className="h-full rounded-full"
+                style={{
+                  background:
+                    "linear-gradient(to right, var(--brand-cyan), var(--success))",
+                }}
+                initial={prefersReducedMotion ? false : { width: 0 }}
+                animate={{ width: "35%" }}
+                transition={{ delay: 1.4, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+              />
+            </div>
+            <div className="text-[10px] mt-1.5 font-medium" style={{ color: "var(--warning)" }}>
+              Below the 6-month target
+            </div>
           </div>
-          <div className="text-[10px] text-muted-foreground mt-1.5">
-            3 insights flagged
-          </div>
-        </div>
 
-        {/* SARS / CIPC Compliance — Standardized look */}
-        <div className="fcc-tile premium-glass col-span-2 sm:col-span-3 rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
-          <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2.5">
-            SARS / CIPC Compliance
+          {/* Debtor days */}
+          <div className="fcc-tile premium-glass rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
+            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Debtor days
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-mono font-bold text-xl leading-none">32</span>
+              <span className="text-xs text-muted-foreground whitespace-nowrap">days</span>
+            </div>
+            <div className="flex items-center gap-1 mt-2.5">
+              <TrendingDown className="h-3.5 w-3.5 shrink-0 text-success" />
+              <span className="text-[11px] font-medium text-success">
+                −4 vs last month
+              </span>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-            {["Provisional Tax", "EMP201", "CIPC Annual Return"].map((item) => (
-              <div key={item} className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
-                <span className="text-xs font-medium text-foreground/80">{item}</span>
-              </div>
-            ))}
+
+          {/* Provisional tax */}
+          <div className="fcc-tile premium-glass col-span-2 sm:col-span-1 rounded-xl border-[0.5px] border-white/10 bg-background/40 p-3.5">
+            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Provisional tax
+            </div>
+            <div className="text-xs font-semibold leading-snug">IRP6 estimate</div>
+            <div className="text-[11px] text-muted-foreground mt-1 leading-snug">
+              Confirm the profit forecast before it&apos;s filed
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Footnote */}
+      <div className="relative z-20 mt-4 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        <Info className="h-3 w-3 shrink-0" />
+        Example figures for illustration.
       </div>
     </motion.div>
   );
@@ -432,7 +391,7 @@ export function HeroSection() {
 
           {/* Dashboard */}
           <div className="relative">
-            <FinanceCommandCentre />
+            <MonthAtAGlance />
           </div>
         </div>
       </div>

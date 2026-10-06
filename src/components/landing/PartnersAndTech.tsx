@@ -43,7 +43,7 @@ export function PartnersAndTech() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={p.name}
-                className="inline-flex items-center text-muted-foreground/70 transition-colors hover:text-foreground"
+                className="inline-flex items-center quiet-hover text-muted-foreground/70"
               >
                 <span
                   aria-hidden

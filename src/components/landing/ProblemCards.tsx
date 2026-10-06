@@ -99,7 +99,7 @@ export function ProblemCards() {
                   "px-5 sm:px-6 h-11 inline-flex items-center rounded-full text-sm font-semibold transition-all duration-300",
                   !isResolved
                     ? "bg-destructive text-destructive-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground",
+                    : "quiet-hover text-muted-foreground",
                 )}
               >
                 Without Capucor
@@ -110,7 +110,7 @@ export function ProblemCards() {
                   "px-5 sm:px-6 h-11 inline-flex items-center rounded-full text-sm font-semibold transition-all duration-300",
                   isResolved
                     ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground",
+                    : "quiet-hover text-muted-foreground",
                 )}
               >
                 With Capucor
