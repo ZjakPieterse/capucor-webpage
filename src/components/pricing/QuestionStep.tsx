@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { Check, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,8 @@ interface ShellProps {
   /** Omitted on the first screen. */
   onBack?: () => void;
   showFitCall?: boolean;
+  /** Overrides the fit-call prompt, e.g. on the transactions screen. */
+  fitCallPrompt?: string;
   children: React.ReactNode;
 }
 
@@ -37,6 +40,7 @@ function QuestionShell({
   onNext,
   onBack,
   showFitCall,
+  fitCallPrompt = FIT_CALL_PROMPT,
   children,
 }: ShellProps) {
   return (
@@ -70,7 +74,7 @@ function QuestionShell({
 
       {showFitCall && (
         <p className="text-xs text-muted-foreground text-right">
-          {FIT_CALL_PROMPT}{' '}
+          {fitCallPrompt}{' '}
           <a
             href={siteConfig.links.booking}
             target="_blank"
@@ -146,18 +150,33 @@ export function YesNoQuestion({ value, onAnswer, ...shell }: YesNoQuestionProps)
     { label: 'Yes', value: true, Icon: Check },
     { label: 'No', value: false, Icon: Minus },
   ] as const;
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  // Radiogroup pattern: one tab stop (the checked radio, else the first), and
+  // the arrow keys move focus between Yes and No. Focus only; Space or Enter
+  // answers, so arrowing past an answer does not move the wizard on.
+  const tabStop = value === false ? 1 : 0;
+  function onKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
+    e.preventDefault();
+    buttons.current[index === 0 ? 1 : 0]?.focus();
+  }
 
   return (
     <QuestionShell {...shell} canProceed={value !== null}>
       <div role="radiogroup" aria-label={shell.copy.title} className="grid grid-cols-2 gap-3 sm:gap-4">
-        {choices.map(({ label, value: choice, Icon }) => {
+        {choices.map(({ label, value: choice, Icon }, index) => {
           const isSelected = value === choice;
           return (
             <button
               key={label}
+              ref={(el) => {
+                buttons.current[index] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={isSelected}
+              tabIndex={index === tabStop ? 0 : -1}
+              onKeyDown={(e) => onKeyDown(e, index)}
               onClick={() => onAnswer(choice)}
               className={cn(
                 'service-card relative rounded-2xl border-2 p-5 text-left outline-none flex items-center gap-3',

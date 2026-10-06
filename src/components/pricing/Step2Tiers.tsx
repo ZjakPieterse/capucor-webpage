@@ -1,12 +1,12 @@
 'use client';
 
-import { CalendarClock, Check, CornerDownRight, Layers, Plus } from 'lucide-react';
+import { CalendarClock, Check, CornerDownRight, Layers, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
 import { RiskReducerStrip } from './RiskReducerStrip';
-import { cn } from '@/lib/utils';
+import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
@@ -20,6 +20,7 @@ import {
   packageCommonItemsFor,
 } from '@/config/tiers';
 import {
+  BASIC_SUPPLIER_NOTE,
   CORE_SERVICES_HEADING,
   CORE_SERVICES_SUBHEADING,
   PREMIUM_APPLY_COPY,
@@ -67,7 +68,7 @@ export function Step2Tiers({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Choose your processing rhythm.</h2>
+        <h2 className="text-xl font-semibold mb-1">Choose your processing rhythm</h2>
         <p className="text-sm text-muted-foreground">
           Every package includes the core services. The packages differ in how often we process your
           books, report and review with you. No lock-in contracts.
@@ -134,6 +135,11 @@ export function Step2Tiers({
                   <AnimatedPrice amount={displayTotal} size="lg" />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">/month</span>
                 </div>
+                {/* The animated figure is not a reliable accessible name, so
+                    the card is described by this plain-text price. */}
+                <span id={`tier-price-${tier.slug}`} className="sr-only">
+                  {`${byApplication ? 'From ' : ''}${formatZAR(displayTotal)} a month`}
+                </span>
               </div>
 
               {/* Row 3: Cumulative additions label */}
@@ -151,7 +157,7 @@ export function Step2Tiers({
 
               {/* Row 4: Features list (and, for Premium, the booking action) */}
               <div className="pricing-card-features flex-grow flex flex-col gap-5">
-                {filteredItems.length > 0 && (
+                {(filteredItems.length > 0 || tier.slug === 'basic') && (
                   <ul className="space-y-2.5">
                     {filteredItems.map((item) => (
                       <li key={item.text} className="flex items-start gap-2.5 text-xs">
@@ -159,6 +165,13 @@ export function Step2Tiers({
                         <span className="text-muted-foreground leading-normal">{item.text}</span>
                       </li>
                     ))}
+                    {/* Basic has no supplier processing (Phase 0 inclusions). */}
+                    {tier.slug === 'basic' && (
+                      <li className="flex items-start gap-2.5 text-xs">
+                        <Minus className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                        <span className="text-muted-foreground leading-normal">{BASIC_SUPPLIER_NOTE}</span>
+                      </li>
+                    )}
                   </ul>
                 )}
                 {byApplication && (
@@ -199,7 +212,8 @@ export function Step2Tiers({
               type="button"
               onClick={() => onTierSelect(tier.slug)}
               aria-pressed={isSelected}
-              aria-label={`${isSelected ? 'Selected ' : ''}${tier.name} tier`}
+              aria-label={`${tier.name} package`}
+              aria-describedby={`tier-price-${tier.slug}`}
               className={cn(
                 'service-card pricing-card-item relative min-w-0 rounded-2xl border-2 p-6 pr-12 text-left outline-none w-full h-full flex flex-col',
                 'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',

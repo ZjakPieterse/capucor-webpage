@@ -102,6 +102,16 @@ export function prevStep(step: CalculatorStep, s: Pick<FlowState, 'answers'>): C
   }
 }
 
+// Position line above each question, e.g. "Your business · 2 of 4" or
+// "Payroll · 1 of 2" (the headcount only follows a payroll Yes).
+const BUSINESS_QUESTIONS: CalculatorStep[] = ['revenue', 'transactions', 'vat', 'invoicing'];
+const PAYROLL_QUESTIONS: CalculatorStep[] = ['payroll', 'employees'];
+export function questionPosition(step: CalculatorStep): string {
+  const i = BUSINESS_QUESTIONS.indexOf(step);
+  if (i >= 0) return `Your business · ${i + 1} of ${BUSINESS_QUESTIONS.length}`;
+  return `Payroll · ${PAYROLL_QUESTIONS.indexOf(step) + 1} of ${PAYROLL_QUESTIONS.length}`;
+}
+
 /**
  * True when every screen up to the package step is answered. Guards the
  * package, add-ons and review screens against an incomplete selection.

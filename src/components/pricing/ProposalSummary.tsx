@@ -99,7 +99,7 @@ export function ProposalSummary({
           <span className="font-mono text-lg font-bold">{formatZAR(monthly)}</span>
         </div>
         <p className="pt-1 text-[11px] text-muted-foreground">
-          Billed monthly in advance · cancel any time with 30 days notice
+          Billed monthly in advance · cancel any time with 30 days&apos; notice
         </p>
       </div>
     </div>
