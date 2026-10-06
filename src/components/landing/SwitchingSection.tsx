@@ -21,7 +21,7 @@ const STEPS = [
     number: "02",
     icon: Settings2,
     title: "Set-up",
-    body: "We set up Xero, Dext and your bank feeds, and take over payroll on its next cycle.",
+    body: "We set up Xero and your bank feeds, and take over payroll on its next cycle.",
   },
   {
     number: "03",

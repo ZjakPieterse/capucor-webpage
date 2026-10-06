@@ -31,7 +31,7 @@ export function FinalCTA() {
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
             Build your subscription in a few minutes and see your full monthly
-            price, or book a short fit call. We set up Xero, Dext and your bank
+            price, or book a short fit call. We set up Xero and your bank
             feeds and bring the backlog up to date.
           </p>
 
