@@ -21,22 +21,37 @@ describe('cumulativeInclusions', () => {
 
   it('accumulates up the packages: Premium carries Pro and Basic items', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
-    expect(premium).toContain('Monthly 5-Minute Video Explainer');
-    expect(premium).toContain('Supplier Processing & Review');
-    expect(premium).toContain('On-Call Partner Support');
+    expect(premium.filter((t) => t === 'Supplier Processing & Review')).toHaveLength(1);
+    expect(premium).toContain('On-call Partner Support');
+    expect(premium).toContain('Monthly Tax Strategy & Planning');
     expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier Processing & Review');
   });
 
   it('keeps one rhythm, report and review per schedule: the highest package wins', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
-    expect(premium.filter((t) => t.startsWith('Processing Rhythm'))).toEqual(['Processing Rhythm: Daily']);
+    expect(premium.filter((t) => t.endsWith('Processing') && !t.startsWith('Supplier'))).toEqual(['Daily Processing']);
     expect(premium).not.toContain('Quarterly Performance Review');
     expect(premium).not.toContain('Monthly Performance Review');
-    expect(premium).toContain('Weekly Reports & Review');
+    expect(premium).toContain('Weekly Performance Review');
+    expect(premium).toContain('Weekly Insights Report');
     const pro = cumulativeInclusions(CORE, 'pro');
     expect(pro).toContain('Monthly Insights Report');
-    expect(pro).not.toContain('Monthly Basic Reports');
-    expect(pro.filter((t) => t.startsWith('Processing Rhythm'))).toEqual(['Processing Rhythm: Weekly']);
+    expect(pro).not.toContain('Quarterly Insights Report');
+    expect(pro).toContain('Weekly Processing');
+    expect(pro).not.toContain('Monthly Processing');
+  });
+
+  it('lists the five core services, plus VAT201 for a VAT-registered business', () => {
+    const basic = cumulativeInclusions(CORE, 'basic');
+    expect(basic.slice(0, 6)).toEqual([
+      'Dedicated Finance Team',
+      'Annual Financials',
+      'SARS & CIPC Submission',
+      'Xero Accounting Software',
+      'Year-round Support',
+      'VAT returns (VAT201)',
+    ]);
+    expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll Services');
   });
 
   it('leaves out the card summary line and never mentions Dext', () => {

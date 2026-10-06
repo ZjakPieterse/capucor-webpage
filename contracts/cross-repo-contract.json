@@ -144,8 +144,8 @@
         "pairMode": "code",
         "why": "PRICING_ADDONS is the server-side WHITELIST of accepted add-on slugs and their prices, not display strings. Reprice an add-on in one repo only and the two apps quote different totals, or one silently drops an add-on the other charges for.",
         "digest": {
-          "web": "sha256:333e8c745b7c511399c2128369ec1bc5dd066a27c64e28be26e2b98ae229292e",
-          "os": "sha256:333e8c745b7c511399c2128369ec1bc5dd066a27c64e28be26e2b98ae229292e"
+          "web": "sha256:a78004bf0b8c0722c86991614685a796a842c16c18b0af61d273f84054214161",
+          "os": "sha256:a78004bf0b8c0722c86991614685a796a842c16c18b0af61d273f84054214161"
         }
       },
       {

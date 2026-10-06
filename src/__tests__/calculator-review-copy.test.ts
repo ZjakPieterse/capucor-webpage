@@ -22,9 +22,11 @@ describe('comparison table rhythm rows (F03)', () => {
   });
 
   it('shows processing as one value per package, not cumulative ticks', () => {
-    const processing = RHYTHM_ROWS.find((r) => r.label === 'Processing rhythm');
+    const processing = RHYTHM_ROWS.find((r) => r.label === 'Processing');
     expect(processing?.values).toEqual({ basic: 'Monthly', pro: 'Weekly', premium: 'Daily' });
-    expect(processing?.replaces).toEqual(['Processing Rhythm: Monthly', 'Processing Rhythm: Weekly', 'Processing Rhythm: Daily']);
+    expect(processing?.replaces).toEqual(['Monthly Processing', 'Weekly Processing', 'Daily Processing']);
+    const report = RHYTHM_ROWS.find((r) => r.label === 'Insights report');
+    expect(report?.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' });
     const review = RHYTHM_ROWS.find((r) => r.label === 'Performance review');
     expect(review?.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' });
   });
