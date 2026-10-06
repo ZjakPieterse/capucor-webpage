@@ -112,6 +112,10 @@ export async function POST(req: NextRequest) {
           brackets: input.brackets,
           tier: input.tierSlug,
           addons: addonSlugs,
+          // Calculator-v2 answers (VAT, Xero invoicing) and the review-step
+          // action. Reference only in Phase 1: they change neither price nor scope.
+          ...(input.answers && { answers: input.answers }),
+          ...(input.intent && { intent: input.intent }),
         },
         consent_given: true,
         consent_timestamp: nowIso,

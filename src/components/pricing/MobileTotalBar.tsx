@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback } from 'react';
-import { ChevronUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
@@ -16,8 +15,12 @@ interface MobileTotalBarProps {
   tiers: Tier[];
   brackets: Bracket[];
   summaryAnchorId: string;
-  onActivate: () => void;
+  /** Optional button on the right, e.g. "Review" on the add-ons step. */
+  action?: { label: string; onClick: () => void };
 }
+
+// Running total for phones. calculator-v2 shows it from the add-ons step on
+// (the parent decides when to render it), so a package is always chosen here.
 
 export function MobileTotalBar({
   selectedServices,
@@ -27,7 +30,7 @@ export function MobileTotalBar({
   tiers,
   brackets,
   summaryAnchorId,
-  onActivate,
+  action,
 }: MobileTotalBarProps) {
   const activeSlugs = [...selectedServices];
   const tier = tiers.find((t) => t.slug === selectedTierSlug) ?? null;
@@ -40,7 +43,7 @@ export function MobileTotalBar({
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [summaryAnchorId]);
 
-  if (activeSlugs.length === 0) return null;
+  if (activeSlugs.length === 0 || !tier) return null;
 
   return (
     <div
@@ -56,40 +59,22 @@ export function MobileTotalBar({
           aria-label="Jump to subscription summary"
           className="min-w-0 flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-primary/5"
         >
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium flex items-center gap-1.5">
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
-              {activeSlugs.length} service{activeSlugs.length === 1 ? '' : 's'}
-            </span>
-            <span>·</span>
-            <span>{tier ? `${tier.name} plan` : 'Select a plan'}</span>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+            {tier.name} package · monthly total
           </p>
-          {total > 0 ? (
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0.5 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="font-mono font-bold text-lg leading-tight"
-            >
-              <AnimatedPrice amount={total} className="text-lg font-bold" />
-              <span className="text-xs font-normal text-muted-foreground ml-1">/mo</span>
-            </motion.div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Pick a tier to see the total</p>
-          )}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0.5 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="font-mono font-bold text-lg leading-tight"
+          >
+            <AnimatedPrice amount={total} className="text-lg font-bold" />
+            <span className="text-xs font-normal text-muted-foreground ml-1">/month</span>
+          </motion.div>
         </button>
 
-        {selectedTierSlug ? (
-          <Button size="sm" onClick={onActivate} className="shrink-0 shadow-lg shadow-primary/20">
-            Get proposal
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={scrollToSummary}
-            className="shrink-0 gap-1 border-primary/20 hover:bg-primary/5"
-          >
-            <ChevronUp className="h-4 w-4" />
-            View summary
+        {action && (
+          <Button size="sm" onClick={action.onClick} className="shrink-0 shadow-lg shadow-primary/20">
+            {action.label}
           </Button>
         )}
       </div>

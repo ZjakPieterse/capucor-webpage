@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
 import { ProposalSummary } from './ProposalSummary';
+import type { ProposalAction } from './ReviewStep';
 import { z } from 'zod';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { clearPricingDraft } from '@/hooks/usePricingState';
-import type { Bracket, BracketValue, Service, Tier } from '@/types';
+import type { Bracket, BracketValue, CalculatorAnswers, Service, Tier } from '@/types';
 
 const FormSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(80),
@@ -32,6 +33,11 @@ type ProposalDelivery = {
 
 interface ActivateProposalModalProps {
   open: boolean;
+  /**
+   * 'send' emails the proposal (valid 7 days) and shows a confirmation.
+   * 'accept' makes the same call, then opens the returned proposalUrl to sign.
+   */
+  mode: ProposalAction;
   onOpenChange: (open: boolean) => void;
   services: Service[];
   brackets: Bracket[];
@@ -40,12 +46,15 @@ interface ActivateProposalModalProps {
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
   selectedAddons?: string[];
+  /** VAT and Xero-invoicing answers, stored with the lead for reference. */
+  answers: CalculatorAnswers;
   /** Called after a proposal is successfully created — marks the flow complete. */
   onSuccess: () => void;
 }
 
 export function ActivateProposalModal({
   open,
+  mode,
   onOpenChange,
   services,
   brackets,
@@ -54,12 +63,15 @@ export function ActivateProposalModal({
   selectedBrackets,
   selectedTier,
   selectedAddons = [],
+  answers,
   onSuccess,
 }: ActivateProposalModalProps) {
+  const isAccept = mode === 'accept';
   const [serverError, setServerError] = useState<string | null>(null);
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
   const [delivery, setDelivery] = useState<ProposalDelivery | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   const activeServiceSlugs = [...selectedServices];
   const integerBrackets: Record<string, number> = {};
@@ -91,6 +103,7 @@ export function ActivateProposalModal({
   function handleOpenChange(next: boolean) {
     if (!next) {
       setDelivery(null);
+      setRedirecting(false);
       setServerError(null);
       setConsentGiven(false);
       setConsentError('');
@@ -117,6 +130,11 @@ export function ActivateProposalModal({
       brackets: integerBrackets,
       tierSlug: selectedTier,
       addons: selectedAddons,
+      answers: {
+        ...(answers.vatRegistered !== null && { vatRegistered: answers.vatRegistered }),
+        ...(answers.xeroInvoicing !== null && { xeroInvoicing: answers.xeroInvoicing }),
+      },
+      intent: mode,
       firstName: values.firstName,
       lastName: values.lastName,
       businessName: values.businessName,
@@ -141,12 +159,19 @@ export function ActivateProposalModal({
       if (!res.ok) throw new Error(data.error ?? 'Could not send your proposal. Please try again.');
 
       clearPricingDraft();
+      onSuccess();
+      if (isAccept && typeof data.proposalUrl === 'string') {
+        // Accept: open the proposal to sign now. The visitor leaves the page,
+        // so the modal stays on its submitting state rather than a success panel.
+        setRedirecting(true);
+        window.location.assign(data.proposalUrl);
+        return;
+      }
       setDelivery({
         email: values.email,
         proposalUrl: data.proposalUrl,
         deliveryStatus: data.deliveryStatus === 'accepted' ? 'accepted' : 'pending',
       });
-      onSuccess();
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
@@ -198,10 +223,11 @@ export function ActivateProposalModal({
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             <DialogHeader>
-              <DialogTitle className="text-lg">Get your proposal</DialogTitle>
+              <DialogTitle className="text-lg">{isAccept ? 'Accept your proposal' : 'Get your proposal'}</DialogTitle>
               <DialogDescription>
-                Tell us where to send it. We’ll email you a proposal to review and sign. No payment required to get
-                started.
+                {isAccept
+                  ? 'Add your details and we’ll open your proposal to sign now. A copy is emailed to you. No payment required to get started.'
+                  : 'Tell us where to send it. We’ll email you a proposal to review and sign within 7 days. No payment required to get started.'}
               </DialogDescription>
             </DialogHeader>
 
@@ -213,6 +239,7 @@ export function ActivateProposalModal({
               selectedBrackets={selectedBrackets}
               tierSlug={selectedTier ?? ''}
               selectedAddons={selectedAddons}
+              mergeCore
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -298,16 +325,16 @@ export function ActivateProposalModal({
               </p>
             )}
 
-            <Button type="submit" disabled={isSubmitting} className="gradient-cta w-full gap-2">
+            <Button type="submit" disabled={isSubmitting || redirecting} className="gradient-cta w-full gap-2">
               <span className="relative z-[2] inline-flex items-center gap-2">
-                {isSubmitting ? (
+                {isSubmitting || redirecting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending your proposal...
+                    {isAccept ? 'Preparing your proposal...' : 'Sending your proposal...'}
                   </>
                 ) : (
                   <>
-                    Email me my proposal
+                    {isAccept ? 'Accept and sign' : 'Email me my proposal'}
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}

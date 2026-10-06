@@ -52,7 +52,9 @@ export function StickyConfigChip({
   const activeSlugs = [...selectedServices];
   if (activeSlugs.length === 0) return null;
 
+  // calculator-v2 renders this from the add-ons step on, so a package is set.
   const tier = tiers.find((t) => t.slug === selectedTierSlug) ?? null;
+  if (!tier) return null;
   const total = tier
     ? monthlyTotal(activeSlugs, selectedBrackets, tier.slug, brackets) + addonTotal(selectedAddons, tier.slug)
     : 0;
@@ -76,7 +78,7 @@ export function StickyConfigChip({
         >
           <div className="flex flex-col leading-tight">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              {tier ? `${tier.name} plan` : `${activeSlugs.length} service${activeSlugs.length === 1 ? '' : 's'}`}
+              {tier.name} package
             </span>
             <AnimatePresence mode="wait">
               <motion.span
@@ -88,12 +90,10 @@ export function StickyConfigChip({
                 {total > 0 ? (
                   <>
                     <AnimatedPrice amount={total} className="text-sm font-bold" />
-                    <span className="text-[10px] font-normal text-muted-foreground ml-1">/mo</span>
+                    <span className="text-[10px] font-normal text-muted-foreground ml-1">/month</span>
                   </>
                 ) : (
-                  <span className="text-xs text-muted-foreground">
-                    {tier ? 'Configure' : 'Pick a tier'}
-                  </span>
+                  <span className="text-xs text-muted-foreground">Configure</span>
                 )}
               </motion.span>
             </AnimatePresence>

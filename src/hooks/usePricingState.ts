@@ -1,25 +1,32 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { BracketValue, CalculatorStep, PricingState } from '@/types';
+import { FIRST_STEP, canProceed, deriveServices, nextStep, prevStep } from '@/lib/calculatorFlow';
+import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
 
-// Bumped to v3 when the calculator collapsed to two input steps (the old
-// "Select services" step folded into the scope questions) and gained add-ons.
-// Old drafts carry step:3 and no selectedAddons, which no longer fit the shape.
-const STORAGE_KEY = 'capucor.pricing.draft.v3';
+// Bumped to v4 for the calculator-v2 wizard: one screen per question, named
+// steps instead of 1 | 2, and the VAT / Xero-invoicing / payroll answers.
+// v3 drafts carry a numeric step and no answers, which no longer fit the shape.
+const STORAGE_KEY = 'capucor.pricing.draft.v4';
+
+const EMPTY_ANSWERS: CalculatorAnswers = {
+  vatRegistered: null,
+  xeroInvoicing: null,
+  needsPayroll: null,
+};
 
 const DEFAULT_STATE: PricingState = {
-  step: 1,
+  step: FIRST_STEP,
   selectedServices: new Set(),
   selectedBrackets: {},
+  answers: EMPTY_ANSWERS,
   selectedTier: null,
   selectedAddons: [],
 };
 
 // Serializable selection used to pre-populate the calculator from an existing
 // proposal. Crosses the server→client boundary, so it's plain arrays/objects —
-// the Set is rebuilt here. `brackets` may carry 'not_required' for services the
-// proposal opted out of, so Back-to-step-1 shows every service already answered.
+// the Set is rebuilt here.
 //
 // Its original caller was the staff amend page, which moved to capucor-os in
 // Phase 3 of the OS split. Nothing seeds the calculator today; the hook is kept
@@ -32,12 +39,18 @@ export interface PricingSeed {
 }
 
 function seededState(seed: PricingSeed): PricingState {
+  const answers: CalculatorAnswers = {
+    ...EMPTY_ANSWERS,
+    needsPayroll: seed.services.includes('payroll'),
+  };
+  const selectedBrackets = { ...seed.brackets };
   return {
-    // The selection is complete, so open on the tier step (priced result +
-    // Activate). Back to step 1 still works to adjust scope.
-    step: 2,
-    selectedServices: new Set(seed.services),
-    selectedBrackets: { ...seed.brackets },
+    // The selection is complete, so open on the package step. Back still
+    // walks through every question to adjust scope.
+    step: 'package',
+    selectedServices: deriveServices(selectedBrackets, answers),
+    selectedBrackets,
+    answers,
     selectedTier: seed.tierSlug,
     selectedAddons: [...seed.addons],
   };
@@ -52,6 +65,7 @@ function persistToStorage(state: PricingState) {
         step: state.step,
         selectedServices: [...state.selectedServices],
         selectedBrackets: state.selectedBrackets,
+        answers: state.answers,
         selectedTier: state.selectedTier,
         selectedAddons: state.selectedAddons,
       })
@@ -77,58 +91,55 @@ export function usePricingState(seed?: PricingSeed) {
     seed ? seededState(seed) : DEFAULT_STATE
   );
 
-  // True once the user has submitted the Activate modal and a proposal has been
-  // sent. Drives the stepper's final "Done" segment. Not persisted — a refresh
-  // starts a fresh configuration. Any change to the selection clears it.
+  // True once the details modal has been submitted and a proposal created.
+  // Lights every stage of the stepper. Not persisted; any change clears it.
   const [completed, setCompleted] = useState(false);
 
   // Every visit to /pricing starts blank: the hook never reads the stored
   // draft on init (it starts from DEFAULT_STATE, or the seed), and the
-  // first persist overwrites any prior draft. Continue/Back within the page
-  // don't unmount this hook, so in-session step state still flows; only fresh
-  // navigation or refresh resets it.
+  // first persist overwrites any prior draft. Moving between screens doesn't
+  // unmount this hook, so answers survive Back and Continue; only fresh
+  // navigation or refresh resets them.
   useEffect(() => {
     persistToStorage(state);
   }, [state]);
 
-  const setStep = useCallback((step: CalculatorStep) => {
-    setState((s) => ({ ...s, step }));
-  }, []);
-
   const markCompleted = useCallback(() => setCompleted(true), []);
 
-  // Going Back clears selections made in later steps so each step is a fresh
-  // choice when re-entered from below. Step 1 answers (brackets) are kept.
-  const setStepBack = useCallback((step: CalculatorStep) => {
+  // Continue: advance only when the current screen is answered.
+  const goNext = useCallback(() => {
+    setState((s) => (canProceed(s.step, s) ? { ...s, step: nextStep(s.step, s) } : s));
+  }, []);
+
+  // Back keeps every answer, the package and the add-ons, so returning
+  // forward shows the visitor's choices as they left them.
+  const goBack = useCallback(() => {
+    setCompleted(false);
+    setState((s) => ({ ...s, step: prevStep(s.step, s) }));
+  }, []);
+
+  // Bracket questions (revenue, transactions, employees). Core is mandatory,
+  // so there is no "Not required" value here.
+  const setBracket = useCallback((slug: string, value: number) => {
     setCompleted(false);
     setState((s) => {
-      const next: PricingState = { ...s, step };
-      if (step <= 1) {
-        next.selectedTier = null;
-        next.selectedAddons = [];
-      }
-      return next;
+      const selectedBrackets = { ...s.selectedBrackets, [slug]: value };
+      return {
+        ...s,
+        selectedBrackets,
+        selectedServices: deriveServices(selectedBrackets, s.answers),
+      };
     });
   }, []);
 
-  // The single entry point of the scope step: a numeric bracket opts the
-  // service in, 'not_required' explicitly opts it out. selectedServices is
-  // maintained here so downstream consumers keep their existing shape.
-  const setBracket = useCallback((slug: string, value: BracketValue) => {
+  const setAnswer = useCallback(<K extends keyof CalculatorAnswers>(key: K, value: boolean) => {
     setCompleted(false);
     setState((s) => {
-      const services = new Set(s.selectedServices);
-      if (typeof value === 'number') {
-        services.add(slug);
-      } else {
-        services.delete(slug);
-      }
-      const selectedTier = services.size === 0 ? null : s.selectedTier;
+      const answers = { ...s.answers, [key]: value };
       return {
         ...s,
-        selectedServices: services,
-        selectedBrackets: { ...s.selectedBrackets, [slug]: value },
-        selectedTier,
+        answers,
+        selectedServices: deriveServices(s.selectedBrackets, answers),
       };
     });
   }, []);
@@ -148,33 +159,21 @@ export function usePricingState(seed?: PricingSeed) {
     }));
   }, []);
 
-  // Step-1 gating ("every question answered, at least one priced") needs the
-  // services list from Supabase, so the calculator computes it — see
-  // canProceedScopeStep below. Step 2 only needs a tier.
-  const canProceedStep2 = state.selectedTier !== null;
+  const setStep = useCallback((step: CalculatorStep) => {
+    setState((s) => ({ ...s, step }));
+  }, []);
 
   return {
     state,
     completed,
     markCompleted,
+    goNext,
+    goBack,
     setStep,
-    setStepBack,
     setBracket,
+    setAnswer,
     setTier,
     toggleAddon,
-    canProceedStep2,
+    canProceedCurrent: canProceed(state.step, state),
   };
-}
-
-// True when every service has an explicit answer (a bracket or 'not_required')
-// and at least one carries a real bracket. Lives here rather than in the hook
-// because the service list comes from Supabase via the page, not from state.
-export function canProceedScopeStep(
-  serviceSlugs: string[],
-  selectedBrackets: Record<string, BracketValue>
-): boolean {
-  if (serviceSlugs.length === 0) return false;
-  const allAnswered = serviceSlugs.every((slug) => slug in selectedBrackets);
-  const anyPriced = serviceSlugs.some((slug) => typeof selectedBrackets[slug] === 'number');
-  return allAnswered && anyPriced;
 }

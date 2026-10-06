@@ -375,4 +375,47 @@ describe('POST /api/proposals', () => {
     expect(sendEmailMock).toHaveBeenCalledTimes(2);
     errorSpy.mockRestore();
   });
+
+  // ── calculator-v2 (Phase 1): VAT / Xero-invoicing answers and the review action ──
+
+  it('18. answers and intent are stored in leads.config and change neither price nor the proposal row', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        answers: { vatRegistered: false, xeroInvoicing: true },
+        intent: 'accept',
+      }),
+    );
+    expect(res.status).toBe(200);
+
+    const config = (leadInsert.mock.calls[0]![0] as Record<string, unknown>).config as Record<string, unknown>;
+    expect(config.answers).toEqual({ vatRegistered: false, xeroInvoicing: true });
+    expect(config.intent).toBe('accept');
+
+    // Same price and same stored services as without the answers.
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({ monthly_total_zar: 1550, services: ['accounting', 'payroll'] });
+    expect(propPayload).not.toHaveProperty('answers');
+    expect(propPayload).not.toHaveProperty('intent');
+  });
+
+  it('19. answers omitted — leads.config carries no answers or intent keys', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
+    expect(res.status).toBe(200);
+    const config = (leadInsert.mock.calls[0]![0] as Record<string, unknown>).config as Record<string, unknown>;
+    expect(config).not.toHaveProperty('answers');
+    expect(config).not.toHaveProperty('intent');
+  });
+
+  it('20. an unknown answer key or intent is rejected with 422, nothing persisted', async () => {
+    const bad = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, answers: { discount: true } }),
+    );
+    expect(bad.status).toBe(422);
+    const badIntent = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, intent: 'buy-now' }),
+    );
+    expect(badIntent.status).toBe(422);
+    expect(leadInsert).not.toHaveBeenCalled();
+  });
 });
