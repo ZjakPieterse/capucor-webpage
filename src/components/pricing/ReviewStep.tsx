@@ -54,7 +54,6 @@ export function ReviewStep({
         selectedBrackets={selectedBrackets}
         tierSlug={selectedTier}
         selectedAddons={selectedAddons}
-        mergeCore
       />
 
       <dl className="rounded-2xl border border-border bg-card/40 p-5 space-y-2 text-sm">
@@ -64,10 +63,6 @@ export function ReviewStep({
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-muted-foreground">{ANSWER_LABELS.vatRegistered}</dt>
           <dd className="font-medium">{yesNo(answers.vatRegistered)}</dd>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-muted-foreground">{ANSWER_LABELS.xeroInvoicing}</dt>
-          <dd className="font-medium">{yesNo(answers.xeroInvoicing)}</dd>
         </div>
       </dl>
 

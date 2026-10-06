@@ -19,7 +19,6 @@ export const CALCULATOR_STAGE_OF: Record<CalculatorStep, CalculatorStage> = {
   revenue: 1,
   transactions: 1,
   vat: 1,
-  invoicing: 1,
   payroll: 2,
   employees: 2,
   package: 3,
@@ -39,15 +38,11 @@ export const QUESTION_COPY = {
   },
   transactions: {
     title: 'How many transactions should be processed each month?',
-    hint: 'An average month of bank lines and journals, across all accounts. On Pro and Premium, where we process supplier bills, count those too.',
+    hint: 'One overall number for an average month: every bank line, supplier bill and journal we would process, across all your accounts.',
   },
   vat: {
     title: 'Is your business registered for VAT?',
     hint: 'This does not change your price.',
-  },
-  invoicing: {
-    title: 'Do you invoice your customers and track their payments in Xero?',
-    hint: 'This tells us how your sales side runs today. It does not change your price.',
   },
   payroll: {
     title: 'Do you need payroll services?',
@@ -62,22 +57,28 @@ export const QUESTION_COPY = {
 // Shown on the review step next to the answers that do not change the price.
 export const ANSWER_LABELS = {
   vatRegistered: 'Registered for VAT',
-  xeroInvoicing: 'Invoices and tracks payments in Xero',
 } as const;
 
 export const CORE_SERVICES_HEADING = 'Core services included';
 export const CORE_SERVICES_SUBHEADING =
   'Accounting and bookkeeping form the core of every package. Each package below builds on it.';
 
-// One line on the review step for accounting plus bookkeeping. Proposals still
-// store the two services separately; this only merges how they are shown.
-export const CORE_LINE_NAME = 'Accounting and bookkeeping';
-export const CORE_SERVICE_SLUGS = ['accounting', 'bookkeeping'] as const;
+// The merged core line ("Monthly accounting") and its slugs live in
+// lib/pricing.ts, shared with capucor-os, so every surface uses one name.
+
+// Revenue above R50m goes to a call (decision 2026-10-06): from the
+// "50 Mil – 75 Mil" band (accounting ordinal 13 in migration 002) upward.
+export const REVENUE_CALL_FROM_ORDINAL = 13;
+export const REVENUE_CALL_COPY = {
+  note: 'Above R50m in revenue, we start with a conversation so the package fits how your business runs.',
+  action: 'Book a call',
+  apiError: 'Businesses above R50m in revenue start with a call. Please book a call and we will prepare your proposal.',
+} as const;
 
 // Dext on Basic is software access only (decision 2026-10-06, add-ons v2):
 // Basic has no supplier processing, so the client does the Dext processing.
 export const DEXT_ACCESS_COPY = {
-  basicTitle: 'Dext with AI Assist: software access',
+  basicTitle: 'Dext with AI Assist',
   basicBody:
     'Capucor provides your Dext subscription, AI Assist included. You snap receipts and supplier bills and process them in Dext yourself. Basic does not include supplier processing.',
   includedTitle: 'Dext with AI Assist',

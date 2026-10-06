@@ -61,18 +61,17 @@ export type CalculatorStep =
   | 'revenue'
   | 'transactions'
   | 'vat'
-  | 'invoicing'
   | 'payroll'
   | 'employees'
   | 'package'
   | 'addons'
   | 'review';
 
-// Scope answers that change neither price nor scope in Phase 1. They travel to
+// Answers that change no price. VAT hides VAT201 from the schedule; payroll
+// decides whether the headcount is asked. They travel to
 // /api/proposals and are stored in leads.config for Capucor's reference.
 export interface CalculatorAnswers {
   vatRegistered: boolean | null;
-  xeroInvoicing: boolean | null;
   needsPayroll: boolean | null;
 }
 

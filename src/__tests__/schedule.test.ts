@@ -31,17 +31,17 @@ describe('cumulativeInclusions', () => {
 describe('buildFairUsage', () => {
   const brackets = [{ service_slug: 'bookkeeping', ordinal: 3, label: 'Up to 100' }];
 
-  it('counts bank lines and journals only on Basic', () => {
-    const [line] = buildFairUsage(['bookkeeping'], { bookkeeping: 3 }, brackets, 'basic');
-    expect(line!.allowance).toMatch(/bank lines and journals/);
-    expect(line!.allowance).not.toMatch(/bills/);
-    expect(line!.bracketLabel).toBe('Up to 100');
+  it('counts all transactions on every package, with one wording (decision 2026-10-06)', () => {
+    const allowances = ['basic', 'pro', 'premium', undefined].map(
+      (tier) => buildFairUsage(['bookkeeping'], { bookkeeping: 3 }, brackets, tier)[0]!.allowance,
+    );
+    expect(new Set(allowances).size).toBe(1);
+    expect(allowances[0]).toMatch(/bank line, invoice, supplier bill and journal/);
+    expect(allowances[0]).not.toMatch(/Basic/);
   });
 
-  it('counts supplier bills from Pro, and when no package is given', () => {
-    for (const tier of ['pro', 'premium', undefined]) {
-      const [line] = buildFairUsage(['bookkeeping'], { bookkeeping: 3 }, brackets, tier);
-      expect(line!.allowance).toMatch(/invoices, bills and journals/);
-    }
+  it('shows the band label in plain form (F17)', () => {
+    const [line] = buildFairUsage(['bookkeeping'], { bookkeeping: 3 }, brackets, 'basic');
+    expect(line!.bracketLabel).toBe('up to 100 transactions');
   });
 });

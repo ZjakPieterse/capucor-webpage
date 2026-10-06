@@ -33,7 +33,9 @@ import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { TIERS_BY_APPLICATION, tierDisplayName } from '@/config/tiers';
-import { effectiveAddons } from '@/lib/calculatorFlow';
+import { effectiveAddons, revenueNeedsCall } from '@/lib/calculatorFlow';
+import { coreServiceError } from '@/lib/pricing';
+import { REVENUE_CALL_COPY } from '@/config/calculatorCopy';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { renderCreatedProposalClientEmail, renderCreatedProposalOwnerText } from '@/lib/email/messages.mjs';
 
@@ -93,13 +95,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Monthly accounting (accounting plus bookkeeping) is in every package. The
+  // same check guards the staff amend form on capucor.app (F30).
+  const coreError = coreServiceError(input.services, input.brackets);
+  if (coreError) {
+    return NextResponse.json({ error: coreError, field: 'services' }, { status: 422 });
+  }
+
+  // Revenue above R50m starts with a call (decision 2026-10-06), like Premium.
+  if (revenueNeedsCall(input.brackets)) {
+    return NextResponse.json(
+      { error: REVENUE_CALL_COPY.apiError, field: 'brackets.accounting' },
+      { status: 422 },
+    );
+  }
+
   // The answers, not the client's add-on list, decide the answer-driven tokens:
-  // a Xero invoicing Yes adds the Xero plan charge (R 200.00 on Basic, folded
-  // into Accounting), a VAT No adds the flag that hides VAT201. Any such token
-  // the client sent is replaced.
+  // a VAT No adds the flag that hides VAT201. Any such token the client sent is
+  // replaced, which also strips the retired Xero invoicing charge.
   const addons = effectiveAddons(input.addons, {
     vatRegistered: input.answers?.vatRegistered ?? null,
-    xeroInvoicing: input.answers?.xeroInvoicing ?? null,
   });
 
   const admin = createSupabaseAdminClient();
@@ -135,9 +150,12 @@ export async function POST(req: NextRequest) {
           brackets: input.brackets,
           tier: input.tierSlug,
           addons: addonSlugs,
-          // Calculator-v2 answers (VAT, Xero invoicing) and the review-step
-          // action. Reference only in Phase 1: they change neither price nor scope.
-          ...(input.answers && { answers: input.answers }),
+          // The VAT answer (it also sets the not-VAT-registered flag above) and
+          // the review-step action, for Capucor's reference. A stale page may
+          // still send the withdrawn Xero-invoicing answer; it is not stored.
+          ...(input.answers?.vatRegistered !== undefined && {
+            answers: { vatRegistered: input.answers.vatRegistered },
+          }),
           ...(input.intent && { intent: input.intent }),
         },
         consent_given: true,

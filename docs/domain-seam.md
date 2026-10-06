@@ -46,9 +46,10 @@ already-sent emails were minted against capucor.app.
 
 - **`siteConfig.url` does not exist.** Use `siteConfig.marketingUrl` or `siteConfig.appUrl`
   (`src/config/site.ts`, overridable via `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL`).
-  **Both URLs are still needed here.** `appUrl` has three live consumers: the Navbar's Client
-  Portal CTA, the proposal page's "Sign in to your portal" link, and the portal invite in
-  `lib/portal/finalizeSign.ts`.
+  **Both URLs are still needed here.** `appUrl` has two live consumers: the Navbar's Client
+  Portal CTA and the `loginUrl` passed to the signed-client email in `lib/portal/fulfilment.ts`
+  (accepted and ignored since 2026-10-06, when new clients stopped being pointed at the portal
+  while it is sunset; the signing page and emails now say Zjak will be in touch).
 - **Links that cross domains must be absolute.** Everything pointing at capucor.app is now a
   cross-repo link — it can never be a relative route.
 - **Auth lives on capucor.app because a Supabase session cookie set on one eTLD+1 is unreachable

@@ -21,7 +21,9 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { POST } from '@/app/api/proposals/route';
 
-// Pro prices: accounting ordinal 1 = 950, payroll ordinal 1 = 600 → 1550 monthly
+// Pro prices: accounting ordinal 1 = 950, bookkeeping Dormant = 0, payroll
+// ordinal 1 = 600 → 1550 monthly. Bookkeeping is there because Monthly
+// accounting (accounting plus bookkeeping) is required on every proposal.
 const PRO_BRACKETS = [
   {
     service_slug: 'accounting',
@@ -30,6 +32,30 @@ const PRO_BRACKETS = [
     basic_price: 725,
     pro_price: 950,
     premium_price: 1525,
+  },
+  {
+    service_slug: 'bookkeeping',
+    ordinal: 0,
+    label: 'Dormant',
+    basic_price: 0,
+    pro_price: 0,
+    premium_price: 0,
+  },
+  {
+    service_slug: 'accounting',
+    ordinal: 13,
+    label: '50 Mil – 75 Mil',
+    basic_price: 3425,
+    pro_price: 4475,
+    premium_price: 7200,
+  },
+  {
+    service_slug: 'accounting',
+    ordinal: 12,
+    label: '45 Mil – 50 Mil',
+    basic_price: 3200,
+    pro_price: 4175,
+    premium_price: 6725,
   },
   {
     service_slug: 'payroll',
@@ -94,8 +120,8 @@ function mountAdmin() {
 }
 
 const validBody = {
-  services: ['accounting', 'payroll'],
-  brackets: { accounting: 1, payroll: 1 },
+  services: ['accounting', 'bookkeeping', 'payroll'],
+  brackets: { accounting: 1, bookkeeping: 0, payroll: 1 },
   tierSlug: 'pro',
   firstName: 'Pat',
   lastName: 'Patterson',
@@ -256,8 +282,8 @@ describe('POST /api/proposals', () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
-        services: ['bookkeeping'],
-        brackets: { bookkeeping: 0 },
+        services: ['accounting', 'bookkeeping'],
+        brackets: { accounting: 0, bookkeeping: 0 },
       }),
     );
     expect(res.status).toBe(422);
@@ -344,8 +370,8 @@ describe('POST /api/proposals', () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
-        services: ['bookkeeping'],
-        brackets: { bookkeeping: 0 },
+        services: ['accounting', 'bookkeeping'],
+        brackets: { accounting: 0, bookkeeping: 0 },
         addons: ['dext'],
       }),
     );
@@ -389,12 +415,13 @@ describe('POST /api/proposals', () => {
     expect(res.status).toBe(200);
 
     const config = (leadInsert.mock.calls[0]![0] as Record<string, unknown>).config as Record<string, unknown>;
-    expect(config.answers).toEqual({ vatRegistered: false, xeroInvoicing: true });
+    // The withdrawn Xero-invoicing answer is accepted from a stale page but not stored.
+    expect(config.answers).toEqual({ vatRegistered: false });
     expect(config.intent).toBe('accept');
 
     // Same price and same stored services as without the answers.
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect(propPayload).toMatchObject({ monthly_total_zar: 1550, services: ['accounting', 'payroll'] });
+    expect(propPayload).toMatchObject({ monthly_total_zar: 1550, services: ['accounting', 'bookkeeping', 'payroll'] });
     expect(propPayload).not.toHaveProperty('answers');
     expect(propPayload).not.toHaveProperty('intent');
   });
@@ -429,7 +456,7 @@ describe('POST /api/proposals', () => {
     expect(proposalInsert).not.toHaveBeenCalled();
   });
 
-  it('22. a Xero invoicing Yes on Basic adds R200 and stores the hidden add-on, even if the client omitted it', async () => {
+  it('22. the withdrawn Xero-invoicing answer adds nothing on Basic (decision 2026-10-06)', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
@@ -440,7 +467,66 @@ describe('POST /api/proposals', () => {
     );
     expect(res.status).toBe(200);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect(propPayload).toMatchObject({ addons: ['xero-invoicing'], monthly_total_zar: 1175 + 200 });
+    expect(propPayload).toMatchObject({ addons: [], monthly_total_zar: 1175 });
+  });
+
+  it('22b. a proposal without Monthly accounting is refused with 422, nothing persisted (F30)', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        services: ['accounting', 'payroll'],
+        brackets: { accounting: 1, payroll: 1 },
+      }),
+    );
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.field).toBe('services');
+    expect(body.error).toMatch(/Monthly accounting/);
+    expect(leadInsert).not.toHaveBeenCalled();
+    expect(proposalInsert).not.toHaveBeenCalled();
+  });
+
+  it('22c. revenue from "50 Mil – 75 Mil" upward goes to a call: 422, nothing persisted', async () => {
+    for (const tierSlug of ['basic', 'pro']) {
+      const res = await POST(
+        makeJsonRequest('http://test/api/proposals', {
+          ...validBody,
+          tierSlug,
+          brackets: { accounting: 13, bookkeeping: 0, payroll: 1 },
+        }),
+      );
+      expect(res.status).toBe(422);
+      const body = await res.json();
+      expect(body.field).toBe('brackets.accounting');
+      expect(body.error).toMatch(/above R50m/);
+    }
+    expect(leadInsert).not.toHaveBeenCalled();
+    expect(proposalInsert).not.toHaveBeenCalled();
+  });
+
+  it('22d. the band just below R50m stays self-serve', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        brackets: { accounting: 12, bookkeeping: 0, payroll: 1 },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload.monthly_total_zar).toBe(4175 + 600);
+  });
+
+  it('22e. the client and owner emails show one "Monthly accounting" line', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
+    expect(res.status).toBe(200);
+    const clientHtml = sendEmailMock.mock.calls[0]![0].message.html as string;
+    const ownerText = sendEmailMock.mock.calls[1]![0].message.text as string;
+    for (const body of [clientHtml, ownerText]) {
+      expect(body).toContain('Monthly accounting');
+      expect(body).toContain('R0 to R1m');
+      expect(body).not.toMatch(/>Accounting<|>Bookkeeping<|· Accounting|· Bookkeeping/);
+    }
+    expect(ownerText).toContain('Monthly accounting (R0 to R1m · no transactions): R 950');
   });
 
   it('23. a client cannot add the Xero charge or the VAT flag without the answers', async () => {

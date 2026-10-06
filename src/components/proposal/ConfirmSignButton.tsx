@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Loader2, Check, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { siteConfig } from '@/config/site';
 
 // The confirm page renders read-only; the actual signature commit happens on
 // this button's POST so an email link-scanner that prefetches the GET can't
-// auto-sign. On success we show the portal sign-in path.
+// auto-sign. On success we say Zjak will be in touch (no portal link).
 export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,23 +47,14 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
         </div>
         <p className="text-base font-semibold">That&rsquo;s signed</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          {completion.provisioned
-            ? 'Your acceptance is recorded and your client portal is ready.'
-            : 'Your acceptance is recorded. The Capucor team is finishing your portal setup and will be in touch shortly.'}
+          {/* No capucor.app portal link for new clients while the portal is
+              being sunset (decision 2026-10-06). Provisioning is unchanged. */}
+          Your acceptance is recorded. Zjak will be in touch shortly to set up your onboarding.
         </p>
         {completion.deliveryStatus === 'pending' && (
           <p className="mt-2 text-sm text-muted-foreground">
             We could not confirm delivery of the follow-up email, but your signed acceptance is safely recorded.
           </p>
-        )}
-        {completion.provisioned && (
-          <Button
-            nativeButton={false}
-            className="mt-5"
-            render={<Link href={`${siteConfig.appUrl}/login?next=/portal`} />}
-          >
-            Sign in to your portal
-          </Button>
         )}
       </div>
     );

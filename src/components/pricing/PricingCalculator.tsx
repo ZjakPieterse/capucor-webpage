@@ -4,7 +4,13 @@ import { Suspense, useState } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
 import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
-import { ANSWER_ADDON_SLUGS, effectiveAddons, questionPosition, scopeComplete } from '@/lib/calculatorFlow';
+import {
+  ANSWER_ADDON_SLUGS,
+  effectiveAddons,
+  questionPosition,
+  revenueNeedsCall,
+  scopeComplete,
+} from '@/lib/calculatorFlow';
 import { parseAddonToken } from '@/lib/pricing';
 import {
   CALCULATOR_STAGE_OF,
@@ -128,15 +134,15 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   };
 
   // Yes / No questions move straight on once answered.
-  const answerAndNext = (key: 'vatRegistered' | 'xeroInvoicing' | 'needsPayroll', value: boolean) => {
+  const answerAndNext = (key: 'vatRegistered' | 'needsPayroll', value: boolean) => {
     setAnswer(key, value);
     goNext();
     scrollToTop();
   };
 
   const { step, selectedBrackets, answers, selectedTier } = state;
-  // The visitor's add-ons plus the answer-driven ones (the Xero invoicing
-  // charge on Basic, the not-VAT-registered flag). Every total, the summary
+  // The visitor's add-ons plus the answer-driven one (the not-VAT-registered
+  // flag). Every total, the summary
   // and the proposal payload use this list.
   const pricedAddons = effectiveAddons(state.selectedAddons, answers);
   // The package, add-ons and review screens need a complete scope and (after
@@ -146,7 +152,10 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   // On the package step, once a package is tapped, phones get the bottom bar
   // with that package's price and a Continue button (the step is long at
   // 375 px). Only the answer-driven add-ons belong in that price, as on the card.
-  const showPackageBar = step === 'package' && pricedStepsReady && !!selectedTier;
+  // Above R50m in revenue every package goes to a call, so there is nothing to
+  // continue with.
+  const byCall = revenueNeedsCall(selectedBrackets);
+  const showPackageBar = step === 'package' && pricedStepsReady && !!selectedTier && !byCall;
   const packageAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
 
   const bracketValue = (slug: string) => {
@@ -172,13 +181,15 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             onBack={step === 'revenue' ? undefined : back}
             showFitCall
             fitCallPrompt={step === 'transactions' ? TRANSACTIONS_FIT_CALL_PROMPT : undefined}
+            // Payroll starts at a headcount: a payroll Yes with no employees is a
+            // fit call, so the "Dormant" band is not offered here (F18).
+            excludeLabels={step === 'employees' ? ['Dormant'] : undefined}
           />
         );
       }
       case 'vat':
-      case 'invoicing':
       case 'payroll': {
-        const key = step === 'vat' ? 'vatRegistered' : step === 'invoicing' ? 'xeroInvoicing' : 'needsPayroll';
+        const key = step === 'vat' ? 'vatRegistered' : 'needsPayroll';
         return (
           <YesNoQuestion
             copy={QUESTION_COPY[step]}
@@ -202,6 +213,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedTier={selectedTier}
             pricedAddons={pricedAddons}
             vatRegistered={answers.vatRegistered !== false}
+            byCall={byCall}
             onTierSelect={setTier}
             onBack={back}
             onNext={next}

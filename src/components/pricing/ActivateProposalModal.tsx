@@ -46,7 +46,7 @@ interface ActivateProposalModalProps {
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
   selectedAddons?: string[];
-  /** VAT and Xero-invoicing answers, stored with the lead for reference. */
+  /** VAT and payroll answers; the VAT answer is stored with the lead. */
   answers: CalculatorAnswers;
   /** Called after a proposal is successfully created — marks the flow complete. */
   onSuccess: () => void;
@@ -132,7 +132,6 @@ export function ActivateProposalModal({
       addons: selectedAddons,
       answers: {
         ...(answers.vatRegistered !== null && { vatRegistered: answers.vatRegistered }),
-        ...(answers.xeroInvoicing !== null && { xeroInvoicing: answers.xeroInvoicing }),
       },
       intent: mode,
       firstName: values.firstName,
@@ -239,7 +238,6 @@ export function ActivateProposalModal({
               selectedBrackets={selectedBrackets}
               tierSlug={selectedTier ?? ''}
               selectedAddons={selectedAddons}
-              mergeCore
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

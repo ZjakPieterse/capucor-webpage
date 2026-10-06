@@ -110,7 +110,7 @@ export default async function ConfirmSignPage({
 }
 
 function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signed' | 'error' }) {
-  const copy: Record<typeof reason, { title: string; body: string; showLogin?: boolean }> = {
+  const copy: Record<typeof reason, { title: string; body: string }> = {
     invalid: {
       title: 'Confirmation link not recognised',
       body: 'This confirmation link is not valid. It may already have been used. Open your proposal again and re-sign to get a fresh link.',
@@ -121,27 +121,25 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
     },
     signed: {
       title: 'Already signed',
-      body: 'This proposal has already been signed. You can sign in to your client portal any time.',
-      showLogin: true,
+      body: 'This proposal has already been signed. Zjak will be in touch to set up your onboarding.',
     },
     error: {
       title: 'Something went wrong',
       body: 'We could not load this confirmation. Please try again in a moment.',
     },
   };
-  const { title, body, showLogin } = copy[reason];
+  const { title, body } = copy[reason];
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{body}</p>
-      <Button
-        nativeButton={false}
-        className="mt-6"
-        render={<Link href={showLogin ? '/login?next=/portal' : '/pricing'} />}
-      >
-        {showLogin ? 'Sign in to your portal' : 'Build your plan'}
-      </Button>
+      {/* A signed proposal needs nothing more from the visitor. */}
+      {reason !== 'signed' && (
+        <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
+          Build your plan
+        </Button>
+      )}
     </div>
   );
 }

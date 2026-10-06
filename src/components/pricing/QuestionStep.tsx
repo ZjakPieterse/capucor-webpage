@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { formatBandLabel } from '@/lib/pricing';
 import { siteConfig } from '@/config/site';
 import { FIT_CALL_PROMPT, type QuestionCopy } from '@/config/calculatorCopy';
 import type { Bracket } from '@/types';
@@ -89,11 +90,19 @@ function QuestionShell({
   );
 }
 
+// Band labels in plain form (F17): "R10m to R15m", "Up to 200 transactions".
+// The rows in brackets.label are unchanged.
+function optionLabel(b: Pick<Bracket, 'service_slug' | 'label'>): string {
+  const label = formatBandLabel(b.service_slug, b.label) ?? b.label;
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 interface BracketQuestionProps extends Omit<ShellProps, 'children' | 'canProceed'> {
   serviceSlug: string;
   brackets: Bracket[];
   value: number | undefined;
   onChange: (value: number) => void;
+  /** Bracket labels not offered on this screen (e.g. "Dormant" for employees). */
+  excludeLabels?: string[];
 }
 
 export function BracketQuestion({
@@ -101,10 +110,11 @@ export function BracketQuestion({
   brackets,
   value,
   onChange,
+  excludeLabels = [],
   ...shell
 }: BracketQuestionProps) {
   const options = brackets
-    .filter((b) => b.service_slug === serviceSlug && !b.is_enterprise)
+    .filter((b) => b.service_slug === serviceSlug && !b.is_enterprise && !excludeLabels.includes(b.label))
     .sort((a, b) => a.display_order - b.display_order);
   const isSet = typeof value === 'number';
 
@@ -114,7 +124,7 @@ export function BracketQuestion({
         <Select
           value={isSet ? String(value) : ''}
           onValueChange={(val) => onChange(Number(val))}
-          items={Object.fromEntries(options.map((b) => [String(b.ordinal), b.label]))}
+          items={Object.fromEntries(options.map((b) => [String(b.ordinal), optionLabel(b)]))}
         >
           <SelectTrigger
             size="default"
@@ -129,7 +139,7 @@ export function BracketQuestion({
           <SelectContent align="start">
             {options.map((bracket) => (
               <SelectItem key={bracket.id} value={String(bracket.ordinal)}>
-                {bracket.label}
+                {optionLabel(bracket)}
               </SelectItem>
             ))}
           </SelectContent>
