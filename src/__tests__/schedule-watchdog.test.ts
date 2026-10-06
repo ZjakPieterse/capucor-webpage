@@ -241,3 +241,44 @@ describe('this repo is wired into the watchdog', () => {
     expect(onDisk).toEqual(declaredHere);
   });
 });
+
+describe('⚠️ an `event` entry is asked whether it FIRED, not whether it succeeded', () => {
+  // The only such entry is watchdog.yml watching its own schedule, and its
+  // scheduled run executes this very check. Asking "did it succeed" there is a
+  // latch: once any other step kept the schedule red for maxAgeDays, every later
+  // scheduled run failed on its own staleness, which only a successful scheduled
+  // run could clear. capucor-webpage sat red 2026-09-15 → 10-06 that way with
+  // every schedule firing on time.
+  const self = { ...declared, file: 'watchdog.yml', event: 'schedule' };
+
+  it('passes on a recent FAILED scheduled run, so the watchdog cannot latch itself red', () => {
+    const r = check({
+      declared: self,
+      newestSuccess: runAt('2026-07-15T02:00:00Z'),
+      newestFired: runAt('2026-08-06T02:00:00Z', 'failure'),
+    });
+    expect(r.ok).toBe(true);
+    expect(r.reason).toMatch(/last fired 0\.4 days ago/);
+  });
+
+  it('still fails when the schedule has not fired inside the window', () => {
+    const r = check({ declared: self, newestFired: runAt('2026-08-01T02:00:00Z', 'failure') });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/last fired 5\.4 days ago/);
+  });
+
+  it('fails when the schedule has never fired', () => {
+    const r = check({ declared: self, newestSuccess: null, newestFired: null, newestRun: null });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/never fired on its schedule trigger/);
+  });
+
+  it('an entry WITHOUT `event` still needs a success — a failing cron is not a running cron', () => {
+    const r = check({
+      newestSuccess: runAt('2026-08-01T02:00:00Z'),
+      newestFired: runAt('2026-08-06T02:00:00Z', 'failure'),
+    });
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/last succeeded 5\.4 days ago/);
+  });
+});
