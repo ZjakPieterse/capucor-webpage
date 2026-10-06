@@ -21,10 +21,30 @@ describe('cumulativeInclusions', () => {
 
   it('accumulates up the packages: Premium carries Pro and Basic items', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
-    expect(premium).toContain('Quarterly performance review');
-    expect(premium).toContain('Supplier processing & review');
-    expect(premium).toContain('On-call partner support');
-    expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier processing & review');
+    expect(premium).toContain('Monthly 5-Minute Video Explainer');
+    expect(premium).toContain('Supplier Processing & Review');
+    expect(premium).toContain('On-Call Partner Support');
+    expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier Processing & Review');
+  });
+
+  it('keeps one rhythm, report and review per schedule: the highest package wins', () => {
+    const premium = cumulativeInclusions(CORE, 'premium');
+    expect(premium.filter((t) => t.startsWith('Processing Rhythm'))).toEqual(['Processing Rhythm: Daily']);
+    expect(premium).not.toContain('Quarterly Performance Review');
+    expect(premium).not.toContain('Monthly Performance Review');
+    expect(premium).toContain('Weekly Reports & Review');
+    const pro = cumulativeInclusions(CORE, 'pro');
+    expect(pro).toContain('Monthly Insights Report');
+    expect(pro).not.toContain('Monthly Basic Reports');
+    expect(pro.filter((t) => t.startsWith('Processing Rhythm'))).toEqual(['Processing Rhythm: Weekly']);
+  });
+
+  it('leaves out the card summary line and never mentions Dext', () => {
+    for (const tier of ['basic', 'pro', 'premium']) {
+      const items = cumulativeInclusions(CORE, tier);
+      expect(items).not.toContain('Core Services Included');
+      expect(items.join(' ')).not.toMatch(/dext/i);
+    }
   });
 });
 

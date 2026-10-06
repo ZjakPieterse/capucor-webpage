@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, CornerDownRight, Layers } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { commonItemIcon } from "@/components/pricing/commonItemIcons";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -7,14 +7,10 @@ import { SectionDivider } from "@/components/ui/SectionDivider";
 import { cn } from "@/lib/utils";
 import {
   TIER_HIGHLIGHTS,
-  TIER_CUMULATIVE_LABELS,
   PACKAGE_COMMON_ITEMS,
   TIER_BUYER_FIT,
-  TIER_RHYTHM_LABELS,
-  TIERS_BY_APPLICATION,
 } from "@/config/tiers";
-import { PREMIUM_APPLY_COPY } from "@/config/calculatorCopy";
-import { siteConfig } from "@/config/site";
+import { TIER_NUDGES } from "@/config/calculatorCopy";
 import type { Service, Tier } from "@/types";
 
 interface PackagesTeaserProps {
@@ -97,9 +93,7 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
           {sortedTiers.map((tier, i) => {
             const isMiddle = i === 1;
             const displayItems = getDisplayItems(tier.slug);
-            const cumulativeLabel = TIER_CUMULATIVE_LABELS[tier.slug];
-            const CumulativeIcon =
-              tier.slug === "basic" ? Layers : CornerDownRight;
+            const nudge = TIER_NUDGES[tier.slug];
 
             return (
               <ScrollReveal key={tier.slug} delay={i * 0.1}>
@@ -119,11 +113,6 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
 
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-1">{tier.name}</h3>
-                    {TIER_RHYTHM_LABELS[tier.slug] && (
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-                        {TIER_RHYTHM_LABELS[tier.slug]}
-                      </p>
-                    )}
                     {TIER_BUYER_FIT[tier.slug] ? (
                       <p className="text-sm text-muted-foreground">
                         {TIER_BUYER_FIT[tier.slug]}
@@ -135,11 +124,11 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
                     ) : null}
                   </div>
 
-                  {cumulativeLabel && (
+                  {nudge && (
                     <div className="mb-4">
-                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1 w-fit">
-                        <CumulativeIcon className="h-3.5 w-3.5 text-primary shrink-0" />
-                        {cumulativeLabel}
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/15 rounded-full px-2.5 py-1 w-fit">
+                        <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                        {nudge}
                       </div>
                     </div>
                   )}
@@ -157,25 +146,14 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
                   </ul>
 
                   <div className="mt-6 flex justify-center">
-                    {/* Premium is sold by booking a call (Phase 0), so its
-                        link goes to the booking page, not the calculator. */}
-                    {TIERS_BY_APPLICATION.includes(tier.slug) ? (
-                      <a
-                        href={siteConfig.links.booking}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="premium-button inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-all"
-                      >
-                        {PREMIUM_APPLY_COPY.action} →
-                      </a>
-                    ) : (
-                      <Link
-                        href="/pricing"
-                        className="premium-button inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-all"
-                      >
-                        Build your subscription →
-                      </Link>
-                    )}
+                    {/* Every package, Premium included, starts in the
+                        calculator (tweaks round 1: no Book a call on Premium). */}
+                    <Link
+                      href="/pricing"
+                      className="premium-button inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-all"
+                    >
+                      Build your subscription →
+                    </Link>
                   </div>
                 </div>
               </ScrollReveal>

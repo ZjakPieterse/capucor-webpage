@@ -13,7 +13,7 @@ import { ProposalSummary } from './ProposalSummary';
 import type { ProposalAction } from './ReviewStep';
 import { z } from 'zod';
 import { ProposalRequestSchema } from '@/lib/validations';
-import { clearPricingDraft } from '@/hooks/usePricingState';
+import { PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
 import type { Bracket, BracketValue, CalculatorAnswers, Service, Tier } from '@/types';
 
 const FormSchema = z.object({
@@ -36,6 +36,8 @@ interface ActivateProposalModalProps {
   /**
    * 'send' emails the proposal (valid 7 days) and shows a confirmation.
    * 'accept' makes the same call, then opens the returned proposalUrl to sign.
+   * 'request' (Premium, sold by application) sends Capucor a request; no
+   * proposal is created and Capucor follows up.
    */
   mode: ProposalAction;
   onOpenChange: (open: boolean) => void;
@@ -67,7 +69,9 @@ export function ActivateProposalModal({
   onSuccess,
 }: ActivateProposalModalProps) {
   const isAccept = mode === 'accept';
+  const isRequest = mode === 'request';
   const [serverError, setServerError] = useState<string | null>(null);
+  const [requested, setRequested] = useState(false);
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
   const [delivery, setDelivery] = useState<ProposalDelivery | null>(null);
@@ -103,6 +107,7 @@ export function ActivateProposalModal({
   function handleOpenChange(next: boolean) {
     if (!next) {
       setDelivery(null);
+      setRequested(false);
       setRedirecting(false);
       setServerError(null);
       setConsentGiven(false);
@@ -157,8 +162,11 @@ export function ActivateProposalModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Could not send your proposal. Please try again.');
 
-      clearPricingDraft();
       onSuccess();
+      if (isRequest) {
+        setRequested(true);
+        return;
+      }
       if (isAccept && typeof data.proposalUrl === 'string') {
         // Accept: open the proposal to sign now. The visitor leaves the page,
         // so the modal stays on its submitting state rather than a success panel.
@@ -179,7 +187,20 @@ export function ActivateProposalModal({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-lg">
-        {delivery ? (
+        {requested ? (
+          <div className="py-2 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <MailCheck className="h-7 w-7" />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-center text-lg">{PREMIUM_REQUEST_COPY.doneTitle}</DialogTitle>
+              <DialogDescription className="text-center">{PREMIUM_REQUEST_COPY.doneBody}</DialogDescription>
+            </DialogHeader>
+            <Button className="mt-6 w-full" onClick={() => handleOpenChange(false)}>
+              Done
+            </Button>
+          </div>
+        ) : delivery ? (
           <div className="py-2 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
               <MailCheck className="h-7 w-7" />
@@ -222,9 +243,13 @@ export function ActivateProposalModal({
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             <DialogHeader>
-              <DialogTitle className="text-lg">{isAccept ? 'Accept your proposal' : 'Get your proposal'}</DialogTitle>
+              <DialogTitle className="text-lg">
+                {isRequest ? PREMIUM_REQUEST_COPY.modalTitle : isAccept ? 'Accept your proposal' : 'Get your proposal'}
+              </DialogTitle>
               <DialogDescription>
-                {isAccept
+                {isRequest
+                  ? PREMIUM_REQUEST_COPY.modalBody
+                  : isAccept
                   ? 'Add your details and we’ll open your proposal to sign now. A copy is emailed to you. No payment required to get started.'
                   : 'Tell us where to send it. We’ll email you a proposal to review and sign within 7 days. No payment required to get started.'}
               </DialogDescription>
@@ -238,6 +263,7 @@ export function ActivateProposalModal({
               selectedBrackets={selectedBrackets}
               tierSlug={selectedTier ?? ''}
               selectedAddons={selectedAddons}
+              totalLabel={isRequest ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -328,11 +354,15 @@ export function ActivateProposalModal({
                 {isSubmitting || redirecting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isAccept ? 'Preparing your proposal...' : 'Sending your proposal...'}
+                    {isRequest
+                      ? PREMIUM_REQUEST_COPY.submitting
+                      : isAccept
+                        ? 'Preparing your proposal...'
+                        : 'Sending your proposal...'}
                   </>
                 ) : (
                   <>
-                    {isAccept ? 'Accept and sign' : 'Email me my proposal'}
+                    {isRequest ? PREMIUM_REQUEST_COPY.submit : isAccept ? 'Accept and sign' : 'Email me my proposal'}
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -341,7 +371,9 @@ export function ActivateProposalModal({
 
             <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
               <Check className="h-3 w-3 text-primary" />
-              {isAccept
+              {isRequest
+                ? 'No payment and no commitment'
+                : isAccept
                 ? 'You sign on the next page. No payment yet.'
                 : 'Review and sign at your own pace · cancel any time with 30 days’ notice'}
             </p>

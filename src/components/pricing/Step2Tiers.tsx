@@ -1,11 +1,11 @@
 'use client';
 
-import { CalendarClock, Check, CornerDownRight, Layers, Minus, Plus } from 'lucide-react';
+import { CalendarClock, Check, Plus, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
-import { RiskReducerStrip } from './RiskReducerStrip';
+import { CoreServicesPanel } from './CoreServicesPanel';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
@@ -13,19 +13,11 @@ import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { siteConfig } from '@/config/site';
 import {
   TIER_HIGHLIGHTS,
-  TIER_CUMULATIVE_LABELS,
   TIER_BUYER_FIT,
-  TIER_RHYTHM_LABELS,
   TIERS_BY_APPLICATION,
   packageCommonItemsFor,
 } from '@/config/tiers';
-import {
-  BASIC_SUPPLIER_NOTE,
-  CORE_SERVICES_HEADING,
-  CORE_SERVICES_SUBHEADING,
-  PREMIUM_APPLY_COPY,
-  REVENUE_CALL_COPY,
-} from '@/config/calculatorCopy';
+import { REVENUE_CALL_COPY, TIER_NUDGES } from '@/config/calculatorCopy';
 import type { Bracket, Service, Tier, BracketValue, Testimonial } from '@/types';
 
 interface Step2TiersProps {
@@ -72,18 +64,13 @@ export function Step2Tiers({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-1">Choose your processing rhythm</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-1">Choose your package</h2>
         <p className="text-sm text-muted-foreground">
-          Every package includes the core services. The packages differ in how often we process your
-          books, report and review with you. No lock-in contracts.
+          Every package includes the core services. They differ in how often we process, report and review.
         </p>
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold mb-1">{CORE_SERVICES_HEADING}</h3>
-        <p className="text-xs text-muted-foreground mb-3">{CORE_SERVICES_SUBHEADING}</p>
-        <RiskReducerStrip items={packageCommonItemsFor(vatRegistered)} />
-      </div>
+      <CoreServicesPanel items={packageCommonItemsFor(vatRegistered)} />
 
       {byCall && (
         <div
@@ -124,18 +111,13 @@ export function Step2Tiers({
           const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
             item.services.some((s) => selectedServices.has(s))
           );
-          const cumulativeLabel = TIER_CUMULATIVE_LABELS[tier.slug];
-          const CumulativeIcon = tier.slug === 'basic' ? Layers : CornerDownRight;
-          const rhythm = TIER_RHYTHM_LABELS[tier.slug];
+          const nudge = TIER_NUDGES[tier.slug];
 
           const rows = (
             <>
-              {/* Row 1: Header (Title, rhythm & buyer fit) */}
+              {/* Row 1: Header (name and buyer fit) */}
               <div className="pricing-card-header mb-4 flex flex-col justify-start">
                 <div className="font-bold text-lg tracking-tight text-foreground">{tier.name}</div>
-                {rhythm && (
-                  <div className="mt-1 text-xs font-semibold uppercase tracking-wider text-primary">{rhythm}</div>
-                )}
                 {(TIER_BUYER_FIT[tier.slug] ?? tier.tagline) && (
                   <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                     {TIER_BUYER_FIT[tier.slug] ?? tier.tagline}
@@ -164,22 +146,28 @@ export function Step2Tiers({
                 </span>
               </div>
 
-              {/* Row 3: Cumulative additions label */}
+              {/* Row 3: Nudge pill (tweaks round 1); the row is kept for subgrid alignment */}
               <div className="pricing-card-cumulative mb-3 flex items-center min-h-[1.75rem]">
-                {cumulativeLabel ? (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1 w-fit">
-                    <CumulativeIcon className="h-3.5 w-3.5 text-primary shrink-0" />
-                    {cumulativeLabel}
+                {nudge ? (
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-2.5 py-1 w-fit',
+                      tier.slug === 'pro'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-primary bg-primary/10 border border-primary/15'
+                    )}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    {nudge}
                   </div>
                 ) : (
-                  // Invisible placeholder to occupy track space in subgrid layout
                   <div className="h-0 w-0 pointer-events-none opacity-0" aria-hidden="true" />
                 )}
               </div>
 
-              {/* Row 4: Features list (and, for Premium, the booking action) */}
+              {/* Row 4: Features list */}
               <div className="pricing-card-features flex-grow flex flex-col gap-5">
-                {(filteredItems.length > 0 || tier.slug === 'basic') && (
+                {filteredItems.length > 0 && (
                   <ul className="space-y-2.5">
                     {filteredItems.map((item) => (
                       <li key={item.text} className="flex items-start gap-2.5 text-xs">
@@ -187,38 +175,14 @@ export function Step2Tiers({
                         <span className="text-muted-foreground leading-normal">{item.text}</span>
                       </li>
                     ))}
-                    {/* Basic has no supplier processing (Phase 0 inclusions). */}
-                    {tier.slug === 'basic' && (
-                      <li className="flex items-start gap-2.5 text-xs">
-                        <Minus className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
-                        <span className="text-muted-foreground leading-normal">{BASIC_SUPPLIER_NOTE}</span>
-                      </li>
-                    )}
                   </ul>
-                )}
-                {byApplication && (
-                  <div className="mt-auto space-y-2">
-                    <p className="text-xs text-muted-foreground leading-relaxed">{PREMIUM_APPLY_COPY.note}</p>
-                    <Button
-                      nativeButton={false}
-                      variant="outline"
-                      className="w-full gap-2"
-                      render={
-                        <a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />
-                      }
-                    >
-                      <CalendarClock className="h-4 w-4" />
-                      {PREMIUM_APPLY_COPY.action}
-                    </Button>
-                  </div>
                 )}
               </div>
             </>
           );
 
-          // A package sold by application is not selectable here, and above
-          // R50m in revenue no package is.
-          if (byApplication || byCall) {
+          // Above R50m in revenue no package is selectable.
+          if (byCall) {
             return (
               <div
                 key={tier.slug}
@@ -261,24 +225,6 @@ export function Step2Tiers({
         })}
       </div>
 
-      <TierComparison
-        tiers={tiers}
-        brackets={brackets}
-        selectedServices={selectedServices}
-        selectedBrackets={selectedBrackets}
-        selectedAddons={answerAddons}
-        vatRegistered={vatRegistered}
-      />
-
-      {testimonial && (
-        <div className="pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-            From a Capucor client
-          </p>
-          <TestimonialSpotlight testimonial={testimonial} />
-        </div>
-      )}
-
       <div className="flex items-center justify-between gap-3 pt-2">
         <Button variant="outline" onClick={onBack}>
           ← Back
@@ -302,6 +248,26 @@ export function Step2Tiers({
           </Button>
         )}
       </div>
+
+      {/* Below the buttons and open by default (tweaks round 1). */}
+      <TierComparison
+        tiers={tiers}
+        brackets={brackets}
+        selectedServices={selectedServices}
+        selectedBrackets={selectedBrackets}
+        selectedAddons={answerAddons}
+        vatRegistered={vatRegistered}
+        defaultOpen
+      />
+
+      {testimonial && (
+        <div className="pt-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+            From a Capucor client
+          </p>
+          <TestimonialSpotlight testimonial={testimonial} />
+        </div>
+      )}
     </div>
   );
 }

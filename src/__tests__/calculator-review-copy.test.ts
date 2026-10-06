@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { questionPosition } from '@/lib/calculatorFlow';
 import { RHYTHM_ROWS } from '@/config/calculatorCopy';
 import { FEES_NOTES } from '@/config/proposalTerms';
 import { TIER_HIGHLIGHTS, TIER_ORDER } from '@/config/tiers';
@@ -23,9 +22,9 @@ describe('comparison table rhythm rows (F03)', () => {
   });
 
   it('shows processing as one value per package, not cumulative ticks', () => {
-    const processing = RHYTHM_ROWS.find((r) => r.label === 'Transaction processing');
+    const processing = RHYTHM_ROWS.find((r) => r.label === 'Processing rhythm');
     expect(processing?.values).toEqual({ basic: 'Monthly', pro: 'Weekly', premium: 'Daily' });
-    expect(processing?.replaces).toEqual(['Transactions processed monthly', 'Transactions processed weekly', 'Transactions processed daily']);
+    expect(processing?.replaces).toEqual(['Processing Rhythm: Monthly', 'Processing Rhythm: Weekly', 'Processing Rhythm: Daily']);
     const review = RHYTHM_ROWS.find((r) => r.label === 'Performance review');
     expect(review?.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' });
   });
@@ -39,11 +38,3 @@ describe('fee notes (F04)', () => {
   });
 });
 
-describe('question position line (F32)', () => {
-  it('counts the payroll questions like the business ones', () => {
-    expect(questionPosition('revenue')).toBe('Your business · 1 of 3');
-    expect(questionPosition('vat')).toBe('Your business · 3 of 3');
-    expect(questionPosition('payroll')).toBe('Payroll · 1 of 2');
-    expect(questionPosition('employees')).toBe('Payroll · 2 of 2');
-  });
-});

@@ -4,54 +4,17 @@
 
 import type { CalculatorStep } from '@/types';
 
-// The five progress stages, in order. Each wizard screen belongs to one.
-export const CALCULATOR_STAGES = [
-  { number: 1, label: 'Your business' },
-  { number: 2, label: 'Payroll' },
-  { number: 3, label: 'Package' },
-  { number: 4, label: 'Add-ons' },
-  { number: 5, label: 'Review' },
-] as const;
-
-export type CalculatorStage = (typeof CALCULATOR_STAGES)[number]['number'];
-
-export const CALCULATOR_STAGE_OF: Record<CalculatorStep, CalculatorStage> = {
-  revenue: 1,
-  transactions: 1,
-  vat: 1,
-  payroll: 2,
-  employees: 2,
-  package: 3,
-  addons: 4,
-  review: 5,
-};
-
+// One plain question per screen: no eyebrow, no hint (tweaks round 1, 2026-10-06).
 export interface QuestionCopy {
   title: string;
-  hint: string;
 }
 
 export const QUESTION_COPY = {
-  revenue: {
-    title: 'What is your annual revenue?',
-    hint: 'Your turnover over the last twelve months, or what you expect this year if you are new.',
-  },
-  transactions: {
-    title: 'How many transactions should be processed each month?',
-    hint: 'One overall number for an average month: every bank line, supplier bill and journal we would process, across all your accounts.',
-  },
-  vat: {
-    title: 'Is your business registered for VAT?',
-    hint: 'This does not change your price.',
-  },
-  payroll: {
-    title: 'Do you need payroll services?',
-    hint: 'Payslips, EMP201 and EMP501 submissions, UIF and the annual COIDA return.',
-  },
-  employees: {
-    title: 'How many active employees?',
-    hint: 'Everyone paid through payroll in an average month.',
-  },
+  revenue: { title: 'What is your annual revenue?' },
+  transactions: { title: 'How many transactions should be processed each month?' },
+  vat: { title: 'Is your business registered for VAT?' },
+  payroll: { title: 'Do you need payroll services?' },
+  employees: { title: 'How many active employees?' },
 } satisfies Partial<Record<CalculatorStep, QuestionCopy>>;
 
 // Shown on the review step next to the answers that do not change the price.
@@ -59,9 +22,16 @@ export const ANSWER_LABELS = {
   vatRegistered: 'Registered for VAT',
 } as const;
 
-export const CORE_SERVICES_HEADING = 'Core services included';
-export const CORE_SERVICES_SUBHEADING =
-  'Accounting and bookkeeping form the core of every package. Each package below builds on it.';
+export const CORE_SERVICES_HEADING = 'Core services';
+export const CORE_SERVICES_BADGE = 'In every package';
+
+// The pill under each package's price: a nudge, not a cumulative label
+// (tweaks round 1, 2026-10-06).
+export const TIER_NUDGES: Record<string, string> = {
+  basic: 'A solid start',
+  pro: 'Most chosen',
+  premium: 'For fast-moving businesses',
+};
 
 // The merged core line ("Monthly accounting") and its slugs live in
 // lib/pricing.ts, shared with capucor-os, so every surface uses one name.
@@ -75,24 +45,13 @@ export const REVENUE_CALL_COPY = {
   apiError: 'Businesses above R50m in revenue start with a call. Please book a call and we will prepare your proposal.',
 } as const;
 
-// Dext on Basic is software access only (decision 2026-10-06, add-ons v2):
-// Basic has no supplier processing, so the client does the Dext processing.
-export const DEXT_ACCESS_COPY = {
-  basicTitle: 'Dext with AI Assist',
-  basicBody:
-    'Capucor provides your Dext subscription, AI Assist included. You snap receipts and supplier bills and process them in Dext yourself. Basic does not include supplier processing.',
-  includedTitle: 'Dext with AI Assist',
-  includedBody:
-    'Included in your package. Snap receipts and supplier bills in the Dext app and we process them into your books.',
-} as const;
-
 export const FIT_CALL_PROMPT = 'Only need payroll, or not sure what fits?';
 // The transactions list stops at 1,500 a month; above that is a conversation.
 export const TRANSACTIONS_FIT_CALL_PROMPT = 'More than 1,500 a month?';
 
-// Page heading and intro above the stepper on /pricing.
+// Page heading and the one promise above the progress bar on /pricing.
 export const PRICING_PAGE_HEADING = 'See your monthly price';
-export const PRICING_PAGE_INTRO = 'About a minute, one question at a time. No call needed.';
+export const PRICING_PAGE_INTRO = 'A few minutes to a price.';
 
 // The packages differ by rhythm, so the side-by-side table shows these rows
 // as a value per package instead of cumulative ticks (a tick for Premium on
@@ -108,10 +67,10 @@ export interface RhythmRow {
 
 export const RHYTHM_ROWS: RhythmRow[] = [
   {
-    label: 'Transaction processing',
+    label: 'Processing rhythm',
     tooltip: 'How often we process what is available. Bank statements are still requested at every monthly close.',
     values: { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' },
-    replaces: ['Transactions processed monthly', 'Transactions processed weekly', 'Transactions processed daily'],
+    replaces: ['Processing Rhythm: Monthly', 'Processing Rhythm: Weekly', 'Processing Rhythm: Daily'],
   },
   {
     label: 'Reports',
@@ -121,23 +80,29 @@ export const RHYTHM_ROWS: RhythmRow[] = [
       pro: 'Monthly insights report and 5-minute video',
       premium: 'Weekly reports',
     },
-    replaces: ['Basic monthly reports', 'Monthly insights report', 'Monthly 5-min video explainer'],
+    replaces: ['Monthly Basic Reports', 'Monthly Insights Report', 'Monthly 5-Minute Video Explainer'],
   },
   {
     label: 'Performance review',
     tooltip: 'A review with you of how the business is performing and what needs attention.',
     values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
-    replaces: ['Quarterly performance review', 'Monthly performance review', 'Weekly reports & review'],
+    replaces: ['Quarterly Performance Review', 'Monthly Performance Review', 'Weekly Reports & Review'],
   },
 ];
 
-// Shown on the Basic card (Phase 0 inclusions: Basic has no supplier
-// processing). Web-only for now; move into TIER_HIGHLIGHTS in tiers.ts at the
-// next paired change.
-export const BASIC_SUPPLIER_NOTE = 'Supplier bills are not processed. Dext access is available as an add-on.';
-
-// Premium is sold by booking a call (decision 2026-10-06, Phase 0).
-export const PREMIUM_APPLY_COPY = {
-  note: 'Premium starts with a conversation, so we can confirm the daily rhythm fits your business.',
-  action: 'Book a call',
+// Premium is sold by application (decision 2026-10-06, Phase 0). The
+// calculator ends in a request (tweaks round 1): no signable proposal, and
+// Capucor follows up.
+export const PREMIUM_REQUEST_COPY = {
+  reviewTitle: 'Request Premium',
+  reviewBody:
+    'Premium starts with a short conversation, so we can confirm the daily rhythm fits your business and finalise your price. Send your details and we will be in touch within one business day.',
+  action: 'Request Premium',
+  modalTitle: 'Request Premium',
+  modalBody: 'Add your details and we will be in touch within one business day to set up a short call. No payment and no commitment.',
+  submit: 'Send my request',
+  submitting: 'Sending your request...',
+  doneTitle: 'Request received',
+  doneBody: 'Thank you. We will be in touch within one business day to set up a short call about Premium.',
+  priceLabel: 'Estimated monthly charge, from',
 } as const;

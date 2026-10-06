@@ -1,12 +1,15 @@
 'use client';
 
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, CalendarClock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProposalSummary } from './ProposalSummary';
-import { ANSWER_LABELS } from '@/config/calculatorCopy';
+import { ANSWER_LABELS, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
+import { TIERS_BY_APPLICATION } from '@/config/tiers';
 import type { Bracket, BracketValue, CalculatorAnswers, Service, Tier } from '@/types';
 
-export type ProposalAction = 'send' | 'accept';
+// 'request' is for a package sold by application (Premium): Capucor follows
+// up and no signable proposal is created (tweaks round 1, 2026-10-06).
+export type ProposalAction = 'send' | 'accept' | 'request';
 
 interface ReviewStepProps {
   services: Service[];
@@ -37,12 +40,16 @@ export function ReviewStep({
   onBack,
   onAction,
 }: ReviewStepProps) {
+  const byApplication = TIERS_BY_APPLICATION.includes(selectedTier);
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h2 className="text-xl sm:text-2xl font-semibold mb-1.5">Review your subscription</h2>
         <p className="text-sm text-muted-foreground">
-          Check the details, then accept now or have the proposal emailed to you.
+          {byApplication
+            ? 'Check the details, then send your request.'
+            : 'Check the details, then accept now or have the proposal emailed to you.'}
         </p>
       </div>
 
@@ -54,6 +61,7 @@ export function ReviewStep({
         selectedBrackets={selectedBrackets}
         tierSlug={selectedTier}
         selectedAddons={selectedAddons}
+        totalLabel={byApplication ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
       />
 
       <p className="text-xs text-muted-foreground leading-relaxed">
@@ -70,32 +78,45 @@ export function ReviewStep({
         </div>
       </dl>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      {byApplication ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 flex flex-col gap-3">
           <div>
-            <p className="font-semibold text-sm">Ready to start</p>
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              We create your proposal and open it for you to sign now. A copy is emailed to you.
-            </p>
+            <p className="font-semibold text-sm">{PREMIUM_REQUEST_COPY.reviewTitle}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{PREMIUM_REQUEST_COPY.reviewBody}</p>
           </div>
-          <Button onClick={() => onAction('accept')} className="mt-auto gap-2 cta-armed">
-            Accept
-            <ArrowRight className="h-4 w-4" />
+          <Button onClick={() => onAction('request')} className="gap-2 cta-armed sm:self-start">
+            <CalendarClock className="h-4 w-4" />
+            {PREMIUM_REQUEST_COPY.action}
           </Button>
         </div>
-        <div className="rounded-2xl border border-border bg-card/40 p-4 flex flex-col gap-3">
-          <div>
-            <p className="font-semibold text-sm">Want to think it over</p>
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              We email the proposal to you. Review and sign it within 7 days.
-            </p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 flex flex-col gap-3">
+            <div>
+              <p className="font-semibold text-sm">Ready to start</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                We create your proposal and open it for you to sign now. A copy is emailed to you.
+              </p>
+            </div>
+            <Button onClick={() => onAction('accept')} className="mt-auto gap-2 cta-armed">
+              Accept
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
-          <Button variant="outline" onClick={() => onAction('send')} className="mt-auto gap-2">
-            <Mail className="h-4 w-4" />
-            Send proposal
-          </Button>
+          <div className="rounded-2xl border border-border bg-card/40 p-4 flex flex-col gap-3">
+            <div>
+              <p className="font-semibold text-sm">Want to think it over</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                We email the proposal to you. Review and sign it within 7 days.
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => onAction('send')} className="mt-auto gap-2">
+              <Mail className="h-4 w-4" />
+              Send proposal
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <p className="text-[11px] text-muted-foreground text-center">
         No payment needed yet · cancel any time with 30 days&apos; notice

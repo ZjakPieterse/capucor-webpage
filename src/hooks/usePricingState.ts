@@ -1,16 +1,21 @@
 'use client';
 
-import { startTransition, useCallback, useEffect, useState } from 'react';
-import { readPricingDraft } from '@/lib/pricingDraft';
-import { FIRST_STEP, canProceed, deriveServices, nextStep, prevStep } from '@/lib/calculatorFlow';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  FIRST_STEP,
+  canProceed,
+  deriveServices,
+  nextStep,
+  prevStep,
+  revertStepFields,
+} from '@/lib/calculatorFlow';
 import { addonToken, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
 
-// Bumped to v4 for the calculator-v2 wizard: one screen per question, named
-// steps instead of 1 | 2, and the VAT and payroll answers (the Xero-invoicing
-// answer was withdrawn on 2026-10-06).
-// v3 drafts carry a numeric step and no answers, which no longer fit the shape.
-const STORAGE_KEY = 'capucor.pricing.draft.v4';
+// Drafts were kept in browser storage until tweaks round 1 (2026-10-06): the
+// calculator now remembers nothing across a refresh, Back to another page or a
+// new visit. The keys are still cleared so no old draft lingers.
+const LEGACY_STORAGE_KEYS = ['capucor.pricing.draft.v4', 'capucor.pricing.draft.v3'];
 
 const EMPTY_ANSWERS: CalculatorAnswers = {
   vatRegistered: null,
@@ -58,143 +63,127 @@ function seededState(seed: PricingSeed): PricingState {
   };
 }
 
-function persistToStorage(state: PricingState) {
+/** Removes any draft an earlier version of the calculator left behind. */
+export function clearPricingDraft() {
   if (typeof window === 'undefined') return;
-  try {
-    window.sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        step: state.step,
-        selectedServices: [...state.selectedServices],
-        selectedBrackets: state.selectedBrackets,
-        answers: state.answers,
-        selectedTier: state.selectedTier,
-        selectedAddons: state.selectedAddons,
-      })
-    );
-  } catch {
-    /* quota exceeded, private mode, etc. — silent */
+  for (const key of LEGACY_STORAGE_KEYS) {
+    try {
+      window.sessionStorage.removeItem(key);
+      window.localStorage.removeItem(key);
+    } catch {
+      /* Storage may be unavailable; nothing to clear. */
+    }
   }
 }
 
-export function clearPricingDraft() {
-  if (typeof window === 'undefined') return;
-  try {
-    window.sessionStorage.removeItem(STORAGE_KEY);
-    window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
+// `entry` is the selection as it stood when the current screen was entered.
+// Back restores the current screen's own value from it, so only what the
+// visitor confirmed with Continue (or a Yes / No tap) is kept.
+interface Box {
+  current: PricingState;
+  entry: PricingState;
 }
 
 export function usePricingState(seed?: PricingSeed) {
-  // Start identically on server and client, then restore after hydration.
-  const [state, setState] = useState<PricingState>(() =>
-    seed ? seededState(seed) : DEFAULT_STATE
-  );
+  const [box, setBox] = useState<Box>(() => {
+    const initial = seed ? seededState(seed) : DEFAULT_STATE;
+    return { current: initial, entry: initial };
+  });
+  const state = box.current;
 
   // True once the details modal has been submitted and a proposal created.
-  // Lights every stage of the stepper. Not persisted; any change clears it.
+  // Fills the progress bar. Any change clears it.
   const [completed, setCompleted] = useState(false);
-  const [draftLoaded, setDraftLoaded] = useState(false);
-
-  // sessionStorage survives refresh and same-tab navigation, but ends when
-  // the tab closes. An explicit proposal seed always takes precedence.
-  useEffect(() => {
-    let draft: PricingState | null = null;
-    try {
-      window.localStorage.removeItem(STORAGE_KEY); // Retire unread long-lived drafts.
-    } catch {
-      /* Legacy storage cleanup must not prevent session restoration. */
-    }
-    try {
-      if (!seed) draft = readPricingDraft(window.sessionStorage.getItem(STORAGE_KEY));
-    } catch {
-      /* Storage may be unavailable; the calculator still works. */
-    }
-    startTransition(() => {
-      if (draft) setState(draft);
-      setDraftLoaded(true);
-    });
-  }, [seed]);
 
   useEffect(() => {
-    if (draftLoaded) persistToStorage(state);
-  }, [state, draftLoaded]);
+    clearPricingDraft();
+  }, []);
+
+  // Changes on the current screen; `entry` is untouched.
+  const update = useCallback((fn: (s: PricingState) => PricingState) => {
+    setCompleted(false);
+    setBox((b) => ({ ...b, current: fn(b.current) }));
+  }, []);
 
   const markCompleted = useCallback(() => setCompleted(true), []);
 
-  // Continue: advance only when the current screen is answered.
+  // Continue: advance only when the current screen is answered. What the
+  // visitor chose here is now confirmed.
   const goNext = useCallback(() => {
-    setState((s) => (canProceed(s.step, s) ? { ...s, step: nextStep(s.step, s) } : s));
+    setBox((b) => {
+      const s = b.current;
+      if (!canProceed(s.step, s)) return b;
+      const next = { ...s, step: nextStep(s.step, s) };
+      return { current: next, entry: next };
+    });
   }, []);
 
-  // Back keeps every answer, the package and the add-ons, so returning
-  // forward shows the visitor's choices as they left them.
+  // Back drops this screen's unconfirmed change, then keeps every confirmed
+  // answer, so returning forward shows the choices as the visitor left them.
   const goBack = useCallback(() => {
     setCompleted(false);
-    setState((s) => ({ ...s, step: prevStep(s.step, s) }));
+    setBox((b) => {
+      const reverted = revertStepFields(b.current, b.entry, b.current.step);
+      const prev = { ...reverted, step: prevStep(reverted.step, reverted) };
+      return { current: prev, entry: prev };
+    });
   }, []);
 
   // Bracket questions (revenue, transactions, employees). Core is mandatory,
   // so there is no "Not required" value here.
-  const setBracket = useCallback((slug: string, value: number) => {
-    setCompleted(false);
-    setState((s) => {
-      const selectedBrackets = { ...s.selectedBrackets, [slug]: value };
-      return {
+  const setBracket = useCallback(
+    (slug: string, value: number) =>
+      update((s) => {
+        const selectedBrackets = { ...s.selectedBrackets, [slug]: value };
+        return { ...s, selectedBrackets, selectedServices: deriveServices(selectedBrackets, s.answers) };
+      }),
+    [update]
+  );
+
+  const setAnswer = useCallback(
+    <K extends keyof CalculatorAnswers>(key: K, value: boolean) =>
+      update((s) => {
+        const answers = { ...s.answers, [key]: value };
+        return { ...s, answers, selectedServices: deriveServices(s.selectedBrackets, answers) };
+      }),
+    [update]
+  );
+
+  const setTier = useCallback((tierSlug: string) => update((s) => ({ ...s, selectedTier: tierSlug })), [update]);
+
+  // Add-ons are stored as tokens ("whatsapp-support", "personal-tax:2");
+  // toggling works by slug and starts a per-unit add-on at a count of 1.
+  const toggleAddon = useCallback(
+    (addonSlug: string) =>
+      update((s) => {
+        const has = s.selectedAddons.some((t) => parseAddonToken(t).slug === addonSlug);
+        return {
+          ...s,
+          selectedAddons: has
+            ? s.selectedAddons.filter((t) => parseAddonToken(t).slug !== addonSlug)
+            : [...s.selectedAddons, addonToken(addonSlug, 1)],
+        };
+      }),
+    [update]
+  );
+
+  const setAddonQuantity = useCallback(
+    (addonSlug: string, quantity: number) =>
+      update((s) => ({
         ...s,
-        selectedBrackets,
-        selectedServices: deriveServices(selectedBrackets, s.answers),
-      };
-    });
-  }, []);
-
-  const setAnswer = useCallback(<K extends keyof CalculatorAnswers>(key: K, value: boolean) => {
-    setCompleted(false);
-    setState((s) => {
-      const answers = { ...s.answers, [key]: value };
-      return {
-        ...s,
-        answers,
-        selectedServices: deriveServices(s.selectedBrackets, answers),
-      };
-    });
-  }, []);
-
-  const setTier = useCallback((tierSlug: string) => {
-    setCompleted(false);
-    setState((s) => ({ ...s, selectedTier: tierSlug }));
-  }, []);
-
-  // Add-ons are stored as tokens ("dext", "personal-tax:2"); toggling works by
-  // slug and starts a per-unit add-on at a count of 1.
-  const toggleAddon = useCallback((addonSlug: string) => {
-    setCompleted(false);
-    setState((s) => {
-      const has = s.selectedAddons.some((t) => parseAddonToken(t).slug === addonSlug);
-      return {
-        ...s,
-        selectedAddons: has
-          ? s.selectedAddons.filter((t) => parseAddonToken(t).slug !== addonSlug)
-          : [...s.selectedAddons, addonToken(addonSlug, 1)],
-      };
-    });
-  }, []);
-
-  const setAddonQuantity = useCallback((addonSlug: string, quantity: number) => {
-    setCompleted(false);
-    setState((s) => ({
-      ...s,
-      selectedAddons: [
-        ...s.selectedAddons.filter((t) => parseAddonToken(t).slug !== addonSlug),
-        addonToken(addonSlug, Math.max(1, Math.round(quantity))),
-      ],
-    }));
-  }, []);
+        selectedAddons: [
+          ...s.selectedAddons.filter((t) => parseAddonToken(t).slug !== addonSlug),
+          addonToken(addonSlug, Math.max(1, Math.round(quantity))),
+        ],
+      })),
+    [update]
+  );
 
   const setStep = useCallback((step: CalculatorStep) => {
-    setState((s) => ({ ...s, step }));
+    setBox((b) => {
+      const at = { ...b.current, step };
+      return { current: at, entry: at };
+    });
   }, []);
 
   return {

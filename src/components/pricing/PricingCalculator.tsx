@@ -7,14 +7,12 @@ import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
 import {
   ANSWER_ADDON_SLUGS,
   effectiveAddons,
-  questionPosition,
+  progressFraction,
   revenueNeedsCall,
   scopeComplete,
 } from '@/lib/calculatorFlow';
 import { parseAddonToken } from '@/lib/pricing';
 import {
-  CALCULATOR_STAGE_OF,
-  CALCULATOR_STAGES,
   PRICING_PAGE_HEADING,
   PRICING_PAGE_INTRO,
   QUESTION_COPY,
@@ -23,7 +21,7 @@ import {
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
-import { StepIndicator } from './StepIndicator';
+import { CalculatorProgress } from './CalculatorProgress';
 import { BracketQuestion, YesNoQuestion } from './QuestionStep';
 import { Step2Tiers } from './Step2Tiers';
 import { AddonsStep } from './AddonsStep';
@@ -172,7 +170,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         return (
           <BracketQuestion
             copy={QUESTION_COPY[step]}
-            position={questionPosition(step)}
             serviceSlug={slug}
             brackets={brackets}
             value={bracketValue(slug)}
@@ -193,7 +190,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         return (
           <YesNoQuestion
             copy={QUESTION_COPY[step]}
-            position={questionPosition(step)}
             value={answers[key]}
             onAnswer={(v) => answerAndNext(key, v)}
             onNext={next}
@@ -256,7 +252,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   return (
     <MotionConfig reducedMotion="user">
       <PageCursorGlow>
-        {/* Merged entry + steps — eyebrow and StepIndicator sit at the top of the calculator section */}
+        {/* Heading, one promise and a single progress bar (tweaks round 1) */}
         <section
           id="pricing-summary"
           className="premium-section relative pt-14 lg:pt-20 pb-4 lg:pb-6"
@@ -265,11 +261,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             <div className="mb-6 text-center">
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{PRICING_PAGE_HEADING}</h1>
               <p className="mt-1.5 text-sm text-muted-foreground">{PRICING_PAGE_INTRO}</p>
-              <p className="mt-4 text-xs font-medium uppercase tracking-widest text-primary">
-                {CALCULATOR_STAGES.length} steps to your proposal
-              </p>
             </div>
-            <StepIndicator currentStep={CALCULATOR_STAGE_OF[step]} completed={completed} />
+            <CalculatorProgress value={progressFraction(step, state, completed)} />
             <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">
               <AnimatePresence mode="wait">
                 <motion.div

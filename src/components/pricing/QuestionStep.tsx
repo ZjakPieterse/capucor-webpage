@@ -22,8 +22,6 @@ import type { Bracket } from '@/types';
 
 interface ShellProps {
   copy: QuestionCopy;
-  /** "Question 2 of 4" within the current stage. */
-  position: string;
   canProceed: boolean;
   onNext: () => void;
   /** Omitted on the first screen. */
@@ -36,7 +34,6 @@ interface ShellProps {
 
 function QuestionShell({
   copy,
-  position,
   canProceed,
   onNext,
   onBack,
@@ -46,13 +43,8 @@ function QuestionShell({
 }: ShellProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">
-          {position}
-        </p>
-        <h2 className="text-xl sm:text-2xl font-semibold mb-1.5">{copy.title}</h2>
-        <p className="text-sm text-muted-foreground">{copy.hint}</p>
-      </div>
+      {/* The question alone: no eyebrow, no hint (tweaks round 1). */}
+      <h2 className="text-xl sm:text-2xl font-semibold">{copy.title}</h2>
 
       {children}
 
@@ -129,16 +121,22 @@ export function BracketQuestion({
           <SelectTrigger
             size="default"
             aria-label={shell.copy.title}
+            // Larger and calmer than the default trigger (tweaks round 1): a
+            // 56 px tap target, base-size text and a bigger chevron.
             className={cn(
-              'scope-trigger w-full h-11 text-sm',
-              isSet ? 'is-set' : 'border-border bg-background/60'
+              'scope-trigger w-full data-[size=default]:h-14 rounded-xl border-2 pl-4 pr-3.5 text-base shadow-sm [&_svg:not([class*=size-])]:size-5',
+              isSet ? 'is-set font-medium' : 'border-border bg-background/60'
             )}
           >
-            <SelectValue placeholder="Select a range…" />
+            <SelectValue placeholder="Choose a range" />
           </SelectTrigger>
-          <SelectContent align="start">
+          <SelectContent align="start" className="max-h-80 rounded-xl p-1.5">
             {options.map((bracket) => (
-              <SelectItem key={bracket.id} value={String(bracket.ordinal)}>
+              <SelectItem
+                key={bracket.id}
+                value={String(bracket.ordinal)}
+                className="rounded-lg py-2.5 pl-3 pr-9 text-base"
+              >
                 {optionLabel(bracket)}
               </SelectItem>
             ))}

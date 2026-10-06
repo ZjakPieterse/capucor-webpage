@@ -17,6 +17,11 @@
  *      an opaque token. Both go through the service-role admin client.
  *   5. Email the proposal link to the client + a reference copy to the owner.
  *
+ * A package sold by application (Premium) takes intent 'request' instead:
+ * steps 1 to 4 run as above (pricing included, as an estimate for Capucor),
+ * the lead is stored with source 'call', Capucor is told by email, and no
+ * proposal row is created (tweaks round 1, 2026-10-06).
+ *
  * The client reviews and signs at /proposal/<token>. Signing is the debit-order
  * mandate and triggers portal provisioning (PR9, in /api/proposals/sign) — there
  * is no on-site payment step; collection is set up manually via Paysoft Flow.
@@ -34,10 +39,15 @@ import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { TIERS_BY_APPLICATION, tierDisplayName } from '@/config/tiers';
 import { effectiveAddons, revenueNeedsCall } from '@/lib/calculatorFlow';
-import { coreServiceError } from '@/lib/pricing';
+import { coreServiceError, parseAddonToken } from '@/lib/pricing';
+import { formatZAR } from '@/lib/utils';
 import { REVENUE_CALL_COPY } from '@/config/calculatorCopy';
 import { sendEmail } from '@/lib/email/sendEmail';
-import { renderCreatedProposalClientEmail, renderCreatedProposalOwnerText } from '@/lib/email/messages.mjs';
+import {
+  renderCreatedProposalClientEmail,
+  renderCreatedProposalOwnerText,
+  renderLeadOwnerText,
+} from '@/lib/email/messages.mjs';
 
 const PROPOSAL_TTL_DAYS = 7;
 
@@ -83,14 +93,22 @@ export async function POST(req: NextRequest) {
 
   const input = parsed.data;
 
-  // Premium is sold by booking a call (calculator-v2 Phase 0). Staff can still
-  // prepare a Premium proposal on capucor.app.
-  if (TIERS_BY_APPLICATION.includes(input.tierSlug)) {
+  // Premium is sold by application (calculator-v2 Phase 0): the calculator
+  // sends a request, never a proposal. Staff can still prepare a Premium
+  // proposal on capucor.app. A request is only for such a package.
+  const byApplication = TIERS_BY_APPLICATION.includes(input.tierSlug);
+  if (byApplication && input.intent !== 'request') {
     return NextResponse.json(
       {
-        error: `${tierDisplayName(input.tierSlug)} starts with a call. Please book a call and we will prepare your proposal.`,
+        error: `${tierDisplayName(input.tierSlug)} starts with a call. Please send a request and we will be in touch.`,
         field: 'tierSlug',
       },
+      { status: 422 },
+    );
+  }
+  if (!byApplication && input.intent === 'request') {
+    return NextResponse.json(
+      { error: 'This package can be accepted or emailed to you directly.', field: 'intent' },
       { status: 422 },
     );
   }
@@ -113,7 +131,10 @@ export async function POST(req: NextRequest) {
   // The answers, not the client's add-on list, decide the answer-driven tokens:
   // a VAT No adds the flag that hides VAT201. Any such token the client sent is
   // replaced, which also strips the retired Xero invoicing charge.
-  const addons = effectiveAddons(input.addons, {
+  // Dext is no longer offered (tweaks round 1, 2026-10-06), so a stale page
+  // cannot add it; proposals already carrying the token still price as sent.
+  const offeredAddons = input.addons.filter((t) => parseAddonToken(t).slug !== 'dext');
+  const addons = effectiveAddons(offeredAddons, {
     vatRegistered: input.answers?.vatRegistered ?? null,
   });
 
@@ -141,7 +162,7 @@ export async function POST(req: NextRequest) {
     const { data: leadRow, error: leadErr } = await admin
       .from('leads')
       .insert({
-        source: 'proposal',
+        source: byApplication ? 'call' : 'proposal',
         name: fullName,
         business: input.businessName,
         email: input.email,
@@ -157,6 +178,7 @@ export async function POST(req: NextRequest) {
             answers: { vatRegistered: input.answers.vatRegistered },
           }),
           ...(input.intent && { intent: input.intent }),
+          ...(byApplication && { estimatedMonthlyZAR: monthlyTotalZAR }),
         },
         consent_given: true,
         consent_timestamp: nowIso,
@@ -171,6 +193,40 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error('[PROPOSALS] lead insert error:', err);
     return NextResponse.json({ error: 'Could not save your details. Please try again.' }, { status: 500 });
+  }
+
+  // A Premium request ends here: tell Capucor, create no proposal.
+  if (byApplication) {
+    const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
+    const fields = {
+      source: 'call',
+      name: fullName,
+      email: input.email,
+      business: input.businessName,
+      message: `${tierDisplayName(input.tierSlug)} request from the calculator. Estimated from ${formatZAR(monthlyTotalZAR)} a month.`,
+      config: { services: input.services, brackets: input.brackets, tier: input.tierSlug, addons: addonSlugs },
+    };
+    if (ownerEmail && leadId) {
+      const delivery = await sendEmail({
+        sourceType: 'lead',
+        sourceId: leadId,
+        eventType: 'lead.owner_notification',
+        idempotencyKey: `capucor_web_lead_owner_${leadId}`,
+        adminClient: admin,
+        message: {
+          from: siteConfig.email.senderWebsite,
+          to: ownerEmail,
+          subject: `${tierDisplayName(input.tierSlug)} request: ${input.businessName}`,
+          text: renderLeadOwnerText(fields),
+        },
+      });
+      if (delivery.errorCode === 'missing_api_key') {
+        console.log(`[PREMIUM REQUEST] business=${input.businessName} email=${input.email}`);
+      }
+    } else {
+      console.log(`[PREMIUM REQUEST] business=${input.businessName} email=${input.email}`);
+    }
+    return NextResponse.json({ ok: true, requested: true });
   }
 
   const token = generateOpaqueToken();

@@ -52,11 +52,22 @@ export function cumulativeInclusions(
     if (!SERVICE_TIED_TEXTS.has(item.text)) out.push(item.text);
   }
 
+  // A card summary line ("Core Services Included") is not a schedule item: the
+  // core items are listed above. Within a group (rhythm, reports, review) a
+  // higher package's item replaces the lower one, so a Premium schedule says
+  // "Processing Rhythm: Daily" once, not monthly, weekly and daily.
   const maxRank = tierRank(tierSlug);
+  const groupAt = new Map<string, number>();
   for (const tier of TIER_ORDER) {
     if (tierRank(tier) > maxRank) break;
     for (const h of TIER_HIGHLIGHTS[tier] ?? []) {
-      if (h.services.some((s) => sel.has(s))) out.push(h.text);
+      if (h.summary || !h.services.some((s) => sel.has(s))) continue;
+      if (h.group && groupAt.has(h.group)) {
+        out[groupAt.get(h.group)!] = h.text;
+        continue;
+      }
+      if (h.group) groupAt.set(h.group, out.length);
+      out.push(h.text);
     }
   }
 

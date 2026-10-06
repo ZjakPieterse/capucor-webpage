@@ -80,8 +80,10 @@ export const ProposalRequestSchema = z.object({
     .strict()
     .optional(),
   // Which review-step action created the proposal: 'send' emails it, 'accept'
-  // also opens it to sign. Stored with the lead; the route behaves the same.
-  intent: z.enum(['send', 'accept']).optional(),
+  // also opens it to sign; both are stored with the lead and behave the same.
+  // 'request' is the only action for a package sold by application (Premium):
+  // the route stores a lead and tells Capucor, and creates no proposal.
+  intent: z.enum(['send', 'accept', 'request']).optional(),
   // Contact
   firstName: z.string().min(1, 'First name is required').max(80),
   lastName: z.string().min(1, 'Surname is required').max(80),
