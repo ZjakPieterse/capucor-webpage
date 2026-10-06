@@ -9,22 +9,22 @@ const CORE = ['accounting', 'bookkeeping'];
 
 describe('cumulativeInclusions', () => {
   it('lists VAT201 by default, so proposals stored before the VAT flag are unchanged', () => {
-    expect(cumulativeInclusions(CORE, 'basic')).toContain('VAT Returns (VAT201)');
-    expect(cumulativeInclusions(CORE, 'basic', ['dext'])).toContain('VAT Returns (VAT201)');
+    expect(cumulativeInclusions(CORE, 'basic')).toContain('VAT returns (VAT201)');
+    expect(cumulativeInclusions(CORE, 'basic', ['dext'])).toContain('VAT returns (VAT201)');
   });
 
   it('drops VAT201, and nothing else, when the proposal carries the not-VAT-registered flag', () => {
     const withVat = cumulativeInclusions(CORE, 'pro', ['dext']);
     const noVat = cumulativeInclusions(CORE, 'pro', ['dext', 'not-vat-registered']);
-    expect(noVat).toEqual(withVat.filter((t) => t !== 'VAT Returns (VAT201)'));
+    expect(noVat).toEqual(withVat.filter((t) => t !== 'VAT returns (VAT201)'));
   });
 
   it('accumulates up the packages: Premium carries Pro and Basic items', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
-    expect(premium).toContain('Quarterly Performance Review');
-    expect(premium).toContain('Supplier Processing & Review');
-    expect(premium).toContain('On-call Partner Support');
-    expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier Processing & Review');
+    expect(premium).toContain('Quarterly performance review');
+    expect(premium).toContain('Supplier processing & review');
+    expect(premium).toContain('On-call partner support');
+    expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier processing & review');
   });
 });
 

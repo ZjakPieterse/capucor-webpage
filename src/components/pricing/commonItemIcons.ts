@@ -13,13 +13,13 @@ import {
 // VAT-filtered list keeps the right icons. Used by the pricing-page strip and
 // the homepage "Included in every package" strip.
 const ICONS: Record<string, LucideIcon> = {
-  'Your Own Accountant': Users,
-  'Xero Software Included': Cloud,
-  'SARS & CIPC Compliance': ShieldCheck,
-  'Annual Financial Statements': FileText,
-  'VAT Returns (VAT201)': Receipt,
-  'Bookkeeping & Monthly Close': Layers,
-  'Year-round Support': CalendarCheck,
+  'Your own accountant': Users,
+  'Xero software included': Cloud,
+  'SARS & CIPC compliance': ShieldCheck,
+  'Annual financial statements': FileText,
+  'VAT returns (VAT201)': Receipt,
+  'Bookkeeping & monthly close': Layers,
+  'Year-round support': CalendarCheck,
 };
 
 export function commonItemIcon(text: string): LucideIcon {

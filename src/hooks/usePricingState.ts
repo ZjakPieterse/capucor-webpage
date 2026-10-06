@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
+import { readPricingDraft } from '@/lib/pricingDraft';
 import { FIRST_STEP, canProceed, deriveServices, nextStep, prevStep } from '@/lib/calculatorFlow';
 import { addonToken, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
@@ -60,7 +61,7 @@ function seededState(seed: PricingSeed): PricingState {
 function persistToStorage(state: PricingState) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         step: state.step,
@@ -79,6 +80,7 @@ function persistToStorage(state: PricingState) {
 export function clearPricingDraft() {
   if (typeof window === 'undefined') return;
   try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {
     /* ignore */
@@ -86,8 +88,7 @@ export function clearPricingDraft() {
 }
 
 export function usePricingState(seed?: PricingSeed) {
-  // Lazy initialiser: when seeded the calculator starts from that selection;
-  // otherwise every visit starts blank (see below).
+  // Start identically on server and client, then restore after hydration.
   const [state, setState] = useState<PricingState>(() =>
     seed ? seededState(seed) : DEFAULT_STATE
   );
@@ -95,15 +96,31 @@ export function usePricingState(seed?: PricingSeed) {
   // True once the details modal has been submitted and a proposal created.
   // Lights every stage of the stepper. Not persisted; any change clears it.
   const [completed, setCompleted] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
-  // Every visit to /pricing starts blank: the hook never reads the stored
-  // draft on init (it starts from DEFAULT_STATE, or the seed), and the
-  // first persist overwrites any prior draft. Moving between screens doesn't
-  // unmount this hook, so answers survive Back and Continue; only fresh
-  // navigation or refresh resets them.
+  // sessionStorage survives refresh and same-tab navigation, but ends when
+  // the tab closes. An explicit proposal seed always takes precedence.
   useEffect(() => {
-    persistToStorage(state);
-  }, [state]);
+    let draft: PricingState | null = null;
+    try {
+      window.localStorage.removeItem(STORAGE_KEY); // Retire unread long-lived drafts.
+    } catch {
+      /* Legacy storage cleanup must not prevent session restoration. */
+    }
+    try {
+      if (!seed) draft = readPricingDraft(window.sessionStorage.getItem(STORAGE_KEY));
+    } catch {
+      /* Storage may be unavailable; the calculator still works. */
+    }
+    startTransition(() => {
+      if (draft) setState(draft);
+      setDraftLoaded(true);
+    });
+  }, [seed]);
+
+  useEffect(() => {
+    if (draftLoaded) persistToStorage(state);
+  }, [state, draftLoaded]);
 
   const markCompleted = useCallback(() => setCompleted(true), []);
 

@@ -56,6 +56,10 @@ export function ReviewStep({
         selectedAddons={selectedAddons}
       />
 
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        If your business grows, extra transactions cost R200 per 25 and each employee above your band costs R75 a month, trued up at the quarterly review. Catch-up for the 3 months before you accept is included.
+      </p>
+
       <dl className="rounded-2xl border border-border bg-card/40 p-5 space-y-2 text-sm">
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
           About your business
