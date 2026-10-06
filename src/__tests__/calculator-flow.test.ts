@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   canProceed,
   deriveServices,
+  effectiveAddons,
   mergeCoreLines,
   nextStep,
   prevStep,
@@ -129,5 +130,29 @@ describe('mergeCoreLines', () => {
   it('leaves the lines alone when core is incomplete', () => {
     const partial = lines.filter((l) => l.slug !== 'bookkeeping');
     expect(mergeCoreLines(partial)).toBe(partial);
+  });
+});
+
+describe('effectiveAddons (answers decide the hidden add-ons)', () => {
+  it('a Xero invoicing Yes adds the Xero plan charge; a VAT No adds the VAT flag', () => {
+    expect(effectiveAddons(['dext'], { vatRegistered: false, xeroInvoicing: true })).toEqual([
+      'dext',
+      'xero-invoicing',
+      'not-vat-registered',
+    ]);
+  });
+
+  it('adds neither for VAT Yes and Xero No, or for unanswered questions', () => {
+    expect(effectiveAddons(['dext'], { vatRegistered: true, xeroInvoicing: false })).toEqual(['dext']);
+    expect(effectiveAddons([], { vatRegistered: null, xeroInvoicing: null })).toEqual([]);
+  });
+
+  it('replaces any hidden token the visitor list carries, so only the answers count', () => {
+    expect(
+      effectiveAddons(['xero-invoicing', 'not-vat-registered', 'personal-tax:2'], {
+        vatRegistered: true,
+        xeroInvoicing: false,
+      }),
+    ).toEqual(['personal-tax:2']);
   });
 });

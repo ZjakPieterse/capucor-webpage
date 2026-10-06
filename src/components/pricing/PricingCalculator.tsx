@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
 import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
-import { scopeComplete } from '@/lib/calculatorFlow';
+import { effectiveAddons, scopeComplete } from '@/lib/calculatorFlow';
 import { CALCULATOR_STAGE_OF, CALCULATOR_STAGES, QUESTION_COPY } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
@@ -96,6 +96,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     setAnswer,
     setTier,
     toggleAddon,
+    setAddonQuantity,
     canProceedCurrent,
   } = usePricingState(seed);
 
@@ -133,6 +134,10 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   };
 
   const { step, selectedBrackets, answers, selectedTier } = state;
+  // The visitor's add-ons plus the answer-driven ones (the Xero invoicing
+  // charge on Basic, the not-VAT-registered flag). Every total, the summary
+  // and the proposal payload use this list.
+  const pricedAddons = effectiveAddons(state.selectedAddons, answers);
   // The package, add-ons and review screens need a complete scope and (after
   // the package step) a package. Normal navigation guarantees both.
   const pricedStepsReady = scopeComplete(state);
@@ -188,6 +193,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedServices={state.selectedServices}
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
+            pricedAddons={pricedAddons}
+            vatRegistered={answers.vatRegistered !== false}
             onTierSelect={setTier}
             onBack={back}
             onNext={next}
@@ -202,7 +209,9 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
             selectedAddons={state.selectedAddons}
+            pricedAddons={pricedAddons}
             onToggleAddon={toggleAddon}
+            onSetQuantity={setAddonQuantity}
             onBack={back}
             onNext={next}
           />
@@ -216,7 +225,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedServices={state.selectedServices}
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
-            selectedAddons={state.selectedAddons}
+            selectedAddons={pricedAddons}
             answers={answers}
             onBack={back}
             onAction={openModal}
@@ -271,7 +280,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedServices={state.selectedServices}
             selectedBrackets={selectedBrackets}
             selectedTierSlug={selectedTier}
-            selectedAddons={state.selectedAddons}
+            selectedAddons={pricedAddons}
             tiers={tiers}
             brackets={brackets}
             summaryAnchorId="pricing-summary"
@@ -282,7 +291,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedServices={state.selectedServices}
             selectedBrackets={selectedBrackets}
             selectedTierSlug={selectedTier}
-            selectedAddons={state.selectedAddons}
+            selectedAddons={pricedAddons}
             tiers={tiers}
             brackets={brackets}
             observeElementId="pricing-summary"
@@ -301,7 +310,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         selectedServices={state.selectedServices}
         selectedBrackets={selectedBrackets}
         selectedTier={selectedTier}
-        selectedAddons={state.selectedAddons}
+        selectedAddons={pricedAddons}
         answers={answers}
         onSuccess={markCompleted}
       />

@@ -17,6 +17,8 @@ export interface SignedProposalPdfSource {
   services: string[];
   brackets: Record<string, number>;
   tier_slug: string;
+  /** Add-on tokens; a not-VAT-registered scope flag hides VAT201. Older callers omit it. */
+  addons?: string[] | null;
   sent_at: string | null;
   expires_at: string | null;
   signed_at: string | null;
@@ -59,11 +61,12 @@ export function buildSignedProposalPdfPayload(
     signatureMethod: row.signature_method,
     signatureImage: row.signature_image,
     signatureIp: row.signature_ip,
-    inclusions: cumulativeInclusions(row.services, row.tier_slug),
+    inclusions: cumulativeInclusions(row.services, row.tier_slug, row.addons ?? []),
     fairUsage: buildFairUsage(
       row.services,
       selectedBrackets,
       catalogue.brackets,
+      row.tier_slug,
     ),
     outOfScope: outOfScopeItems(row.services, catalogue.services),
     lineItems: priced.lineItems,

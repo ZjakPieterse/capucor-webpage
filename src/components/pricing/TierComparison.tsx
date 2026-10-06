@@ -7,7 +7,7 @@ import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, bracketPrice } from '@/lib/pricing';
 import {
   TIER_HIGHLIGHTS,
-  PACKAGE_COMMON_ITEMS,
+  packageCommonItemsFor,
   type TierHighlightItem,
 } from '@/config/tiers';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
@@ -20,6 +20,8 @@ interface TierComparisonProps {
   selectedBrackets: Record<string, BracketValue>;
   /** Selected optional add-on slugs — included in the footer totals so they match the tier cards. */
   selectedAddons?: string[];
+  /** False only on a VAT "No": hides VAT201 from the core rows. */
+  vatRegistered?: boolean;
 }
 
 type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
@@ -36,6 +38,7 @@ export function TierComparison({
   selectedServices,
   selectedBrackets,
   selectedAddons = [],
+  vatRegistered = true,
 }: TierComparisonProps) {
   const [open, setOpen] = useState(false);
 
@@ -51,7 +54,7 @@ export function TierComparison({
     const seen = new Set<string>();
 
     // Common items first
-    for (const item of PACKAGE_COMMON_ITEMS) {
+    for (const item of packageCommonItemsFor(vatRegistered)) {
       if (seen.has(item.text)) continue;
       seen.add(item.text);
       result.push({ text: item.text, tooltip: item.tooltip, lowestTier: 'common' });
@@ -68,7 +71,7 @@ export function TierComparison({
       }
     }
     return result;
-  }, [selectedServices]);
+  }, [selectedServices, vatRegistered]);
 
   // Per-tier total for the footer row. Includes the flat add-on fee so the
   // figures match the tier cards above.

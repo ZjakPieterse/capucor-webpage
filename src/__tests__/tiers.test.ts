@@ -4,6 +4,9 @@ import {
   TIER_CUMULATIVE_LABELS,
   TIER_DISPLAY_NAMES,
   PACKAGE_COMMON_ITEMS,
+  TIER_RHYTHM_LABELS,
+  TIERS_BY_APPLICATION,
+  packageCommonItemsFor,
   tierDisplayName,
   type TierHighlightItem,
 } from '@/config/tiers';
@@ -61,8 +64,24 @@ describe('TIER_CUMULATIVE_LABELS', () => {
     expect(TIER_CUMULATIVE_LABELS.premium).toBe('Everything in Pro, plus:');
   });
 
-  it('uses the approved "Your compliance foundation:" label for basic', () => {
-    expect(TIER_CUMULATIVE_LABELS.basic).toBe('Your compliance foundation:');
+  it('labels Basic as building on the core services (calculator-v2)', () => {
+    expect(TIER_CUMULATIVE_LABELS.basic).toBe('On top of the core services:');
+  });
+});
+
+// ─── rhythm and application (calculator-v2 Phase 0) ─────────────────────────
+
+describe('package rhythm and Premium by application', () => {
+  it('names each package by its processing rhythm', () => {
+    expect(TIER_RHYTHM_LABELS).toEqual({
+      basic: 'Monthly rhythm',
+      pro: 'Weekly rhythm',
+      premium: 'Daily rhythm',
+    });
+  });
+
+  it('sells Premium, and only Premium, by application', () => {
+    expect([...TIERS_BY_APPLICATION]).toEqual(['premium']);
   });
 });
 
@@ -88,38 +107,47 @@ describe('tierDisplayName', () => {
 
 // ─── ordering + legacy absence ──────────────────────────────────────────────
 
-describe('TIER_HIGHLIGHTS ordering', () => {
-  it('basic uses the approved order (accounting+bookkeeping order, payroll last)', () => {
+describe('TIER_HIGHLIGHTS ordering (calculator-v2 Phase 0 inclusions)', () => {
+  it('basic: monthly rhythm, basic reports, quarterly review, then payroll', () => {
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text)).toEqual([
-      'Annual Financial Statements',
-      'SARS & CIPC Compliance',
-      'VAT Reporting & Submission',
-      'Bookkeeping & Monthly Close',
-      'Core Monthly Financials',
+      'Transactions Processed Monthly',
+      'Basic Monthly Reports',
+      'Quarterly Performance Review',
       'Payroll Processing & Payslips',
       'COIDA Annual Submission',
     ]);
   });
 
-  it('pro uses the approved order', () => {
+  it('pro: weekly rhythm, monthly review, richer reports, supplier processing, Dext', () => {
     expect(TIER_HIGHLIGHTS.pro.map((i) => i.text)).toEqual([
-      'Quarterly Review Meeting',
-      'Accounts Payable Management',
+      'Transactions Processed Weekly',
+      'Monthly Performance Review',
       'Monthly Insights Report',
       'Monthly 5-Min Video Explainer',
+      'Supplier Processing & Review',
       'Dext with AI Assist Included',
       'Employee Self-Service Portal',
     ]);
   });
 
-  it('premium uses the approved order', () => {
+  it('premium: daily rhythm, weekly review, planning, on-call partner, budget vs actual', () => {
     expect(TIER_HIGHLIGHTS.premium.map((i) => i.text)).toEqual([
-      'Monthly Strategy Session',
+      'Transactions Processed Daily',
+      'Weekly Reports & Review',
+      'Monthly Tax & Financial Planning',
+      'On-call Partner Support',
       'Budget vs Actual Reporting',
-      'Advanced KPI Dashboard',
-      'Benchmark Analysis',
       'Payroll Payment Files Prepared',
     ]);
+  });
+
+  it('Basic has no supplier processing', () => {
+    expect(TIER_HIGHLIGHTS.basic.map((i) => i.text).join(' ')).not.toMatch(/supplier/i);
+  });
+
+  it('on-call partner support promises a same-day reply', () => {
+    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'On-call Partner Support');
+    expect(item!.tooltip).toMatch(/same business day/);
   });
 
   it('merged EMP/UIF wording lives in the Payroll Processing tooltip', () => {
@@ -131,24 +159,20 @@ describe('TIER_HIGHLIGHTS ordering', () => {
     expect(payrollItem!.tooltip).toContain('UIF');
   });
 
-  it('contains no legacy package wording', () => {
+  it('contains no legacy or dropped package wording', () => {
     const legacy = [
       'VAT Reports & Submission',
       'Xero Business Software',
       'Monthly Bookkeeping',
       'Quarterly Reports',
       'Annual Tax Planning',
-      'Weekly Processing',
       'Suppliers Processing',
       'Monthly Reports',
       'Monthly Tax Strategy',
-      'Daily Processing',
       'Budget vs Actuals',
       'Live KPI Dashboard',
       'SARS and CIPC Compliance',
-      // Retired in the 2026-06 wording pass
       'Monthly Financial Reports',
-      'Quarterly Performance Review',
       'Supplier Processing with Dext',
       'Core Business Metrics Overview',
       'Monthly 5-Min Video Walkthrough',
@@ -158,8 +182,14 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Rolling Cashflow Forecast',
       'Payroll Payment File Preparation',
       'Direct Employee Payroll Support',
-      // Retired in the 2026-06 wording pass (renamed to "Monthly 5-Min Video Explainer")
       'Monthly 5min Video Walkthrough',
+      // Dropped from Premium or replaced in calculator-v2 Phase 0 (2026-10-06)
+      'Advanced KPI Dashboard',
+      'Benchmark Analysis',
+      'Monthly Strategy Session',
+      'Quarterly Review Meeting',
+      'Accounts Payable Management',
+      'Core Monthly Financials',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -172,86 +202,67 @@ describe('TIER_HIGHLIGHTS ordering', () => {
 
 // ─── common items ───────────────────────────────────────────────────────────
 
-describe('PACKAGE_COMMON_ITEMS', () => {
+describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
   it('uses "Year-round Support" (not the retired "Year-round Advisory")', () => {
     const texts = PACKAGE_COMMON_ITEMS.map((i) => i.text);
     expect(texts).toContain('Year-round Support');
     expect(texts).not.toContain('Year-round Advisory');
   });
 
-  it('uses the approved order, with Xero as a common item rather than a tier highlight', () => {
+  it('lists the approved core services, none of them repeated as a tier highlight', () => {
     expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).toEqual([
       'Your Own Accountant',
-      'SARS & CIPC Compliance',
       'Xero Software Included',
+      'SARS & CIPC Compliance',
+      'Annual Financial Statements',
+      'VAT Returns (VAT201)',
+      'Bookkeeping & Monthly Close',
       'Year-round Support',
     ]);
-    const allTierTexts = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
-      TIER_HIGHLIGHTS[t].map((i) => i.text)
+    const allTierTexts = new Set(
+      (['basic', 'pro', 'premium'] as const).flatMap((t) => TIER_HIGHLIGHTS[t].map((i) => i.text))
     );
-    expect(allTierTexts).not.toContain('Xero Software Included');
+    for (const item of PACKAGE_COMMON_ITEMS) expect(allTierTexts.has(item.text)).toBe(false);
+  });
+
+  it('hides only VAT201 for a business that is not VAT-registered', () => {
+    const all = packageCommonItemsFor(true).map((i) => i.text);
+    const noVat = packageCommonItemsFor(false).map((i) => i.text);
+    expect(all).toContain('VAT Returns (VAT201)');
+    expect(noVat).toEqual(all.filter((t) => t !== 'VAT Returns (VAT201)'));
   });
 });
 
 // ─── service-filter cases ───────────────────────────────────────────────────
 
 describe('service-filter behaviour', () => {
-  it('Case 1 — accounting + bookkeeping: all approved non-payroll items show', () => {
+  it('Case 1 — core (accounting + bookkeeping): every non-payroll item shows', () => {
     const sel = new Set(['accounting', 'bookkeeping']);
-    expect(visibleItems('basic', sel).map((i) => i.text)).toEqual([
-      'Annual Financial Statements',
-      'SARS & CIPC Compliance',
-      'VAT Reporting & Submission',
-      'Bookkeeping & Monthly Close',
-      'Core Monthly Financials',
-    ]);
-    expect(visibleItems('pro', sel).map((i) => i.text)).toEqual([
-      'Quarterly Review Meeting',
-      'Accounts Payable Management',
-      'Monthly Insights Report',
-      'Monthly 5-Min Video Explainer',
-      'Dext with AI Assist Included',
-    ]);
-    expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
-      'Monthly Strategy Session',
-      'Budget vs Actual Reporting',
-      'Advanced KPI Dashboard',
-      'Benchmark Analysis',
-    ]);
+    for (const t of ['basic', 'pro', 'premium'] as const) {
+      expect(visibleItems(t, sel).map((i) => i.text)).toEqual(
+        TIER_HIGHLIGHTS[t].filter((i) => !i.services.includes('payroll')).map((i) => i.text)
+      );
+    }
   });
 
   it('Case 2 — accounting only: hides bookkeeping-only items', () => {
     const sel = new Set(['accounting']);
     const basic = visibleItems('basic', sel).map((i) => i.text);
-    expect(basic).toContain('Annual Financial Statements');
-    expect(basic).toContain('SARS & CIPC Compliance');
-    expect(basic).toContain('VAT Reporting & Submission');
-    expect(basic).toContain('Core Monthly Financials');
-    expect(basic).not.toContain('Xero Software Included');
-    expect(basic).not.toContain('Bookkeeping & Monthly Close');
+    expect(basic).toContain('Basic Monthly Reports');
+    expect(basic).not.toContain('Transactions Processed Monthly');
     expect(basic).not.toContain('Payroll Processing & Payslips');
-    expect(basic).not.toContain('COIDA Annual Submission');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
-    expect(pro).not.toContain('Accounts Payable Management');
+    expect(pro).not.toContain('Supplier Processing & Review');
     expect(pro).not.toContain('Employee Self-Service Portal');
-    expect(pro).toContain('Quarterly Review Meeting');
-
-    const premium = visibleItems('premium', sel).map((i) => i.text);
-    expect(premium).not.toContain('Payroll Payment Files Prepared');
+    expect(pro).toContain('Monthly Performance Review');
   });
 
-  it('Case 3 — bookkeeping only: hides accounting-only items', () => {
+  it('Case 3 — bookkeeping only: shows the processing rhythm items', () => {
     const sel = new Set(['bookkeeping']);
-    const basic = visibleItems('basic', sel).map((i) => i.text);
-    expect(basic).toContain('Bookkeeping & Monthly Close');
-    expect(basic).toContain('Core Monthly Financials');
-    expect(basic).not.toContain('Annual Financial Statements');
-    expect(basic).not.toContain('SARS & CIPC Compliance');
-    expect(basic).not.toContain('VAT Reporting & Submission');
-
-    const pro = visibleItems('pro', sel).map((i) => i.text);
-    expect(pro).toContain('Accounts Payable Management');
+    expect(visibleItems('basic', sel).map((i) => i.text)).toContain('Transactions Processed Monthly');
+    expect(visibleItems('pro', sel).map((i) => i.text)).toContain('Supplier Processing & Review');
+    expect(visibleItems('premium', sel).map((i) => i.text)).toContain('Transactions Processed Daily');
   });
 
   it('Case 4 — payroll only: shows each tier’s approved payroll items in order', () => {
@@ -273,8 +284,7 @@ describe('service-filter behaviour', () => {
     for (const t of ['basic', 'pro', 'premium'] as const) {
       const items = visibleItems(t, sel).map((i) => i.text);
       expect(items).not.toContain('Payroll Included');
-      expect(items).not.toContain('Annual Financial Statements');
-      expect(items).not.toContain('Bookkeeping & Monthly Close');
+      expect(items).not.toContain('Transactions Processed Monthly');
     }
   });
 });
@@ -285,55 +295,37 @@ describe('TierComparison accumulation', () => {
   const sel = new Set(['accounting', 'bookkeeping']);
   const rows = buildMatrix(sel);
 
-  it('marks every basic item as covered in basic, pro, and premium', () => {
-    const basicTexts = [
-      'Annual Financial Statements',
-      'VAT Reporting & Submission',
-      'Bookkeeping & Monthly Close',
-      'Core Monthly Financials',
-    ];
-    for (const text of basicTexts) {
+  const expectCoverage = (texts: string[], basic: boolean, pro: boolean) => {
+    for (const text of texts) {
       const row = rows.find((r) => r.text === text);
       expect(row, `expected row "${text}"`).toBeDefined();
-      expect(isCovered('basic', row!.lowestTier)).toBe(true);
-      expect(isCovered('pro', row!.lowestTier)).toBe(true);
+      expect(isCovered('basic', row!.lowestTier)).toBe(basic);
+      expect(isCovered('pro', row!.lowestTier)).toBe(pro);
       expect(isCovered('premium', row!.lowestTier)).toBe(true);
     }
+  };
+
+  it('marks every basic item as covered in basic, pro, and premium', () => {
+    expectCoverage(['Transactions Processed Monthly', 'Basic Monthly Reports', 'Quarterly Performance Review'], true, true);
   });
 
   it('marks pro items as covered in pro and premium only', () => {
-    const proTexts = [
-      'Quarterly Review Meeting',
-      'Accounts Payable Management',
-      'Monthly Insights Report',
-      'Monthly 5-Min Video Explainer',
-    ];
-    for (const text of proTexts) {
-      const row = rows.find((r) => r.text === text);
-      expect(row, `expected row "${text}"`).toBeDefined();
-      expect(isCovered('basic', row!.lowestTier)).toBe(false);
-      expect(isCovered('pro', row!.lowestTier)).toBe(true);
-      expect(isCovered('premium', row!.lowestTier)).toBe(true);
-    }
+    expectCoverage(
+      ['Transactions Processed Weekly', 'Monthly Performance Review', 'Supplier Processing & Review', 'Dext with AI Assist Included'],
+      false,
+      true,
+    );
   });
 
   it('marks premium items as covered in premium only', () => {
-    const premiumTexts = [
-      'Monthly Strategy Session',
-      'Budget vs Actual Reporting',
-      'Advanced KPI Dashboard',
-      'Benchmark Analysis',
-    ];
-    for (const text of premiumTexts) {
-      const row = rows.find((r) => r.text === text);
-      expect(row, `expected row "${text}"`).toBeDefined();
-      expect(isCovered('basic', row!.lowestTier)).toBe(false);
-      expect(isCovered('pro', row!.lowestTier)).toBe(false);
-      expect(isCovered('premium', row!.lowestTier)).toBe(true);
-    }
+    expectCoverage(
+      ['Transactions Processed Daily', 'Weekly Reports & Review', 'Monthly Tax & Financial Planning', 'On-call Partner Support', 'Budget vs Actual Reporting'],
+      false,
+      false,
+    );
   });
 
-  it('deduplicates SARS & CIPC Compliance to a single common-tier row', () => {
+  it('places SARS & CIPC Compliance on a single common-tier row', () => {
     const sarsRows = rows.filter((r) => r.text === 'SARS & CIPC Compliance');
     expect(sarsRows).toHaveLength(1);
     expect(sarsRows[0].lowestTier).toBe('common');

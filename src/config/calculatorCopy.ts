@@ -39,7 +39,7 @@ export const QUESTION_COPY = {
   },
   transactions: {
     title: 'How many transactions should be processed each month?',
-    hint: 'An average month of bank lines, invoices, bills and journals, across all accounts.',
+    hint: 'An average month of bank lines and journals, across all accounts. On Pro and Premium, where we process supplier bills, count those too.',
   },
   vat: {
     title: 'Is your business registered for VAT?',
@@ -86,3 +86,9 @@ export const DEXT_ACCESS_COPY = {
 } as const;
 
 export const FIT_CALL_PROMPT = 'Only need payroll, or not sure what fits?';
+
+// Premium is sold by booking a call (decision 2026-10-06, Phase 0).
+export const PREMIUM_APPLY_COPY = {
+  note: 'Premium starts with a conversation, so we can confirm the daily rhythm fits your business.',
+  action: 'Book a call',
+} as const;

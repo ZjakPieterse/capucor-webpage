@@ -60,9 +60,14 @@ export const ProposalRequestSchema = z.object({
   services: z.array(z.string().min(1)).min(1, 'Select at least one service'),
   brackets: z.record(z.string(), z.number().int().nonnegative()),
   tierSlug: z.string().min(1, 'Choose a package'),
-  // Optional flat-fee add-ons. The route whitelists slugs against
-  // PRICING_ADDONS (config/tiers.ts) before pricing them.
-  addons: z.array(z.string().min(1)).max(5).optional().default([]),
+  // Optional add-ons, as tokens: a slug, or "slug:count" for a per-unit add-on
+  // (e.g. "personal-tax:2"). The route whitelists slugs against PRICING_ADDONS
+  // (config/tiers.ts) before pricing them.
+  addons: z
+    .array(z.string().regex(/^[a-z0-9-]+(:\d{1,2})?$/, 'Invalid add-on'))
+    .max(10)
+    .optional()
+    .default([]),
   // Calculator-v2 scope answers. Phase 1 changes neither price nor scope with
   // them: the route stores them in leads.config for Capucor's reference.
   answers: z

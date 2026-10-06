@@ -2,7 +2,7 @@
 // so the rules are unit-tested directly (src/__tests__/calculator-flow.test.ts).
 
 import { CORE_LINE_NAME, CORE_SERVICE_SLUGS } from '@/config/calculatorCopy';
-import type { ProposalLineItem } from '@/lib/pricing';
+import { parseAddonToken, type ProposalLineItem } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep } from '@/types';
 
 export const FIRST_STEP: CalculatorStep = 'revenue';
@@ -137,3 +137,23 @@ export function mergeCoreLines(items: ProposalLineItem[]): ProposalLineItem[] {
   }
   return out;
 }
+
+/**
+ * The add-on tokens a selection carries once the answers are applied: a Xero
+ * invoicing Yes adds the hidden Xero plan charge (R 200.00 on Basic, folded
+ * into the accounting line; included from Pro), and a VAT No adds the scope
+ * flag that hides VAT201. Hidden tokens the visitor could not have chosen are
+ * stripped first, so only the answers decide them. /api/proposals applies the
+ * same rule server-side.
+ */
+export function effectiveAddons(
+  selectedAddons: string[],
+  answers: Pick<CalculatorAnswers, 'vatRegistered' | 'xeroInvoicing'>,
+): string[] {
+  const out = selectedAddons.filter((t) => !ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
+  if (answers.xeroInvoicing === true) out.push('xero-invoicing');
+  if (answers.vatRegistered === false) out.push('not-vat-registered');
+  return out;
+}
+
+export const ANSWER_ADDON_SLUGS: ReadonlySet<string> = new Set(['xero-invoicing', 'not-vat-registered']);

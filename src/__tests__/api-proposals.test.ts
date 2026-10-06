@@ -418,4 +418,88 @@ describe('POST /api/proposals', () => {
     expect(badIntent.status).toBe(422);
     expect(leadInsert).not.toHaveBeenCalled();
   });
+
+  // ── calculator-v2 Phase 2: Premium by call, answer-driven add-ons, per-person add-ons ──
+
+  it('21. Premium is refused for self-serve with 422, nothing persisted', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', { ...validBody, tierSlug: 'premium' }));
+    expect(res.status).toBe(422);
+    expect((await res.json()).field).toBe('tierSlug');
+    expect(leadInsert).not.toHaveBeenCalled();
+    expect(proposalInsert).not.toHaveBeenCalled();
+  });
+
+  it('22. a Xero invoicing Yes on Basic adds R200 and stores the hidden add-on, even if the client omitted it', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        tierSlug: 'basic',
+        addons: [],
+        answers: { xeroInvoicing: true },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({ addons: ['xero-invoicing'], monthly_total_zar: 1175 + 200 });
+  });
+
+  it('23. a client cannot add the Xero charge or the VAT flag without the answers', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        tierSlug: 'basic',
+        addons: ['xero-invoicing', 'not-vat-registered'],
+        answers: { xeroInvoicing: false, vatRegistered: true },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({ addons: [], monthly_total_zar: 1175 });
+  });
+
+  it('24. a Xero invoicing Yes on Pro costs nothing and is not stored', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, answers: { xeroInvoicing: true } }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({ addons: ['dext'], monthly_total_zar: 1550 });
+  });
+
+  it('25. a VAT No stores the not-VAT-registered flag at no charge', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        tierSlug: 'basic',
+        answers: { vatRegistered: false },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({ addons: ['not-vat-registered'], monthly_total_zar: 1175 });
+  });
+
+  it('26. personal tax returns are priced per person from the stored count', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        tierSlug: 'basic',
+        addons: ['personal-tax:3', 'whatsapp-support'],
+      }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({
+      addons: ['whatsapp-support', 'personal-tax:3'],
+      monthly_total_zar: 1175 + 750 + 3 * 75,
+    });
+  });
+
+  it('27. a malformed add-on token is rejected with 422', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, addons: ['personal-tax:abc'] }),
+    );
+    expect(res.status).toBe(422);
+    expect(leadInsert).not.toHaveBeenCalled();
+  });
 });

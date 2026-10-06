@@ -126,8 +126,8 @@
         "pairMode": "code",
         "why": "Both repos price the same proposals off the same `brackets` table — capucor.com when a lead builds one, capucor.app when staff amend one. Drift means two different quotes for one selection.",
         "digest": {
-          "web": "sha256:9ff8478aac585c1018e095461f83d7b0ba8dae8648af7d502dc8186856d1aaa0",
-          "os": "sha256:9ff8478aac585c1018e095461f83d7b0ba8dae8648af7d502dc8186856d1aaa0"
+          "web": "sha256:511943088b652bbd7caa73ce8d345c7a4c66cce30fb5a0f90b07cfaaac717a9b",
+          "os": "sha256:511943088b652bbd7caa73ce8d345c7a4c66cce30fb5a0f90b07cfaaac717a9b"
         }
       },
       {
@@ -135,8 +135,8 @@
         "pairMode": "code",
         "why": "Both repos price the same proposals off the same `brackets` table. It carried three sanctioned divergent lines until 2026-08-06 — capucor-os logged the bracket-fetch failure through `lib/log.ts`, capucor-web through console.error — and giving capucor-web the same `lib/log.ts` collapsed that to zero. A BOUNDED divergence still needs a reader to judge whether the bound is measuring the right thing; an equality does not. ⛔ DIGEST RE-RECORDED 2026-09-04 (AE-07): the bracket fetch dropped `.returns<BracketRow[]>()` and assigns the PostgREST result instead. That override handed its type back verbatim when the select string failed to parse, so this file — which re-prices every proposal and every archived signed mandate — had an UNCHECKED six-column select list in both repos. Both copies moved together and still agree.",
         "digest": {
-          "web": "sha256:a2722963a59b9b8d7992c4d161beac8c5127086ecf3015c2dfcd80a13255350c",
-          "os": "sha256:a2722963a59b9b8d7992c4d161beac8c5127086ecf3015c2dfcd80a13255350c"
+          "web": "sha256:f77b8809aacde6f65366251a688aa79cf8abf913546552f8bfa1d40cc05abe74",
+          "os": "sha256:f77b8809aacde6f65366251a688aa79cf8abf913546552f8bfa1d40cc05abe74"
         }
       },
       {
@@ -144,8 +144,8 @@
         "pairMode": "code",
         "why": "PRICING_ADDONS is the server-side WHITELIST of accepted add-on slugs and their prices, not display strings. Reprice an add-on in one repo only and the two apps quote different totals, or one silently drops an add-on the other charges for.",
         "digest": {
-          "web": "sha256:d31899f7ea60e90d9e7c7a714b9f6c7b6eaa0f45575890eb0481d6807e450a39",
-          "os": "sha256:d31899f7ea60e90d9e7c7a714b9f6c7b6eaa0f45575890eb0481d6807e450a39"
+          "web": "sha256:62e62142a704a3aaadca13f9f0cfbf8084db547cb6da26fb255cb5ad3b867ed6",
+          "os": "sha256:62e62142a704a3aaadca13f9f0cfbf8084db547cb6da26fb255cb5ad3b867ed6"
         }
       },
       {

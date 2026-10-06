@@ -1,13 +1,6 @@
 import Link from "next/link";
-import {
-  CalendarCheck,
-  Check,
-  Cloud,
-  CornerDownRight,
-  Layers,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { Check, CornerDownRight, Layers } from "lucide-react";
+import { commonItemIcon } from "@/components/pricing/commonItemIcons";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
@@ -17,6 +10,7 @@ import {
   TIER_CUMULATIVE_LABELS,
   PACKAGE_COMMON_ITEMS,
   TIER_BUYER_FIT,
+  TIER_RHYTHM_LABELS,
 } from "@/config/tiers";
 import type { Service, Tier } from "@/types";
 
@@ -25,9 +19,6 @@ interface PackagesTeaserProps {
   tiers: Tier[];
 }
 
-// Icons are positional — one per PACKAGE_COMMON_ITEMS entry, same order as the
-// pricing-page strip (RiskReducerStrip).
-const COMMON_ITEM_ICONS = [Users, ShieldCheck, Cloud, CalendarCheck];
 
 function getDisplayItems(
   tierSlug: string,
@@ -50,7 +41,7 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
           <SectionHeading
             eyebrow="Packages"
             title="Choose the level of support your business needs right now"
-            subtitle="Start with the services you need, then choose the depth of monthly support. You see the monthly fee before any conversation, and your subscription can grow as the business becomes more complex."
+            subtitle="Every package includes the core accounting and bookkeeping. Choose how often we process, report and review with you. You see the monthly fee before any conversation, and your subscription can grow with the business."
           />
         </ScrollReveal>
 
@@ -63,8 +54,8 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
             {/* Constrained + centered so the items cluster toward the middle of
                 the strip, leading the eye down to the "Most popular" card. */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4 max-w-4xl mx-auto">
-              {PACKAGE_COMMON_ITEMS.map((item, idx) => {
-                const Icon = COMMON_ITEM_ICONS[idx] ?? Users;
+              {PACKAGE_COMMON_ITEMS.map((item) => {
+                const Icon = commonItemIcon(item.text);
                 return (
                   <div
                     key={item.text}
@@ -125,6 +116,11 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
 
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-1">{tier.name}</h3>
+                    {TIER_RHYTHM_LABELS[tier.slug] && (
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                        {TIER_RHYTHM_LABELS[tier.slug]}
+                      </p>
+                    )}
                     {TIER_BUYER_FIT[tier.slug] ? (
                       <p className="text-sm text-muted-foreground">
                         {TIER_BUYER_FIT[tier.slug]}

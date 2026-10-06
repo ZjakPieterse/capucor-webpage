@@ -193,8 +193,8 @@ export default async function ProposalPage({
     tiers.find((t) => t.slug === row.tier_slug)?.name ?? tierDisplayName(row.tier_slug);
 
   // Derived schedule + terms (config-driven; see lib/schedule.ts).
-  const inclusions = cumulativeInclusions(row.services, row.tier_slug);
-  const fairUsage = buildFairUsage(row.services, selectedBrackets, brackets);
+  const inclusions = cumulativeInclusions(row.services, row.tier_slug, row.addons ?? []);
+  const fairUsage = buildFairUsage(row.services, selectedBrackets, brackets, row.tier_slug);
   const outOfScope = outOfScopeItems(row.services, services);
   const debitBlock = PROPOSAL_TERMS.find((b) => b.id === 'debit-order');
   const inlineIds = INLINE_TERM_IDS as readonly string[];

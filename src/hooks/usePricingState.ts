@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { FIRST_STEP, canProceed, deriveServices, nextStep, prevStep } from '@/lib/calculatorFlow';
+import { addonToken, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
 
 // Bumped to v4 for the calculator-v2 wizard: one screen per question, named
@@ -149,13 +150,29 @@ export function usePricingState(seed?: PricingSeed) {
     setState((s) => ({ ...s, selectedTier: tierSlug }));
   }, []);
 
+  // Add-ons are stored as tokens ("dext", "personal-tax:2"); toggling works by
+  // slug and starts a per-unit add-on at a count of 1.
   const toggleAddon = useCallback((addonSlug: string) => {
+    setCompleted(false);
+    setState((s) => {
+      const has = s.selectedAddons.some((t) => parseAddonToken(t).slug === addonSlug);
+      return {
+        ...s,
+        selectedAddons: has
+          ? s.selectedAddons.filter((t) => parseAddonToken(t).slug !== addonSlug)
+          : [...s.selectedAddons, addonToken(addonSlug, 1)],
+      };
+    });
+  }, []);
+
+  const setAddonQuantity = useCallback((addonSlug: string, quantity: number) => {
     setCompleted(false);
     setState((s) => ({
       ...s,
-      selectedAddons: s.selectedAddons.includes(addonSlug)
-        ? s.selectedAddons.filter((a) => a !== addonSlug)
-        : [...s.selectedAddons, addonSlug],
+      selectedAddons: [
+        ...s.selectedAddons.filter((t) => parseAddonToken(t).slug !== addonSlug),
+        addonToken(addonSlug, Math.max(1, Math.round(quantity))),
+      ],
     }));
   }, []);
 
@@ -174,6 +191,7 @@ export function usePricingState(seed?: PricingSeed) {
     setAnswer,
     setTier,
     toggleAddon,
+    setAddonQuantity,
     canProceedCurrent: canProceed(state.step, state),
   };
 }

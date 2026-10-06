@@ -32,7 +32,8 @@ import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
-import { tierDisplayName } from '@/config/tiers';
+import { TIERS_BY_APPLICATION, tierDisplayName } from '@/config/tiers';
+import { effectiveAddons } from '@/lib/calculatorFlow';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { renderCreatedProposalClientEmail, renderCreatedProposalOwnerText } from '@/lib/email/messages.mjs';
 
@@ -79,6 +80,28 @@ export async function POST(req: NextRequest) {
   }
 
   const input = parsed.data;
+
+  // Premium is sold by booking a call (calculator-v2 Phase 0). Staff can still
+  // prepare a Premium proposal on capucor.app.
+  if (TIERS_BY_APPLICATION.includes(input.tierSlug)) {
+    return NextResponse.json(
+      {
+        error: `${tierDisplayName(input.tierSlug)} starts with a call. Please book a call and we will prepare your proposal.`,
+        field: 'tierSlug',
+      },
+      { status: 422 },
+    );
+  }
+
+  // The answers, not the client's add-on list, decide the answer-driven tokens:
+  // a Xero invoicing Yes adds the Xero plan charge (R 200.00 on Basic, folded
+  // into Accounting), a VAT No adds the flag that hides VAT201. Any such token
+  // the client sent is replaced.
+  const addons = effectiveAddons(input.addons, {
+    vatRegistered: input.answers?.vatRegistered ?? null,
+    xeroInvoicing: input.answers?.xeroInvoicing ?? null,
+  });
+
   const admin = createSupabaseAdminClient();
 
   // 5. Recompute pricing server-side from the live brackets (anti-tamper).
@@ -86,7 +109,7 @@ export async function POST(req: NextRequest) {
     services: input.services,
     brackets: input.brackets,
     tierSlug: input.tierSlug,
-    addons: input.addons,
+    addons,
   });
   if (!priced.ok) {
     return NextResponse.json({ error: priced.error }, { status: priced.status });
