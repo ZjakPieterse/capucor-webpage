@@ -111,7 +111,7 @@ export const RHYTHM_ROWS: RhythmRow[] = [
     label: 'Transaction processing',
     tooltip: 'How often we process what is available. Bank statements are still requested at every monthly close.',
     values: { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' },
-    replaces: ['Transactions Processed Monthly', 'Transactions Processed Weekly', 'Transactions Processed Daily'],
+    replaces: ['Transactions processed monthly', 'Transactions processed weekly', 'Transactions processed daily'],
   },
   {
     label: 'Reports',
@@ -121,13 +121,13 @@ export const RHYTHM_ROWS: RhythmRow[] = [
       pro: 'Monthly insights report and 5-minute video',
       premium: 'Weekly reports',
     },
-    replaces: ['Basic Monthly Reports', 'Monthly Insights Report', 'Monthly 5-Min Video Explainer'],
+    replaces: ['Basic monthly reports', 'Monthly insights report', 'Monthly 5-min video explainer'],
   },
   {
     label: 'Performance review',
     tooltip: 'A review with you of how the business is performing and what needs attention.',
     values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
-    replaces: ['Quarterly Performance Review', 'Monthly Performance Review', 'Weekly Reports & Review'],
+    replaces: ['Quarterly performance review', 'Monthly performance review', 'Weekly reports & review'],
   },
 ];
 

@@ -25,6 +25,7 @@ describe('comparison table rhythm rows (F03)', () => {
   it('shows processing as one value per package, not cumulative ticks', () => {
     const processing = RHYTHM_ROWS.find((r) => r.label === 'Transaction processing');
     expect(processing?.values).toEqual({ basic: 'Monthly', pro: 'Weekly', premium: 'Daily' });
+    expect(processing?.replaces).toEqual(['Transactions processed monthly', 'Transactions processed weekly', 'Transactions processed daily']);
     const review = RHYTHM_ROWS.find((r) => r.label === 'Performance review');
     expect(review?.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' });
   });

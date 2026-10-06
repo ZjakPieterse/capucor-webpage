@@ -15,28 +15,28 @@ export interface TierHighlightItem {
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
     {
-      text: 'Transactions Processed Monthly',
+      text: 'Transactions processed monthly',
       services: ['bookkeeping'],
       tooltip: 'Your bank transactions are processed and reconciled once a month, at the monthly close.',
     },
     {
-      text: 'Basic Monthly Reports',
+      text: 'Basic monthly reports',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A profit and loss statement and balance sheet after each monthly close.',
     },
     {
-      text: 'Quarterly Performance Review',
+      text: 'Quarterly performance review',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A review every quarter of how the business is performing and what needs attention.',
     },
     {
-      text: 'Payroll Processing & Payslips',
+      text: 'Payroll processing & payslips',
       services: ['payroll'],
       tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time, with EMP201 and EMP501 submissions lodged on their cycles and UIF declarations handled when needed.',
       calculatorOnly: true,
     },
     {
-      text: 'COIDA Annual Submission',
+      text: 'COIDA annual submission',
       services: ['payroll'],
       tooltip: 'Annual COIDA Return of Earnings information prepared and submitted for compliance purposes.',
       calculatorOnly: true,
@@ -44,37 +44,37 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
   pro: [
     {
-      text: 'Transactions Processed Weekly',
+      text: 'Transactions processed weekly',
       services: ['bookkeeping'],
       tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
     },
     {
-      text: 'Monthly Performance Review',
+      text: 'Monthly performance review',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A review every month, in place of the quarterly review, covering performance, key concerns and next steps.',
     },
     {
-      text: 'Monthly Insights Report',
+      text: 'Monthly insights report',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A monthly report covering selected business metrics for a clearer snapshot of financial performance.',
     },
     {
-      text: 'Monthly 5-Min Video Explainer',
+      text: 'Monthly 5-min video explainer',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
     {
-      text: 'Supplier Processing & Review',
+      text: 'Supplier processing & review',
       services: ['bookkeeping'],
       tooltip: 'Supplier bills captured and reviewed, so supplier and customer balances are tracked in Xero.',
     },
     {
-      text: 'Dext with AI Assist Included',
+      text: 'Dext with AI Assist included',
       services: ['bookkeeping'],
       tooltip: 'Dext software access, AI Assist included, as part of your package: snap receipts and supplier bills and we process them into your books.',
     },
     {
-      text: 'Employee Self-Service Portal',
+      text: 'Employee self-service portal',
       services: ['payroll'],
       tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
       calculatorOnly: true,
@@ -82,32 +82,32 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
   premium: [
     {
-      text: 'Transactions Processed Daily',
+      text: 'Transactions processed daily',
       services: ['bookkeeping'],
       tooltip: 'We process what is available every business day, so your numbers are close to live.',
     },
     {
-      text: 'Weekly Reports & Review',
+      text: 'Weekly reports & review',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A short report and review every week, so decisions are made on current numbers.',
     },
     {
-      text: 'Monthly Tax & Financial Planning',
+      text: 'Monthly tax & financial planning',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A monthly planning cycle covering tax position, cash flow and the decisions ahead.',
     },
     {
-      text: 'On-call Partner Support',
+      text: 'On-call partner support',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A direct line to your partner, with a reply the same business day.',
     },
     {
-      text: 'Budget vs Actual Reporting',
+      text: 'Budget vs actual reporting',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Compare actual financial performance against budget and identify areas requiring attention.',
     },
     {
-      text: 'Payroll Payment Files Prepared',
+      text: 'Payroll payment files prepared',
       services: ['payroll'],
       tooltip: 'A bank-upload salary-payment file is prepared after payroll finalisation to simplify the payment process.',
       calculatorOnly: true,
@@ -167,23 +167,23 @@ export interface PackageCommonItem {
 }
 
 export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
-  { text: 'Your Own Accountant', tooltip: 'One accountant who knows your business and runs your month.' },
-  { text: 'Xero Software Included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
-  { text: 'SARS & CIPC Compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
+  { text: 'Your own accountant', tooltip: 'One accountant who knows your business and runs your month.' },
+  { text: 'Xero software included', tooltip: 'Xero accounting software included as part of your monthly subscription.' },
+  { text: 'SARS & CIPC compliance', tooltip: 'Tax returns and annual filings done each year. Nothing to remember.' },
   {
-    text: 'Annual Financial Statements',
+    text: 'Annual financial statements',
     tooltip: 'Year-end financial statements prepared for compliance, SARS, banks, and other stakeholders.',
   },
   {
-    text: 'VAT Returns (VAT201)',
+    text: 'VAT returns (VAT201)',
     tooltip: 'VAT returns prepared and submitted accurately for each applicable cycle.',
     vatOnly: true,
   },
   {
-    text: 'Bookkeeping & Monthly Close',
+    text: 'Bookkeeping & monthly close',
     tooltip: 'Transactions reconciled and closed off every month. Bank statements are requested at every monthly close.',
   },
-  { text: 'Year-round Support', tooltip: 'Ongoing guidance from your accountant all year, not only at year-end.' },
+  { text: 'Year-round support', tooltip: 'Ongoing guidance from your accountant all year, not only at year-end.' },
 ];
 
 /** The core items for a business, hiding VAT201 when it is not VAT-registered. */
