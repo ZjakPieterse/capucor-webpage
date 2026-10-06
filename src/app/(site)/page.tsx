@@ -107,7 +107,7 @@ export default async function HomePage() {
         {/* 6. Testimonials / social proof — placeholder between Services and Packages. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
         {/* 7. Packages */}
         <PackagesTeaser services={services} tiers={tiers} />
-        {/* 8. Switching in any month (onboarding steps; no catch-up pricing while the pricing model is open) */}
+        {/* 8. Switching in any month (onboarding steps; catch-up rule, no amounts) */}
         <SwitchingSection />
         {/* 9. Contact + lead capture (replaced the homepage FAQ). */}
         <ContactSection />

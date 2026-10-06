@@ -107,6 +107,7 @@ describe('TIER_HIGHLIGHTS ordering', () => {
       'Accounts Payable Management',
       'Monthly Insights Report',
       'Monthly 5-Min Video Explainer',
+      'Dext with AI Assist Included',
       'Employee Self-Service Portal',
     ]);
   });
@@ -180,7 +181,7 @@ describe('PACKAGE_COMMON_ITEMS', () => {
 
   it('uses the approved order, with Xero as a common item rather than a tier highlight', () => {
     expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).toEqual([
-      'Dedicated Finance Team',
+      'Your Own Accountant',
       'SARS & CIPC Compliance',
       'Xero Software Included',
       'Year-round Support',
@@ -209,6 +210,7 @@ describe('service-filter behaviour', () => {
       'Accounts Payable Management',
       'Monthly Insights Report',
       'Monthly 5-Min Video Explainer',
+      'Dext with AI Assist Included',
     ]);
     expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
       'Monthly Strategy Session',

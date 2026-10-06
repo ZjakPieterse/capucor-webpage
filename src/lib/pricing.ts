@@ -1,4 +1,4 @@
-import { PRICING_ADDONS } from '@/config/tiers';
+import { PRICING_ADDONS, addonIncludedInTier, tierDisplayName } from '@/config/tiers';
 import type { Bracket, BracketValue, Service } from '@/types';
 
 export function bracketPrice(
@@ -58,23 +58,40 @@ export function buildLineItems(
   return items;
 }
 
+// The add-ons a proposal carries for a package: the selected ones that are on
+// the PRICING_ADDONS whitelist, plus every add-on the package includes (Dext
+// from Pro up), de-duplicated and in PRICING_ADDONS order. Unknown slugs drop.
+export function addonsForTier(selectedAddons: string[], tierSlug: string): string[] {
+  return PRICING_ADDONS.filter(
+    (a) => selectedAddons.includes(a.slug) || addonIncludedInTier(a, tierSlug),
+  ).map((a) => a.slug);
+}
+
 // Flat monthly total of the selected optional add-ons (e.g. Dext access).
-// Unknown slugs are ignored — PRICING_ADDONS doubles as the whitelist.
-export function addonTotal(selectedAddons: string[]): number {
+// An add-on the package includes costs nothing. Unknown slugs are ignored —
+// PRICING_ADDONS doubles as the whitelist.
+export function addonTotal(selectedAddons: string[], tierSlug: string): number {
   return selectedAddons.reduce((sum, slug) => {
     const addon = PRICING_ADDONS.find((a) => a.slug === slug);
-    return addon ? sum + addon.priceZAR : sum;
+    return addon && !addonIncludedInTier(addon, tierSlug) ? sum + addon.priceZAR : sum;
   }, 0);
 }
 
-// One line per selected add-on, appended after the service lines in the
-// proposal summary, email, and proposal page. Tier-independent flat fees.
-export function buildAddonLineItems(selectedAddons: string[]): ProposalLineItem[] {
+// One line per add-on, appended after the service lines in the proposal
+// summary, email, and proposal page. An add-on the package includes shows at
+// R 0.00 with an "Included in <package>" label.
+export function buildAddonLineItems(selectedAddons: string[], tierSlug: string): ProposalLineItem[] {
   const items: ProposalLineItem[] = [];
   for (const slug of selectedAddons) {
     const addon = PRICING_ADDONS.find((a) => a.slug === slug);
     if (!addon) continue;
-    items.push({ slug: addon.slug, name: addon.name, label: null, price: addon.priceZAR });
+    const included = addonIncludedInTier(addon, tierSlug);
+    items.push({
+      slug: addon.slug,
+      name: addon.name,
+      label: included ? `Included in ${tierDisplayName(tierSlug)}` : null,
+      price: included ? 0 : addon.priceZAR,
+    });
   }
   return items;
 }

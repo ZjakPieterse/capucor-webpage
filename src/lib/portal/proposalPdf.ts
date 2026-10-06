@@ -111,10 +111,11 @@ export async function archiveSignedProposal(
         .select('*')
         .eq('active', true)
         .order('display_order'),
+      // No active filter: the stored ordinals may point at retired rows (see
+      // the proposal page, which reads brackets the same way).
       anon
         .from('brackets')
         .select('*')
-        .eq('active', true)
         .order('display_order'),
     ]);
     const services = (servicesRes.data ?? []) as Service[];

@@ -1,5 +1,5 @@
 import { cn, formatZAR } from '@/lib/utils';
-import { addonTotal, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
+import { addonTotal, addonsForTier, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
 import { tierDisplayName } from '@/config/tiers';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
@@ -34,15 +34,17 @@ export function ProposalSummary({
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
   const tierName = tier?.name ?? tierDisplayName(tierSlug);
+  // Same add-on rule as the server: the package's included add-ons are listed too.
+  const addons = addonsForTier(selectedAddons, tierSlug);
   const lineItems = [
     ...buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
-    ...buildAddonLineItems(selectedAddons),
+    ...buildAddonLineItems(addons, tierSlug),
   ];
 
   const monthly =
     monthlyZAR ??
     monthlyTotal(selectedServices, selectedBrackets, tierSlug, brackets) +
-      addonTotal(selectedAddons);
+      addonTotal(addons, tierSlug);
 
   return (
     <div className={cn('rounded-2xl border border-primary/25 bg-primary/[0.04] p-5', className)}>

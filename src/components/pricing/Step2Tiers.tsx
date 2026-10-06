@@ -12,6 +12,8 @@ import { useCursorGlow } from '@/hooks/useCursorGlow';
 import {
   PRICING_ADDONS,
   TIER_HIGHLIGHTS,
+  addonIncludedInTier,
+  tierDisplayName,
   TIER_CUMULATIVE_LABELS,
   TIER_BUYER_FIT,
 } from '@/config/tiers';
@@ -49,7 +51,6 @@ export function Step2Tiers({
   const sortedTiers = [...tiers].sort((a, b) => a.display_order - b.display_order);
   const activeServices = services.filter((s) => selectedServices.has(s.slug));
   const containerRef = useCursorGlow<HTMLDivElement>();
-  const addonsZAR = addonTotal(selectedAddons);
 
   return (
     <div className="space-y-6">
@@ -75,7 +76,7 @@ export function Step2Tiers({
             const b = brackets.find((x) => x.service_slug === svc.slug && x.ordinal === sel);
             return sum + (b ? bracketPrice(b, tier.slug) : 0);
           }, 0);
-          const displayTotal = regularTotal + addonsZAR;
+          const displayTotal = regularTotal + addonTotal(selectedAddons, tier.slug);
 
           const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
             item.services.some((s) => selectedServices.has(s))
@@ -156,21 +157,27 @@ export function Step2Tiers({
         })}
       </div>
 
-      {/* Optional add-ons — flat monthly fee, available with every package */}
+      {/* Optional add-ons — flat monthly fee, available with every package unless the chosen package includes it */}
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
           Optional add-ons
         </p>
         <div className="space-y-3">
           {PRICING_ADDONS.map((addon) => {
-            const isOn = selectedAddons.includes(addon.slug);
+            const included = !!selectedTier && addonIncludedInTier(addon, selectedTier);
+            const isOn = included || selectedAddons.includes(addon.slug);
             return (
               <button
                 key={addon.slug}
                 type="button"
                 onClick={() => onToggleAddon(addon.slug)}
+                disabled={included}
                 aria-pressed={isOn}
-                aria-label={`${isOn ? 'Remove' : 'Add'} ${addon.name}`}
+                aria-label={
+                  included
+                    ? `${addon.name}, included in ${tierDisplayName(selectedTier!)}`
+                    : `${isOn ? 'Remove' : 'Add'} ${addon.name}`
+                }
                 className={cn(
                   'service-card relative w-full rounded-2xl border-2 p-4 pr-14 sm:p-5 sm:pr-16 text-left outline-none',
                   'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
@@ -208,11 +215,22 @@ export function Step2Tiers({
                     <p className="font-semibold text-sm">{addon.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                       {addon.description}
+                      {addon.includedFromTier && !included && (
+                        <> Included from {tierDisplayName(addon.includedFromTier)}.</>
+                      )}
                     </p>
                   </div>
                   <div className="shrink-0 flex items-baseline gap-1 ml-2">
-                    <span className="font-mono text-sm font-bold whitespace-nowrap">{formatZAR(addon.priceZAR)}</span>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">/month</span>
+                    {included ? (
+                      <span className="text-xs font-semibold text-primary whitespace-nowrap">
+                        Included in {tierDisplayName(selectedTier!)}
+                      </span>
+                    ) : (
+                      <>
+                        <span className="font-mono text-sm font-bold whitespace-nowrap">{formatZAR(addon.priceZAR)}</span>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">/month</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </button>

@@ -284,25 +284,36 @@ describe('POST /api/proposals', () => {
     errorSpy.mockRestore();
   });
 
-  it('13. addons omitted — defaults to empty, no addon charge', async () => {
+  it('13. addons omitted on Pro — Dext is included at no charge and persisted', async () => {
     const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
     expect(res.status).toBe(200);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect(propPayload.addons).toEqual([]);
+    expect(propPayload.addons).toEqual(['dext']);
     expect(propPayload.monthly_total_zar).toBe(1550);
   });
 
-  it('14. dext add-on — flat R375 added to the recomputed total and persisted', async () => {
+  it('13b. addons omitted on Basic — defaults to empty, no addon charge', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, tierSlug: 'basic' }),
+    );
+    expect(res.status).toBe(200);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload.addons).toEqual([]);
+    expect(propPayload.monthly_total_zar).toBe(1175);
+  });
+
+  it('14. dext add-on on Basic — flat R375 added to the recomputed total and persisted', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
+        tierSlug: 'basic',
         addons: ['dext'],
       }),
     );
     expect(res.status).toBe(200);
 
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    const expectedMonthly = 1550 + 375;
+    const expectedMonthly = 1175 + 375;
     expect(propPayload).toMatchObject({
       addons: ['dext'],
       monthly_total_zar: expectedMonthly,
@@ -318,13 +329,14 @@ describe('POST /api/proposals', () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
+        tierSlug: 'basic',
         addons: ['dext', 'mystery-addon'],
       }),
     );
     expect(res.status).toBe(200);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
     expect(propPayload.addons).toEqual(['dext']);
-    expect(propPayload.monthly_total_zar).toBe(1550 + 375);
+    expect(propPayload.monthly_total_zar).toBe(1175 + 375);
   });
 
   it('16. an add-on alone cannot carry a proposal — dormant selection still 422', async () => {
