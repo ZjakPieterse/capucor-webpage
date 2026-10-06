@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   TIER_HIGHLIGHTS,
-  TIER_CUMULATIVE_LABELS,
   TIER_DISPLAY_NAMES,
   PACKAGE_COMMON_ITEMS,
-  TIER_RHYTHM_LABELS,
   TIERS_BY_APPLICATION,
   packageCommonItemsFor,
   tierDisplayName,
@@ -53,31 +51,29 @@ function isCovered(tierSlug: string, lowestTier: LowestTier): boolean {
   return (rank[tierSlug] ?? 0) >= (rank[lowestTier] ?? 0);
 }
 
-// ─── cumulative labels ──────────────────────────────────────────────────────
+// ─── card structure and Premium by application (tweaks round 1) ─────────────
 
-describe('TIER_CUMULATIVE_LABELS', () => {
-  it('uses the approved "Everything in Basic, plus:" label for pro', () => {
-    expect(TIER_CUMULATIVE_LABELS.pro).toBe('Everything in Basic, plus:');
+describe('package cards (tweaks round 1, 2026-10-06)', () => {
+  it('every card opens with the core services and its processing rhythm', () => {
+    const rhythm = { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' } as const;
+    for (const t of ['basic', 'pro', 'premium'] as const) {
+      const [first, second] = TIER_HIGHLIGHTS[t];
+      expect(first!.text).toBe('Core Services Included');
+      expect(first!.summary).toBe(true);
+      expect(second!.text).toBe(`Processing Rhythm: ${rhythm[t]}`);
+      expect(second!.group).toBe('rhythm');
+    }
   });
 
-  it('uses the approved "Everything in Pro, plus:" label for premium', () => {
-    expect(TIER_CUMULATIVE_LABELS.premium).toBe('Everything in Pro, plus:');
-  });
-
-  it('labels Basic as building on the core services (calculator-v2)', () => {
-    expect(TIER_CUMULATIVE_LABELS.basic).toBe('On top of the core services:');
-  });
-});
-
-// ─── rhythm and application (calculator-v2 Phase 0) ─────────────────────────
-
-describe('package rhythm and Premium by application', () => {
-  it('names each package by its processing rhythm', () => {
-    expect(TIER_RHYTHM_LABELS).toEqual({
-      basic: 'Monthly rhythm',
-      pro: 'Weekly rhythm',
-      premium: 'Daily rhythm',
-    });
+  it('no card or core item mentions Dext, and Xero only as the core software line', () => {
+    const cardText = Object.values(TIER_HIGHLIGHTS)
+      .flat()
+      .map((i) => `${i.text} ${i.tooltip}`)
+      .join(' ');
+    expect(cardText).not.toMatch(/dext|xero/i);
+    const coreXero = PACKAGE_COMMON_ITEMS.filter((i) => /xero/i.test(i.text)).map((i) => i.text);
+    expect(coreXero).toEqual(['Xero software included']);
+    expect(PACKAGE_COMMON_ITEMS.map((i) => `${i.text} ${i.tooltip}`).join(' ')).not.toMatch(/dext/i);
   });
 
   it('sells Premium, and only Premium, by application', () => {
@@ -107,37 +103,44 @@ describe('tierDisplayName', () => {
 
 // ─── ordering + legacy absence ──────────────────────────────────────────────
 
-describe('TIER_HIGHLIGHTS ordering (calculator-v2 Phase 0 inclusions)', () => {
-  it('basic: monthly rhythm, basic reports, quarterly review, then payroll', () => {
+describe('TIER_HIGHLIGHTS ordering (tweaks round 1 lists)', () => {
+  it('basic: core, monthly rhythm, basic reports, quarterly review, then payroll', () => {
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text)).toEqual([
-      'Transactions processed monthly',
-      'Basic monthly reports',
-      'Quarterly performance review',
-      'Payroll processing & payslips',
-      'COIDA annual submission',
+      'Core Services Included',
+      'Processing Rhythm: Monthly',
+      'Monthly Basic Reports',
+      'Quarterly Performance Review',
+      'Payroll Processing & Payslips',
+      'COIDA Annual Submission',
     ]);
   });
 
-  it('pro: weekly rhythm, monthly review, richer reports, supplier processing, Dext', () => {
+  it('pro: core, weekly rhythm, insights report, monthly review, video, supplier processing, payroll', () => {
     expect(TIER_HIGHLIGHTS.pro.map((i) => i.text)).toEqual([
-      'Transactions processed weekly',
-      'Monthly performance review',
-      'Monthly insights report',
-      'Monthly 5-min video explainer',
-      'Supplier processing & review',
-      'Dext with AI Assist included',
-      'Employee self-service portal',
+      'Core Services Included',
+      'Processing Rhythm: Weekly',
+      'Monthly Insights Report',
+      'Monthly Performance Review',
+      'Monthly 5-Minute Video Explainer',
+      'Supplier Processing & Review',
+      'Payroll Processing & Payslips',
+      'COIDA Annual Submission',
+      'Employee Self-Service Portal',
     ]);
   });
 
-  it('premium: daily rhythm, weekly review, planning, on-call partner, budget vs actual', () => {
+  it('premium: core, daily rhythm, weekly review, planning, budget vs actual, on-call partner, payroll', () => {
     expect(TIER_HIGHLIGHTS.premium.map((i) => i.text)).toEqual([
-      'Transactions processed daily',
-      'Weekly reports & review',
-      'Monthly tax & financial planning',
-      'On-call partner support',
-      'Budget vs actual reporting',
-      'Payroll payment files prepared',
+      'Core Services Included',
+      'Processing Rhythm: Daily',
+      'Weekly Reports & Review',
+      'Monthly Tax & Financial Planning',
+      'Budget vs Actual Reporting',
+      'On-Call Partner Support',
+      'Payroll Processing & Payslips',
+      'COIDA Annual Submission',
+      'Employee Self-Service Portal',
+      'Payroll Payment Files Prepared',
     ]);
   });
 
@@ -146,13 +149,13 @@ describe('TIER_HIGHLIGHTS ordering (calculator-v2 Phase 0 inclusions)', () => {
   });
 
   it('on-call partner support promises a same-day reply', () => {
-    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'On-call partner support');
+    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'On-Call Partner Support');
     expect(item!.tooltip).toMatch(/same business day/);
   });
 
   it('merged EMP/UIF wording lives in the Payroll Processing tooltip', () => {
     const payrollItem = TIER_HIGHLIGHTS.basic.find(
-      (i) => i.text === 'Payroll processing & payslips'
+      (i) => i.text === 'Payroll Processing & Payslips'
     );
     expect(payrollItem).toBeDefined();
     expect(payrollItem!.tooltip).toContain('EMP201');
@@ -190,6 +193,9 @@ describe('TIER_HIGHLIGHTS ordering (calculator-v2 Phase 0 inclusions)', () => {
       'Quarterly Review Meeting',
       'Accounts Payable Management',
       'Core Monthly Financials',
+      // Replaced in tweaks round 1 (2026-10-06)
+      'Dext with AI Assist included',
+      'Transactions processed monthly',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -248,43 +254,48 @@ describe('service-filter behaviour', () => {
   it('Case 2 — accounting only: hides bookkeeping-only items', () => {
     const sel = new Set(['accounting']);
     const basic = visibleItems('basic', sel).map((i) => i.text);
-    expect(basic).toContain('Basic monthly reports');
-    expect(basic).not.toContain('Transactions processed monthly');
-    expect(basic).not.toContain('Payroll processing & payslips');
+    expect(basic).toContain('Monthly Basic Reports');
+    expect(basic).not.toContain('Processing Rhythm: Monthly');
+    expect(basic).not.toContain('Payroll Processing & Payslips');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
-    expect(pro).not.toContain('Supplier processing & review');
-    expect(pro).not.toContain('Employee self-service portal');
-    expect(pro).toContain('Monthly performance review');
+    expect(pro).not.toContain('Supplier Processing & Review');
+    expect(pro).not.toContain('Employee Self-Service Portal');
+    expect(pro).toContain('Monthly Performance Review');
   });
 
   it('Case 3 — bookkeeping only: shows the processing rhythm items', () => {
     const sel = new Set(['bookkeeping']);
-    expect(visibleItems('basic', sel).map((i) => i.text)).toContain('Transactions processed monthly');
-    expect(visibleItems('pro', sel).map((i) => i.text)).toContain('Supplier processing & review');
-    expect(visibleItems('premium', sel).map((i) => i.text)).toContain('Transactions processed daily');
+    expect(visibleItems('basic', sel).map((i) => i.text)).toContain('Processing Rhythm: Monthly');
+    expect(visibleItems('pro', sel).map((i) => i.text)).toContain('Supplier Processing & Review');
+    expect(visibleItems('premium', sel).map((i) => i.text)).toContain('Processing Rhythm: Daily');
   });
 
   it('Case 4 — payroll only: shows each tier’s approved payroll items in order', () => {
     const sel = new Set(['payroll']);
 
     expect(visibleItems('basic', sel).map((i) => i.text)).toEqual([
-      'Payroll processing & payslips',
-      'COIDA annual submission',
+      'Payroll Processing & Payslips',
+      'COIDA Annual Submission',
     ]);
 
     expect(visibleItems('pro', sel).map((i) => i.text)).toEqual([
-      'Employee self-service portal',
+      'Payroll Processing & Payslips',
+      'COIDA Annual Submission',
+      'Employee Self-Service Portal',
     ]);
 
     expect(visibleItems('premium', sel).map((i) => i.text)).toEqual([
-      'Payroll payment files prepared',
+      'Payroll Processing & Payslips',
+      'COIDA Annual Submission',
+      'Employee Self-Service Portal',
+      'Payroll Payment Files Prepared',
     ]);
 
     for (const t of ['basic', 'pro', 'premium'] as const) {
       const items = visibleItems(t, sel).map((i) => i.text);
       expect(items).not.toContain('Payroll Included');
-      expect(items).not.toContain('Transactions processed monthly');
+      expect(items).not.toContain('Processing Rhythm: Monthly');
     }
   });
 });
@@ -306,12 +317,12 @@ describe('TierComparison accumulation', () => {
   };
 
   it('marks every basic item as covered in basic, pro, and premium', () => {
-    expectCoverage(['Transactions processed monthly', 'Basic monthly reports', 'Quarterly performance review'], true, true);
+    expectCoverage(['Processing Rhythm: Monthly', 'Monthly Basic Reports', 'Quarterly Performance Review'], true, true);
   });
 
   it('marks pro items as covered in pro and premium only', () => {
     expectCoverage(
-      ['Transactions processed weekly', 'Monthly performance review', 'Supplier processing & review', 'Dext with AI Assist included'],
+      ['Processing Rhythm: Weekly', 'Monthly Performance Review', 'Supplier Processing & Review'],
       false,
       true,
     );
@@ -319,7 +330,7 @@ describe('TierComparison accumulation', () => {
 
   it('marks premium items as covered in premium only', () => {
     expectCoverage(
-      ['Transactions processed daily', 'Weekly reports & review', 'Monthly tax & financial planning', 'On-call partner support', 'Budget vs actual reporting'],
+      ['Processing Rhythm: Daily', 'Weekly Reports & Review', 'Monthly Tax & Financial Planning', 'On-Call Partner Support', 'Budget vs Actual Reporting'],
       false,
       false,
     );
@@ -348,9 +359,9 @@ describe('payroll accumulation in the comparison matrix', () => {
   const sel = new Set(['payroll']);
   const rows = buildMatrix(sel);
 
-  const basicPayrollTexts = ['Payroll processing & payslips', 'COIDA annual submission'];
-  const proPayrollTexts = ['Employee self-service portal'];
-  const premiumPayrollTexts = ['Payroll payment files prepared'];
+  const basicPayrollTexts = ['Payroll Processing & Payslips', 'COIDA Annual Submission'];
+  const proPayrollTexts = ['Employee Self-Service Portal'];
+  const premiumPayrollTexts = ['Payroll Payment Files Prepared'];
 
   it('places basic payroll items at lowestTier "basic" and covers them in all three tiers', () => {
     for (const text of basicPayrollTexts) {

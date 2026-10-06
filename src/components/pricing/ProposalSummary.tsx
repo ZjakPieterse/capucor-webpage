@@ -22,6 +22,8 @@ interface ProposalSummaryProps {
   selectedAddons?: string[];
   /** Server-stored total — pass to display the figure locked in at send time. */
   monthlyZAR?: number;
+  /** Replaces "Total monthly charge", e.g. for a Premium "from" estimate. */
+  totalLabel?: string;
   className?: string;
 }
 
@@ -38,6 +40,7 @@ export function ProposalSummary({
   tierSlug,
   selectedAddons = [],
   monthlyZAR,
+  totalLabel = 'Total monthly charge',
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
@@ -89,7 +92,7 @@ export function ProposalSummary({
 
       <div className="space-y-1.5 border-t border-primary/20 pt-3 text-sm">
         <div className="flex items-baseline justify-between">
-          <span className="font-semibold">Total monthly charge</span>
+          <span className="font-semibold">{totalLabel}</span>
           <span className="font-mono text-lg font-bold">{formatZAR(monthly)}</span>
         </div>
         <p className="pt-1 text-[11px] text-muted-foreground">

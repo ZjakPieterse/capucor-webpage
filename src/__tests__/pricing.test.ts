@@ -171,9 +171,14 @@ describe('addonsForTier', () => {
     expect(addonsForTier([], 'basic')).toEqual([]);
   });
 
-  it('adds Dext from Pro up even when it was not selected', () => {
-    expect(addonsForTier([], 'pro')).toEqual(['dext']);
-    expect(addonsForTier(['dext'], 'premium')).toEqual(['dext']);
+  it('no longer lists Dext from Pro up (withdrawn from view, tweaks round 1 2026-10-06)', () => {
+    expect(addonsForTier([], 'pro')).toEqual([]);
+    expect(addonsForTier(['dext'], 'premium')).toEqual([]);
+  });
+
+  it('keeps a Dext token already on a Basic proposal, priced as sent', () => {
+    expect(addonsForTier(['dext'], 'basic')).toEqual(['dext']);
+    expect(addonTotal(['dext'], 'basic')).toBe(375);
   });
 });
 
@@ -325,12 +330,12 @@ describe('retired Xero invoicing charge (proposals sent before 2026-10-06)', () 
 
   it('is dropped from the stored add-ons where the package includes it', () => {
     expect(addonsForTier(['xero-invoicing'], 'basic')).toEqual(['xero-invoicing']);
-    expect(addonsForTier(['xero-invoicing'], 'pro')).toEqual(['dext']);
+    expect(addonsForTier(['xero-invoicing'], 'pro')).toEqual([]);
   });
 
   it('is never added by the package alone', () => {
     expect(addonsForTier([], 'basic')).toEqual([]);
-    expect(addonsForTier([], 'premium')).toEqual(['dext']);
+    expect(addonsForTier([], 'premium')).toEqual([]);
   });
 });
 

@@ -11,7 +11,6 @@ import {
   tierDisplayName,
   type PricingAddon,
 } from '@/config/tiers';
-import { DEXT_ACCESS_COPY } from '@/config/calculatorCopy';
 import type { Bracket, BracketValue } from '@/types';
 
 interface AddonsStepProps {
@@ -30,13 +29,14 @@ interface AddonsStepProps {
 }
 
 const ICONS: Record<string, React.ElementType> = {
-  dext: ReceiptText,
   'whatsapp-support': MessageCircle,
   'category-tracking': Tags,
   'personal-tax': UserRound,
 };
 
 // Hidden add-ons (the VAT flag, the retired Xero charge) are never offered.
+// Dext is hidden too since tweaks round 1 (2026-10-06); it is
+// still delivered on Pro and Premium, and old proposals keep the token.
 const OFFERED = PRICING_ADDONS.filter((a) => !a.hidden);
 
 export function AddonsStep({
@@ -120,11 +120,8 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
   const active = included || isOn;
   const Icon = ICONS[addon.slug] ?? ReceiptText;
 
-  // Dext reads differently by package: access only on Basic (the client does
-  // the processing), included and processed by Capucor from Pro.
-  const isDext = addon.slug === 'dext';
-  const title = isDext ? (included ? DEXT_ACCESS_COPY.includedTitle : DEXT_ACCESS_COPY.basicTitle) : addon.name;
-  const body = isDext ? (included ? DEXT_ACCESS_COPY.includedBody : DEXT_ACCESS_COPY.basicBody) : addon.description;
+  const title = addon.name;
+  const body = addon.description;
 
   const price = included ? (
     <span className="text-xs font-semibold text-primary">Included in {tierDisplayName(tierSlug)}</span>

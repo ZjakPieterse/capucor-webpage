@@ -24,6 +24,8 @@ interface TierComparisonProps {
   selectedAddons?: string[];
   /** False only on a VAT "No": hides VAT201 from the core rows. */
   vatRegistered?: boolean;
+  /** Start expanded (the package step opens it by default, tweaks round 1). */
+  defaultOpen?: boolean;
 }
 
 type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
@@ -43,8 +45,9 @@ export function TierComparison({
   selectedBrackets,
   selectedAddons = [],
   vatRegistered = true,
+  defaultOpen = false,
 }: TierComparisonProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
 
   const sortedTiers = useMemo(
     () => [...tiers].sort((a, b) => a.display_order - b.display_order),
@@ -74,7 +77,7 @@ export function TierComparison({
     for (const tierSlug of tierOrder) {
       const highlights: TierHighlightItem[] = TIER_HIGHLIGHTS[tierSlug] ?? [];
       for (const h of highlights) {
-        if (RHYTHM_TEXTS.has(h.text)) continue;
+        if (h.summary || RHYTHM_TEXTS.has(h.text)) continue;
         if (h.services.length > 0 && !h.services.some((s) => selectedServices.has(s))) continue;
         if (seen.has(h.text)) continue;
         seen.add(h.text);

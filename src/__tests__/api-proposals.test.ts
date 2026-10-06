@@ -310,11 +310,11 @@ describe('POST /api/proposals', () => {
     errorSpy.mockRestore();
   });
 
-  it('13. addons omitted on Pro — Dext is included at no charge and persisted', async () => {
+  it('13. addons omitted on Pro — nothing is stored (Dext is delivered but not listed since 2026-10-06)', async () => {
     const res = await POST(makeJsonRequest('http://test/api/proposals', validBody));
     expect(res.status).toBe(200);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect(propPayload.addons).toEqual(['dext']);
+    expect(propPayload.addons).toEqual([]);
     expect(propPayload.monthly_total_zar).toBe(1550);
   });
 
@@ -328,7 +328,7 @@ describe('POST /api/proposals', () => {
     expect(propPayload.monthly_total_zar).toBe(1175);
   });
 
-  it('14. dext add-on on Basic — flat R375 added to the recomputed total and persisted', async () => {
+  it('14. a stale page cannot add the withdrawn Dext add-on on Basic (tweaks round 1)', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
@@ -339,16 +339,15 @@ describe('POST /api/proposals', () => {
     expect(res.status).toBe(200);
 
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    const expectedMonthly = 1175 + 375;
     expect(propPayload).toMatchObject({
-      addons: ['dext'],
-      monthly_total_zar: expectedMonthly,
+      addons: [],
+      monthly_total_zar: 1175,
       vat_zar: 0,
-      total_charge_zar: expectedMonthly,
+      total_charge_zar: 1175,
     });
 
     const leadPayload = leadInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect((leadPayload.config as Record<string, unknown>).addons).toEqual(['dext']);
+    expect((leadPayload.config as Record<string, unknown>).addons).toEqual([]);
   });
 
   it('15. unknown addon slugs are filtered out, not priced', async () => {
@@ -356,13 +355,13 @@ describe('POST /api/proposals', () => {
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
         tierSlug: 'basic',
-        addons: ['dext', 'mystery-addon'],
+        addons: ['whatsapp-support', 'mystery-addon'],
       }),
     );
     expect(res.status).toBe(200);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect(propPayload.addons).toEqual(['dext']);
-    expect(propPayload.monthly_total_zar).toBe(1175 + 375);
+    expect(propPayload.addons).toEqual(['whatsapp-support']);
+    expect(propPayload.monthly_total_zar).toBe(1175 + 750);
   });
 
   it('16. an add-on alone cannot carry a proposal — dormant selection still 422', async () => {
@@ -449,11 +448,39 @@ describe('POST /api/proposals', () => {
   // ── calculator-v2 Phase 2: Premium by call, answer-driven add-ons, per-person add-ons ──
 
   it('21. Premium is refused for self-serve with 422, nothing persisted', async () => {
-    const res = await POST(makeJsonRequest('http://test/api/proposals', { ...validBody, tierSlug: 'premium' }));
-    expect(res.status).toBe(422);
-    expect((await res.json()).field).toBe('tierSlug');
+    for (const intent of [undefined, 'send', 'accept']) {
+      const res = await POST(makeJsonRequest('http://test/api/proposals', { ...validBody, tierSlug: 'premium', intent }));
+      expect(res.status).toBe(422);
+      expect((await res.json()).field).toBe('tierSlug');
+    }
     expect(leadInsert).not.toHaveBeenCalled();
     expect(proposalInsert).not.toHaveBeenCalled();
+  });
+
+  it('21b. a Premium request stores a call lead with the estimate and tells Capucor, but creates no proposal', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', { ...validBody, tierSlug: 'premium', intent: 'request' }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, requested: true });
+    expect(proposalInsert).not.toHaveBeenCalled();
+    const leadPayload = leadInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(leadPayload).toMatchObject({ source: 'call', business: 'Pat Trading Co' });
+    // Premium prices: accounting 1525 + bookkeeping 0 + payroll 950.
+    expect(leadPayload.config).toMatchObject({ tier: 'premium', intent: 'request', estimatedMonthlyZAR: 2475 });
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    const mail = sendEmailMock.mock.calls[0]![0];
+    expect(mail).toMatchObject({ sourceType: 'lead', sourceId: 'lead_1', eventType: 'lead.owner_notification' });
+    expect(mail.message.to).toBe('owner@capucor.com');
+    expect(mail.message.subject).toBe('Premium request: Pat Trading Co');
+    expect(mail.message.text).toMatch(/R\s?2,475/);
+  });
+
+  it('21c. a request for a self-serve package is refused with 422, nothing persisted', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', { ...validBody, intent: 'request' }));
+    expect(res.status).toBe(422);
+    expect((await res.json()).field).toBe('intent');
+    expect(leadInsert).not.toHaveBeenCalled();
   });
 
   it('22. the withdrawn Xero-invoicing answer adds nothing on Basic (decision 2026-10-06)', async () => {
@@ -549,7 +576,7 @@ describe('POST /api/proposals', () => {
     );
     expect(res.status).toBe(200);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
-    expect(propPayload).toMatchObject({ addons: ['dext'], monthly_total_zar: 1550 });
+    expect(propPayload).toMatchObject({ addons: [], monthly_total_zar: 1550 });
   });
 
   it('25. a VAT No stores the not-VAT-registered flag at no charge', async () => {

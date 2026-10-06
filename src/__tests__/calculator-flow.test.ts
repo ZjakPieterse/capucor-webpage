@@ -5,10 +5,11 @@ import {
   effectiveAddons,
   nextStep,
   prevStep,
+  progressFraction,
   revenueNeedsCall,
+  revertStepFields,
   scopeComplete,
 } from '@/lib/calculatorFlow';
-import { CALCULATOR_STAGE_OF } from '@/config/calculatorCopy';
 import type { CalculatorAnswers, CalculatorStep } from '@/types';
 
 const answers = (over: Partial<CalculatorAnswers> = {}): CalculatorAnswers => ({
@@ -51,9 +52,53 @@ describe('calculator-v2 navigation', () => {
     }
   });
 
-  it('every screen belongs to one of the five progress stages, in order', () => {
-    const stages = walk(answers({ needsPayroll: true })).map((s) => CALCULATOR_STAGE_OF[s]);
-    expect(stages).toEqual([1, 1, 1, 2, 2, 3, 4, 5]);
+  it('the progress bar grows screen by screen and fills only once the visitor is done', () => {
+    for (const needsPayroll of [true, false]) {
+      const a = { answers: answers({ needsPayroll }) };
+      const values = walk(a.answers).map((s) => progressFraction(s, a));
+      for (let i = 1; i < values.length; i++) expect(values[i]).toBeGreaterThan(values[i - 1]!);
+      expect(values[0]).toBeGreaterThan(0);
+      expect(values[values.length - 1]).toBeLessThan(1);
+      expect(progressFraction('review', a, true)).toBe(1);
+    }
+  });
+});
+
+describe('only Continue keeps a selection (tweaks round 1)', () => {
+  const base = {
+    step: 'transactions' as const,
+    selectedServices: new Set(['accounting', 'bookkeeping']),
+    selectedBrackets: { accounting: 3, bookkeeping: 4 } as Record<string, number>,
+    answers: answers({ vatRegistered: true, needsPayroll: false }),
+    selectedTier: 'pro' as string | null,
+    selectedAddons: ['whatsapp-support'],
+  };
+
+  it('Back restores the screen value it had on entry, and only that one', () => {
+    const changed = { ...base, selectedBrackets: { accounting: 3, bookkeeping: 9 } };
+    const out = revertStepFields(changed, base, 'transactions');
+    expect(out.selectedBrackets).toEqual({ accounting: 3, bookkeeping: 4 });
+  });
+
+  it('a value first chosen on this screen is dropped on Back', () => {
+    const entry = { ...base, selectedBrackets: { accounting: 3 } };
+    const out = revertStepFields(base, entry, 'transactions');
+    expect(out.selectedBrackets).toEqual({ accounting: 3 });
+    expect(out.selectedServices.has('bookkeeping')).toBe(false);
+  });
+
+  it('the package and add-on screens drop an unconfirmed package or add-on', () => {
+    expect(revertStepFields({ ...base, selectedTier: 'basic' }, base, 'package').selectedTier).toBe('pro');
+    expect(revertStepFields({ ...base, selectedAddons: [] }, base, 'addons').selectedAddons).toEqual(['whatsapp-support']);
+    // Other screens' values are untouched.
+    expect(revertStepFields({ ...base, selectedTier: 'basic' }, base, 'addons').selectedTier).toBe('basic');
+  });
+
+  it('a payroll answer reverts with the services it implied', () => {
+    const entry = { ...base, answers: answers({ vatRegistered: true, needsPayroll: null }) };
+    const out = revertStepFields(base, entry, 'payroll');
+    expect(out.answers.needsPayroll).toBeNull();
+    expect(out.answers.vatRegistered).toBe(true);
   });
 });
 

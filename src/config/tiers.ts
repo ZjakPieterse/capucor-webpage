@@ -10,104 +10,140 @@ export interface TierHighlightItem {
   services: string[];
   tooltip: string;
   calculatorOnly?: boolean;
+  /**
+   * Items in the same group replace each other as the package goes up (the
+   * rhythm, the reports, the review). A cumulative list, such as the signed
+   * schedule, keeps only the highest package's item of each group.
+   */
+  group?: 'rhythm' | 'reports' | 'review';
+  /** A card summary line ("Core Services Included"), not a schedule item. */
+  summary?: boolean;
 }
+
+// Each card lists its package in full, starting with the core services and the
+// processing rhythm (tweaks round 1, 2026-10-06). Premium does not repeat Pro's
+// extras; the comparison table and the schedule carry them cumulatively.
+// Payroll is flat across packages, so its lines repeat on every card.
+const CORE_SERVICES_INCLUDED: TierHighlightItem = {
+  text: 'Core Services Included',
+  services: ['accounting', 'bookkeeping'],
+  tooltip: 'Everything in the core services: your own accountant, SARS and CIPC compliance, annual financial statements, bookkeeping and the monthly close, and year-round support.',
+  summary: true,
+};
+
+const PAYROLL_PROCESSING: TierHighlightItem = {
+  text: 'Payroll Processing & Payslips',
+  services: ['payroll'],
+  tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time, with EMP201 and EMP501 submissions lodged on their cycles and UIF declarations handled when needed.',
+  calculatorOnly: true,
+};
+
+const COIDA_SUBMISSION: TierHighlightItem = {
+  text: 'COIDA Annual Submission',
+  services: ['payroll'],
+  tooltip: 'Annual COIDA Return of Earnings information prepared and submitted for compliance purposes.',
+  calculatorOnly: true,
+};
+
+const EMPLOYEE_PORTAL: TierHighlightItem = {
+  text: 'Employee Self-Service Portal',
+  services: ['payroll'],
+  tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
+  calculatorOnly: true,
+};
 
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
+    CORE_SERVICES_INCLUDED,
     {
-      text: 'Transactions processed monthly',
+      text: 'Processing Rhythm: Monthly',
       services: ['bookkeeping'],
       tooltip: 'Your bank transactions are processed and reconciled once a month, at the monthly close.',
+      group: 'rhythm',
     },
     {
-      text: 'Basic monthly reports',
+      text: 'Monthly Basic Reports',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A profit and loss statement and balance sheet after each monthly close.',
+      group: 'reports',
     },
     {
-      text: 'Quarterly performance review',
+      text: 'Quarterly Performance Review',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A review every quarter of how the business is performing and what needs attention.',
+      group: 'review',
     },
-    {
-      text: 'Payroll processing & payslips',
-      services: ['payroll'],
-      tooltip: 'Monthly payroll calculations and employee payslips prepared accurately and on time, with EMP201 and EMP501 submissions lodged on their cycles and UIF declarations handled when needed.',
-      calculatorOnly: true,
-    },
-    {
-      text: 'COIDA annual submission',
-      services: ['payroll'],
-      tooltip: 'Annual COIDA Return of Earnings information prepared and submitted for compliance purposes.',
-      calculatorOnly: true,
-    },
+    PAYROLL_PROCESSING,
+    COIDA_SUBMISSION,
   ],
   pro: [
+    CORE_SERVICES_INCLUDED,
     {
-      text: 'Transactions processed weekly',
+      text: 'Processing Rhythm: Weekly',
       services: ['bookkeeping'],
       tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
+      group: 'rhythm',
     },
     {
-      text: 'Monthly performance review',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'A review every month, in place of the quarterly review, covering performance, key concerns and next steps.',
-    },
-    {
-      text: 'Monthly insights report',
+      text: 'Monthly Insights Report',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A monthly report covering selected business metrics for a clearer snapshot of financial performance.',
+      group: 'reports',
     },
     {
-      text: 'Monthly 5-min video explainer',
+      text: 'Monthly Performance Review',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A review every month, in place of the quarterly review, covering performance, key concerns and next steps.',
+      group: 'review',
+    },
+    {
+      text: 'Monthly 5-Minute Video Explainer',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Receive a short monthly video highlighting the key points from your latest financial results.',
     },
     {
-      text: 'Supplier processing & review',
+      text: 'Supplier Processing & Review',
       services: ['bookkeeping'],
-      tooltip: 'Supplier bills captured and reviewed, so supplier and customer balances are tracked in Xero.',
+      tooltip: 'Supplier bills captured and reviewed, so what you owe suppliers and what customers owe you is always up to date.',
     },
-    {
-      text: 'Dext with AI Assist included',
-      services: ['bookkeeping'],
-      tooltip: 'Dext software access, AI Assist included, as part of your package: snap receipts and supplier bills and we process them into your books.',
-    },
-    {
-      text: 'Employee self-service portal',
-      services: ['payroll'],
-      tooltip: 'Employees can access payslips and tax certificates directly through a secure self-service portal.',
-      calculatorOnly: true,
-    },
+    PAYROLL_PROCESSING,
+    COIDA_SUBMISSION,
+    EMPLOYEE_PORTAL,
   ],
   premium: [
+    CORE_SERVICES_INCLUDED,
     {
-      text: 'Transactions processed daily',
+      text: 'Processing Rhythm: Daily',
       services: ['bookkeeping'],
       tooltip: 'We process what is available every business day, so your numbers are close to live.',
+      group: 'rhythm',
     },
     {
-      text: 'Weekly reports & review',
+      text: 'Weekly Reports & Review',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A short report and review every week, so decisions are made on current numbers.',
+      group: 'review',
     },
     {
-      text: 'Monthly tax & financial planning',
+      text: 'Monthly Tax & Financial Planning',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A monthly planning cycle covering tax position, cash flow and the decisions ahead.',
     },
     {
-      text: 'On-call partner support',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'A direct line to your partner, with a reply the same business day.',
-    },
-    {
-      text: 'Budget vs actual reporting',
+      text: 'Budget vs Actual Reporting',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Compare actual financial performance against budget and identify areas requiring attention.',
     },
     {
-      text: 'Payroll payment files prepared',
+      text: 'On-Call Partner Support',
+      services: ['accounting', 'bookkeeping'],
+      tooltip: 'A direct line to your partner, with a reply the same business day.',
+    },
+    PAYROLL_PROCESSING,
+    COIDA_SUBMISSION,
+    EMPLOYEE_PORTAL,
+    {
+      text: 'Payroll Payment Files Prepared',
       services: ['payroll'],
       tooltip: 'A bank-upload salary-payment file is prepared after payroll finalisation to simplify the payment process.',
       calculatorOnly: true,
@@ -115,22 +151,10 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
 };
 
-export const TIER_CUMULATIVE_LABELS: Record<string, string> = {
-  basic: 'On top of the core services:',
-  pro: 'Everything in Basic, plus:',
-  premium: 'Everything in Pro, plus:',
-};
-
-// The processing rhythm that defines each package, shown under its name.
-export const TIER_RHYTHM_LABELS: Record<string, string> = {
-  basic: 'Monthly rhythm',
-  pro: 'Weekly rhythm',
-  premium: 'Daily rhythm',
-};
-
-// Packages sold by booking a call rather than self-serve acceptance. The
-// calculator shows a "from" price and a booking link; /api/proposals refuses
-// them. Staff can still prepare and amend a proposal on capucor.app.
+// Packages sold by application rather than self-serve acceptance. The
+// calculator shows a "from" price and ends in a request (tweaks round 1);
+// /api/proposals creates no proposal for them. Staff can still prepare and
+// amend a proposal on capucor.app.
 export const TIERS_BY_APPLICATION: readonly string[] = ['premium'];
 
 // Canonical display names for the three package slugs. The Supabase `tiers`
@@ -241,6 +265,10 @@ export const PRICING_ADDONS: PricingAddon[] = [
     includedFromTier: 'pro',
     // Basic has no supplier processing, so on Basic the client does the processing.
     chargedLabel: 'Software access, you process the items',
+    // WITHDRAWN 2026-10-06 (tweaks round 1): no longer offered on Basic and not
+    // mentioned anywhere; Capucor still delivers Dext on Pro and Premium. Kept
+    // so proposals already sent with the token price and render as sent.
+    hidden: true,
   },
   {
     slug: 'whatsapp-support',
@@ -253,7 +281,7 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'Category Tracking',
     priceZAR: 1200,
     description:
-      'Xero tracking categories set up for your branches, projects or departments, with every transaction coded to them so your reports split by category.',
+      'Tracking categories set up for your branches, projects or departments, with every transaction coded to them so your reports split by category.',
   },
   {
     slug: 'personal-tax',

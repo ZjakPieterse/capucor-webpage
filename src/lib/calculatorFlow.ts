@@ -96,14 +96,53 @@ export function prevStep(step: CalculatorStep, s: Pick<FlowState, 'answers'>): C
   }
 }
 
-// Position line above each question, e.g. "Your business · 2 of 3" or
-// "Payroll · 1 of 2" (the headcount only follows a payroll Yes).
-const BUSINESS_QUESTIONS: CalculatorStep[] = ['revenue', 'transactions', 'vat'];
-const PAYROLL_QUESTIONS: CalculatorStep[] = ['payroll', 'employees'];
-export function questionPosition(step: CalculatorStep): string {
-  const i = BUSINESS_QUESTIONS.indexOf(step);
-  if (i >= 0) return `Your business · ${i + 1} of ${BUSINESS_QUESTIONS.length}`;
-  return `Payroll · ${PAYROLL_QUESTIONS.indexOf(step) + 1} of ${PAYROLL_QUESTIONS.length}`;
+/**
+ * How full the progress bar is on `step`, from 0 to 1 (tweaks round 1: one
+ * bar, no stage names). The screens are counted along the visitor's own path,
+ * so a payroll No has one screen fewer. Review stops short of full; a created
+ * proposal or request fills the bar.
+ */
+export function progressFraction(
+  step: CalculatorStep,
+  s: Pick<FlowState, 'answers'>,
+  completed = false,
+): number {
+  if (completed) return 1;
+  const path: CalculatorStep[] = [FIRST_STEP];
+  while (path[path.length - 1] !== 'review') path.push(nextStep(path[path.length - 1]!, s));
+  const at = path.indexOf(step);
+  return at < 0 ? 0 : (at + 1) / (path.length + 1);
+}
+
+interface SelectionState extends FlowState {
+  selectedServices: Set<string>;
+  selectedAddons: string[];
+}
+
+/**
+ * Back from `step` drops whatever the visitor changed on that screen without
+ * pressing Continue (tweaks round 1: only Continue keeps a selection). The
+ * screen's own value goes back to what it was when the screen was entered;
+ * everything else is left as it is.
+ */
+export function revertStepFields<S extends SelectionState>(current: S, entry: S, step: CalculatorStep): S {
+  const bracketSlug =
+    step === 'revenue' ? 'accounting' : step === 'transactions' ? 'bookkeeping' : step === 'employees' ? 'payroll' : null;
+  if (bracketSlug) {
+    const selectedBrackets = { ...current.selectedBrackets };
+    const was = entry.selectedBrackets[bracketSlug];
+    if (was === undefined) delete selectedBrackets[bracketSlug];
+    else selectedBrackets[bracketSlug] = was;
+    return { ...current, selectedBrackets, selectedServices: deriveServices(selectedBrackets, current.answers) };
+  }
+  if (step === 'vat' || step === 'payroll') {
+    const key = step === 'vat' ? 'vatRegistered' : 'needsPayroll';
+    const answers = { ...current.answers, [key]: entry.answers[key] };
+    return { ...current, answers, selectedServices: deriveServices(current.selectedBrackets, answers) };
+  }
+  if (step === 'package') return { ...current, selectedTier: entry.selectedTier };
+  if (step === 'addons') return { ...current, selectedAddons: entry.selectedAddons };
+  return current;
 }
 
 /**
