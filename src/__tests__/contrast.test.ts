@@ -205,9 +205,9 @@ describe('colour is never the only signal (§5)', () => {
     // only in the colour.
     expect(hero).toMatch(/AlertCircle/);
 
-    // The payroll and close tiles state their status in words.
+    // The payroll and books-closed rows state their status in words.
     expect(hero).toMatch(/EMP201 submitted/);
-    expect(hero).toMatch(/reviewed/);
+    expect(hero).toMatch(/reconciled/);
   });
 
   it('pairs the margin trend in the service dashboards with a direction icon', () => {

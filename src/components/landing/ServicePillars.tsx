@@ -37,7 +37,6 @@ const SERVICES = [
     ],
     href: "/bookkeeping",
     ctaLabel: "View bookkeeping support",
-    featured: true,
   },
   {
     icon: Users,
@@ -125,7 +124,7 @@ export function ServicePillars() {
 
                 <a
                   href={svc.href}
-                  className="text-sm font-medium text-primary hover:underline underline-offset-4"
+                  className="text-link text-sm font-medium text-primary"
                 >
                   {svc.ctaLabel} →
                 </a>
@@ -138,7 +137,7 @@ export function ServicePillars() {
           <div className="mt-12 text-center">
             <a
               href="/pricing"
-              className="premium-button inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+              className="premium-button inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
             >
               Build your subscription →
             </a>

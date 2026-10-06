@@ -397,6 +397,30 @@
   }
 }
 
+/* ─── Text links and quiet toggles ─────────────────────────────────────────
+   Named replacements for inline `hover:underline` / `hover:text-foreground`,
+   which do not reliably emit here (see docs/design-system.md). */
+.text-link {
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 260ms ease;
+}
+
+.quiet-hover {
+  transition: color 260ms ease;
+}
+
+@media all {
+  .text-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  .quiet-hover:hover {
+    color: var(--foreground);
+  }
+}
+
 .premium-button {
   position: relative;
   border-radius: var(--radius-lg);

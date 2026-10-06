@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowRight, BarChart2, Users } from 'lucide-react';
+import { BarChart2, Users } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { BookkeepingDashboard } from '@/components/services/ServiceMiniDashboards';
+import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
@@ -66,13 +66,7 @@ export default function BookkeepingPage() {
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
                 Every transaction processed, categorised and reconciled against your bank statements each month. Your P&amp;L and balance sheet arrive on a schedule, and your accountant talks you through them.
               </p>
-              <Link
-                href="/pricing"
-                className="premium-button inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all"
-              >
-                Build your subscription
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              <ServiceCtaPair />
             </div>
             <BookkeepingDashboard />
           </div>
@@ -120,12 +114,7 @@ export default function BookkeepingPage() {
           <p className="text-muted-foreground mb-8">
             Flat monthly pricing. Build your exact subscription in minutes.
           </p>
-          <a
-            href="/pricing"
-            className="premium-button inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all"
-          >
-            Build your subscription →
-          </a>
+          <ServiceCtaPair className="justify-center" />
         </div>
       </section>
 

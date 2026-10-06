@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowRight, BookMarked, Users } from 'lucide-react';
+import { BookMarked, Users } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { AccountingDashboard } from '@/components/services/ServiceMiniDashboards';
+import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
@@ -66,13 +66,7 @@ export default function AccountingPage() {
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
                 Annual financials, provisional and income tax, VAT201 and CIPC annual returns, prepared on a calendar and checked before anything reaches SARS. It runs on the same monthly rhythm as your books and payroll.
               </p>
-              <Link
-                href="/pricing"
-                className="premium-button inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all"
-              >
-                Build your subscription
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              <ServiceCtaPair />
             </div>
             <AccountingDashboard />
           </div>
@@ -120,12 +114,7 @@ export default function AccountingPage() {
           <p className="text-muted-foreground mb-8">
             Flat monthly pricing. Build your exact subscription in minutes.
           </p>
-          <a
-            href="/pricing"
-            className="premium-button inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all"
-          >
-            Build your subscription →
-          </a>
+          <ServiceCtaPair className="justify-center" />
         </div>
       </section>
 
