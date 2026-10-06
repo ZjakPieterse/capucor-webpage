@@ -1,6 +1,7 @@
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, addonsForTier, buildAddonLineItems, buildLineItems, monthlyTotal } from '@/lib/pricing';
 import { tierDisplayName } from '@/config/tiers';
+import { mergeCoreLines } from '@/lib/calculatorFlow';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 interface ProposalSummaryProps {
@@ -14,6 +15,12 @@ interface ProposalSummaryProps {
   selectedAddons?: string[];
   /** Server-stored total — pass to display the figure locked in at send time. */
   monthlyZAR?: number;
+  /**
+   * Show accounting and bookkeeping as one core line (the calculator's review
+   * step and details modal). The signing page leaves it off so it matches the
+   * PDF and email, which list the two services the proposal stores.
+   */
+  mergeCore?: boolean;
   className?: string;
 }
 
@@ -30,14 +37,16 @@ export function ProposalSummary({
   tierSlug,
   selectedAddons = [],
   monthlyZAR,
+  mergeCore = false,
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
   const tierName = tier?.name ?? tierDisplayName(tierSlug);
   // Same add-on rule as the server: the package's included add-ons are listed too.
   const addons = addonsForTier(selectedAddons, tierSlug);
+  const serviceLines = buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets);
   const lineItems = [
-    ...buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
+    ...(mergeCore ? mergeCoreLines(serviceLines) : serviceLines),
     ...buildAddonLineItems(addons, tierSlug),
   ];
 
@@ -61,12 +70,12 @@ export function ProposalSummary({
 
       <ul className="mb-4 space-y-2">
         {lineItems.map((item) => (
-          <li key={item.slug} className="flex items-center justify-between text-sm">
-            <span>
+          <li key={item.slug} className="flex items-start justify-between gap-3 text-sm">
+            <span className="min-w-0">
               {item.name}
               {item.label ? <span className="text-muted-foreground"> · {item.label}</span> : null}
             </span>
-            <span className="font-mono text-sm">{formatZAR(item.price)}</span>
+            <span className="font-mono text-sm whitespace-nowrap">{formatZAR(item.price)}</span>
           </li>
         ))}
       </ul>

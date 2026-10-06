@@ -1,32 +1,28 @@
 'use client';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
-import type { CalculatorStep } from '@/types';
+import { CALCULATOR_STAGES, type CalculatorStage } from '@/config/calculatorCopy';
 
 interface StepIndicatorProps {
-  currentStep: CalculatorStep;
-  /** True once the Activate modal has been submitted and the proposal sent. */
+  currentStep: CalculatorStage;
+  /** True once the details modal has been submitted and the proposal created. */
   completed?: boolean;
 }
 
-// Two real input steps + a 3rd "Done" completion marker (not an input step).
-// The banner above reads "3 steps to your monthly price"; the last segment
-// signals that the process is complete.
-const STEPS = [
-  { number: 1, label: 'Your business' },
-  { number: 2, label: 'Choose package' },
-  { number: 3, label: 'Done' },
-] as const;
+// Five stages (Your business, Payroll, Package, Add-ons, Review). Stages 1 and
+// 2 hold one question per screen; the indicator shows the stage, not the screen.
+const STEPS = CALCULATOR_STAGES;
+const LAST = STEPS[STEPS.length - 1]!.number;
 
 export function StepIndicator({ currentStep, completed = false }: StepIndicatorProps) {
   return (
     <nav aria-label="Calculator progress" className="mb-8">
       <ol className="flex items-start gap-0">
         {STEPS.map((step, i) => {
-          // On completion every segment lights up and the last ("Done") gets
-          // the active glow as the celebratory end state.
-          const isDone = completed ? true : step.number < currentStep;
-          const isActive = completed ? step.number === 3 : step.number === currentStep;
+          // On completion every stage before Review lights up as done and
+          // Review keeps the active glow as the end state.
+          const isDone = completed ? step.number < LAST : step.number < currentStep;
+          const isActive = completed ? step.number === LAST : step.number === currentStep;
 
           return (
             <li
@@ -34,9 +30,9 @@ export function StepIndicator({ currentStep, completed = false }: StepIndicatorP
               className={cn('flex items-start', i === STEPS.length - 1 ? '' : 'flex-1')}
             >
               {/* Column width is pinned to the circle (w-8) so label widths
-                  can't skew the flex layout — labels get a fixed w-20 and
-                  overflow the column symmetrically. This keeps circle 2 at the
-                  true container center, aligned with the eyebrow above. */}
+                  can't skew the flex layout. Labels get a fixed width and
+                  overflow the column symmetrically, so circle 3 sits at the
+                  true container centre, aligned with the eyebrow above. */}
               <div className="flex flex-col items-center shrink-0 w-8">
                 <motion.div
                   initial={false}
@@ -70,7 +66,7 @@ export function StepIndicator({ currentStep, completed = false }: StepIndicatorP
                 </motion.div>
                 <span
                   className={cn(
-                    'mt-2 w-20 text-[10px] sm:text-xs font-medium text-center leading-tight transition-colors duration-300',
+                    'mt-2 w-16 sm:w-20 text-[10px] sm:text-xs font-medium text-center leading-tight transition-colors duration-300',
                     isActive ? 'text-foreground' : 'text-muted-foreground'
                   )}
                 >
@@ -79,7 +75,7 @@ export function StepIndicator({ currentStep, completed = false }: StepIndicatorP
               </div>
 
               {i < STEPS.length - 1 && (
-                <div className="flex-1 h-[2px] mt-4 mx-2 sm:mx-3 bg-border relative overflow-hidden rounded-full">
+                <div className="flex-1 h-[2px] mt-4 mx-1.5 sm:mx-3 bg-border relative overflow-hidden rounded-full">
                   <div
                     className="absolute inset-0 bg-primary origin-left will-change-transform"
                     style={{

@@ -1,22 +1,16 @@
 'use client';
 
-import { ArrowRight, Check, CornerDownRight, Layers, Plus, ReceiptText } from 'lucide-react';
+import { Check, CornerDownRight, Layers, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
 import { RiskReducerStrip } from './RiskReducerStrip';
-import { cn, formatZAR } from '@/lib/utils';
-import { addonTotal, bracketPrice } from '@/lib/pricing';
+import { cn } from '@/lib/utils';
+import { bracketPrice } from '@/lib/pricing';
 import { useCursorGlow } from '@/hooks/useCursorGlow';
-import {
-  PRICING_ADDONS,
-  TIER_HIGHLIGHTS,
-  addonIncludedInTier,
-  tierDisplayName,
-  TIER_CUMULATIVE_LABELS,
-  TIER_BUYER_FIT,
-} from '@/config/tiers';
+import { TIER_HIGHLIGHTS, TIER_CUMULATIVE_LABELS, TIER_BUYER_FIT } from '@/config/tiers';
+import { CORE_SERVICES_HEADING, CORE_SERVICES_SUBHEADING } from '@/config/calculatorCopy';
 import type { Bracket, Service, Tier, BracketValue, Testimonial } from '@/types';
 
 interface Step2TiersProps {
@@ -26,11 +20,9 @@ interface Step2TiersProps {
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string | null;
-  selectedAddons: string[];
   onTierSelect: (slug: string) => void;
-  onToggleAddon: (slug: string) => void;
   onBack: () => void;
-  onActivate: () => void;
+  onNext: () => void;
   testimonial?: Testimonial | null;
 }
 
@@ -41,11 +33,9 @@ export function Step2Tiers({
   selectedServices,
   selectedBrackets,
   selectedTier,
-  selectedAddons,
   onTierSelect,
-  onToggleAddon,
   onBack,
-  onActivate,
+  onNext,
   testimonial,
 }: Step2TiersProps) {
   const sortedTiers = [...tiers].sort((a, b) => a.display_order - b.display_order);
@@ -61,7 +51,11 @@ export function Step2Tiers({
         </p>
       </div>
 
-      <RiskReducerStrip />
+      <div>
+        <h3 className="text-sm font-semibold mb-1">{CORE_SERVICES_HEADING}</h3>
+        <p className="text-xs text-muted-foreground mb-3">{CORE_SERVICES_SUBHEADING}</p>
+        <RiskReducerStrip />
+      </div>
 
       <div
         ref={containerRef}
@@ -76,7 +70,9 @@ export function Step2Tiers({
             const b = brackets.find((x) => x.service_slug === svc.slug && x.ordinal === sel);
             return sum + (b ? bracketPrice(b, tier.slug) : 0);
           }, 0);
-          const displayTotal = regularTotal + addonTotal(selectedAddons, tier.slug);
+          // All-in monthly price for the package: core plus payroll. Add-ons
+          // come on the next step, where the running total starts.
+          const displayTotal = regularTotal;
 
           const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
             item.services.some((s) => selectedServices.has(s))
@@ -157,109 +153,11 @@ export function Step2Tiers({
         })}
       </div>
 
-      {/* Optional add-ons — flat monthly fee, available with every package unless the chosen package includes it */}
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-          Optional add-ons
-        </p>
-        <div className="space-y-3">
-          {PRICING_ADDONS.map((addon) => {
-            const included = !!selectedTier && addonIncludedInTier(addon, selectedTier);
-            const isOn = included || selectedAddons.includes(addon.slug);
-            return (
-              <button
-                key={addon.slug}
-                type="button"
-                onClick={() => onToggleAddon(addon.slug)}
-                disabled={included}
-                aria-pressed={isOn}
-                aria-label={
-                  included
-                    ? `${addon.name}, included in ${tierDisplayName(selectedTier!)}`
-                    : `${isOn ? 'Remove' : 'Add'} ${addon.name}`
-                }
-                className={cn(
-                  'service-card relative w-full rounded-2xl border-2 p-4 pr-14 sm:p-5 sm:pr-16 text-left outline-none',
-                  'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
-                  isOn
-                    ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
-                    : 'border-border bg-card/40 backdrop-blur-md'
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn('service-card-toggle service-card-toggle--center', isOn && 'is-selected')}
-                >
-                  {isOn ? (
-                    <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  )}
-                </span>
-
-                <div className="flex items-center gap-3.5">
-                  <div
-                    className={cn(
-                      'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-200',
-                      isOn ? 'bg-primary/15' : 'bg-muted'
-                    )}
-                  >
-                    <ReceiptText
-                      className={cn(
-                        'h-5 w-5 transition-colors duration-200',
-                        isOn ? 'text-primary' : 'text-muted-foreground'
-                      )}
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm">{addon.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      {addon.description}
-                      {addon.includedFromTier && !included && (
-                        <> Included from {tierDisplayName(addon.includedFromTier)}.</>
-                      )}
-                    </p>
-                  </div>
-                  <div className="shrink-0 flex items-baseline gap-1 ml-2">
-                    {included ? (
-                      <span className="text-xs font-semibold text-primary whitespace-nowrap">
-                        Included in {tierDisplayName(selectedTier!)}
-                      </span>
-                    ) : (
-                      <>
-                        <span className="font-mono text-sm font-bold whitespace-nowrap">{formatZAR(addon.priceZAR)}</span>
-                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">/month</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {selectedTier && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/[0.08] backdrop-blur-md p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-primary/10">
-          <div>
-            <p className="font-semibold text-sm">Your subscription is ready.</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Add a few details and we&rsquo;ll email you a proposal to review and sign. No payment needed yet, and you can cancel any time with 30 days notice.
-            </p>
-          </div>
-          <Button onClick={onActivate} className="shrink-0 gap-2 cta-armed">
-            Get my proposal
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
       <TierComparison
         tiers={tiers}
         brackets={brackets}
         selectedServices={selectedServices}
         selectedBrackets={selectedBrackets}
-        selectedAddons={selectedAddons}
       />
 
       {testimonial && (
@@ -271,9 +169,16 @@ export function Step2Tiers({
         </div>
       )}
 
-      <div className="flex justify-start pt-2">
+      <div className="flex items-center justify-between gap-3 pt-2">
         <Button variant="outline" onClick={onBack}>
           ← Back
+        </Button>
+        <Button
+          onClick={onNext}
+          disabled={!selectedTier}
+          className={cn('gap-2', selectedTier && 'cta-armed')}
+        >
+          Continue to add-ons →
         </Button>
       </div>
     </div>

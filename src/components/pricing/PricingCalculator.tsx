@@ -3,17 +3,21 @@
 import { Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
-import { canProceedScopeStep, usePricingState, type PricingSeed } from '@/hooks/usePricingState';
+import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
+import { scopeComplete } from '@/lib/calculatorFlow';
+import { CALCULATOR_STAGE_OF, CALCULATOR_STAGES, QUESTION_COPY } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { StepIndicator } from './StepIndicator';
-import { Step1Scope } from './Step1Scope';
+import { BracketQuestion, YesNoQuestion } from './QuestionStep';
 import { Step2Tiers } from './Step2Tiers';
+import { AddonsStep } from './AddonsStep';
+import { ReviewStep, type ProposalAction } from './ReviewStep';
 import { ActivateProposalModal } from './ActivateProposalModal';
 import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
-import type { PricingData, Testimonial } from '@/types';
+import type { CalculatorStep, PricingData, Testimonial } from '@/types';
 
 // Amend mode was removed in Phase 3 of the OS split. Staff amend a proposal on
 // capucor.app now, through a plain form in the capucor-os repo — this calculator
@@ -69,6 +73,15 @@ function BottomCTA() {
   );
 }
 
+const SCREEN_TRANSITION = { duration: 0.4, ease: [0.16, 1, 0.3, 1] as const };
+
+// Position line above each question, e.g. "Your business · 2 of 4".
+const BUSINESS_QUESTIONS: CalculatorStep[] = ['revenue', 'transactions', 'vat', 'invoicing'];
+function questionPosition(step: CalculatorStep): string {
+  const i = BUSINESS_QUESTIONS.indexOf(step);
+  return i >= 0 ? `Your business · ${i + 1} of ${BUSINESS_QUESTIONS.length}` : 'Payroll';
+}
+
 function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalculatorProps) {
   const { services, brackets, tiers } = data;
   const spotlightTestimonial = testimonials[0] ?? null;
@@ -77,22 +90,23 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     state,
     completed,
     markCompleted,
-    setStep,
-    setStepBack,
+    goNext,
+    goBack,
     setBracket,
+    setAnswer,
     setTier,
     toggleAddon,
-    canProceedStep2,
+    canProceedCurrent,
   } = usePricingState(seed);
 
-  // "Every question answered, at least one priced" — needs the service list
-  // from Supabase, so it lives here rather than in the hook.
-  const canProceedStep1 = canProceedScopeStep(
-    services.map((s) => s.slug),
-    state.selectedBrackets
-  );
-
-  const [activateOpen, setActivateOpen] = useState(false);
+  // The details modal, and which review-step action opened it. The mode is
+  // kept while the modal closes so its title does not change mid-animation.
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ProposalAction>('send');
+  const openModal = (mode: ProposalAction) => {
+    setModalMode(mode);
+    setModalOpen(true);
+  };
 
   const scrollToTop = () => {
     if (typeof window !== 'undefined') {
@@ -100,20 +114,116 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     }
   };
 
-  const goForward = (step: 2) => {
-    setStep(step);
+  const next = () => {
+    if (!canProceedCurrent) return;
+    goNext();
     scrollToTop();
   };
 
-  const goBack = (step: 1) => {
-    setStepBack(step);
+  const back = () => {
+    goBack();
     scrollToTop();
   };
 
-  // "Activate" no longer routes to payment — it opens the proposal modal.
-  const openActivateModal = () => {
-    if (canProceedStep2) setActivateOpen(true);
+  // Yes / No questions move straight on once answered.
+  const answerAndNext = (key: 'vatRegistered' | 'xeroInvoicing' | 'needsPayroll', value: boolean) => {
+    setAnswer(key, value);
+    goNext();
+    scrollToTop();
   };
+
+  const { step, selectedBrackets, answers, selectedTier } = state;
+  // The package, add-ons and review screens need a complete scope and (after
+  // the package step) a package. Normal navigation guarantees both.
+  const pricedStepsReady = scopeComplete(state);
+  const showTotal = (step === 'addons' || step === 'review') && pricedStepsReady && !!selectedTier;
+
+  const bracketValue = (slug: string) => {
+    const v = selectedBrackets[slug];
+    return typeof v === 'number' ? v : undefined;
+  };
+
+  function renderScreen() {
+    switch (step) {
+      case 'revenue':
+      case 'transactions':
+      case 'employees': {
+        const slug = step === 'revenue' ? 'accounting' : step === 'transactions' ? 'bookkeeping' : 'payroll';
+        return (
+          <BracketQuestion
+            copy={QUESTION_COPY[step]}
+            position={questionPosition(step)}
+            serviceSlug={slug}
+            brackets={brackets}
+            value={bracketValue(slug)}
+            onChange={(v) => setBracket(slug, v)}
+            onNext={next}
+            onBack={step === 'revenue' ? undefined : back}
+            showFitCall={step === 'revenue' || step === 'employees'}
+          />
+        );
+      }
+      case 'vat':
+      case 'invoicing':
+      case 'payroll': {
+        const key = step === 'vat' ? 'vatRegistered' : step === 'invoicing' ? 'xeroInvoicing' : 'needsPayroll';
+        return (
+          <YesNoQuestion
+            copy={QUESTION_COPY[step]}
+            position={questionPosition(step)}
+            value={answers[key]}
+            onAnswer={(v) => answerAndNext(key, v)}
+            onNext={next}
+            onBack={back}
+            showFitCall={step === 'payroll'}
+          />
+        );
+      }
+      case 'package':
+        return (
+          <Step2Tiers
+            services={services}
+            brackets={brackets}
+            tiers={tiers}
+            selectedServices={state.selectedServices}
+            selectedBrackets={selectedBrackets}
+            selectedTier={selectedTier}
+            onTierSelect={setTier}
+            onBack={back}
+            onNext={next}
+            testimonial={spotlightTestimonial}
+          />
+        );
+      case 'addons':
+        return selectedTier ? (
+          <AddonsStep
+            brackets={brackets}
+            selectedServices={state.selectedServices}
+            selectedBrackets={selectedBrackets}
+            selectedTier={selectedTier}
+            selectedAddons={state.selectedAddons}
+            onToggleAddon={toggleAddon}
+            onBack={back}
+            onNext={next}
+          />
+        ) : null;
+      case 'review':
+        return selectedTier ? (
+          <ReviewStep
+            services={services}
+            brackets={brackets}
+            tiers={tiers}
+            selectedServices={state.selectedServices}
+            selectedBrackets={selectedBrackets}
+            selectedTier={selectedTier}
+            selectedAddons={state.selectedAddons}
+            answers={answers}
+            onBack={back}
+            onAction={openModal}
+          />
+        ) : null;
+    }
+  }
 
   return (
     <>
@@ -125,56 +235,20 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         >
           <div className="max-w-[1090px] mx-auto px-6">
             <p className="text-xs font-medium uppercase tracking-widest text-primary mb-6 text-center">
-              3 steps to your monthly price
+              {CALCULATOR_STAGES.length} steps to your proposal
             </p>
-            <StepIndicator currentStep={state.step} completed={completed} />
+            <StepIndicator currentStep={CALCULATOR_STAGE_OF[step]} completed={completed} />
             <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">
               <AnimatePresence mode="wait">
-                {state.step === 1 && (
-                  <motion.div
-                    key="step1"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <Step1Scope
-                      services={services}
-                      brackets={brackets}
-                      selectedBrackets={state.selectedBrackets}
-                      onBracketChange={setBracket}
-                      onNext={() => {
-                        if (canProceedStep1) goForward(2);
-                      }}
-                      canProceed={canProceedStep1}
-                    />
-                  </motion.div>
-                )}
-
-                {state.step === 2 && (
-                  <motion.div
-                    key="step2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  >
-                    <Step2Tiers
-                      services={services}
-                      brackets={brackets}
-                      tiers={tiers}
-                      selectedServices={state.selectedServices}
-                      selectedBrackets={state.selectedBrackets}
-                      selectedTier={state.selectedTier}
-                      selectedAddons={state.selectedAddons}
-                      onTierSelect={setTier}
-                      onToggleAddon={toggleAddon}
-                      onBack={() => goBack(1)}
-                      onActivate={openActivateModal}
-                      testimonial={spotlightTestimonial}
-                    />
-                  </motion.div>
-                )}
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={SCREEN_TRANSITION}
+                >
+                  {renderScreen()}
+                </motion.div>
               </AnimatePresence>
             </div>
           </div>
@@ -191,38 +265,44 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         <BottomCTA />
       </PageCursorGlow>
 
-      <MobileTotalBar
-        selectedServices={state.selectedServices}
-        selectedBrackets={state.selectedBrackets}
-        selectedTierSlug={state.selectedTier}
-        selectedAddons={state.selectedAddons}
-        tiers={tiers}
-        brackets={brackets}
-        summaryAnchorId="pricing-summary"
-        onActivate={openActivateModal}
-      />
+      {showTotal && (
+        <>
+          <MobileTotalBar
+            selectedServices={state.selectedServices}
+            selectedBrackets={selectedBrackets}
+            selectedTierSlug={selectedTier}
+            selectedAddons={state.selectedAddons}
+            tiers={tiers}
+            brackets={brackets}
+            summaryAnchorId="pricing-summary"
+            action={step === 'addons' ? { label: 'Review', onClick: next } : undefined}
+          />
 
-      <StickyConfigChip
-        selectedServices={state.selectedServices}
-        selectedBrackets={state.selectedBrackets}
-        selectedTierSlug={state.selectedTier}
-        selectedAddons={state.selectedAddons}
-        tiers={tiers}
-        brackets={brackets}
-        observeElementId="pricing-summary"
-        scrollToId="pricing-summary"
-      />
+          <StickyConfigChip
+            selectedServices={state.selectedServices}
+            selectedBrackets={selectedBrackets}
+            selectedTierSlug={selectedTier}
+            selectedAddons={state.selectedAddons}
+            tiers={tiers}
+            brackets={brackets}
+            observeElementId="pricing-summary"
+            scrollToId="pricing-summary"
+          />
+        </>
+      )}
 
       <ActivateProposalModal
-        open={activateOpen}
-        onOpenChange={setActivateOpen}
+        open={modalOpen}
+        mode={modalMode}
+        onOpenChange={setModalOpen}
         services={services}
         brackets={brackets}
         tiers={tiers}
         selectedServices={state.selectedServices}
-        selectedBrackets={state.selectedBrackets}
-        selectedTier={state.selectedTier}
+        selectedBrackets={selectedBrackets}
+        selectedTier={selectedTier}
         selectedAddons={state.selectedAddons}
+        answers={answers}
         onSuccess={markCompleted}
       />
     </>

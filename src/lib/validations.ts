@@ -63,6 +63,18 @@ export const ProposalRequestSchema = z.object({
   // Optional flat-fee add-ons. The route whitelists slugs against
   // PRICING_ADDONS (config/tiers.ts) before pricing them.
   addons: z.array(z.string().min(1)).max(5).optional().default([]),
+  // Calculator-v2 scope answers. Phase 1 changes neither price nor scope with
+  // them: the route stores them in leads.config for Capucor's reference.
+  answers: z
+    .object({
+      vatRegistered: z.boolean().optional(),
+      xeroInvoicing: z.boolean().optional(),
+    })
+    .strict()
+    .optional(),
+  // Which review-step action created the proposal: 'send' emails it, 'accept'
+  // also opens it to sign. Stored with the lead; the route behaves the same.
+  intent: z.enum(['send', 'accept']).optional(),
   // Contact
   firstName: z.string().min(1, 'First name is required').max(80),
   lastName: z.string().min(1, 'Surname is required').max(80),

@@ -55,19 +55,38 @@ export interface PricingData {
   tiers: Tier[];
 }
 
-// The calculator has two real input steps (Business scope → Package). The 3rd
-// stepper segment is a completion marker ("Done"), not an input step.
-export type CalculatorStep = 1 | 2;
+// One screen per value (calculator-v2 wizard). The progress indicator groups
+// them into five stages; see CALCULATOR_STAGE_OF in usePricingState.
+export type CalculatorStep =
+  | 'revenue'
+  | 'transactions'
+  | 'vat'
+  | 'invoicing'
+  | 'payroll'
+  | 'employees'
+  | 'package'
+  | 'addons'
+  | 'review';
+
+// Scope answers that change neither price nor scope in Phase 1. They travel to
+// /api/proposals and are stored in leads.config for Capucor's reference.
+export interface CalculatorAnswers {
+  vatRegistered: boolean | null;
+  xeroInvoicing: boolean | null;
+  needsPayroll: boolean | null;
+}
 
 export interface PricingState {
   step: CalculatorStep;
-  // Derived from selectedBrackets: slugs whose bracket is numeric. Kept in
+  // Derived: accounting and bookkeeping once their brackets are chosen (core is
+  // mandatory), plus payroll only on a payroll "Yes" with a headcount. Kept in
   // state so every consumer (tiers step, totals, proposal payload) reads one
-  // shape; setBracket maintains it.
+  // shape; the hook maintains it.
   selectedServices: Set<string>;
   selectedBrackets: Record<string, BracketValue>;
+  answers: CalculatorAnswers;
   selectedTier: string | null;
-  // Optional flat-fee add-ons (PRICING_ADDONS slugs), chosen in the package step.
+  // Optional flat-fee add-ons (PRICING_ADDONS slugs), chosen in the add-ons step.
   selectedAddons: string[];
 }
 
