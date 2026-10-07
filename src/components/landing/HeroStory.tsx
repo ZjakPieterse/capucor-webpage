@@ -14,13 +14,14 @@ import { signatureFont } from "@/lib/fonts";
 //              returns are filed
 //   decision → the month's report arrives by email with one plain recommendation,
 //              to talk through at the owner's next review
-// Then it fades to the next owner's story, and it pauses while hovered so the
-// email can be read. Every figure, name and business is invented and the panel
+// Then it fades to the next owner's story. It keeps running on hover (Zjak,
+// 2026-10-07). Every figure, name and business is invented and the panel
 // says so twice (static "Example" badge and footnote), as decided for the hero
 // panel in website-v2 (Zjak, 2026-10-05). The decision arrives as an email, not a
 // chat, so the panel doesn't promise instant replies.
 
-type StoryPhase = "chaos" | "order" | "arriving" | "decision";
+// "intro" runs once, on first load only: a loading bar before the pile builds.
+type StoryPhase = "intro" | "chaos" | "order" | "arriving" | "decision";
 
 /** Lines reconciled in the order beat, one count per story. */
 const TX_COUNTS = [23, 29, 18];
@@ -31,6 +32,8 @@ const ROW_PX = 26;
 /** The order beat lasts as long as its statement takes, plus time for the filed chips. */
 function phaseMs(phase: StoryPhase, scene: number): number {
   switch (phase) {
+    case "intro":
+      return 2000;
     case "chaos":
       return 4800;
     case "order":
@@ -43,6 +46,7 @@ function phaseMs(phase: StoryPhase, scene: number): number {
 }
 
 const NEXT_PHASE: Record<StoryPhase, StoryPhase | null> = {
+  intro: "chaos",
   chaos: "order",
   order: "arriving",
   arriving: "decision",
@@ -298,10 +302,10 @@ function buildStatement(pool: string[], seed: number, count: number): Tx[] {
 }
 
 // ── Timeline ─────────────────────────────────────────────────────────────────────
-function useStoryTimeline(paused: boolean) {
+function useStoryTimeline() {
   const reduce = useReducedMotion();
   const observeRef = useRef<HTMLDivElement | null>(null);
-  const [phase, setPhase] = useState<StoryPhase>("chaos");
+  const [phase, setPhase] = useState<StoryPhase>("intro");
   const [scene, setScene] = useState(0);
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
@@ -323,7 +327,7 @@ function useStoryTimeline(paused: boolean) {
   }, []);
 
   useEffect(() => {
-    if (reduce || !inView || !pageVisible || paused) return;
+    if (reduce || !inView || !pageVisible) return;
     const timer = setTimeout(() => {
       const next = NEXT_PHASE[phase];
       if (next) {
@@ -334,7 +338,7 @@ function useStoryTimeline(paused: boolean) {
       }
     }, phaseMs(phase, scene));
     return () => clearTimeout(timer);
-  }, [phase, scene, inView, pageVisible, paused, reduce]);
+  }, [phase, scene, inView, pageVisible, reduce]);
 
   return {
     observeRef,
@@ -557,8 +561,7 @@ const STEPS: { label: string; phases: StoryPhase[] }[] = [
 ];
 
 export function HeroStory() {
-  const [hovered, setHovered] = useState(false);
-  const { observeRef, phase, scene, reduce } = useStoryTimeline(hovered);
+  const { observeRef, phase, scene, reduce } = useStoryTimeline();
   const dates = computeStoryDates();
   const s = buildScenes(dates)[scene];
   const txCount = TX_COUNTS[scene];
@@ -566,7 +569,8 @@ export function HeroStory() {
   const { ref: tiltRef, rotateX, rotateY, lift, scale, onMouseMove, onMouseLeave } =
     use3DTilt<HTMLDivElement>({ maxTiltDeg: 3 });
 
-  const ordered = phase !== "chaos";
+  const intro = phase === "intro";
+  const ordered = phase !== "chaos" && !intro;
   const processing = phase === "order";
   const emailIn = phase === "arriving" || phase === "decision";
   const emailOpen = phase === "decision";
@@ -599,11 +603,7 @@ export function HeroStory() {
       <motion.div
         ref={tiltRef}
         onMouseMove={onMouseMove}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => {
-          setHovered(false);
-          onMouseLeave();
-        }}
+        onMouseLeave={onMouseLeave}
         style={{ rotateX, rotateY, y: lift, scale, transformPerspective: 1200 }}
         className="tilt-card premium-card relative overflow-hidden rounded-2xl border-[0.5px] border-white/10 bg-card/80 p-4 shadow-2xl sm:p-5"
         role="figure"
@@ -643,7 +643,31 @@ export function HeroStory() {
 
         {/* Stage */}
         <div aria-hidden className="relative z-10 h-[440px] sm:h-[390px]">
-          <AnimatePresence mode="wait" initial={false}>
+          {/* First load only: a quiet loading bar before the pile builds */}
+          <AnimatePresence>
+            {intro && (
+              <motion.div
+                key="intro"
+                className="absolute inset-0 z-[80] flex flex-col items-center justify-center text-center"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
+                transition={{ duration: 0.5, delay: 0.35, ease: EASE }}
+              >
+                <div className="h-[2px] w-40 overflow-hidden rounded-full bg-white/[0.08]">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: "linear-gradient(to right, var(--brand-cyan), var(--primary))" }}
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 1.5, delay: 0.45, ease: "easeInOut" }}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence mode="wait">
             <motion.div
               key={scene}
               className="absolute inset-0"
@@ -654,6 +678,7 @@ export function HeroStory() {
             >
               {/* Chaos: the pile builds, faster as it goes */}
               {!reduce &&
+                !intro &&
                 pile.map((piece, i) => {
                   const slot = PILE[i];
                   const back = slot.depth === 1;
