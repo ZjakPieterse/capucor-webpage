@@ -88,13 +88,12 @@ npm run build:cf:offline  # Full OpenNext/Cloudflare build with NO credentials �
 npm run test         # Run Vitest unit tests
 npm run test:watch   # Vitest in watch mode
 npm run test:ui      # Open Vitest browser UI
+npm run db:types     # Regenerate src/types/db.ts from the live schema (needs `npx supabase login`)
 ```
 
-⛔ **There is no `db:types` here, and that is deliberate — AE-08, 2026-09-06.**
-`src/types/db.ts` is generated in **capucor-os only** and lands here as a byte-for-byte copy.
-It is pinned by digest in `contracts/cross-repo-contract.json`, so `npm test` in this repo fails
-if the copy moves. The procedure after a schema change is in
-[`docs/database.md`](docs/database.md).
+⛔ **Do not commit a regenerated `src/types/db.ts` yet.** It is still pinned by digest in
+`contracts/cross-repo-contract.json`, so `npm test` fails if it moves; web-standalone phase 2
+replaces that arrangement. See [`docs/database.md`](docs/database.md#types).
 
 ## Build and deploy (Cloudflare)
 
@@ -122,10 +121,11 @@ capucor.app.
 contracts filed under it.** Read it before touching the redirect table, provisioning, a cron, a
 route handler that reads a body, or anything that sends email.
 
-- ⚠️ **The schema seam is the one that breaks silently.** `supabase/migrations/` lives in
-  `../capucor-os` and nowhere else, but marketing still starts provisioning at signing. **A change
-  on the capucor-os side breaks this repo's provisioning path with no compile error and no failing
-  test here.**
+- ⚠️ **The schema seam is the one that breaks silently.** This repo owns the funnel schema, but
+  until web-standalone phase 3 signing still calls `provision_from_signed_proposal`, which writes
+  the portal-owned `client_orgs` / `client_org_members` / `subscriptions` in capucor-os. **A change
+  to those tables on the capucor-os side breaks this repo's provisioning path with no compile
+  error and no failing test here.**
 - **Cross-repo contract** — change a hand-synced file or a pinned version and you must change the
   manifest in all three copies, or CI goes red naming the counterpart.
 - **Scheduled workflows** — an undeclared cron is a job nothing watches, and the audit fails.
@@ -138,14 +138,21 @@ route handler that reads a body, or anything that sends email.
 
 ## Database (Supabase)
 
-Both apps share **one Supabase project**, and ⚠️ **this repo does not own the schema** —
-`supabase/migrations/` lives in [`../capucor-os`](../capucor-os/AGENTS.md) and nowhere else.
+Both apps share **one Supabase project**. ⚠️ **Since 2026-10-07 this repo owns the sales-funnel
+schema** (`leads`, `proposals`, `brackets`, `services`, `tiers`, `data_requests`,
+`proposal_fulfilment`, `email_deliveries` and the signing/fulfilment functions). **New funnel
+migrations are written in this repo's [`supabase/migrations/`](supabase/migrations/) only** —
+never in capucor-os. Portal tables stay in capucor-os until os-sunset.
+`supabase/migrations/000_baseline_funnel.sql` records the live starting state and is ⛔ **never
+applied**.
 
-⛔ **[`docs/database.md`](docs/database.md) — read it before any Supabase call.** Two things there
-are load-bearing:
+⛔ **[`docs/database.md`](docs/database.md) — read it before any Supabase call.** Three things
+there are load-bearing:
 
 - ⛔ **Migrations are applied BY HAND by Zjak in the Supabase SQL editor. No agent applies one, by
-  any route.** The page carries the reasoning and the dated correction.
+  any route.**
+- ⛔ **Never use `supabase db push`.** The remote migration ledger has drifted from production, so
+  a push would replay already-applied migrations.
 - ⚠️ **Picking the wrong Supabase client causes silent data loss, not an error.** The public
   pricing tables grant `select` to `anon` only, so reading them with the cookie-bound server
   client returns **zero rows and no error** for a signed-in visitor.

@@ -75,8 +75,9 @@ curl -sI https://capucor.com/pricing     # 200 — never redirected
 
 ### ⚠️ Schema seam — the one thing that can break silently
 
-`supabase/migrations/` **lives in `../capucor-os` and nowhere else** (this repo's copy was deleted in
-Phase 3). Marketing still starts provisioning at signing:
+Since 2026-10-07 **this repo owns the funnel schema** ([`database.md`](database.md)); the portal
+tables provisioning writes are still capucor-os's. Marketing still starts provisioning at signing
+(until web-standalone phase 3):
 [`src/lib/portal/provision.ts`](../src/lib/portal/provision.ts) idempotently mints/locates the Auth
 user, then calls the OS-owned `provision_from_signed_proposal` transaction.
 
