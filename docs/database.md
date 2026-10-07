@@ -58,14 +58,16 @@ re-open push.
 
 ## Types
 
-`npm run db:types` regenerates `src/types/db.ts` from the live project (same command as
-capucor-os; needs `npx supabase login` on the machine). ⚠️ If the CLI is not logged in, the shell
-redirect still truncates `src/types/db.ts` and writes an error into it — restore it with
-`git checkout src/types/db.ts`.
+`src/types/db.ts` is **generated in this repo** (since 2026-10-07, web-standalone phase 2) and is
+not pinned or compared with capucor-os. After Zjak confirms a funnel migration is applied, run
+`npm run db:types` and commit the regenerated file with the code that uses it.
 
-⛔ **Until phase 2, do not commit a regenerated `src/types/db.ts`.** It is still pinned by digest
-in `contracts/cross-repo-contract.json`, and `npm test` fails if it moves. Phase 2 replaces that
-arrangement; until then the procedure in that contract stands.
+- It needs `npx supabase login` on the machine. ⚠️ A `SUPABASE_ACCESS_TOKEN` environment variable
+  takes precedence over the login; a stale one fails with `Unauthorized`.
+- ⚠️ If the CLI fails, the shell redirect still truncates `src/types/db.ts` and writes an error
+  into it — restore it with `git checkout src/types/db.ts`.
+- The file covers the whole shared project, portal tables included, so a capucor-os migration
+  also shows up in the next regeneration. That is expected; commit it.
 
 ### Supabase clients — pick the right one (load-bearing)
 

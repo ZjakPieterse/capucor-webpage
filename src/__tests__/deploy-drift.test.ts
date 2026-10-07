@@ -19,8 +19,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// A zero-dependency .mjs, deliberately untyped and shared byte-identically with
-// capucor-os — see deployDrift in the contract. The verdict shape is restated
+// A zero-dependency .mjs, deliberately untyped (it runs without `npm ci`) — see deployDrift in the contract. The verdict shape is restated
 // here rather than inferred, so a field renamed in the script shows up as a type
 // error in the test that reads it.
 import { evaluate, applyDrill, deploymentsFor } from '../../scripts/deploy-drift.mjs';
@@ -237,7 +236,7 @@ describe('this repo is wired into the deploy-drift check', () => {
     // Without if:always() a failing cron watchdog in the step above skips this
     // one, so the two failures could never be seen in the same run.
     expect(wf).toMatch(/if:\s*always\(\)/);
-    expect(wf, contract.backup.zeroDependencyWhy).not.toMatch(/^\s*run:\s*npm (ci|install)\b/m);
+    expect(wf, contract.scheduledWorkflows.zeroDependencyWhy).not.toMatch(/^\s*run:\s*npm (ci|install)\b/m);
   });
 
   it('declares every workflow in this repo that actually deploys', () => {

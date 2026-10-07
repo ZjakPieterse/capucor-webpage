@@ -362,7 +362,7 @@ if (isCli) {
     fail(
       `${repoSlug} is not in scheduledWorkflows.githubRepos in the contract manifest, so the ` +
         `CI-silence check does not know which branch to expect here. Declare it in ` +
-        `capucor-docs/contracts/cross-repo-contract.json and copy it into both app repos.`,
+        `contracts/web-contract.json.`,
     );
   }
   if (!branches.length) {
@@ -433,7 +433,7 @@ if (isCli) {
     for (const r of broken) console.error(`::error::${r.file}@${r.branch}: ${r.reason}`);
     console.error(
       `\n${broken.length} of ${results.length} release branch(es) carry commits validation never ran on. ` +
-        `See ciSilence in contracts/cross-repo-contract.json.`,
+        `See ciSilence in contracts/web-contract.json.`,
     );
     process.exitCode = 1;
   } else {

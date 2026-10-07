@@ -42,8 +42,8 @@ name: Watchdog — are the crons running, is production current, did CI actually
 #
 # ⚠️ ZERO DEPENDENCIES. checkout + setup-node + three .mjs files, no `npm ci`,
 # the same rule the cron jobs it watches follow. `npm ci` here would be a
-# five-fold cost increase on a job that runs on every push. The audit's
-# `schedule` check fails if one appears.
+# five-fold cost increase on a job that runs on every push. The watchdog
+# tests (npm test) fail if one appears.
 #
 # It is a SEPARATE workflow rather than a step in ci.yml on purpose: it must not
 # block a deploy (you may be pushing the very fix), it must not be skipped by an

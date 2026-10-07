@@ -1,5 +1,5 @@
-// ⚠️ HAND-SYNCED with capucor-os/src/config/tiers.ts and pinned by digest in
-// contracts/cross-repo-contract.json. Change both copies together.
+// Web-owned since 2026-10-07 (web-standalone phase 2); capucor-os's old copy is
+// not kept in step.
 //
 // Package content follows the package simplification (2026-10-06): a
 // bare-minimum baseline of five core services in every package, tiers defined

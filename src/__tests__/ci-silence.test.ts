@@ -23,8 +23,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// A zero-dependency .mjs, deliberately untyped and shared byte-identically with
-// capucor-os — see ciSilence in the contract. The verdict shape is restated
+// A zero-dependency .mjs, deliberately untyped (it runs without `npm ci`) — see ciSilence in the contract. The verdict shape is restated
 // here rather than inferred, so a field renamed in the script shows up as a type
 // error in the test that reads it.
 import { evaluate, applyDrill, branchesFor, firstParentChain } from '../../scripts/ci-silence.mjs';
@@ -274,7 +273,7 @@ describe('this repo is wired into the CI-silence check', () => {
     expect(wf).toContain(contract.ciSilence.script);
     expect(wf).toMatch(/contents:\s*read/);
     expect(wf).toMatch(/actions:\s*read/);
-    expect(wf, contract.backup.zeroDependencyWhy).not.toMatch(/^\s*run:\s*npm (ci|install)\b/m);
+    expect(wf, contract.scheduledWorkflows.zeroDependencyWhy).not.toMatch(/^\s*run:\s*npm (ci|install)\b/m);
   });
 
   it('⚠️ carries if:always() on the CI-silence STEP, not merely somewhere in the file', () => {
@@ -295,7 +294,7 @@ describe('this repo is wired into the CI-silence check', () => {
     const entries = contract.scheduledWorkflows.workflows.filter(
       (w: { file: string }) => w.file === 'watchdog.yml',
     );
-    expect(entries.length).toBe(2);
+    expect(entries.length).toBe(1);
     for (const w of entries) expect(w.event).toBe('schedule');
     const script = readFileSync(join(ROOT, contract.scheduledWorkflows.watchdogScript), 'utf8');
     expect(script).toContain('event=${declared.event}');

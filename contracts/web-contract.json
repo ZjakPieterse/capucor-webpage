@@ -1,0 +1,237 @@
+{
+  "$comment": [
+    "THE WEB CONTRACT. The invariants this repository enforces on itself, in one",
+    "machine-readable place. Read by src/__tests__/web-contract.test.ts (npm test) and",
+    "by the three watchdog scripts in watchdog.yml (schedule-watchdog, deploy-drift,",
+    "ci-silence).",
+    "",
+    "WEB-OWNED SINCE 2026-10-07 (web-standalone phase 2). It replaces the vendored",
+    "cross-repo contract that was shared with capucor-os and capucor-docs. Nothing here",
+    "is compared with another repository: no digests of files that must match a sibling,",
+    "no three-copies rule. Edit this file in this repo only.",
+    "",
+    "Two entries are TEMPORARY and name the phase that removes them: `provisioning` and",
+    "`frozenUntilPhase3` both go when signing stops at signed + PDF (phase 3)."
+  ],
+  "version": 2,
+  "lastReviewed": "2026-10-07",
+  "coupledDependencies": {
+    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.6 requires Next >=16.3.3 AND wrangler ^4.125.0, and moving one side alone can make a clean install select an adapter whose peer range the app does not satisfy. React, supabase-js and resend are pinned for the same reason: a range lets a clean install pick a runtime nobody has built against. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped. ⚠️ THE PEER RANGES ARE NOW TIGHTER IN BOTH DIRECTIONS THAN THEY WERE AT 1.20.2, so the triple is less separable than it used to be: 1.20.2 accepted wrangler ^4.86.0, while every release from 1.20.3 onward names ^4.125.0. Bumping wrangler for a security fix therefore drags OpenNext, and OpenNext drags Next. That is the whole reason AE-04 moved four packages to close alerts against two.",
+    "exact": {
+      "next": "16.3.4",
+      "eslint-config-next": "16.3.4",
+      "@opennextjs/cloudflare": "1.20.6",
+      "wrangler": "4.131.0",
+      "react": "19.2.4",
+      "react-dom": "19.2.4",
+      "@supabase/supabase-js": "2.112.0",
+      "resend": "6.18.1"
+    },
+    "triple": [
+      "next",
+      "@opennextjs/cloudflare",
+      "wrangler"
+    ],
+    "node": {
+      "version": "24",
+      "why": "The dev box runs Node 24 / npm 11. CI ran Node 20 until 2026-08-03 and a lockfile written by npm 11 was rejected outright by npm 10. `.nvmrc` and the `setup-node` step in ci.yml must move together or that trap returns.",
+      "declaredIn": [
+        ".nvmrc",
+        ".github/workflows/ci.yml"
+      ]
+    }
+  },
+  "provisioning": {
+    "why": "Until web-standalone phase 3, signing calls the portal-owned provision_from_signed_proposal RPC. PostgREST matches an RPC by ARGUMENT NAME, so a rename here is a 404 at signing with no compile error. Removed in phase 3 together with provision.ts.",
+    "until": "web-standalone phase 3",
+    "rpc": "provision_from_signed_proposal",
+    "args": [
+      "p_proposal_id",
+      "p_user_id",
+      "p_org_slug"
+    ],
+    "caller": "src/lib/portal/provision.ts",
+    "tripwire": "src/__tests__/portal-provision.test.ts"
+  },
+  "frozenUntilPhase3": {
+    "why": "Until web-standalone phase 3, failed email sends are retried by capucor-os's reconciliation workflow, which rebuilds the message from ITS OWN copy of messages.mjs and resends it under the ORIGINAL idempotency key. If this file changes first, a retry sends different content from the original. Phase 3 moves retries to this repo in the same release that changes the emails, and deletes this entry. This is a freeze on this repo's file, not a comparison with capucor-os.",
+    "files": [
+      {
+        "path": "src/lib/email/messages.mjs",
+        "mode": "byte",
+        "digest": "sha256:342f4fc74211b76c1a262a691491f79510b67b145069cbc384adfa30c5945f65"
+      }
+    ]
+  },
+  "routeSeam": {
+    "why": "capucor.com bounces old portal paths to capucor.app until os-sunset. A path dropped from the list turns an old bookmark or an already-sent email link into a 404.",
+    "file": "next.config.ts",
+    "listName": "APP_PATHS",
+    "mustContain": [
+      "/portal",
+      "/portal/:path*",
+      "/internal",
+      "/internal/:path*",
+      "/login",
+      "/login/:path*",
+      "/onboarding"
+    ],
+    "forbiddenSources": [
+      "/api",
+      "/api/:path*",
+      "/api/(.*)",
+      "/_next/:path*",
+      "/brand/:path*"
+    ],
+    "forbiddenWhy": "A 301 on a POST downgrades it to GET and drops the body. Redirecting /_next or /brand off capucor.app strips the CSS and logo from every portal page — which is why the lists are explicit rather than a negative-lookahead catch-all."
+  },
+  "rules": [
+    {
+      "id": "migrations-applied-by-hand",
+      "title": "Migrations are applied by hand; no agent applies one",
+      "why": "Set by Zjak 2026-08-26. AGENTS.md here went on saying 'supabase db push is allowed' for eight days after the rule changed, with every check green, because nothing compared the prose to the rule. This check is that comparison.",
+      "mustMatch": "no agent applies one",
+      "mustMatchWhy": "The one phrase both files share; they word the rest of the rule differently, so a longer literal would match neither.",
+      "mustNotMatch": "db push[^.]{0,40}is allowed",
+      "mustNotMatchWhy": "The exact shape of the 2026-08-26 drift.",
+      "files": [
+        "AGENTS.md",
+        "docs/database.md"
+      ]
+    },
+    {
+      "id": "production-deploys-are-manual",
+      "title": "Production deploys are manual dispatch only",
+      "why": "ADR 0010: production ships by manual dispatch of deploy.yml only, so a merged fix is not a shipped fix. If this repo's instructions ever say a push deploys, an agent will believe it.",
+      "mustMatch": "manual(ly)? (dispatch|triggered)",
+      "mustMatchWhy": "AGENTS.md says 'MANUAL DISPATCH ONLY'; the alternation also accepts 'manually triggered'.",
+      "mustNotMatch": "deploys? (automatically )?on (every )?push",
+      "mustNotMatchWhy": "The claim that would be dangerous to believe, in its common wording.",
+      "files": [
+        "AGENTS.md",
+        "docs/deploy.md"
+      ]
+    }
+  ],
+  "rulesHow": "Each rule names the files in this repo that must carry it. Patterns are case-insensitive JavaScript regular expressions. mustMatch is evaluated against the whole file. ⚠️ mustNotMatch is evaluated with BLOCKQUOTE LINES REMOVED: a corrected claim stays quoted inside a '>' block beside a dated correction (docs/database.md once said 'db push is allowed'), and a checker that could not tell an assertion from a quotation would flag the file that fixed the bug. Fenced code blocks are stripped from both directions.",
+  "scheduledWorkflows": {
+    "why": "This repo's irreplaceable scheduled jobs are GitHub Actions crons: the POPIA lead prune and the proposal expiry. They fail the same way — they stop, and nothing says so. `scripts/schedule-watchdog.mjs` asks the Actions API when each one last SUCCEEDED and fails the run when the answer is older than `maxAgeDays`.",
+    "watchesForSilenceNotCause": "The check is deliberately cause-agnostic. Asking 'is the workflow disabled?' covers one failure mode; asking 'when did it last succeed?' covers that one plus an expired secret, an exhausted Actions allowance, a renamed file, a deleted schedule and a job that has been failing every night. A watchdog written against a named cause stops working the moment the cause is different.",
+    "inactivityRule": "MEASURED 2026-08-06. GitHub's documentation scopes the auto-disable to public repositories: 'In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.' capucor-webpage IS public (unauthenticated api.github.com read → 200), so its crons are exposed to exactly that rule. The watchdog checks recency rather than visibility, so it covers that cause and every other one.",
+    "cannotFireDuringQuiet": "The watchdog runs on push. It cannot fire during the quiet period that causes the disable, and no in-repo mechanism can — every in-repo mechanism is hosted by the thing that goes quiet. Stated rather than papered over, with the one external control, in capucor-docs/operations/backup-watchdog.md.",
+    "githubRepos": {
+      "web": "ZjakPieterse/capucor-webpage"
+    },
+    "watchdogScript": "scripts/schedule-watchdog.mjs",
+    "watchdogWorkflow": ".github/workflows/watchdog.yml",
+    "watchdogWhy": "It watches only this repo's crons, selected by matching GITHUB_REPOSITORY against githubRepos, so a fork or a renamed repo fails loudly instead of passing with nothing to check. A second cron watching the first would share its failure mode, which is why the cron check is hosted on push (see watchdog.yml).",
+    "workflows": [
+      {
+        "repo": "web",
+        "file": "cron-prune-leads.yml",
+        "schedule": "15 3 * * *",
+        "maxAgeDays": 3,
+        "why": "The POPIA retention job. If it has stopped, personal data is being kept past the retention policy — a compliance failure whose only symptom is nothing happening."
+      },
+      {
+        "repo": "web",
+        "file": "cron-expire-proposals.yml",
+        "schedule": "30 3 * * *",
+        "maxAgeDays": 3,
+        "why": "Flips proposals past expires_at to expired. If it has stopped, an expired quote stays signable at a price that is no longer offered."
+      },
+      {
+        "repo": "web",
+        "file": "watchdog.yml",
+        "schedule": "0 6 * * *",
+        "event": "schedule",
+        "maxAgeDays": 3,
+        "why": "⚠️ THE WATCHDOG WATCHING ITS OWN SCHEDULE, AND IT IS NOT THE REGRESS watchdogWhy REFUSES. watchdog.yml runs on push (the cron and deploy-drift checks) AND on a schedule (the CI-silence check, R-12b). Those are two INDEPENDENT GitHub dispatch paths, and the 2026-08-06 incident is the evidence that they fail independently: webhook delivery was throttled to ~15% while every scheduled run fired on time. So the push half asserts the schedule half is alive (this entry) and the schedule half asserts the push half is alive (ciSilence). Mutual, not recursive — a second cron watching the FIRST cron would have shared its failure mode, which is what watchdogWhy refuses. ⚠️ It degrades gracefully in the one direction that could go quiet: if this schedule is auto-disabled by 60-day inactivity, the push half reports it on the next push — and the next push is precisely when CI silence starts mattering again. `event: \"schedule\"` is required here; see eventWhy."
+      }
+    ],
+    "notBeforeWhy": "OPTIONAL, BOUNDED GRACE FOR A NEWLY DECLARED SCHEDULE, NOT A MUTE. A workflow declared in the same change that creates its schedule has no successful run yet, so the watchdog would fail on every push for a reason whose only fix is to wait. A per-entry notBefore is the deadline by which the first SUCCESSFUL run must exist: before it the row reports as pending, and after it the row fails normally. `src/__tests__/schedule-watchdog.test.ts` refuses an invalid date or a deadline more than three days away, so the grace cannot become an indefinite way to silence a dead cron. Remove the field after the first successful schedule-triggered run; never extend it to hide silence. Three days lets a daily job fire with one spare despite measured GitHub delay. The 2026-08-25 watchdog rollout proved the lifecycle: both schedules first succeeded on 2026-08-26, before their deadline, and the spent fields were removed on 2026-08-28.",
+    "eventWhy": "⚠️ OPTIONAL PER-ENTRY `event` FILTER, ADDED 2026-08-25 FOR R-12b, AND IT IS LOAD-BEARING ON EXACTLY ONE ENTRY. scripts/schedule-watchdog.mjs asks the Actions API for the newest successful run of a workflow WITHOUT filtering by trigger, which is correct for the cron files above because a schedule is the only thing that runs them. watchdog.yml is different: it runs on BOTH push and schedule, so an unfiltered query would let a push run satisfy its own staleness check and a dead schedule would be invisible behind the very pushes it is meant to outlive. Setting `event: \"schedule\"` makes the question \"has the SCHEDULE fired\", which is the question that matters. Entries with no `event` behave exactly as before — the addition is a query-string suffix, not a change of semantics.",
+    "maxAgeWhy": "Three days for a daily job, not one. GitHub delays scheduled runs under load — measured on capucor-webpage 2026-08-06, jobs scheduled for 03:15/03:30 UTC actually ran between 06:01 and 06:44 — and a run can be skipped outright. A threshold that goes red on one late night is a threshold somebody switches off.",
+    "reportsFailureDoesNotFailOnIt": "A failing LATEST run is reported as context but is not itself a failure here. GitHub already emails on a failed scheduled run, so a red night is loud without us; silence is what nothing else covers, and a job that keeps failing crosses the staleness threshold on its own. Failing on it would also leave every push red after an intentional R2 fire drill until the next nightly run.",
+    "drill": "SCHEDULE_WATCHDOG_DRILL=stale forces maxAgeDays to 0 so a healthy cron reads as overdue; =disabled rewrites the reported state to disabled_inactivity. Both are workflow_dispatch inputs on watchdog.yml, touch no secret and mutate nothing. Same reasoning as R2_FIRE_DRILL: an unexercised failure path is not a control.",
+    "zeroDependencyWhy": "These jobs are checkout + setup-node + `node script.mjs` BY DESIGN. No `npm ci`, which is the difference between a run billing one minute against the free 2,000 and billing five. Do not add one."
+  },
+  "deployDrift": {
+    "why": "R-12. Nothing watched capucor-os `master` drifting ahead of what is actually deployed, and on 2026-08-24 it drifted by two merges before being closed by hand. ADR 0010 part 1 made this the NORMAL state rather than an exception: deployment is now a manual dispatch on both surfaces, so a merged fix is no longer a shipped fix and drift no longer self-corrects. `scripts/deploy-drift.mjs` asks the Actions API for the newest SUCCESSFUL run of each repo's deploy workflow, takes its `head_sha`, and compares that commit to the tip of the release branch.",
+    "measuredEvidence": "MEASURED 2026-08-24, and it is why this exists rather than being proposed. capucor-webpage's last successful production deploy was `f99bc85` at 14:20Z on 2026-08-20 — the ADR 0010 verification dispatch. `master` was `3896e1c`, `ahead_by` 21, including the Node 24 Actions upgrade and four `db.ts` regenerations. Four days, twenty-one commits, no signal anywhere. The gap this check closes was open and occupied at the moment the check was written.",
+    "questionIsComparisonNotAge": "⚠️ THE OBVIOUS SHAPE IS WRONG. The cron watchdog beside this asks 'when did the workflow last succeed?' and that question does not transfer. A deploy is not scheduled and has no cadence it is supposed to keep, so an age threshold on the WORKFLOW silently invents a release cadence ADR 0010 deliberately declined to set — and it is reset by a deploy that happened for an unrelated reason while the drift that matters persists. The question here is a COMPARISON: is the deployed commit still the tip of the branch, and if not, how long has the oldest unshipped commit been sitting there.",
+    "measuresOldestUnshippedCommitNotCommitCount": "The gate is the AGE OF THE OLDEST UNSHIPPED COMMIT, never `ahead_by`. Commit count is noise: twenty-one commits of generated types is not riskier than one broken route, and gating on it would go red on a busy afternoon and green on a fortnight of neglect. Age measures the thing that actually went wrong — how long a merged fix has not been a shipped fix. `ahead_by` is reported as context and must not become a threshold.",
+    "equalityWouldBeSwitchedOff": "⚠️ AND IT MUST NOT BE AN EQUALITY CHECK. Under ADR 0010 `master` ahead of production is the normal state, so a check that fails whenever the deployed SHA is not the tip goes red on every single merge. The contract already learned this one for the crons — see `scheduledWorkflows.maxAgeWhy` — and the lesson is the same: a threshold that cries wolf is a threshold somebody switches off, which is how a control becomes a comment.",
+    "githubReposFrom": "scheduledWorkflows.githubRepos",
+    "githubReposWhy": "The owner/name slugs are NOT repeated here. They are already canonical in `scheduledWorkflows.githubRepos`, and a second copy is a second thing to forget when a repo is renamed. `scripts/deploy-drift.mjs` resolves this pointer rather than carrying its own map.",
+    "script": "scripts/deploy-drift.mjs",
+    "workflow": ".github/workflows/watchdog.yml",
+    "hostedByTheWatchdogWorkflow": "It is a second STEP in watchdog.yml, not a second workflow. Same trigger (push), same reason (a push is the one moment we know a human is present), same zero-dependency rule, and the permissions it needs are already granted there: `actions: read` for the run, `contents: read` for the compare. No new workflow, no new credential, no new infrastructure and no additional Actions minutes — two extra API calls in a job that already runs.",
+    "deployments": [
+      {
+        "repo": "web",
+        "file": "deploy.yml",
+        "branch": "master",
+        "maxAgeDays": 7,
+        "why": "capucor.com — the marketing funnel that mints proposals. This is the repo the 2026-08-24 measurement found four days and twenty-one commits adrift, and the repo whose deploy.yml has been dispatched exactly once since ADR 0010 part 1 created it."
+      }
+    ],
+    "maxAgeWhy": "Seven days, and the number is a judgement rather than a measurement. capucor-webpage's four-day drift on 2026-08-24 was deliberate — deploy.yml was awaiting an intentional deployment — and going red on it would have been noise. The capucor.com incident of 2026-08-06 ran to two weeks and was plainly not fine. Seven splits them and turns a merged-but-unshipped fix red inside one working week. ⚠️ It is deliberately LOOSE: set tight enough to force a deploy schedule this stops being a hygiene check and becomes a release cadence, which is an amendment to ADR 0010 and belongs there rather than here.",
+    "cannotSeeProduction": "⚠️ IT DOES NOT OBSERVE PRODUCTION, and the distinction matters. A green deploy run proves `wrangler` uploaded a build; it does not prove the Worker is serving that code. A rollback in the Cloudflare dashboard, a hand-run `npx wrangler deploy` from a laptop, or a deploy that succeeded against the wrong account are all invisible from the Actions API. ✅ NARROWED 2026-09-04 (AE-05), AND ONLY NARROWED. This note used to end by declaring the gap unclosable: \"true ground truth would need the deployed app to advertise its build SHA and this job to fetch it — but the detailed /api/health response is HMAC-signed with SUPABASE_SERVICE_ROLE_KEY, and putting a production secret into a job that runs on EVERY push is a worse trade than the gap it closes.\" The premise was right and the conclusion was too broad: it treated THIS check as the only place the question could be asked. The manual deploy workflow already holds that key, so `releaseProvenance` asks it there instead, at the one moment production actually changes. ⛔ THIS CHECK IS STILL BLIND, AND STILL MUST NOT BE GIVEN THE KEY. It runs on every push. What changed is that a deploy now cannot finish while production is serving a different commit; what has NOT changed is that a rollback three days later is invisible to everything in this repository. See `releaseProvenance.residual`.",
+    "cannotFireDuringQuiet": "Same limit as the cron watchdog, and sharper here, because a push is the very thing that CREATES drift. A repo that goes quiet while drifted stays silent until someone pushes again. The 2026-08-24 measurement is the worked example: capucor-webpage's drift began on 2026-08-20 and would have been reported on the next push, four days later — loudly, and four days before anyone found it by hand.",
+    "cannotJudgeWhetherDriftMatters": "Twenty-one commits of generated types and one broken route look identical from here. This check reports that production is not the tip and how long that has been true; deciding whether it matters is a human reading the commit list.",
+    "closesOnlyTheDriftHalf": "⚠️ IT CLOSES ONLY THE DRIFT HALF OF R-12. The risk records two gaps: deploy drift, and CI SILENCE — the 2026-08-06 incident in which GitHub dropped push triggers on capucor-webpage so ci.yml never ran at all. This check does not detect that, and cannot: it is hosted by the push trigger that goes missing. R-12a is this. R-12b is CI silence, and it is closed separately by `ciSilence` — which is hosted on the SCHEDULE for exactly that reason, and whose theDetectorIsNotSelfReferential records why the self-referential framing this note used to carry was wrong.",
+    "drill": "DEPLOY_DRIFT_DRILL=drift rewrites the observed comparison to 99 commits ahead with an oldest unshipped commit 99 days old, so the common failure and its message are exercised against the REAL API; =never rewrites the observed run to absent, exercising the 'this repo has never deployed' path. Both are workflow_dispatch inputs on watchdog.yml, touch no secret and mutate nothing. Same reasoning as SCHEDULE_WATCHDOG_DRILL and R2_FIRE_DRILL: an unexercised failure path is not a control. The drill forces the CONDITION true rather than moving the threshold, because with the deployed SHA at the tip there is no unshipped commit for a threshold of zero to act on."
+  },
+  "ciSilence": {
+    "why": "R-12b. Nothing watched for CI SILENCE — commits landing on the release branch with no validation run at all. On 2026-08-06 a GitHub Actions incident (impact: critical, 15:05Z → 00:14Z; GitHub's own 20:34Z status update reads \"webhook triggers are currently throttled to help with recovery and we are processing approximately 15% of webhooks, so many events such as pushes and pull requests are not triggering new workflow runs\") dropped two pushes to capucor-webpage. `4283406` at 21:01:33Z and `56e0acf` at 21:50:33Z produced NO workflow runs of any kind. The crons stayed green, nothing went red, and capucor.com sat three commits behind master for two weeks. The gap was found by hand on 2026-08-20, not by a control.",
+    "theDetectorIsNotSelfReferential": "⚠️ THIS CORRECTS THE RISK REGISTER'S OWN FRAMING, AND THE CORRECTION IS THE WHOLE DESIGN. R-12b recorded the difficulty as \"any in-repo check for 'did CI run on this commit?' is hosted by the same push trigger that was dropped\". That is true of a PUSH-hosted check and FALSE of a SCHEDULE-hosted one. MEASURED 2026-08-25 against the Actions API for the incident window: cron-prune-leads.yml ran 2026-08-07 05:03:01Z (schedule, success, head `56e0acf`) and cron-expire-proposals.yml ran 05:15:41Z (schedule, success, head `56e0acf`), while ci.yml's last push run was 2026-08-06 16:54Z on `dd3dbf4`. The schedule dispatch path stayed up throughout and ran, seven hours after the last dropped push, with the exact commit CI never validated as its head. A scheduled check asking this question would have gone red that morning instead of the gap running to a fortnight.",
+    "hostedOnTheScheduleNotThePush": "⚠️ IT RUNS ON THE SCHEDULE, WHICH IS THE OPPOSITE OF THE CRON WATCHDOG BESIDE IT AND FOR THE OPPOSITE REASON. scheduledWorkflows.watchdogWhy refuses a cron watching a cron, because they share a failure mode. Here the thing being watched IS the push path, so hosting the detector on the push path is that same mistake and the schedule is the independent choice. It is a third STEP in watchdog.yml rather than a new workflow: a new workflow is a second thing to notice going quiet, and the permissions it needs — `actions: read` and `contents: read` — are already granted there.",
+    "amendsTheWatchdogsPushOnlyRule": "⚠️ THIS AMENDS A RECORDED DECISION, AND THE COMMENT WAS REWRITTEN RATHER THAN EXTENDED. watchdog.yml's header used to read \"IT RUNS ON PUSH, NOT ON A SCHEDULE, and that is the whole point\", which was about CRON silence and is still correct about it. The file now runs on both and says which question each trigger answers. A later reader finding the old sentence beside a `schedule:` block would reasonably assume the schedule had been added carelessly.",
+    "reportOnlyNeverARequiredCheck": "⚠️ REPORT-ONLY. It turns the watchdog run red; it is NOT a required status check and must not become one. Promoting it to a merge gate would change the release process — an amendment to ADR 0003 and ADR 0010 — and that belongs in those ADRs, not in a check. It would also be self-defeating: during the very incident this exists to detect, a required check that cannot run is a repository nobody can merge into.",
+    "asksDidItRunNotDidItPass": "It asks whether validation RAN, never whether it passed. A failing run is loud already — GitHub emails on it — and a red CI is somebody's problem within the hour. Silence produces no run, therefore no failure, therefore no email, and that is the thing nothing else covers. Same division of labour as scheduledWorkflows.reportsFailureDoesNotFailOnIt.",
+    "firstParentOnly": "⚠️ IT WALKS THE FIRST-PARENT CHAIN FROM THE TIP, NOT EVERY ANCESTOR, AND CHECKING EVERY ANCESTOR WOULD BE RED ON A HEALTHY REPO WITHIN A DAY. This repo merges pull requests as merge commits, so a push to master creates ONE ci.yml run whose head_sha is the merge commit. The commits inside the merged branch are ancestors of master that were never the head of a push to it — they were validated by `pull_request` runs, under a different head. The first-parent chain is exactly the set of commits a push trigger was owed. On a squash-merge repo the chain is every commit, so this degrades correctly rather than silently narrowing.",
+    "githubReposFrom": "scheduledWorkflows.githubRepos",
+    "githubReposWhy": "The owner/name slugs are NOT repeated here, for the same reason deployDrift does not repeat them: a second copy is a second thing to forget when a repo is renamed. `scripts/ci-silence.mjs` resolves this pointer.",
+    "script": "scripts/ci-silence.mjs",
+    "workflow": ".github/workflows/watchdog.yml",
+    "hostedByTheWatchdogWorkflow": "A third STEP in watchdog.yml, after the cron watchdog and the deploy-drift check, and carrying `if: always()` for the same reason they do: without it a failure in either step above skips this one, so the three verdicts could never be seen in the same run and the louder would mask the quieter.",
+    "branches": [
+      {
+        "repo": "web",
+        "file": "ci.yml",
+        "branch": "master",
+        "graceHours": 6,
+        "lookbackDays": 14,
+        "why": "capucor.com — the marketing funnel that mints proposals, and the repo the 2026-08-06 incident actually hit. Two pushes here were validated by nothing and nobody knew for two weeks."
+      }
+    ],
+    "graceWhy": "Six hours before a commit is expected to have a run, and the number is a judgement rather than a measurement. A run normally appears within seconds, so a grace of minutes would be enough on a healthy day — but GitHub's own delays on this estate have been measured in hours (jobs scheduled for 03:15 and 03:30 UTC ran between 06:01 and 06:44 on 2026-08-06), and this check runs daily, so buying quiet at the cost of six hours of detection latency costs nothing real. ⚠️ Without a grace window every commit pushed in the minutes before the cron fires reads as unvalidated, the check goes red for reasons nobody can act on, and a gate that cries wolf is a gate somebody switches off.",
+    "lookbackWhy": "Fourteen days, chosen against the incident it exists to catch: the 2026-08-06 gap ran to exactly two weeks before a human found it. A window shorter than the known failure would let the same event age out of view before anyone looked. It is a WINDOW, not a threshold — a commit older than this is not forgiven, it is simply no longer reported, and the deploy-drift check beside this one is what notices an old unshipped commit.",
+    "cannotSurviveATotalActionsOutage": "⚠️ A TOTAL ACTIONS OUTAGE TAKES BOTH PATHS. Schedules survived the 2026-08-06 incident; that is evidence, not a guarantee. If Actions is wholly down nothing in-repo runs, and the control for that is the external one in capucor-docs/operations/backup-watchdog.md — the same shape, and the same admission, as the backup residual.",
+    "cannotSeePullRequests": "⚠️ IT WATCHES THE RELEASE BRANCH ONLY. A dropped `pull_request` trigger — where CI actually gates a merge — is invisible here. Deliberately out of the first cut: an un-run PR check leaves the pull request visibly un-green in front of the person merging it, which is a signal a dropped push trigger on master does not have.",
+    "detectionIsSameDayNotImmediate": "⚠️ ONE CRON INTERVAL, PLUS GitHub's scheduling delay — measured on this estate at up to ~2h50m. This shortens the 2026-08-06 gap from a fortnight to a day. It does not make it zero, and nothing hosted inside these repos can.",
+    "provesARunExistedNotThatItWasHonest": "⚠️ It proves a run EXISTED, not that the run was honest. A ci.yml gutted to `run: true` still produces a run. Same class of limit as deployDrift.cannotSeeProduction, and stated rather than papered over.",
+    "narrowsTheQuietPeriodResidual": "⚠️ A SIDE EFFECT WORTH STATING PRECISELY, BECAUSE IT IS EASY TO OVERCLAIM. Adding a schedule to watchdog.yml means the CRON watchdog step now also runs daily, not only on push — so scheduledWorkflows.cannotFireDuringQuiet is NARROWED, not closed. capucor-webpage is PUBLIC, so after 60 days of inactivity watchdog.yml's own schedule is auto-disabled along with everything else and the residual returns in full.",
+    "drill": "CI_SILENCE_DRILL=silent removes the run belonging to the OLDEST in-window commit, so one commit reads as validated by nothing while the rest stay healthy — the 2026-08-06 shape exactly, two pushes lost out of many. =blind rewrites the commit list to empty, exercising the 'I could not enumerate the branch' path, which MUST fail rather than pass green. Both are workflow_dispatch inputs on watchdog.yml, touch no secret and mutate nothing. Both force the CONDITION true rather than moving a threshold, for the same reason DEPLOY_DRIFT_DRILL does: on a healthy repo every commit has a run, so a threshold-moving drill would have nothing to act on and would pass green — and a drill that cannot fail is the bug it exists to catch, one level up."
+  },
+  "releaseProvenance": {
+    "why": "AE-05. `deployDrift` answers \"did we intend to ship this commit?\" by comparing the newest successful deploy run's head_sha to the tip of the release branch. Nothing answered \"is that commit the one actually serving?\" — and the two questions come apart in exactly the cases that matter: a dashboard rollback, a hand-run `npx wrangler deploy`, a deploy against the wrong Cloudflare account, or an upload that succeeded while the Worker kept serving an older bundle. Each of those leaves every existing check green. The deployed app now says which revision it is, and the deploy workflow refuses to finish if that is not the revision it just shipped.",
+    "mechanism": "`next.config.ts` defines `process.env.CAPUCOR_RELEASE` into the SERVER webpack compilation from the build environment, so the full git SHA is a literal in the compiled worker. `src/lib/release.ts` reads it and normalises it. The signed /api/health response carries it as `release`. `.github/workflows/deploy.yml` sets `CAPUCOR_RELEASE: ${{ github.sha }}`, asserts before deploying that the SHA is in `.open-next/server-functions` and is NOT in `.open-next/assets`, and after deploying signs a health request and fails the run unless the returned `release` equals the SHA exactly.",
+    "whyBuildTimeNotRuntime": "⚠️ IT IS BAKED AT BUILD TIME AND MUST NOT BECOME A WORKER SECRET. A Cloudflare secret is set by hand in the dashboard and can be edited to say anything, which would make the whole check a statement about the dashboard rather than about the artefact — it would report what somebody typed, not what is running. Baking it into the bundle makes the answer a property of the thing that was uploaded, which is the only version of the question worth asking.",
+    "whyServerOnly": "⚠️ `isServer` IN THE WEBPACK HOOK IS LOAD-BEARING, NOT TIDINESS. Defining the value for the client compilation would inline the SHA into `.open-next/assets/_next/static/*`, which is served unauthenticated — publishing repository metadata that narrowing the public health body was meant to withhold. The same is true of `env:` in next.config and of any `NEXT_PUBLIC_*` name: both inline into the client bundle BY DESIGN, so either would be the same disclosure by a shorter route, and either would read as a simplification in review. The pre-deploy step greps the public assets and refuses the deploy on a hit, so the mistake cannot ship quietly.",
+    "whyNotPublic": "The unauthenticated /api/health response stays exactly `{ ok, app }`. Exposing repository or release metadata to anonymous callers is a disclosure decision nobody has taken, and it is the same class of topology the public body was narrowed to withhold in the first place. If it is ever wanted publicly that is an ADR, not a field.",
+    "strictIdentifier": "Anything that is not a full 40-character lower-case hex SHA is reported as the string `unknown`. A short SHA, a tag or a branch name would each read as provenance while being uncomparable — and a prefix comparison is one two commits can share. The deploy gate distinguishes three failures with three different fixes: `absent` (the Worker predates this, or the signature was rejected so it is the public view), `unknown` (built without CAPUCOR_RELEASE reaching next.config.ts), and a mismatch (production is serving something else).",
+    "guarantee": "It proves the expected revision was serving IMMEDIATELY AFTER THAT DEPLOY. Nothing more, and the precision is deliberate: a control that is described as stronger than it is stops anyone looking again.",
+    "residual": "⛔ IT DOES NOT CONTINUOUSLY DETECT A LATER ROLLBACK. Nothing re-asks the question after the deploy finishes, so a dashboard rollback the following week is still invisible to every check in these repositories. Closing that needs a mechanism that can sign a health request on a schedule, which needs SUPABASE_SERVICE_ROLE_KEY somewhere that runs unattended — and `deployDrift.cannotSeeProduction` records why the push-triggered watchdog is the wrong home for it. That is a separate design and a separate decision, not an omission to be quietly patched later.",
+    "mustNotMigrateToTheWatchdog": "⚠️ MOVING THIS CHECK INTO watchdog.yml WOULD LOOK LIKE AN IMPROVEMENT AND WOULD BE THE TRADE THAT WAS ALREADY REFUSED. watchdog.yml runs on every push, holds no credential of its own, and needs only `actions: read` and `contents: read`. Giving it a production secret to make the provenance check continuous puts that key in a job triggered by anything that reaches the default branch. `src/__tests__/deploy-release-provenance.test.ts` asserts that watchdog.yml names neither SUPABASE_SERVICE_ROLE_KEY nor /api/health nor CAPUCOR_RELEASE.",
+    "files": [
+      "next.config.ts",
+      "src/lib/release.ts",
+      "src/app/api/health/route.ts",
+      ".github/workflows/deploy.yml",
+      "src/__tests__/release.test.ts",
+      "src/__tests__/deploy-release-provenance.test.ts"
+    ]
+  }
+}

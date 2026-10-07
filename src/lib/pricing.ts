@@ -1,15 +1,6 @@
-// ⚠️ HAND-SYNCED with capucor-os/src/lib/pricing.ts. Both repos price the same
-// proposals off the same `brackets` table: capucor.com when a lead builds one on
-// /pricing, capucor.app when staff amend one. A change to this math in one repo
-// and not the other means the two surfaces quote different numbers for the same
-// selection, with nothing to catch it — no compile error, no failing test.
-// CHANGE IT HERE, CHANGE IT THERE, AND KEEP pricing.test.ts PASSING IN BOTH.
-// The same applies to ./proposalPricing.ts and ../config/tiers.ts.
-//
-// This duplication is deliberate (see "Not worth paying for" in
-// capucor-docs/archive/phase2-os-split-execution-plan.md): a shared package
-// would mean a version bump plus two PRs for every pricing tweak, on the
-// most-iterated surface of the site.
+// Web-owned since 2026-10-07 (web-standalone phase 2). capucor-os keeps an old
+// copy for its staff amend form until phase 4 switches that off; it is not kept
+// in step and nothing here compares the two. Keep pricing.test.ts passing.
 
 import { PRICING_ADDONS, addonIncludedInTier, tierDisplayName, type PricingAddon } from '@/config/tiers';
 import type { Bracket, BracketValue, Service } from '@/types';

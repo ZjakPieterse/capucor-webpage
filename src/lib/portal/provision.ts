@@ -4,13 +4,14 @@ import { slugify } from './orgSlug';
 
 /**
  * Portal provisioning still starts on capucor.com, but every database-only
- * invariant now belongs to capucor-os's `provision_from_signed_proposal` RPC.
+ * invariant belongs to the `provision_from_signed_proposal` RPC.
  * Supabase Auth user creation cannot join that transaction, so it happens first
  * and is deliberately re-entrant; a retry locates the same user and calls the
  * transaction again.
  *
- * Schema ownership warning: the RPC and every migration it depends on live in
- * capucor-os. Keep the generated Database contract in both repositories in sync.
+ * The RPC is recorded in this repo's funnel baseline, but it writes the
+ * portal-owned client_orgs / client_org_members / subscriptions tables.
+ * Removed in web-standalone phase 3.
  */
 
 export interface ProposalForProvision {

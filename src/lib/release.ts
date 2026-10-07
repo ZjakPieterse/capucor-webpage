@@ -3,8 +3,8 @@ import 'server-only';
 /**
  * Which commit is this Worker actually running?
  *
- * ⚠️ Hand-synced with ../capucor-os/src/lib/release.ts, and registered in
- * contracts/cross-repo-contract.json → knownDuplicates. Both Workers report a
+ * ⚠️ Hand-synced with ../capucor-os/src/lib/release.ts (not enforced since
+ * web-standalone phase 2; reviewed in phase 5). Both Workers report a
  * release on their signed /api/health and both deploy workflows compare it the
  * same way; a divergence would let one gate accept a value the other rejects.
  *

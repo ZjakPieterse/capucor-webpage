@@ -3,15 +3,10 @@
  *
  * The client only ever sends config (services / brackets / tier / add-ons).
  * Prices come from the live `brackets` table here, so the client cannot tamper
- * with them. In this repo the consumers are /api/proposals (create) and the
- * signing flow; capucor-os runs the same code for the staff amend form.
+ * with them. The consumers are /api/proposals (create) and the signing flow.
  *
- * ⚠️ HAND-SYNCED with capucor-os/src/lib/proposalPricing.ts — as are
- * ./pricing.ts and ../config/tiers.ts. Both repos price the same proposals off
- * the same `brackets` table. Change the math in one and not the other and the
- * two surfaces quote different numbers for the same selection, with nothing to
- * catch it: no compile error, no failing test. Change it here, change it there,
- * and keep pricing.test.ts passing in both.
+ * Web-owned since 2026-10-07 (web-standalone phase 2), as are ./pricing.ts and
+ * ../config/tiers.ts. capucor-os's old copy is not kept in step.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
