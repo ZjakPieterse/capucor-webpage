@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, Check, Layers, Plus } from 'lucide-react';
+import { CalendarClock, Check, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
@@ -180,21 +180,13 @@ export function Step2Tiers({
               <div className="pricing-card-features flex-grow flex flex-col gap-5">
                 {filteredItems.length > 0 && (
                   <ul className="space-y-2.5">
-                    {filteredItems.map((item) =>
-                      // The summary line points back to the core services panel,
-                      // with the panel's icon, so it reads as the foundation.
-                      item.summary ? (
-                        <li key={item.text} className="flex items-start gap-2.5 text-xs">
-                          <Layers className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                          <span className="font-semibold text-foreground leading-normal">{item.text}</span>
-                        </li>
-                      ) : (
-                        <li key={item.text} className="flex items-start gap-2.5 text-xs">
-                          <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                          <span className="text-muted-foreground leading-normal">{item.text}</span>
-                        </li>
-                      )
-                    )}
+                    {/* Every line alike, "Core Services Included" too (tweaks round 3). */}
+                    {filteredItems.map((item) => (
+                      <li key={item.text} className="flex items-start gap-2.5 text-xs">
+                        <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
+                        <span className="text-muted-foreground leading-normal">{item.text}</span>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>

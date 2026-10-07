@@ -28,10 +28,11 @@ export const ANSWER_RECAP_HEADING = 'Priced for:';
 
 // The pill under each package's price: a nudge, not a cumulative label
 // (tweaks round 1, 2026-10-06). Short enough for one line on every card
-// (tweaks round 2).
+// (tweaks round 2). Pro's pill is highlighted as the recommended package
+// (tweaks round 3).
 export const TIER_NUDGES: Record<string, string> = {
   basic: 'A solid start',
-  pro: 'Most chosen',
+  pro: 'Most popular',
   premium: 'Our fullest service',
 };
 
@@ -47,9 +48,6 @@ export const REVENUE_CALL_COPY = {
   apiError: 'Businesses above R50m in revenue start with a call. Please book a call and we will prepare your proposal.',
 } as const;
 
-export const FIT_CALL_PROMPT = 'Only need payroll, or not sure what fits?';
-// The transactions list stops at 1,500 a month; above that is a conversation.
-export const TRANSACTIONS_FIT_CALL_PROMPT = 'More than 1,500 a month?';
 
 // Page heading and the one promise above the progress bar on /pricing
 // (tweaks round 2, 2026-10-07).

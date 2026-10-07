@@ -12,8 +12,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { formatBandLabel } from '@/lib/pricing';
-import { siteConfig } from '@/config/site';
-import { FIT_CALL_PROMPT, QUESTION_PLACEHOLDER, type QuestionCopy } from '@/config/calculatorCopy';
+import { QUESTION_PLACEHOLDER, type QuestionCopy } from '@/config/calculatorCopy';
 import type { Bracket } from '@/types';
 
 // One question per screen (calculator-v2). Two shapes share one shell: a
@@ -26,9 +25,6 @@ interface ShellProps {
   onNext: () => void;
   /** Omitted on the first screen. */
   onBack?: () => void;
-  showFitCall?: boolean;
-  /** Overrides the fit-call prompt, e.g. on the transactions screen. */
-  fitCallPrompt?: string;
   children: React.ReactNode;
 }
 
@@ -37,8 +33,6 @@ function QuestionShell({
   canProceed,
   onNext,
   onBack,
-  showFitCall,
-  fitCallPrompt = FIT_CALL_PROMPT,
   children,
 }: ShellProps) {
   return (
@@ -65,19 +59,8 @@ function QuestionShell({
         </Button>
       </div>
 
-      {showFitCall && (
-        <p className="text-xs text-muted-foreground text-right">
-          {fitCallPrompt}{' '}
-          <a
-            href={siteConfig.links.booking}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary/80 underline underline-offset-2"
-          >
-            Book a fit call →
-          </a>
-        </p>
-      )}
+      {/* No fit-call line here: the page's own "Book a fit call" section
+          follows the question (tweaks round 3). */}
     </div>
   );
 }
