@@ -12,7 +12,7 @@
 
 | Kind | Objects |
 |---|---|
-| Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters` |
+| Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters` |
 | Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `provision_from_signed_proposal` (removed in phase 3), `next_proposal_ref`, `proposals_set_ref`; and, until phase 4 removes their capucor.app callers, `create_proposal_amendment` / `start_proposal_resend` |
 | Plus | their triggers, CHECKs, indexes, RLS policies and grants |
 
@@ -23,9 +23,9 @@ consolidated from capucor-os migrations 001–065 and cross-checked column by co
 live, and its first statement raises an exception on purpose.
 
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
-table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`. ⚠️
-`testimonials` is read here (homepage, anon client) but was left out of the baseline — an open
-question, not a decision.
+table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`.
+`testimonials` was adopted into the baseline on 2026-10-07: capucor.com is its only reader, and
+capucor-os's nightly backup still copies it until os-sunset.
 
 ### Links across the line (until os-sunset)
 

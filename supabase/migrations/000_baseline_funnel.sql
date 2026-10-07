@@ -43,9 +43,6 @@
 --   has_capability(); ensure_default_entity() / set_org_from_entity().
 --   tier_inclusions (001) — references tiers/services but nothing in this repo
 --   reads it.
---   testimonials (001) — ⚠️ OPEN: this repo DOES read it (getPricingData.ts,
---   anon client, `anon_select_testimonials` policy) but it was not in the phase-1
---   list. Recorded here as a known gap, not decided.
 --
 -- ── ⚠️ CROSS-OWNER LINKS THAT STILL EXIST ────────────────────────────────────
 --   * proposals.client_org_id → client_orgs(id). Still live, still written by
@@ -80,7 +77,7 @@ do $$ begin
 end $$;
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 1. PRICING CONFIG — services, brackets, tiers   (public read via anon)
+-- 1. PRICING CONFIG — services, brackets, tiers, testimonials   (public read via anon)
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- services — 001 (created), 002 (dropped base_price, scale_per_bracket).
@@ -140,6 +137,27 @@ create policy "anon_select_brackets"
   on public.brackets for select to anon using (active = true);           -- 001
 create policy "anon_select_tiers"
   on public.tiers for select to anon using (active = true);              -- 001
+
+-- testimonials — 001, never altered since. Adopted 2026-10-07 (Zjak's decision,
+-- after phase 1): capucor.com is its only reader (getPricingData.ts, anon
+-- client); capucor.app stopped reading it, but capucor-os's nightly backup
+-- still copies it until os-sunset. Rows are dashboard-owned; rows whose name or
+-- quote starts with "[" are seed placeholders and are filtered out in code.
+create table public.testimonials (
+  id              uuid primary key default gen_random_uuid(),
+  name            text not null,
+  role            text,
+  business        text,
+  quote           text not null,
+  avatar_url      text,
+  display_order   int not null default 0,
+  active          boolean not null default true,
+  created_at      timestamptz not null default now()
+);
+create index on public.testimonials (display_order) where active = true; -- 001
+alter table public.testimonials enable row level security;               -- 001
+create policy "anon_select_testimonials"
+  on public.testimonials for select to anon using (active = true);       -- 001
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- 2. LEADS AND POPIA REQUESTS   (anon insert only)

@@ -142,7 +142,7 @@ route handler that reads a body, or anything that sends email.
 ## Database (Supabase)
 
 Both apps share **one Supabase project**. ⚠️ **Since 2026-10-07 this repo owns the sales-funnel
-schema** (`leads`, `proposals`, `brackets`, `services`, `tiers`, `data_requests`,
+schema** (`leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`,
 `proposal_fulfilment`, `email_deliveries` and the signing/fulfilment functions). **New funnel
 migrations are written in this repo's [`supabase/migrations/`](supabase/migrations/) only** —
 never in capucor-os. Portal tables stay in capucor-os until os-sunset.
