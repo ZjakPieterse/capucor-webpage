@@ -80,8 +80,8 @@ export default async function ConfirmSignPage({
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           You&rsquo;re confirming acceptance of the Capucor proposal
-          {row.ref_number ? ` (${row.ref_number})` : ''}. Confirming records your signature and sets
-          up your client portal. There&rsquo;s no payment needed up front.
+          {row.ref_number ? ` (${row.ref_number})` : ''}. Confirming records your signature, and we
+          email you to say it&rsquo;s signed. There&rsquo;s no payment needed up front.
         </p>
 
         <dl className="mt-5 space-y-2 rounded-xl border border-border bg-card/40 p-4 text-sm">

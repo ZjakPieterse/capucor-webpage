@@ -4,6 +4,7 @@ import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { buildSignedProposalPdfPayload } from '@/lib/portal/proposalPdfPayload';
 import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
+import { driveFileUrl } from '@/lib/email/messages.mjs';
 import type { Bracket, Service } from '@/types';
 
 /**
@@ -15,8 +16,9 @@ import type { Bracket, Service } from '@/types';
  * (deployed by Zjak), which converts HTML→PDF and files it into the central
  * "Internal Drive" folder in a Shared Drive. No service account / JWT here.
  *
- * Called non-fatally from the sign route: a failure never blocks signing or
- * provisioning, and re-runs are idempotent (skip once proposal_pdf_drive_id is
+ * Called as the `pdf` fulfilment stage (lib/portal/fulfilment.ts) and, for
+ * retries, through /api/internal/proposal-fulfilment/pdf by the retry runner. A
+ * failure never blocks signing, and re-runs are idempotent (skip once proposal_pdf_drive_id is
  * set). With the env vars unset it silently no-ops, so the rest of the sign flow
  * works before the Apps Script is wired up.
  */
@@ -60,11 +62,6 @@ export const PDF_ARCHIVE_TIMEOUT_MS = 8_000;
 
 const PDF_COLUMNS =
   'id, ref_number, version, first_name, last_name, business_name, services, brackets, tier_slug, addons, total_charge_zar, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image, signature_ip, proposal_pdf_drive_id';
-
-// Drive's standard single-file view URL, derived from the file id.
-export function driveFileUrl(fileId: string): string {
-  return `https://drive.google.com/file/d/${fileId}/view`;
-}
 
 export async function archiveSignedProposal(
   admin: SupabaseClient<Database>,

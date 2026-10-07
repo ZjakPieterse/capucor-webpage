@@ -5,8 +5,8 @@
  * (2026-10-07) it is web-owned and compares nothing with capucor-os: pricing,
  * tiers, db.ts and the rest are this repo's own files. What stays is what still
  * protects this repo alone — exact runtime pins, the redirect table, two
- * written rules, schema ownership — plus two temporary entries (the
- * provisioning RPC boundary and the messages.mjs freeze) that phase 3 deletes.
+ * written rules, schema ownership. Phase 3 (2026-10-07) deleted the two
+ * temporary entries, the provisioning RPC boundary and the messages.mjs freeze.
  *
  * The cron, deploy-drift and CI-silence declarations in the same manifest are
  * tested beside their scripts (schedule-watchdog / deploy-drift / ci-silence).
@@ -15,7 +15,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { loadContract, digestFile } from '../../contracts/contract.mjs';
+import { loadContract } from '../../contracts/contract.mjs';
 
 const ROOT = process.cwd();
 const contract = loadContract(join(ROOT, 'contracts'));
@@ -76,42 +76,6 @@ describe('the redirect table this repo owns', () => {
     it(`declares no redirect from "${forbidden}"`, () => {
       const escaped = forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       expect(config, spec.forbiddenWhy).not.toMatch(new RegExp(`source:\\s*["'\`]${escaped}["'\`]`));
-    });
-  }
-});
-
-describe('the provisioning RPC boundary (until phase 3)', () => {
-  const p = contract.provisioning;
-  const caller = read(p.caller);
-
-  it(`still calls ${p.rpc}()`, () => {
-    expect(caller).toContain(`'${p.rpc}'`);
-  });
-
-  for (const arg of p.args as string[]) {
-    it(`passes "${arg}"`, () => {
-      // PostgREST matches an RPC by ARGUMENT NAME, so a rename is a 404 at
-      // signing — no compile error and no failing type.
-      expect(caller).toMatch(new RegExp(`\\b${arg}\\s*:`));
-    });
-  }
-
-  it('keeps its tripwire test', () => {
-    expect(existsSync(join(ROOT, p.tripwire))).toBe(true);
-  });
-});
-
-describe('frozen until phase 3', () => {
-  for (const file of contract.frozenUntilPhase3.files) {
-    it(`${file.path} is unchanged`, () => {
-      const actual = digestFile(join(ROOT, file.path));
-      expect(actual, `${file.path} is missing from this repo`).not.toBeNull();
-      expect(
-        actual,
-        `\n${file.path} has changed.\nWHY THAT MATTERS: ${contract.frozenUntilPhase3.why}\n` +
-          `Change it in web-standalone phase 3, in the release that moves retries here, ` +
-          `and delete the frozenUntilPhase3 entry in contracts/web-contract.json then.\n`,
-      ).toBe(file.digest);
     });
   }
 });

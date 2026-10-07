@@ -4,7 +4,7 @@ import { makeJsonRequest } from './helpers/request';
 // Step A of email-bound signing: POST /api/proposals/sign no longer commits the
 // signature. It stashes a *pending* signature + a one-time confirm token and
 // emails a "Confirm & sign" link to the proposal's own address. The commit
-// (provision + portal emails) is Step B — see api-proposals-sign-confirm.test.ts.
+// (signed PDF + "signed" emails) is Step B — see api-proposals-sign-confirm.test.ts.
 
 vi.mock('server-only', () => ({}));
 
@@ -16,10 +16,7 @@ vi.mock('@/lib/supabase/admin', () => ({
   createSupabaseAdminClient: vi.fn(),
 }));
 
-// These must NOT run in Step A — assert they stay untouched.
-vi.mock('@/lib/portal/provision', () => ({
-  provisionFromSignedProposal: vi.fn(),
-}));
+// This must NOT run in Step A — assert it stays untouched.
 vi.mock('@/lib/portal/proposalPdf', () => ({
   archiveSignedProposal: vi.fn(),
 }));
@@ -31,7 +28,6 @@ vi.mock('@/lib/email/sendEmail', () => ({
 
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { provisionFromSignedProposal } from '@/lib/portal/provision';
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
 import { POST } from '@/app/api/proposals/sign/route';
 
@@ -161,8 +157,7 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     expect(email.subject).toMatch(/confirm your capucor signature/i);
     expect(email.html).toContain('/proposal/confirm/');
 
-    // No provisioning or archival happens until confirmation.
-    expect(provisionFromSignedProposal).not.toHaveBeenCalled();
+    // No archival happens until confirmation.
     expect(archiveSignedProposal).not.toHaveBeenCalled();
   });
 

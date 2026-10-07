@@ -34,8 +34,26 @@ export interface SignedProposalPdfPayload {
 }
 
 /**
- * Pure legal-document rendering boundary shared with the dependency-free OS
- * reconciliation bundle. All database/provider work stays in the callers.
+ * The Drive file name: `YYYY-MM-DD - <business name> - <ref> - signed proposal.pdf`,
+ * dated by the SIGNING day in SAST (decision 2026-10-07). South Africa has no
+ * daylight saving, so SAST is a fixed UTC+2 and needs no time-zone database.
+ * The ref segment is left out for the older rows that have none.
+ */
+export function signedProposalFilename(row: {
+  signed_at: string | null;
+  business_name: string;
+  ref_number: string | null;
+}): string {
+  const signed = row.signed_at ? new Date(row.signed_at) : new Date();
+  const sastDate = new Date(signed.getTime() + 2 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return [sastDate, row.business_name.trim(), row.ref_number, 'signed proposal.pdf']
+    .filter(Boolean)
+    .join(' - ');
+}
+
+/**
+ * Pure legal-document rendering boundary. All database/provider work stays in
+ * the callers.
  */
 export function buildSignedProposalPdfPayload(
   row: SignedProposalPdfSource,
@@ -75,7 +93,7 @@ export function buildSignedProposalPdfPayload(
   });
 
   return {
-    filename: `${row.ref_number ?? 'proposal'} - ${row.business_name} - signed proposal.pdf`,
+    filename: signedProposalFilename(row),
     html,
   };
 }

@@ -4,7 +4,8 @@
  * The recipient clicked the one-time "Confirm & sign" link from their own inbox
  * (Step A emailed it to the proposal address) and pressed Confirm. Only now do
  * we commit: promote the pending signature into the real columns, flip status to
- * `signed`, provision the portal, archive the PDF, and email client + owner.
+ * `signed`, archive the signed PDF to Drive, and email client + owner. That is
+ * where signing stops (web-standalone phase 3): no portal records.
  *
  * Finalising on a POST (a button press), not the bare GET of the confirm page,
  * means an email link-scanner that prefetches the URL can't auto-sign.
@@ -15,8 +16,6 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { readJsonBody } from '@/lib/readJsonBody';
 import { getClientIp } from '@/lib/getClientIp';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
-import type { Json } from '@/types/db';
 import {
   finalizeProposalSignature,
   type FinalizeSignRow,
@@ -38,12 +37,7 @@ import {
 // `column 'pending_signature_ipp' does not exist on 'proposals'`; concatenated,
 // the same typo is invisible and you get a shapeless type error instead.
 const PENDING_COLUMNS =
-  'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, client_org_id, sign_confirm_expires_at, pending_signature_name, pending_signature_method, pending_signature_image, pending_signature_ip';
-
-type ConfirmRaw = Omit<ConfirmRow, 'brackets' | 'addons'> & {
-  brackets: Json;
-  addons: Json;
-};
+  'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, sign_confirm_expires_at, pending_signature_name, pending_signature_method, pending_signature_image, pending_signature_ip';
 
 interface ConfirmRow extends FinalizeSignRow {
   expires_at: string | null;
@@ -113,14 +107,8 @@ export async function POST(req: NextRequest) {
         { status: 404 },
       );
     }
-    // The two `jsonb` columns arrive as `Json`; everything else is checked
-    // against the schema by this assignment. See lib/portal/proposalJson.ts.
-    const raw: ConfirmRaw = data;
-    row = {
-      ...raw,
-      brackets: bracketMapFromStored(raw.brackets, raw.id),
-      addons: addonSlugsFromStored(raw.addons, raw.id),
-    };
+    // Checked against the schema by this assignment (no cast).
+    row = data;
   } catch (err) {
     console.error('[SIGN/CONFIRM] lookup error:', err);
     return NextResponse.json(
@@ -178,7 +166,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    provisioned: result.provisioned ?? false,
     deliveryStatus: result.deliveryStatus ?? 'pending',
   });
 }

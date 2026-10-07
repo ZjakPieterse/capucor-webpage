@@ -81,7 +81,6 @@ beforeEach(() => {
   };
   vi.mocked(checkRateLimit).mockResolvedValue({ allowed: true, retryAfter: 0 });
   vi.mocked(processProposalFulfilment).mockResolvedValue({
-    provisioned: true,
     deliveryStatus: 'accepted',
     completed: true,
   });
@@ -96,11 +95,10 @@ describe('POST /api/proposals/sign/confirm', () => {
       }),
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({
-      ok: true,
-      provisioned: true,
-      deliveryStatus: 'accepted',
-    });
+    const body = await res.json();
+    expect(body).toMatchObject({ ok: true, deliveryStatus: 'accepted' });
+    // Signing stops at signed + PDF: nothing in the response speaks of a portal.
+    expect(body).not.toHaveProperty('provisioned');
     expect(rpc).toHaveBeenCalledWith(
       'commit_proposal_signature',
       expect.objectContaining({
@@ -113,8 +111,8 @@ describe('POST /api/proposals/sign/confirm', () => {
       expect.anything(),
       expect.objectContaining({
         id: '11111111-1111-4111-8111-111111111111',
-        status: 'signed',
-        tier_slug: 'pro',
+        email: expect.any(String),
+        business_name: expect.any(String),
       }),
       expect.any(String),
     );
@@ -122,7 +120,6 @@ describe('POST /api/proposals/sign/confirm', () => {
 
   it('2. incomplete external work remains a successful legal signature with pending delivery', async () => {
     vi.mocked(processProposalFulfilment).mockResolvedValueOnce({
-      provisioned: false,
       deliveryStatus: 'pending',
       completed: false,
     });
@@ -134,7 +131,6 @@ describe('POST /api/proposals/sign/confirm', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
       ok: true,
-      provisioned: false,
       deliveryStatus: 'pending',
     });
   });

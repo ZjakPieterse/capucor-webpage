@@ -118,24 +118,25 @@ capucor.app.
 > to [`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md).**
 
 ⛔ **[`docs/domain-seam.md`](docs/domain-seam.md) — the seam itself, and four operational
-contracts filed under it.** Read it before touching the redirect table, provisioning, a cron, a
-route handler that reads a body, or anything that sends email.
+contracts filed under it.** Read it before touching the redirect table, a cron, a route handler
+that reads a body, or anything that sends email.
 
-- ⚠️ **The schema seam is the one that breaks silently.** This repo owns the funnel schema, but
-  until web-standalone phase 3 signing still calls `provision_from_signed_proposal`, which writes
-  the portal-owned `client_orgs` / `client_org_members` / `subscriptions` in capucor-os. **A change
-  to those tables on the capucor-os side breaks this repo's provisioning path with no compile
-  error and no failing test here.**
-- **Web contract** — exact version pins, the redirect table, the provisioning RPC arguments (until
-  phase 3) and the declared crons live in `contracts/web-contract.json`, checked by `npm test`.
-  It is web-owned: pricing, tiers, emails and `db.ts` are this repo's files and nothing is
-  compared with capucor-os. ⛔ **`src/lib/email/messages.mjs` is frozen until web-standalone
-  phase 3** — capucor-os still retries failed sends from its own copy.
+- **Signing stops at `signed` + the signed PDF in Drive** (web-standalone phase 3, migration
+  `001`): fulfilment is pdf → client email → owner email (with the Drive link). Nothing here
+  writes a capucor.app portal table; `proposals.client_org_id` is left unused until os-sunset.
+- **Web contract** — exact version pins, the redirect table and the declared crons live in
+  `contracts/web-contract.json`, checked by `npm test`. It is web-owned: pricing, tiers, emails
+  and `db.ts` are this repo's files and nothing is compared with capucor-os.
+- **Retries run here.** `cron-reconcile-deliveries.yml` (zero-dependency
+  `scripts/reconcile-deliveries.mjs`) finishes fulfilment and resends failed funnel emails,
+  rebuilt from `src/lib/email/messages.mjs` under the original idempotency key. It runs from
+  `master`, so deploy soon after merging a `messages.mjs` change.
 - **Scheduled workflows** — an undeclared cron is a job nothing watches, and `npm test` fails.
 - ⚠️ **Never call `req.json()` in a route handler** — it is unbounded. Use
   `readJsonBody(req, MAX_BODY_BYTES)`.
-- **Every transactional send goes through `src/lib/email/sendEmail.ts`.** Never construct
-  `Resend` elsewhere; `accepted` means the provider took the request, not that anyone received it.
+- **Every transactional send in the Worker goes through `src/lib/email/sendEmail.ts`.** Never
+  construct `Resend` elsewhere; the retry runner is the only other sender, under the same
+  contract. `accepted` means the provider took the request, not that anyone received it.
 - ⚠️ **Never delete the capucor.com zone or any of its DNS records** — several are load-bearing for
   services beyond this website and break silently while the sites keep looking fine.
 
@@ -180,8 +181,8 @@ src/
 │   │                 #   stable dotted id you can query on in the Cloudflare
 │   │                 #   dashboard. Byte-identical to capucor-os's copy.
 │   ├── portal/       # ⚠️ NAME IS HISTORICAL — this is the SIGNING half, not a portal:
-│   │                 #   finalizeSign, provision, proposalPdf, signEmails, orgSlug.
-│   │                 #   The actual portal is in ../capucor-os.
+│   │                 #   finalizeSign, fulfilment, proposalPdf, signEmails,
+│   │                 #   reconciliationAuth (the retry runner's PDF bridge).
 │   └── proposal/     # Proposal document rendering (HTML → PDF, inlined logo)
 └── types/            # TypeScript interfaces
 ```
@@ -254,9 +255,10 @@ It also carries the section rhythm (`premium-section` + `SectionDivider`), price
 ⛔ **[`docs/payments.md`](docs/payments.md) — read it before touching payment code.** The billing
 model changed on 2026-06-17 and the shape of the code changed with it.
 
-**Subscriptions** are collected via **Paysoft Flow**, which has **no developer API** — provisioning
-is manual, the signed proposal is the debit-order mandate, and **no banking details are captured on
-the site**. Portal access is minted at signing by provision-on-sign, not by a payment webhook.
+**Subscriptions** are collected via **Paysoft Flow**, which has **no developer API** — billing is
+set up by hand, the signed proposal is the debit-order mandate, and **no banking details are captured on
+the site**. Signing stops at `signed` + the signed PDF in Drive; the owner email is the cue to
+set up billing.
 **Shop one-offs** will use **PayFast**, not yet wired. ⛔ **There is no Paystack code here and none
 of it is worth resurrecting** — the shop needs PayFast's ITN/MD5 scheme, not Paystack's HMAC.
 

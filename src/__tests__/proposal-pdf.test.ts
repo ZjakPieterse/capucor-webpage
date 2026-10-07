@@ -30,6 +30,7 @@ vi.mock('@/lib/proposalPricing', () => ({
 }));
 
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
+import { signedProposalFilename } from '@/lib/portal/proposalPdfPayload';
 
 const PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -124,8 +125,8 @@ describe('archiveSignedProposal', () => {
     );
     expect(body.secret).toBe('shh');
     expect(body.proposalId).toBe('prop_1');
-    expect(body.filename).toContain('FT-2026-06-0042');
-    expect(body.filename).toContain('Pat Trading Co');
+    // Decision 2026-10-07: signing date (SAST) - business - ref - signed proposal.
+    expect(body.filename).toBe('2026-06-17 - Pat Trading Co - FT-2026-06-0042 - signed proposal.pdf');
     expect(typeof body.html).toBe('string');
     expect(
       (fetchMock.mock.calls[0]![1] as { signal: AbortSignal }).signal,
@@ -213,5 +214,24 @@ describe('archiveSignedProposal', () => {
     expect(res).toMatchObject({ ok: false, error: 'Timed out' });
     expect(admin.updatePayloads).toHaveLength(0);
     errorSpy.mockRestore();
+  });
+});
+
+describe('signedProposalFilename', () => {
+  it('dates the file by the signing day in SAST, not UTC', () => {
+    // 23:30 UTC on 30 Sept is 01:30 on 1 Oct in Johannesburg.
+    expect(
+      signedProposalFilename({
+        signed_at: '2026-09-30T23:30:00Z',
+        business_name: ' Pat Trading Co ',
+        ref_number: 'FT-2026-09-0007',
+      }),
+    ).toBe('2026-10-01 - Pat Trading Co - FT-2026-09-0007 - signed proposal.pdf');
+  });
+
+  it('leaves out the ref segment for an older row without one', () => {
+    expect(
+      signedProposalFilename({ signed_at: '2026-10-07T08:00:00+00:00', business_name: 'Pat Trading Co', ref_number: null }),
+    ).toBe('2026-10-07 - Pat Trading Co - signed proposal.pdf');
   });
 });

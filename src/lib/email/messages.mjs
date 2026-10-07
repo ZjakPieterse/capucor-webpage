@@ -2,11 +2,13 @@
  * Dependency-free transactional email renderers. No secrets or delivery state
  * live here, so a queued event can be rebuilt from its source row.
  *
- * Web-owned since 2026-10-07 (web-standalone phase 2). ⛔ FROZEN UNTIL PHASE 3:
- * capucor-os's reconciliation workflow still retries failed sends by rebuilding
- * them from its own copy of this file under the original idempotency key, so
- * the rendered output must not change until retries move here. Enforced by
- * frozenUntilPhase3 in contracts/web-contract.json.
+ * Two senders use this file: the Worker's first attempt (through
+ * src/lib/email/sendEmail.ts) and the retry runner
+ * (scripts/reconcile-deliveries.mjs, a zero-dependency GitHub Action that
+ * rebuilds a failed send and resends it under the ORIGINAL idempotency key).
+ * The runner runs from master and the Worker from the last deploy, so ship a
+ * change here by deploying soon after merging it. Since web-standalone phase 3
+ * (2026-10-07) no other repository reads this file.
  */
 
 export const EMAIL_SENDER = 'Capucor <noreply@capucor.com>';
@@ -235,14 +237,6 @@ function signedAlertBlock(businessName, signedAt) {
   return `<p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:16px;">This proposal for <strong>${escapeHtml(businessName)}</strong> was signed on ${escapeHtml(formatSast(signedAt))} (SAST). If this wasn&rsquo;t you, reply to this email right away.</p>`;
 }
 
-// Sent once the signed proposal is provisioned. New clients are not pointed at
-// the capucor.app portal while it is being sunset (decision 2026-10-06): the
-// email confirms the signature and says Zjak will be in touch. `loginUrl` is
-// still accepted, and ignored, so queued events rebuild unchanged.
-export function renderProvisionedClientEmail(d) {
-  return renderSignedClientEmail(d);
-}
-
 export function renderSignedClientEmail(d) {
   return clientShell(`${brand()}
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">That&rsquo;s signed, ${escapeHtml(d.firstName)}</h1>
@@ -251,13 +245,13 @@ export function renderSignedClientEmail(d) {
       ${signedAlertBlock(d.businessName, d.signedAt)}`);
 }
 
-function ownerShell(content, failed = false) {
+function ownerShell(content) {
   return `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8" /></head>
 <body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2937;">
   <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
-    <div style="background:#ffffff;border:1px solid ${failed ? '#f5c2c7' : '#e5e7eb'};border-radius:16px;padding:28px;">${content}
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:28px;">${content}
     </div>
   </div>
 </body>
@@ -274,35 +268,76 @@ function ownerDetails(d) {
       </table>`;
 }
 
-export function renderProvisionedOwnerEmail(d) {
+export function renderSignedOwnerEmail(d) {
   return ownerShell(`
-      <h1 style="margin:0 0 8px;font-size:18px;color:#111827;">Proposal signed, portal provisioned</h1>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">${escapeHtml(d.businessName)} has signed. The portal org, membership and subscription are set up. To start billing:</p>
+      <h1 style="margin:0 0 8px;font-size:18px;color:#111827;">Proposal signed</h1>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">${escapeHtml(d.businessName)} has signed. The signature is recorded and the proposal is marked signed. To start billing:</p>
       <ol style="margin:0 0 20px;padding-left:18px;font-size:14px;line-height:1.7;color:#1f2937;">
         <li>Create the Xero contact for ${escapeHtml(d.businessName)} and set up the recurring invoice.</li>
         <li>Load the client&rsquo;s bank details into Paysoft Flow so the debit order can collect.</li>
       </ol>
       ${ownerDetails(d)}
-      ${button(d.proposalUrl, 'View the signed proposal', true)}
-      <p style="margin:16px 0 0;font-size:13px;color:#6b7280;">${
+      ${
         d.pdfUrl
-          ? `Signed-proposal PDF archived: <a href="${d.pdfUrl}" style="color:#0f766e;">open in Drive</a>.`
-          : 'Signed-proposal PDF: not archived yet (it will be filed once Drive archival is set up).'
-      }</p>`);
+          ? button(d.pdfUrl, 'Open the signed PDF in Drive', true)
+          : '<p style="margin:16px 0 0;font-size:13px;color:#b02a37;">The signed PDF is not in Drive. Check this proposal&rsquo;s row in proposal_fulfilment.</p>'
+      }`);
 }
 
-export function renderProvisionFailedOwnerEmail(d) {
-  return ownerShell(
-    `
-      <h1 style="margin:0 0 8px;font-size:18px;color:#b02a37;">Proposal signed, but provisioning failed</h1>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">${escapeHtml(d.businessName)} signed, and the signature is recorded, but the portal records were not created automatically. The proposal is left as signed (not active). Please set the client up by hand: create the org, membership and subscription, then the Xero contact and Paysoft Flow mandate.</p>
-      <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;">The automated setup did not complete. Check the application logs for the diagnostic details and complete the setup manually.</p>
-      ${ownerDetails(d)}
-      ${button(d.proposalUrl, 'View the signed proposal', true)}`,
-    true,
-  );
+// ── Signed-proposal fulfilment emails ───────────────────────────────────────
+// Built here rather than in their callers so that the Worker's first attempt
+// (src/lib/portal/fulfilment.ts) and the retry runner build the SAME request
+// for the same idempotency key. `p` is a proposals row: id, email, first_name,
+// last_name, business_name, ref_number, signed_at, proposal_pdf_drive_id.
+
+export const SIGNED_CLIENT_EVENT = 'proposal.signed_client';
+export const SIGNED_OWNER_EVENT = 'proposal.signed_owner';
+
+export function signedClientIdempotencyKey(proposalId) {
+  return `capucor_web_proposal_signed_client_${proposalId}`;
 }
 
+export function signedOwnerIdempotencyKey(proposalId) {
+  return `capucor_web_proposal_signed_owner_${proposalId}`;
+}
+
+export function driveFileUrl(fileId) {
+  return `https://drive.google.com/file/d/${fileId}/view`;
+}
+
+export function buildSignedClientMessage(p) {
+  return {
+    from: EMAIL_SENDER,
+    replyTo: EMAIL_REPLY_TO,
+    to: p.email,
+    subject: 'Your Capucor proposal is signed',
+    html: renderSignedClientEmail({
+      firstName: p.first_name,
+      businessName: p.business_name,
+      signedAt: p.signed_at,
+    }),
+  };
+}
+
+export function buildSignedOwnerMessage(p, ownerEmail) {
+  return {
+    from: WEBSITE_SENDER,
+    to: ownerEmail,
+    subject: `Signed: ${p.business_name}${p.ref_number ? ` (${p.ref_number})` : ''}, set up billing`,
+    html: renderSignedOwnerEmail({
+      fullName: `${p.first_name} ${p.last_name}`.trim(),
+      businessName: p.business_name,
+      email: p.email,
+      refNumber: p.ref_number,
+      signedAt: p.signed_at,
+      pdfUrl: p.proposal_pdf_drive_id ? driveFileUrl(p.proposal_pdf_drive_id) : null,
+    }),
+  };
+}
+
+// capucor.app's staff amend / resend emails. This repo never sends them; the
+// retry runner rebuilds them only until web-standalone phase 4 removes those
+// staff tools from capucor-os. Delete both at the phase-5 clean-up.
 function renderStaffProposalEmail(d, amended) {
   return clientShell(`${brand()}
       ${reference(d.refNumber)}

@@ -3,16 +3,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/portal/provision', () => ({
-  provisionFromSignedProposal: vi.fn(),
-}));
 vi.mock('@/lib/portal/proposalPdf', () => ({ archiveSignedProposal: vi.fn() }));
 vi.mock('@/lib/email/sendEmail', () => ({ sendEmail: vi.fn() }));
 
 import { sendEmail } from '@/lib/email/sendEmail';
 import { processProposalFulfilment } from '@/lib/portal/fulfilment';
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
-import { provisionFromSignedProposal } from '@/lib/portal/provision';
 
 const PROPOSAL_ID = '11111111-1111-4111-8111-111111111111';
 const SIGNED_AT = '2026-08-04T08:00:00.000Z';
@@ -26,21 +22,14 @@ function proposal() {
     first_name: 'Pat',
     last_name: 'Patterson',
     business_name: 'Pat Trading Co',
-    services: ['accounting'],
-    brackets: { accounting: 0 },
-    tier_slug: 'pro',
-    addons: [],
-    monthly_total_zar: 1325,
-    vat_zar: 0,
-    total_charge_zar: 1325,
-    status: 'signed',
-    client_org_id: null,
   };
 }
 
-function makeAdmin(stages: { stage: string; attempt?: number }[]) {
+function makeAdmin(
+  stages: { stage: string; attempt?: number }[],
+  storedPdfId: string | null = null,
+) {
   const state = {
-    portal_status: 'pending',
     pdf_status: 'pending',
     client_email_status: 'pending',
     owner_email_status: 'pending',
@@ -74,12 +63,10 @@ function makeAdmin(stages: { stage: string; attempt?: number }[]) {
             ? 'accepted'
             : 'complete'
           : outcome;
-      if (stage === 'portal') state.portal_status = status;
       if (stage === 'pdf') state.pdf_status = status;
       if (stage === 'client_email') state.client_email_status = status;
       if (stage === 'owner_email') state.owner_email_status = status;
       if (
-        state.portal_status === 'complete' &&
         state.pdf_status === 'complete' &&
         state.client_email_status === 'accepted' &&
         ['accepted', 'not_required'].includes(state.owner_email_status)
@@ -105,6 +92,14 @@ function makeAdmin(stages: { stage: string; attempt?: number }[]) {
       }
       if (table === 'proposals') {
         return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { proposal_pdf_drive_id: storedPdfId },
+                error: null,
+              }),
+            }),
+          }),
           update: (payload: Record<string, unknown>) => {
             signedEmailUpdates.push(payload);
             return { eq: () => ({ is: async () => ({ error: null }) }) };
@@ -115,16 +110,12 @@ function makeAdmin(stages: { stage: string; attempt?: number }[]) {
     },
   } as unknown as SupabaseClient<Database>;
 
-  return { client, state, finishes, signedEmailUpdates };
+  return { client, state, finishes, signedEmailUpdates, rpc };
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   process.env.OWNER_NOTIFICATION_EMAIL = 'owner@capucor.com';
-  vi.mocked(provisionFromSignedProposal).mockResolvedValue({
-    ok: true,
-    orgId: 'org_1',
-  });
   vi.mocked(archiveSignedProposal).mockResolvedValue({
     ok: true,
     fileId: 'file_1',
@@ -139,9 +130,8 @@ beforeEach(() => {
 });
 
 describe('processProposalFulfilment', () => {
-  it('converges all four stages in dependency order', async () => {
+  it('converges the three stages in dependency order: pdf, client email, owner email', async () => {
     const admin = makeAdmin([
-      { stage: 'portal' },
       { stage: 'pdf' },
       { stage: 'client_email' },
       { stage: 'owner_email' },
@@ -152,13 +142,8 @@ describe('processProposalFulfilment', () => {
       SIGNED_AT,
     );
 
-    expect(result).toEqual({
-      provisioned: true,
-      deliveryStatus: 'accepted',
-      completed: true,
-    });
+    expect(result).toEqual({ deliveryStatus: 'accepted', completed: true });
     expect(admin.finishes.map((item) => item.p_stage)).toEqual([
-      'portal',
       'pdf',
       'client_email',
       'owner_email',
@@ -167,31 +152,44 @@ describe('processProposalFulfilment', () => {
     expect(admin.signedEmailUpdates).toHaveLength(1);
   });
 
-  it('stops at a portal failure, schedules recovery and alerts the owner once', async () => {
-    vi.mocked(provisionFromSignedProposal).mockResolvedValueOnce({
-      ok: false,
-      error: 'Auth temporarily unavailable',
-    });
-    const admin = makeAdmin([{ stage: 'portal' }]);
-    const result = await processProposalFulfilment(
-      admin.client,
-      proposal(),
-      SIGNED_AT,
-    );
+  it('sends the "signed" emails under their phase-3 events and keys', async () => {
+    const admin = makeAdmin([
+      { stage: 'pdf' },
+      { stage: 'client_email' },
+      { stage: 'owner_email' },
+    ]);
+    await processProposalFulfilment(admin.client, proposal(), SIGNED_AT);
 
-    expect(result).toMatchObject({
-      provisioned: false,
-      deliveryStatus: 'pending',
+    const [client, owner] = vi.mocked(sendEmail).mock.calls.map((c) => c[0]);
+    expect(client).toMatchObject({
+      sourceType: 'proposal',
+      sourceId: PROPOSAL_ID,
+      eventType: 'proposal.signed_client',
+      idempotencyKey: `capucor_web_proposal_signed_client_${PROPOSAL_ID}`,
     });
-    expect(admin.finishes[0]).toMatchObject({
-      p_stage: 'portal',
-      p_outcome: 'retry_scheduled',
-      p_error_message: 'Auth temporarily unavailable',
+    expect(client.message).toMatchObject({
+      to: 'pat@example.com',
+      subject: 'Your Capucor proposal is signed',
     });
+    expect(owner).toMatchObject({
+      eventType: 'proposal.signed_owner',
+      idempotencyKey: `capucor_web_proposal_signed_owner_${PROPOSAL_ID}`,
+    });
+    expect(owner.message).toMatchObject({ to: 'owner@capucor.com' });
+    // The owner email carries the Drive link to the PDF this request archived.
+    expect(owner.message.html).toContain('https://drive.google.com/file/d/file_1/view');
+    for (const { message } of [client, owner]) {
+      expect(message.html).not.toMatch(/portal|provision|log ?in/i);
+      expect(message.subject).not.toMatch(/portal|provision/i);
+    }
+  });
+
+  it('links the Drive file archived by an earlier attempt', async () => {
+    const admin = makeAdmin([{ stage: 'owner_email' }], 'file_earlier');
+    await processProposalFulfilment(admin.client, proposal(), SIGNED_AT);
     expect(archiveSignedProposal).not.toHaveBeenCalled();
-    expect(vi.mocked(sendEmail).mock.calls[0]?.[0]).toMatchObject({
-      eventType: 'proposal.provision_failed_owner',
-    });
+    const owner = vi.mocked(sendEmail).mock.calls[0]![0];
+    expect(owner.message.html).toContain('https://drive.google.com/file/d/file_earlier/view');
   });
 
   it('stops at a PDF timeout and does not send premature client email', async () => {
@@ -199,18 +197,15 @@ describe('processProposalFulfilment', () => {
       ok: false,
       error: 'The operation was aborted due to timeout',
     });
-    const admin = makeAdmin([{ stage: 'portal' }, { stage: 'pdf' }]);
+    const admin = makeAdmin([{ stage: 'pdf' }]);
     const result = await processProposalFulfilment(
       admin.client,
       proposal(),
       SIGNED_AT,
     );
 
-    expect(result).toMatchObject({
-      provisioned: true,
-      deliveryStatus: 'pending',
-    });
-    expect(admin.finishes[1]).toMatchObject({
+    expect(result).toMatchObject({ deliveryStatus: 'pending', completed: false });
+    expect(admin.finishes[0]).toMatchObject({
       p_stage: 'pdf',
       p_outcome: 'retry_scheduled',
     });
@@ -225,11 +220,7 @@ describe('processProposalFulfilment', () => {
       errorCode: 'timeout',
       errorMessage: 'provider timeout',
     });
-    const admin = makeAdmin([
-      { stage: 'portal' },
-      { stage: 'pdf' },
-      { stage: 'client_email' },
-    ]);
+    const admin = makeAdmin([{ stage: 'pdf' }, { stage: 'client_email' }]);
     const result = await processProposalFulfilment(
       admin.client,
       proposal(),
@@ -237,7 +228,7 @@ describe('processProposalFulfilment', () => {
     );
 
     expect(result.deliveryStatus).toBe('pending');
-    expect(admin.finishes[2]).toMatchObject({
+    expect(admin.finishes[1]).toMatchObject({
       p_stage: 'client_email',
       p_outcome: 'retry_scheduled',
       p_delivery_id: '22222222-2222-4222-8222-222222222222',
@@ -248,7 +239,6 @@ describe('processProposalFulfilment', () => {
   it('marks owner email not required when no owner recipient is configured', async () => {
     delete process.env.OWNER_NOTIFICATION_EMAIL;
     const admin = makeAdmin([
-      { stage: 'portal' },
       { stage: 'pdf' },
       { stage: 'client_email' },
       { stage: 'owner_email' },
@@ -260,24 +250,37 @@ describe('processProposalFulfilment', () => {
     );
 
     expect(result.completed).toBe(true);
-    expect(admin.finishes[3]).toMatchObject({
+    expect(admin.finishes[2]).toMatchObject({
       p_stage: 'owner_email',
       p_outcome: 'not_required',
     });
     expect(sendEmail).toHaveBeenCalledTimes(1);
   });
 
-  it('turns the sixth portal failure into visible permanent failure', async () => {
-    vi.mocked(provisionFromSignedProposal).mockResolvedValueOnce({
+  it('turns the sixth PDF failure into visible permanent failure', async () => {
+    vi.mocked(archiveSignedProposal).mockResolvedValueOnce({
       ok: false,
       error: 'still down',
     });
-    const admin = makeAdmin([{ stage: 'portal', attempt: 6 }]);
+    const admin = makeAdmin([{ stage: 'pdf', attempt: 6 }]);
     await processProposalFulfilment(admin.client, proposal(), SIGNED_AT);
     expect(admin.finishes[0]).toMatchObject({
       p_outcome: 'permanently_failed',
       p_error_code: 'max_attempts_exhausted',
     });
+  });
+
+  it('leaves an unknown stage (the pre-001 portal stage) alone', async () => {
+    const admin = makeAdmin([{ stage: 'portal' }]);
+    const result = await processProposalFulfilment(
+      admin.client,
+      proposal(),
+      SIGNED_AT,
+    );
+    expect(result.deliveryStatus).toBe('pending');
+    expect(admin.finishes).toHaveLength(0);
+    expect(archiveSignedProposal).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   it('a lost claim performs no external side effect', async () => {
@@ -288,7 +291,6 @@ describe('processProposalFulfilment', () => {
       SIGNED_AT,
     );
     expect(result.deliveryStatus).toBe('pending');
-    expect(provisionFromSignedProposal).not.toHaveBeenCalled();
     expect(archiveSignedProposal).not.toHaveBeenCalled();
     expect(sendEmail).not.toHaveBeenCalled();
   });

@@ -125,13 +125,15 @@ describe('a newly declared workflow that has not run yet', () => {
   });
 
   it('⚠️ the contract keeps every notBefore inside the three-day bound', () => {
-    // A notBefore far in the future silences a dead cron indefinitely. This
-    // pins the contract's values so a date more than three days out fails, offline.
+    // A notBefore far in the future silences a dead cron indefinitely. A date
+    // more than three days from the moment the tests run fails, offline. (Until
+    // 2026-10-07 this measured from a fixed 2026-08-25, which would have refused
+    // every later grace.) A past date is fine: the watchdog then fails normally.
     for (const w of contract.scheduledWorkflows.workflows as { file: string; notBefore?: string }[]) {
       if (!w.notBefore) continue;
       const when = new Date(w.notBefore).getTime();
       expect(Number.isNaN(when), `${w.file} notBefore is not a date`).toBe(false);
-      expect(when - Date.parse('2026-08-25T00:00:00Z')).toBeLessThanOrEqual(3 * 86_400_000);
+      expect(when - Date.now(), `${w.file} notBefore is more than three days away`).toBeLessThanOrEqual(3 * 86_400_000);
     }
   });
 });

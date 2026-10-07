@@ -91,8 +91,7 @@ export interface PricingState {
 
 // SubscriptionStatus / SubscriptionSummary moved to capucor-os in Phase 3 of the
 // OS split — they described the portal's billing view, which lives on
-// capucor.app now. Marketing writes the `subscriptions` row at signing
-// (lib/portal/provision.ts) but never reads one back.
+// capucor.app. Since web-standalone phase 3 signing writes no portal record.
 
 export interface LeadPayload {
   source:

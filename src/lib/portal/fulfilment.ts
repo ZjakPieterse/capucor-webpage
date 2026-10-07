@@ -2,18 +2,16 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
-import { siteConfig } from '@/config/site';
 import { sendEmail, type DeliveryStatus } from '@/lib/email/sendEmail';
+import {
+  SIGNED_CLIENT_EVENT,
+  SIGNED_OWNER_EVENT,
+  buildSignedClientMessage,
+  buildSignedOwnerMessage,
+  signedClientIdempotencyKey,
+  signedOwnerIdempotencyKey,
+} from '@/lib/email/messages.mjs';
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
-import {
-  provisionFromSignedProposal,
-  type ProposalForProvision,
-} from '@/lib/portal/provision';
-import {
-  renderProvisionedClientEmail,
-  renderProvisionedOwnerEmail,
-  renderProvisionFailedOwnerEmail,
-} from '@/lib/portal/signEmails';
 
 const LEASE_MS = 60_000;
 const FIRST_RETRY_MS = 10 * 60_000;
@@ -21,16 +19,22 @@ const MAX_RETRY_MS = 6 * 60 * 60_000;
 const MAX_STAGE_ATTEMPTS = 6;
 const MAX_ERROR_LENGTH = 2_000;
 
-type Stage = 'portal' | 'pdf' | 'client_email' | 'owner_email';
+// Since web-standalone phase 3 (migration 001) signing stops at `signed` + the
+// signed PDF in Drive: pdf → client_email → owner_email. No portal stage.
+type Stage = 'pdf' | 'client_email' | 'owner_email';
 type FulfilmentRow = Database['public']['Tables']['proposal_fulfilment']['Row'];
 
-export interface ProposalForFulfilment extends ProposalForProvision {
+export interface ProposalForFulfilment {
+  id: string;
   token: string;
   ref_number: string | null;
+  email: string;
+  first_name: string;
+  last_name: string;
+  business_name: string;
 }
 
 export interface FulfilmentResult {
-  provisioned: boolean;
   deliveryStatus: DeliveryStatus;
   completed: boolean;
 }
@@ -70,6 +74,11 @@ async function claimStage(
   if (error) throw error;
   const claimed = data?.[0];
   if (!claimed) return null;
+  // A stage this code does not know (the pre-001 `portal` stage, say) is left
+  // to its lease expiry rather than guessed at.
+  if (!['pdf', 'client_email', 'owner_email'].includes(claimed.stage)) {
+    throw new Error(`Unknown fulfilment stage "${claimed.stage}".`);
+  }
   return {
     stage: claimed.stage as Stage,
     attempt: claimed.attempt_count,
@@ -127,39 +136,27 @@ async function loadState(
   return data;
 }
 
-async function notifyPortalFailure(
+// The owner email links the Drive file, which an earlier attempt (or the retry
+// runner) may have archived; read it from the row rather than trusting only
+// this request's PDF stage.
+async function loadPdfDriveId(
   admin: SupabaseClient<Database>,
-  proposal: ProposalForFulfilment,
-  signedAt: string,
-): Promise<void> {
-  const ownerEmail = process.env.OWNER_NOTIFICATION_EMAIL;
-  if (!ownerEmail) return;
-  await sendEmail({
-    sourceType: 'proposal',
-    sourceId: proposal.id,
-    eventType: 'proposal.provision_failed_owner',
-    idempotencyKey: `capucor_web_proposal_provision_failed_owner_${proposal.id}`,
-    adminClient: admin,
-    message: {
-      from: siteConfig.email.senderWebsite,
-      to: ownerEmail,
-      subject: `Provisioning FAILED: ${proposal.business_name}${proposal.ref_number ? ` (${proposal.ref_number})` : ''}`,
-      html: renderProvisionFailedOwnerEmail({
-        fullName: `${proposal.first_name} ${proposal.last_name}`.trim(),
-        businessName: proposal.business_name,
-        email: proposal.email,
-        refNumber: proposal.ref_number,
-        signedAt,
-        proposalUrl: `${siteConfig.marketingUrl}/proposal/${proposal.token}`,
-      }),
-    },
-  });
+  proposalId: string,
+): Promise<string | null> {
+  const { data, error } = await admin
+    .from('proposals')
+    .select('proposal_pdf_drive_id')
+    .eq('id', proposalId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.proposal_pdf_drive_id ?? null;
 }
 
 /**
  * Attempt all dependency-ordered stages synchronously for the client experience.
- * Any failed stage is released with durable backoff; the OS Action later claims
- * exactly the same work. A lease loss is treated as pending, never as failure.
+ * Any failed stage is released with durable backoff; the retry runner
+ * (scripts/reconcile-deliveries.mjs) later claims exactly the same work. A lease
+ * loss is treated as pending, never as failure.
  */
 export async function processProposalFulfilment(
   admin: SupabaseClient<Database>,
@@ -169,43 +166,9 @@ export async function processProposalFulfilment(
   let pdfFileId: string | null = null;
 
   try {
-    for (let step = 0; step < 4; step += 1) {
+    for (let step = 0; step < 3; step += 1) {
       const claim = await claimStage(admin, proposal.id);
       if (!claim) break;
-
-      if (claim.stage === 'portal') {
-        const provision = await provisionFromSignedProposal(admin, {
-          ...proposal,
-          status: 'signed',
-        });
-        if (!provision.ok) {
-          const detail = errorDetails(
-            provision.error,
-            'portal_provision_failed',
-          );
-          const permanent = claim.attempt >= MAX_STAGE_ATTEMPTS;
-          await finishStage(admin, {
-            proposalId: proposal.id,
-            leaseToken: claim.leaseToken,
-            stage: claim.stage,
-            outcome: permanent ? 'permanently_failed' : 'retry_scheduled',
-            nextAttemptAt: permanent ? null : retryAt(claim.attempt),
-            errorCode: permanent ? 'max_attempts_exhausted' : detail.code,
-            errorMessage: permanent
-              ? `Portal provisioning exhausted ${MAX_STAGE_ATTEMPTS} attempts: ${detail.message}`
-              : detail.message,
-          });
-          await notifyPortalFailure(admin, proposal, signedAt);
-          break;
-        }
-        await finishStage(admin, {
-          proposalId: proposal.id,
-          leaseToken: claim.leaseToken,
-          stage: claim.stage,
-          outcome: 'success',
-        });
-        continue;
-      }
 
       if (claim.stage === 'pdf') {
         const archive = await archiveSignedProposal(admin, proposal.id);
@@ -239,25 +202,20 @@ export async function processProposalFulfilment(
         continue;
       }
 
+      const signed = {
+        ...proposal,
+        signed_at: signedAt,
+        proposal_pdf_drive_id: null as string | null,
+      };
+
       if (claim.stage === 'client_email') {
         const clientDelivery = await sendEmail({
           sourceType: 'proposal',
           sourceId: proposal.id,
-          eventType: 'proposal.portal_ready_client',
-          idempotencyKey: `capucor_web_proposal_portal_ready_client_${proposal.id}`,
+          eventType: SIGNED_CLIENT_EVENT,
+          idempotencyKey: signedClientIdempotencyKey(proposal.id),
           adminClient: admin,
-          message: {
-            from: siteConfig.email.sender,
-            replyTo: siteConfig.email.replyTo,
-            to: proposal.email,
-            subject: 'Your Capucor proposal is signed',
-            html: renderProvisionedClientEmail({
-              firstName: proposal.first_name,
-              businessName: proposal.business_name,
-              loginUrl: `${siteConfig.appUrl}/login?next=/portal`,
-              signedAt,
-            }),
-          },
+          message: buildSignedClientMessage(signed),
         });
         await finishStage(admin, {
           proposalId: proposal.id,
@@ -301,28 +259,15 @@ export async function processProposalFulfilment(
         });
         continue;
       }
+      signed.proposal_pdf_drive_id =
+        pdfFileId ?? (await loadPdfDriveId(admin, proposal.id));
       const ownerDelivery = await sendEmail({
         sourceType: 'proposal',
         sourceId: proposal.id,
-        eventType: 'proposal.provisioned_owner',
-        idempotencyKey: `capucor_web_proposal_provisioned_owner_${proposal.id}`,
+        eventType: SIGNED_OWNER_EVENT,
+        idempotencyKey: signedOwnerIdempotencyKey(proposal.id),
         adminClient: admin,
-        message: {
-          from: siteConfig.email.senderWebsite,
-          to: ownerEmail,
-          subject: `Provisioned: ${proposal.business_name}${proposal.ref_number ? ` (${proposal.ref_number})` : ''}, set up billing`,
-          html: renderProvisionedOwnerEmail({
-            fullName: `${proposal.first_name} ${proposal.last_name}`.trim(),
-            businessName: proposal.business_name,
-            email: proposal.email,
-            refNumber: proposal.ref_number,
-            signedAt,
-            proposalUrl: `${siteConfig.marketingUrl}/proposal/${proposal.token}`,
-            pdfUrl: pdfFileId
-              ? `https://drive.google.com/file/d/${pdfFileId}/view`
-              : null,
-          }),
-        },
+        message: buildSignedOwnerMessage(signed, ownerEmail),
       });
       await finishStage(admin, {
         proposalId: proposal.id,
@@ -351,13 +296,12 @@ export async function processProposalFulfilment(
   try {
     const state = await loadState(admin, proposal.id);
     return {
-      provisioned: state?.portal_status === 'complete',
       deliveryStatus:
         state?.client_email_status === 'accepted' ? 'accepted' : 'pending',
       completed: state?.completed_at != null,
     };
   } catch (error) {
     console.error('[FULFILMENT] state lookup failed:', error);
-    return { provisioned: false, deliveryStatus: 'pending', completed: false };
+    return { deliveryStatus: 'pending', completed: false };
   }
 }

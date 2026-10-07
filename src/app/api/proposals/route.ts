@@ -23,8 +23,9 @@
  * proposal row is created (tweaks round 1, 2026-10-06).
  *
  * The client reviews and signs at /proposal/<token>. Signing is the debit-order
- * mandate and triggers portal provisioning (PR9, in /api/proposals/sign) — there
- * is no on-site payment step; collection is set up manually via Paysoft Flow.
+ * mandate and stops at `signed` + the signed PDF in Drive (web-standalone
+ * phase 3) — there is no on-site payment step and no portal record; collection
+ * is set up manually via Paysoft Flow.
  */
 
 import { NextRequest, NextResponse } from 'next/server';

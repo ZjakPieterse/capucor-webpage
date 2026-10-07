@@ -45,17 +45,17 @@
 --   reads it.
 --
 -- ── ⚠️ CROSS-OWNER LINKS THAT STILL EXIST ────────────────────────────────────
---   * proposals.client_org_id → client_orgs(id). Still live, still written by
---     provision_from_signed_proposal until phase 3 removes the portal stage.
---     After that it is left UNUSED (nullable, not dropped) until os-sunset.
+--   * proposals.client_org_id → client_orgs(id). Written by
+--     provision_from_signed_proposal until 001 dropped it (phase 3). Left
+--     UNUSED (nullable, not dropped) until os-sunset.
 --   * outbound_request_emails.delivery_id → email_deliveries(id) (OS 037). The
 --     PORTAL also writes email_deliveries (staff request emails). Treat any
 --     change to email_deliveries as a change capucor-os must survive.
 --   * internal_select_proposals (below) calls the portal helpers is_internal()
 --     and has_client_access().
---   * provision_from_signed_proposal writes client_orgs, client_org_members and
---     subscriptions; the client_orgs insert fires OS 017's
---     ensure_default_entity() trigger inside the same transaction.
+--   * provision_from_signed_proposal wrote client_orgs, client_org_members and
+--     subscriptions (the client_orgs insert fires OS 017's
+--     ensure_default_entity() trigger). Dropped by 001.
 --   * create_proposal_amendment / start_proposal_resend are called only by
 --     capucor.app's staff amend/resend routes (removed in phase 4).
 --
@@ -445,9 +445,9 @@ comment on table public.email_deliveries is
 comment on column public.email_deliveries.last_error_message is
   'Provider/transport diagnostic metadata only; never an email body, snippet or secret token.';
 
--- proposal_fulfilment — 018. Unchanged since. Phase 3 drops the portal_* stage
--- (portal_status, portal_attempt_count, portal_completed_at and the checks that
--- name them) in a web migration.
+-- proposal_fulfilment — 018. ⚠️ 001 dropped the portal_* stage (portal_status,
+-- portal_attempt_count, portal_completed_at and the checks that name them) and
+-- re-created those checks without it; see 001 for the current definitions.
 create table public.proposal_fulfilment (
   proposal_id                  uuid primary key references public.proposals(id),
 
@@ -640,7 +640,8 @@ grant execute on function public.commit_proposal_signature(uuid, text, timestamp
 comment on function public.commit_proposal_signature(uuid, text, timestamptz) is
   'Service-role-only atomic signature commit and fulfilment-row creation. The confirmation token is consumed in the same transaction.';
 
--- claim_proposal_fulfilment_stage — 021. Unchanged since.
+-- claim_proposal_fulfilment_stage — 021. ⚠️ Re-created without the portal
+-- stage by 001; this is the pre-001 body (001's rollback pastes it back).
 create or replace function public.claim_proposal_fulfilment_stage(
   p_proposal_id uuid,
   p_lease_token uuid,
@@ -741,9 +742,9 @@ grant execute on function public.claim_proposal_fulfilment_stage(uuid, uuid, tim
 comment on function public.claim_proposal_fulfilment_stage(uuid, uuid, timestamptz) is
   'Service-role-only CAS claim for the next dependency-ordered fulfilment stage.';
 
--- finish_proposal_fulfilment_stage — 021. Unchanged since. ⚠️ It hard-codes the
--- email event types 'proposal.portal_ready_client' / 'proposal.provisioned_owner';
--- phase 3 changes both the stage list and these names.
+-- finish_proposal_fulfilment_stage — 021. ⚠️ Re-created by 001 without the
+-- portal stage and with the 'proposal.signed_client' / 'proposal.signed_owner'
+-- event types; this is the pre-001 body.
 create or replace function public.finish_proposal_fulfilment_stage(
   p_proposal_id uuid,
   p_lease_token uuid,
@@ -920,8 +921,9 @@ comment on function public.finish_proposal_fulfilment_stage(
   uuid, uuid, text, text, timestamptz, timestamptz, uuid, text, text
 ) is 'Service-role-only completion of one leased fulfilment stage.';
 
--- sync_proposal_fulfilment_email — 021. Unchanged since. Called by capucor-os's
--- reconciliation runner, not by this repo (until phase 3 moves retries here).
+-- sync_proposal_fulfilment_email — 021. ⚠️ Re-created by 001 without the portal
+-- stage; this is the pre-001 body. Called by the retry runner
+-- (scripts/reconcile-deliveries.mjs since phase 3).
 create or replace function public.sync_proposal_fulfilment_email(
   p_delivery_id uuid
 )
@@ -1011,9 +1013,9 @@ grant execute on function public.sync_proposal_fulfilment_email(uuid)
 comment on function public.sync_proposal_fulfilment_email(uuid) is
   'Service-role-only projection of terminal email-delivery state into proposal fulfilment.';
 
--- provision_from_signed_proposal — 021, re-created by 022. ⚠️ KEPT FOR NOW;
--- PHASE 3 REMOVES IT. Writes the portal-owned client_orgs, client_org_members
--- and subscriptions, and promotes the proposal to 'active'.
+-- provision_from_signed_proposal — 021, re-created by 022. ⚠️ DROPPED BY 001.
+-- Wrote the portal-owned client_orgs, client_org_members and subscriptions, and
+-- promoted the proposal to 'active'. Kept here as 001's rollback source.
 create or replace function public.provision_from_signed_proposal(
   p_proposal_id uuid,
   p_user_id uuid,

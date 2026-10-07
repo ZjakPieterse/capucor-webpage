@@ -10,8 +10,9 @@ import { priceProposalSelection } from '@/lib/proposalPricing';
 import { buildSignedProposalPdfPayload } from '@/lib/portal/proposalPdfPayload';
 import { ProposalSummary } from '@/components/pricing/ProposalSummary';
 import {
+  buildSignedClientMessage,
+  buildSignedOwnerMessage,
   renderCreatedProposalClientEmail,
-  renderProvisionedClientEmail,
   renderSignedClientEmail,
 } from '@/lib/email/messages.mjs';
 import type { Bracket, Service, Tier } from '@/types';
@@ -116,22 +117,49 @@ describe('emails after signing (F10, F25)', () => {
   const d = {
     firstName: 'Pat',
     businessName: 'Pat Trading Co',
-    loginUrl: 'https://capucor.app/login?next=/portal',
     signedAt: '2026-10-06T08:00:00Z',
   };
+  const proposal = {
+    id: '11111111-1111-4111-8111-111111111111',
+    email: 'Pat@Example.com',
+    first_name: 'Pat',
+    last_name: 'Patterson',
+    business_name: 'Pat Trading Co',
+    ref_number: 'FT-2026-10-0001',
+    signed_at: '2026-10-06T08:00:00Z',
+    proposal_pdf_drive_id: 'drive_file_1',
+  };
 
-  it('the "portal ready" email has no portal link and says Zjak will be in touch', () => {
-    const html = renderProvisionedClientEmail(d);
+  it('the signed email has no portal link and says Zjak will be in touch', () => {
+    const html = renderSignedClientEmail(d);
     expect(html).not.toContain('capucor.app');
-    expect(html).not.toMatch(/portal/i);
+    expect(html).not.toMatch(/portal|log ?in/i);
     expect(html).toContain('Zjak will be in touch');
     expect(html).not.toMatch(/our team|the Capucor team/i);
   });
 
-  it('the signed email says the same', () => {
-    const html = renderSignedClientEmail(d);
-    expect(html).toContain('Zjak will be in touch');
-    expect(html).not.toMatch(/our team/i);
+  it('the client message says "signed" and goes to the address as signed', () => {
+    const m = buildSignedClientMessage(proposal);
+    expect(m.to).toBe('Pat@Example.com');
+    expect(m.subject).toBe('Your Capucor proposal is signed');
+    expect(m.replyTo).toBe('info@capucor.com');
+    expect(m.html).not.toMatch(/portal|log ?in/i);
+  });
+
+  it('the owner message says "signed", carries the Drive link and no portal wording', () => {
+    const m = buildSignedOwnerMessage(proposal, 'owner@capucor.com');
+    expect(m.to).toBe('owner@capucor.com');
+    expect(m.subject).toBe('Signed: Pat Trading Co (FT-2026-10-0001), set up billing');
+    expect(m.html).toContain('Proposal signed');
+    expect(m.html).toContain('https://drive.google.com/file/d/drive_file_1/view');
+    expect(m.html).not.toMatch(/portal|provision|log ?in/i);
+  });
+
+  it('the owner message says so when the PDF is not in Drive', () => {
+    const m = buildSignedOwnerMessage({ ...proposal, ref_number: null, proposal_pdf_drive_id: null }, 'owner@capucor.com');
+    expect(m.subject).toBe('Signed: Pat Trading Co, set up billing');
+    expect(m.html).not.toContain('drive.google.com');
+    expect(m.html).toContain('not in Drive');
   });
 });
 
