@@ -35,14 +35,12 @@ import {
   WEBSITE_SENDER,
   buildSignedClientMessage,
   buildSignedOwnerMessage,
-  renderAmendEmail,
   renderCreatedProposalClientEmail,
   renderCreatedProposalOwnerText,
   renderDataRequestConfirmationText,
   renderDataRequestConfirmedOwnerText,
   renderDataRequestPendingOwnerText,
   renderLeadOwnerText,
-  renderResendEmail,
   renderSignConfirmEmail,
   signedClientIdempotencyKey,
   signedOwnerIdempotencyKey,
@@ -777,29 +775,6 @@ async function buildProposalMessage(row, db, marketingUrl) {
         businessName: proposal.business_name,
         refNumber: proposal.ref_number,
         confirmUrl: `${marketingUrl}/proposal/confirm/${proposal.sign_confirm_token}`,
-      }),
-    };
-  }
-
-  // capucor.app staff amend / resend, until web-standalone phase 4.
-  if (
-    row.event_type === 'proposal.amended_client' ||
-    row.event_type === 'proposal.resent_client'
-  ) {
-    const amended = row.event_type === 'proposal.amended_client';
-    return {
-      from: EMAIL_SENDER,
-      replyTo: EMAIL_REPLY_TO,
-      to: row.recipient,
-      subject: proposal.ref_number
-        ? `${amended ? 'Your updated' : 'Your'} Capucor proposal (${proposal.ref_number})`
-        : `${amended ? 'Your updated' : 'Your'} Capucor proposal`,
-      html: (amended ? renderAmendEmail : renderResendEmail)({
-        firstName: proposal.first_name,
-        businessName: proposal.business_name,
-        refNumber: proposal.ref_number,
-        monthlyZAR: Number(proposal.monthly_total_zar),
-        proposalUrl,
       }),
     };
   }
