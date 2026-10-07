@@ -8,7 +8,6 @@ const anonMock = {
   from: () => ({
     select: () => ({
       eq: () => ({ order: async () => ({ data: [], error: null }) }),
-      // Brackets are read without the active filter (retired rows included).
       order: async () => ({ data: [], error: null }),
     }),
   }),
@@ -30,6 +29,8 @@ vi.mock('@/lib/proposalPricing', () => ({
 }));
 
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
+import { priceProposalSelection } from '@/lib/proposalPricing';
+import { formatZAR } from '@/lib/utils';
 import { signedProposalFilename } from '@/lib/portal/proposalPdfPayload';
 
 const PNG =
@@ -65,9 +66,16 @@ function makeAdmin(
   { updateError = null }: { updateError?: unknown } = {},
 ) {
   const updatePayloads: Record<string, unknown>[] = [];
+  const bracketReads: string[] = [];
   const admin = {
     updatePayloads,
+    bracketReads,
     from: (t: string) => {
+      // Brackets come through the SERVICE ROLE (retired rows included).
+      if (t === 'brackets') {
+        bracketReads.push(t);
+        return { select: () => ({ order: async () => ({ data: [], error: null }) }) };
+      }
       if (t !== 'proposals') throw new Error(`unexpected table ${t}`);
       return {
         select: () => ({
@@ -214,6 +222,37 @@ describe('archiveSignedProposal', () => {
     expect(res).toMatchObject({ ok: false, error: 'Timed out' });
     expect(admin.updatePayloads).toHaveLength(0);
     errorSpy.mockRestore();
+  });
+});
+
+describe('⚠️ a proposal priced on retired bracket rows (price-list change after sending)', () => {
+  // The anon RLS policy returns active rows only, so an anon read dropped the
+  // retired lines and re-priced the signed mandate lower than what was signed.
+  it('reads brackets and prices with the service role, never anon', async () => {
+    const admin = makeAdmin(signedRow());
+    await archiveSignedProposal(asClient(admin), 'prop_1');
+    expect(admin.bracketReads).toEqual(['brackets']);
+    expect(vi.mocked(priceProposalSelection).mock.calls[0]![0]).toBe(admin);
+  });
+
+  it('states the SIGNED total on the PDF even when re-pricing disagrees', async () => {
+    vi.mocked(priceProposalSelection).mockResolvedValueOnce({
+      ok: true,
+      data: {
+        addonSlugs: [],
+        lineItems: [{ slug: 'accounting', name: 'Accounting', label: null, price: 900 }],
+        monthlyTotalZAR: 900,
+        vatZAR: 0,
+        totalChargeZAR: 900,
+      },
+    });
+    const admin = makeAdmin(signedRow({ total_charge_zar: 1325 }));
+    const res = await archiveSignedProposal(asClient(admin), 'prop_1');
+    expect(res.ok).toBe(true);
+    const body = JSON.parse((fetchMock.mock.calls[0]![1] as { body: string }).body);
+    // The bold total cell is the signed figure, not the re-priced R 900.
+    expect(body.html).toMatch(new RegExp(`font-weight:700[^>]*>${formatZAR(1325)}</td>`));
+    expect(body.html).not.toMatch(new RegExp(`font-weight:700[^>]*>${formatZAR(900)}</td>`));
   });
 });
 
