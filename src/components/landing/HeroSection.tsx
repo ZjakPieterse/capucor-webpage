@@ -8,8 +8,8 @@ import { siteConfig } from "@/config/site";
 import { HeroStory } from "@/components/landing/HeroStory";
 
 // ── Hero Section ──────────────────────────────────────────────────────────────────
-// The headline is static and plain by decision (Zjak, 2026-10-07): no eyebrow, no
-// animation, no colour. The story panel carries the motion.
+// No eyebrow, and no motion inside the headline (Zjak, 2026-10-07). On load the
+// hero builds in order: headline, panel, subtext, buttons, trust line.
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();
 
@@ -54,10 +54,14 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* Copy */}
           <div className="hero-copy-container">
-            <h1 className="hero-headline text-[2.6rem] sm:text-6xl lg:text-[4.1rem] font-semibold leading-[1.02] pb-1 mb-6">
+            <motion.h1
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 18, filter: "blur(8px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="hero-headline text-[2.6rem] sm:text-6xl lg:text-[4.1rem] font-semibold leading-[1.02] pb-1 mb-6">
               From monthly chaos to{" "}
               <span className="hero-headline-accent">numbers that work for you</span>
-            </h1>
+            </motion.h1>
 
             <motion.p
               className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg"
@@ -65,7 +69,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.4,
-                delay: prefersReducedMotion ? 0 : 0.2,
+                delay: prefersReducedMotion ? 0 : 0.45,
               }}
             >
               We close your books, run payroll and handle SARS submissions every
@@ -79,7 +83,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.4,
-                delay: prefersReducedMotion ? 0 : 0.35,
+                delay: prefersReducedMotion ? 0 : 0.6,
               }}
             >
               <Button
@@ -113,7 +117,7 @@ export function HeroSection() {
               className="mt-5 text-sm text-muted-foreground/80"
               initial={prefersReducedMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: prefersReducedMotion ? 0 : 0.5 }}
+              transition={{ duration: 0.4, delay: prefersReducedMotion ? 0 : 0.75 }}
             >
               Fixed monthly fee <span aria-hidden className="mx-1.5">·</span> No lock-in contracts{" "}
               <span aria-hidden className="mx-1.5">·</span> Start in any month
@@ -121,9 +125,14 @@ export function HeroSection() {
           </div>
 
           {/* The story: chaos → order → decision */}
-          <div className="relative">
+          <motion.div
+            className="relative"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          >
             <HeroStory />
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
