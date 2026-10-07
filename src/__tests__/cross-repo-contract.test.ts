@@ -121,10 +121,20 @@ describe('the provisioning seam this repo calls', () => {
 });
 
 describe('schema ownership', () => {
-  it('has no supabase/migrations directory', () => {
-    // capucor-os is the SOLE owner. This repo's stale copy was deleted in Phase
-    // 3 of the OS split; a second copy is how two repos end up applying
-    // different schemas to one database.
-    expect(existsSync(join(ROOT, 'supabase', 'migrations'))).toBe(false);
+  // Since 2026-10-07 (web-standalone phase 1) this repo owns the funnel schema.
+  // The baseline records what is already live and must never run: its first
+  // statement raises, so an accidental apply aborts before creating anything.
+  const baseline = join('supabase', 'migrations', '000_baseline_funnel.sql');
+
+  it('keeps the funnel baseline record', () => {
+    expect(existsSync(join(ROOT, baseline))).toBe(true);
+  });
+
+  it('keeps the never-apply tripwire as the first statement', () => {
+    const sql = read(baseline)
+      .split('\n')
+      .filter((line) => line.trim() !== '' && !line.trim().startsWith('--'));
+    expect(sql[0]).toBe('do $$ begin');
+    expect(sql[1]).toContain('raise exception');
   });
 });

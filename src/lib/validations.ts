@@ -16,8 +16,8 @@ export const CalculatorConfigSchema = z.object({
 export type CalculatorConfig = z.infer<typeof CalculatorConfigSchema>;
 
 export const LeadSchema = z.object({
-  // Keep in sync with the leads.source CHECK constraint (supabase/migrations —
-  // last widened in 009 to add 'roi' and 'lead_magnet') and LeadPayload in
+  // Keep in sync with the leads.source CHECK constraint (leads_source_check in
+  // supabase/migrations/000_baseline_funnel.sql) and LeadPayload in
   // src/types/index.ts.
   source: z.enum([
     'signup',

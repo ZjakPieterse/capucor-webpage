@@ -1,89 +1,71 @@
-# Database — the shared Supabase project this repo does not own
+# Database — the sales-funnel schema this repo owns
 
-> Both apps share one Supabase project. **This repo does not own the schema**, and picking the wrong Supabase client here causes silent data loss rather than an error.
->
-> Extracted from `AGENTS.md` on 2026-09-03 (EH-02); the words are unchanged.
+> Both apps still share **one Supabase project**. Since **2026-10-07** (web-standalone, phase 1)
+> **this repo owns the sales-funnel schema**; capucor-os keeps the portal tables until os-sunset.
+> Picking the wrong Supabase client here causes silent data loss rather than an error.
 >
 > Canonical agent instructions: [`../AGENTS.md`](../AGENTS.md).
 
 ---
 
-## Database (Supabase)
+## What this repo owns
 
-Both apps share **one Supabase project**, but ⚠️ **this repo does not own the schema.**
+| Kind | Objects |
+|---|---|
+| Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters` |
+| Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `provision_from_signed_proposal` (removed in phase 3), `next_proposal_ref`, `proposals_set_ref`; and, until phase 4 removes their capucor.app callers, `create_proposal_amendment` / `start_proposal_resend` |
+| Plus | their triggers, CHECKs, indexes, RLS policies and grants |
 
-**`supabase/migrations/` lives in [`../capucor-os`](../../capucor-os/AGENTS.md) and nowhere else** —
-this repo's copy was deleted in Phase 3 of the OS split. Write new migrations there, and apply them
-using the canonical OS migration workflow.
+The starting state is recorded in
+[`supabase/migrations/000_baseline_funnel.sql`](../supabase/migrations/000_baseline_funnel.sql),
+consolidated from capucor-os migrations 001–065 and cross-checked column by column against
+`src/types/db.ts`. ⛔ **That file is a record and is never applied** — everything in it is already
+live, and its first statement raises an exception on purpose.
 
-⛔ **ZJAK APPLIES EVERY MIGRATION BY HAND IN THE SUPABASE SQL EDITOR. NO AGENT APPLIES ONE, BY ANY
-ROUTE** — not `supabase db push`, not `supabase db query --linked`, not a script. Standing rule,
-set 2026-08-26. Write the file in `capucor-os/supabase/migrations/`, hand it over, then prove the
-result with `npm run db:check` there; the proof is the writer's, not the operator's. The
-reasoning is in
-[`../../capucor-os/docs/engineering/prototype/DATABASE.md`](../../capucor-os/docs/engineering/prototype/DATABASE.md)
-and the rule is repeated in [`../../capucor-os/AGENTS.md`](../../capucor-os/AGENTS.md).
+**Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
+table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`. ⚠️
+`testimonials` is read here (homepage, anon client) but was left out of the baseline — an open
+question, not a decision.
 
-> ⛔ **CORRECTED 2026-09-03 (EH-02). THIS FILE SAID THE OPPOSITE FOR EIGHT DAYS.** The line here
-> read *"✅ `supabase db push` is allowed since 2026-08-06, from `capucor-os` and nowhere else"* —
-> true when written, and false from **2026-08-26**, when the standing rule was set. It is the one
-> line EH-02 did not move verbatim, because moving it would have minted a new document dated
-> today that granted permission a standing safety rule forbids.
->
-> ⚠️ **`db push` is not merely disallowed, it is actively dangerous here.** The remote ledger
-> stopped being maintained and sits twelve versions behind production, so a push would replay
-> already-applied migrations — including the destructive `034`. **Repairing the ledger does NOT
-> re-open push.** The original ledger reasoning, now historical, is in
-> [`../../capucor-docs/operations/migration-ledger-repair-plan.md`](../../capucor-docs/operations/migration-ledger-repair-plan.md).
+### Links across the line (until os-sunset)
 
-⛔ **`009a` / `009b` are deliberately absent from the ledger** and must stay that way — a ledger
-version with no matching local file blocks *every* push. Measured 2026-08-06.
+- `proposals.client_org_id` → `client_orgs(id)`. Written by `provision_from_signed_proposal`
+  until phase 3; afterwards left unused, not dropped.
+- capucor-os also writes `email_deliveries` (`outbound_request_emails.delivery_id` points at it),
+  so a change to that table must not break capucor-os.
+- `set_updated_at()` is shared with portal tables. Never drop or rename it from here.
+- The staff policy `internal_select_proposals` calls portal helpers. Drop it at os-sunset.
 
-That matters here because marketing still initiates OS-owned provisioning at signing
-(`lib/portal/provision.ts` → `provision_from_signed_proposal`). See the **Schema seam** warning
-under "Domain seam" before changing the RPC or its four internal tables.
+## Writing a migration
 
-### ⛔ Types are NOT generated in this repo — corrected 2026-09-06 (AE-08)
+1. Write it in **this repo's** `supabase/migrations/`, numbered from `001_…` (the baseline is
+   `000`). ⛔ Never write a funnel migration in capucor-os again.
+2. Head it with what it changes, why, pre-flight and verify queries, and a rollback — as
+   capucor-os `065` does.
+3. ⚠️ **Price changes are new `brackets` rows, never edits.** Proposals store bracket ordinals and
+   re-pricing does not filter on `active`, so editing a live row re-prices every unsigned
+   proposal. Issue a new ladder and retire the old rows (see the baseline's `brackets` note).
+4. Hand it to Zjak. Code that depends on it ships only after Zjak confirms it is applied.
 
-`src/types/db.ts` is generated in **capucor-os only**, by its `npm run db:types`, and lands here as
-a **byte-for-byte copy**. There is deliberately no `db:types` script in this repository any more.
+⛔ **ZJAK APPLIES EVERY MIGRATION BY HAND IN THE SUPABASE SQL EDITOR. NO AGENT APPLIES ONE, BY
+ANY ROUTE** — not `supabase db push`, not `supabase db query --linked`, not a script. Standing
+rule since 2026-08-26.
 
-> **Corrected 2026-09-06 (AE-08). This page previously said:** *"Regenerate TypeScript types after
-> a schema change: `npm run db:types`. Generated types land in `src/types/db.ts` and are tracked.
-> Regenerate and commit them after schema changes; **CI rejects drift from the live schema**."*
->
-> **The last clause was false in this repository.** Its `ci.yml` has never carried a types step —
-> the steps are Install, Lint, Type check, Test, Build (Cloudflare) and Assert Supabase env, and
-> nothing among them reads `src/types/db.ts`. The only thing watching this copy was
-> `npm run audit`, which needs all three checkouts side by side and therefore runs on a person’s
-> machine, never in CI. The surrounding advice to replace `YOUR_PROJECT_REF` was inert as well —
-> the script had the project ref hardcoded.
+⛔ **Never use `supabase db push`.** It is not merely disallowed, it is dangerous: the remote
+migration ledger stopped being maintained and has drifted from production, so a push would replay
+migrations that are already applied — some of them destructive. Repairing the ledger does not
+re-open push.
 
-**Why one generator and not two.** Two repositories independently generating a file that must be
-byte-identical turns the Supabase CLI pin into a cross-repo coupling that nothing enforces: a
-Dependabot bump on one side would leave two individually-green CIs and a drift no CI could see —
-the same class of silent drift, moved one level up. Arming a generation step here would also need
-`SUPABASE_ACCESS_TOKEN` in this repository’s secrets, and ⛔ **measured 2026-09-06, a
-project-scoped, read-only Supabase personal access token returns the project’s `service_role` JWT
-and both secret-class API keys in plaintext from a plain `GET /v1/projects/<ref>/api-keys`** —
-`?reveal=true` is not even required. That is a real key-revealing credential in a second
-repository, bought for nothing a digest does not already give.
+## Types
 
-**What watches this copy instead.** `src/types/db.ts` is pinned by digest in
-`contracts/cross-repo-contract.json` under `handSynced`, and
-`src/__tests__/cross-repo-contract.test.ts` — which runs in this repo’s `npm test`, and therefore
-in CI — fails when the copy here moves. capucor-os’s own CI proves *its* copy still matches the
-live schema, so the chain is: live schema → capucor-os’s copy → the recorded digest → this copy.
+`npm run db:types` regenerates `src/types/db.ts` from the live project (same command as
+capucor-os; needs `npx supabase login` on the machine). ⚠️ If the CLI is not logged in, the shell
+redirect still truncates `src/types/db.ts` and writes an error into it — restore it with
+`git checkout src/types/db.ts`.
 
-**After a schema change**, in order:
-
-1. In capucor-os: `npm run db:types`, and commit the result there.
-2. Copy `capucor-os/src/types/db.ts` over this repository’s copy. ⛔ Do not regenerate it here.
-3. In capucor-os: `npm run audit -- --print-digests`, and paste the `src/types/db.ts` digests into
-   **all three** copies of `contracts/cross-repo-contract.json`.
-4. ⚠️ **Read the audit report before you paste.** `--print-digests` reads the files on disk, so it
-   will happily emit a stale digest for this repository if step 2 was skipped. What catches that is
-   `duplicate-file` going red in the same audit run.
+⛔ **Until phase 2, do not commit a regenerated `src/types/db.ts`.** It is still pinned by digest
+in `contracts/cross-repo-contract.json`, and `npm test` fails if it moves. Phase 2 replaces that
+arrangement; until then the procedure in that contract stands.
 
 ### Supabase clients — pick the right one (load-bearing)
 
@@ -100,15 +82,12 @@ loss, not an error:
   RLS. Server-only mutations — provision-on-sign, the signing flow, the crons. Never import into
   browser code.
 
-**There is no browser client in this repo.** `supabase/client.ts` went to capucor-os with `/login`
-in Phase 3; every Supabase call here is server-side. Don't add one back for a marketing feature —
-if a public page needs data, fetch it in a server component.
+**There is no browser client in this repo.** Every Supabase call here is server-side. Don't add
+one for a marketing feature — if a public page needs data, fetch it in a server component.
 
-⚠️ **The public pricing tables only grant `select to anon`** (migration `001_schema.sql`, now in
-capucor-os; no `to authenticated` policy). Reading them via the cookie-bound server client means a
-**signed-in** visitor runs as `authenticated`, matches no policy, and silently gets **zero rows**
-(no error) — which renders the calculator unavailable for logged-in users only. Always read public
-data with `createSupabaseAnonClient`. Since Phase 3 there is no way to be signed in *on
-capucor.com* — the session cookie belongs to capucor.app — so this trap is now much harder to
-trip here. Keep the rule anyway: it costs nothing, and the same policies bite for real in
-capucor-os, where signed-in staff read exactly these tables.
+⚠️ **The public pricing tables only grant `select to anon`** (no `to authenticated` policy; see
+the baseline). Reading them via the cookie-bound server client means a **signed-in** visitor runs
+as `authenticated`, matches no policy, and silently gets **zero rows** (no error) — which renders
+the calculator unavailable for logged-in users only. Always read public data with
+`createSupabaseAnonClient`. There is no way to be signed in *on capucor.com* today; keep the rule
+anyway, it costs nothing.
