@@ -4,6 +4,7 @@ import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { buildSignedProposalPdfPayload } from '@/lib/portal/proposalPdfPayload';
 import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
+import { logError } from '@/lib/log';
 import { driveFileUrl } from '@/lib/email/messages.mjs';
 import type { Bracket, Service } from '@/types';
 
@@ -100,17 +101,18 @@ export async function archiveSignedProposal(
     }
     if (!row.signed_at) return { ok: false, error: 'Proposal is not signed.' };
 
-    // Public pricing config via the anon client (RLS rule for public tables).
-    const anon = createSupabaseAnonClient();
+    // ⚠️ SERVICE ROLE, NOT `anon`, for brackets and pricing. The stored
+    // ordinals may point at retired (inactive) rows after a price-list change,
+    // and the `anon` RLS policy returns active rows only — an anon read
+    // silently dropped those lines and re-priced the signed mandate LOWER than
+    // what the client signed. Services stay anon + active (labels only).
     const [servicesRes, bracketsRes] = await Promise.all([
-      anon
+      createSupabaseAnonClient()
         .from('services')
         .select('*')
         .eq('active', true)
         .order('display_order'),
-      // No active filter: the stored ordinals may point at retired rows (see
-      // the proposal page, which reads brackets the same way).
-      anon
+      admin
         .from('brackets')
         .select('*')
         .order('display_order'),
@@ -118,7 +120,7 @@ export async function archiveSignedProposal(
     const services = (servicesRes.data ?? []) as Service[];
     const brackets = (bracketsRes.data ?? []) as Bracket[];
 
-    const priced = await priceProposalSelection(anon, {
+    const priced = await priceProposalSelection(admin, {
       services: row.services,
       brackets: row.brackets,
       tierSlug: row.tier_slug,
@@ -126,12 +128,23 @@ export async function archiveSignedProposal(
     });
     if (!priced.ok) return { ok: false, error: priced.error };
 
+    // The PDF is the debit-order mandate: it states the total the client SIGNED
+    // (stored), never a re-priced one. A disagreement is logged, not hidden.
+    const signedTotalZAR = Number(row.total_charge_zar);
+    if (Math.abs(priced.data.totalChargeZAR - signedTotalZAR) > 0.005) {
+      logError('proposal_pdf.total_mismatch', new Error('Re-priced total differs from signed total'), {
+        proposalId: row.id,
+        signedTotalZAR,
+        repricedTotalZAR: priced.data.totalChargeZAR,
+      });
+    }
+
     const { html, filename } = buildSignedProposalPdfPayload(
       row,
       { services, brackets },
       {
         lineItems: priced.data.lineItems,
-        totalChargeZAR: priced.data.totalChargeZAR,
+        totalChargeZAR: signedTotalZAR,
       },
     );
 

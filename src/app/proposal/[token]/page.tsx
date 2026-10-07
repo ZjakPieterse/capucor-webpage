@@ -171,15 +171,20 @@ export default async function ProposalPage({
     );
   }
 
-  // Public pricing tables for the rich line-item labels — read as `anon` so the
-  // proposal renders correctly even when the viewer is signed in. Brackets are
-  // read WITHOUT the active filter: a proposal stores bracket ordinals, and one
-  // sent before a price-list change still points at the retired (inactive) rows,
-  // which the server keeps pricing it from (proposalPricing.ts has no filter).
+  // Public pricing tables for the rich line-item labels — services and tiers are
+  // read as `anon` so the proposal renders correctly even when the viewer is
+  // signed in.
+  //
+  // ⚠️ BRACKETS ARE READ WITH THE SERVICE ROLE, NOT `anon`. A proposal stores
+  // bracket ordinals, and one sent before a price-list change still points at
+  // the retired (inactive) rows, which the server keeps pricing it from
+  // (proposalPricing.ts). The `anon` RLS policy returns active rows only, so an
+  // anon read silently drops those lines and the breakdown no longer adds up to
+  // the stored total. This page is a server component; the key never ships.
   const supabase = createSupabaseAnonClient();
   const [servicesRes, bracketsRes, tiersRes] = await Promise.all([
     supabase.from('services').select('*').eq('active', true).order('display_order'),
-    supabase.from('brackets').select('*').order('display_order'),
+    createSupabaseAdminClient().from('brackets').select('*').order('display_order'),
     supabase.from('tiers').select('*').eq('active', true).order('display_order'),
   ]);
 
