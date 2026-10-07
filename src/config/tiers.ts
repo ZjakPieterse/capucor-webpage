@@ -273,7 +273,7 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'Personal Tax Returns',
     priceZAR: 75,
     description:
-      'An annual personal income tax return (ITR12) prepared and submitted for each person: R 900.00 a year per person, billed monthly.',
+      'An annual personal income tax return (ITR12) prepared and submitted for each person.',
     unit: { singular: 'person', plural: 'people', max: 10 },
   },
   // RETIRED 2026-10-06 (calculator review answers): the Xero-invoicing question

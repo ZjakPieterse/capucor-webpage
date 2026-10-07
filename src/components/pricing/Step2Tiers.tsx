@@ -1,12 +1,13 @@
 'use client';
 
-import { CalendarClock, Check, Layers, Plus, Sparkles } from 'lucide-react';
+import { CalendarClock, Check, Layers, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
 import { CoreServicesPanel } from './CoreServicesPanel';
 import { AnswerRecap } from './AnswerRecap';
+import { TierNudge } from './TierNudge';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
@@ -132,7 +133,6 @@ export function Step2Tiers({
           const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
             item.services.some((s) => selectedServices.has(s))
           );
-          const nudge = TIER_NUDGES[tier.slug];
 
           const rows = (
             <>
@@ -167,20 +167,10 @@ export function Step2Tiers({
                 </span>
               </div>
 
-              {/* Row 3: Nudge pill (tweaks round 1); the row is kept for subgrid alignment */}
+              {/* Row 3: Nudge pill; the row is kept for subgrid alignment */}
               <div className="pricing-card-cumulative mb-3 flex items-center min-h-[1.75rem]">
-                {nudge ? (
-                  <div
-                    className={cn(
-                      'inline-flex items-center gap-1.5 text-xs font-semibold rounded-full px-2.5 py-1 w-fit',
-                      tier.slug === 'pro'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-primary bg-primary/10 border border-primary/15'
-                    )}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                    {nudge}
-                  </div>
+                {TIER_NUDGES[tier.slug] ? (
+                  <TierNudge tierSlug={tier.slug} />
                 ) : (
                   <div className="h-0 w-0 pointer-events-none opacity-0" aria-hidden="true" />
                 )}

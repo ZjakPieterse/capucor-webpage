@@ -80,10 +80,10 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
 ### Repeated component treatments
 
 - When a visual element appears on some cards in a set, give it to **all** peers for rhythm;
-  vary only the icon and copy, keep the styling byte-identical. Example: the tier "intro
-  pills" — all three pricing tiers carry the same pill (`bg-primary/5 border border-primary/10
-  rounded-md px-2.5 py-1`), differing only in icon (`Layers` for Basic, `CornerDownRight`
-  for Pro/Premium) and label (`TIER_CUMULATIVE_LABELS` in `config/tiers.ts`).
+  vary only the icon and copy, keep the styling byte-identical. Example: the tier nudge pills
+  (`components/pricing/TierNudge.tsx`) — all three pricing tiers carry the same pill
+  (`bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1`), differing only in icon and
+  label (`TIER_NUDGES` in `config/calculatorCopy.ts`).
 
 ### Price display
 

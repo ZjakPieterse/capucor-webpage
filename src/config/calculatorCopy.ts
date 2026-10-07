@@ -25,14 +25,14 @@ export const ANSWER_LABELS = {
 export const CORE_SERVICES_HEADING = 'Core services';
 // Above the packages: the visitor's answers as tap-to-change chips.
 export const ANSWER_RECAP_HEADING = 'Priced for:';
-export const CORE_SERVICES_BADGE = 'In every package';
 
 // The pill under each package's price: a nudge, not a cumulative label
-// (tweaks round 1, 2026-10-06).
+// (tweaks round 1, 2026-10-06). Short enough for one line on every card
+// (tweaks round 2).
 export const TIER_NUDGES: Record<string, string> = {
   basic: 'A solid start',
   pro: 'Most chosen',
-  premium: 'For fast-moving businesses',
+  premium: 'Our fullest service',
 };
 
 // The merged core line ("Monthly accounting") and its slugs live in
@@ -51,9 +51,13 @@ export const FIT_CALL_PROMPT = 'Only need payroll, or not sure what fits?';
 // The transactions list stops at 1,500 a month; above that is a conversation.
 export const TRANSACTIONS_FIT_CALL_PROMPT = 'More than 1,500 a month?';
 
-// Page heading and the one promise above the progress bar on /pricing.
-export const PRICING_PAGE_HEADING = 'See your monthly price';
-export const PRICING_PAGE_INTRO = 'A few minutes to a price.';
+// Page heading and the one promise above the progress bar on /pricing
+// (tweaks round 2, 2026-10-07).
+export const PRICING_PAGE_HEADING = 'Calculate your monthly price';
+export const PRICING_PAGE_INTRO = 'A few quick questions, then your price. No sign-up needed.';
+
+// Dropdown placeholder on the bracket questions.
+export const QUESTION_PLACEHOLDER = 'Choose an option';
 
 // The packages differ by rhythm, so the side-by-side table shows these rows
 // as a value per package instead of cumulative ticks (a tick for Premium on

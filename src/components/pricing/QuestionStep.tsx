@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatBandLabel } from '@/lib/pricing';
 import { siteConfig } from '@/config/site';
-import { FIT_CALL_PROMPT, type QuestionCopy } from '@/config/calculatorCopy';
+import { FIT_CALL_PROMPT, QUESTION_PLACEHOLDER, type QuestionCopy } from '@/config/calculatorCopy';
 import type { Bracket } from '@/types';
 
 // One question per screen (calculator-v2). Two shapes share one shell: a
@@ -128,7 +128,7 @@ export function BracketQuestion({
               isSet ? 'is-set font-medium' : 'border-border bg-background/60'
             )}
           >
-            <SelectValue placeholder="Choose a range" />
+            <SelectValue placeholder={QUESTION_PLACEHOLDER} />
           </SelectTrigger>
           <SelectContent align="start" className="max-h-80 rounded-xl p-1.5">
             {options.map((bracket) => (
