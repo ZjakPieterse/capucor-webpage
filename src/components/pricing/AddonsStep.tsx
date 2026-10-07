@@ -11,6 +11,7 @@ import {
   tierDisplayName,
   type PricingAddon,
 } from '@/config/tiers';
+import { ADDON_DESCRIPTIONS } from '@/config/calculatorCopy';
 import type { Bracket, BracketValue } from '@/types';
 
 interface AddonsStepProps {
@@ -121,7 +122,7 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
   const Icon = ICONS[addon.slug] ?? ReceiptText;
 
   const title = addon.name;
-  const body = addon.description;
+  const body = ADDON_DESCRIPTIONS[addon.slug] ?? addon.description;
 
   const price = included ? (
     <span className="text-xs font-semibold text-primary">Included in {tierDisplayName(tierSlug)}</span>

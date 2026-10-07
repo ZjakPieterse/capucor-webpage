@@ -2,7 +2,7 @@
 
 import { Layers } from 'lucide-react';
 import type { PackageCommonItem } from '@/config/tiers';
-import { CORE_SERVICES_BADGE, CORE_SERVICES_HEADING } from '@/config/calculatorCopy';
+import { CORE_SERVICES_HEADING } from '@/config/calculatorCopy';
 import { cn } from '@/lib/utils';
 import { commonItemIcon } from './commonItemIcons';
 
@@ -21,21 +21,17 @@ export function CoreServicesPanel({ items }: CoreServicesPanelProps) {
       aria-labelledby="core-services-heading"
       className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 sm:p-5"
     >
-      <div className="mb-3 sm:mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span
-            aria-hidden
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary"
-          >
-            <Layers className="h-4 w-4" />
-          </span>
-          <h3 id="core-services-heading" className="text-sm sm:text-base font-semibold">
-            {CORE_SERVICES_HEADING}
-          </h3>
-        </div>
-        <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-          {CORE_SERVICES_BADGE}
+      {/* No "in every package" badge: each card's first line already says so (tweaks round 2). */}
+      <div className="mb-3 sm:mb-4 flex items-center gap-2.5">
+        <span
+          aria-hidden
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary"
+        >
+          <Layers className="h-4 w-4" />
         </span>
+        <h3 id="core-services-heading" className="text-sm sm:text-base font-semibold">
+          {CORE_SERVICES_HEADING}
+        </h3>
       </div>
       <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5">
         {items.map((item, i) => {

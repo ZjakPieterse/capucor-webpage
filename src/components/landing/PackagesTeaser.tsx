@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import { commonItemIcon } from "@/components/pricing/commonItemIcons";
+import { TierNudge } from "@/components/pricing/TierNudge";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
@@ -126,10 +127,7 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
 
                   {nudge && (
                     <div className="mb-4">
-                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/15 rounded-full px-2.5 py-1 w-fit">
-                        <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                        {nudge}
-                      </div>
+                      <TierNudge tierSlug={tier.slug} />
                     </div>
                   )}
 

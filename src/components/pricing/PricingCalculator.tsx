@@ -288,7 +288,9 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
               <p className="mt-1.5 text-sm text-muted-foreground">{PRICING_PAGE_INTRO}</p>
             </div>
             <CalculatorProgress value={progressFraction(step, state, completed)} />
-            <div className="relative min-h-[auto] sm:min-h-[400px] lg:min-h-[500px]">
+            {/* No minimum height: the next section follows the screen's own
+                content, so short question screens leave no gap (tweaks round 2). */}
+            <div className="relative">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
