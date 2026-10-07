@@ -104,6 +104,14 @@ fulfilment/email retry runner (`cron-reconcile-deliveries.yml`, see the email se
   `npm ci` appears in that workflow.
 - `SCHEDULE_WATCHDOG_DRILL` (`stale` / `disabled`) is a `workflow_dispatch` input that forces the
   failure path against the real API. Re-run it after changing the script or the workflow.
+- ⚠️ **A filtered Actions run listing is not evidence of absence.** Listings filtered by
+  `status`, `branch` or `event` intermittently return stale data (2026-10-07: three false red
+  watchdog runs in one day on healthy crons and green CI). So none of the three scripts goes red on
+  one filtered listing: the cron and deploy-drift checks take the freshest success across an
+  unfiltered page and the exact `status=success` query, and the CI-silence check confirms every
+  commit the branch listing misses with a bounded `actions/runs?head_sha=` lookup. See
+  `scheduledWorkflows.filteredListingsAreNotEvidenceOfAbsence` in the contract. Keep it that way
+  when changing any of them.
 
 ⚠️ **Why this watchdog exists, and what it deliberately cannot cover,** is kept out of this public repository on purpose (ADR 0010 part 3, 2026-08-20) and recorded in the owner's private workspace (Capucor wiki, `systems/capucor-com`).
 

@@ -270,16 +270,42 @@ async function gh(path, token) {
   return res.json();
 }
 
-async function observe(declared, repoSlug, token) {
-  const runs = await gh(
-    `/repos/${repoSlug}/actions/workflows/${declared.file}/runs?status=success&per_page=1&exclude_pull_requests=true`,
-    token,
-  );
-  const run = runs?.workflow_runs?.[0] ?? null;
+/**
+ * The newest successful deploy run, read from two DIFFERENTLY SHAPED listings,
+ * then compared to the branch. `get` is `(path) => json | null`, injected so the
+ * tests can drive the stale-listing case off fixtures.
+ *
+ * ⚠️ A FILTERED LISTING IS NOT EVIDENCE OF ABSENCE. Measured 2026-10-07: the
+ * `status=success` listing for a deploy workflow returned a run four weeks old
+ * while that day's successful deploy sat at the top of the unfiltered listing.
+ * Relying on it alone reports a month of drift on a surface deployed that
+ * morning. A stale listing only ever returns OLDER runs, never invented ones, so
+ * the freshest success across both listings is the safe reading:
+ *
+ *   1. the newest page of runs with no filter, the newest success picked here;
+ *   2. the exact `status=success` query this check used to rely on alone.
+ */
+export async function observe(declared, repoSlug, get) {
+  const base = `/repos/${repoSlug}/actions/workflows/${declared.file}/runs`;
+  const [page, successes] = await Promise.all([
+    get(`${base}?per_page=30&exclude_pull_requests=true`),
+    get(`${base}?status=success&per_page=1&exclude_pull_requests=true`),
+  ]);
+  const run = newestSuccess(page?.workflow_runs, successes?.workflow_runs);
   if (!run) return { declared, run: null, comparison: null };
 
-  const comparison = await gh(`/repos/${repoSlug}/compare/${run.head_sha}...${declared.branch}`, token);
+  const comparison = await get(`/repos/${repoSlug}/compare/${run.head_sha}...${declared.branch}`);
   return { declared, run, comparison };
+}
+
+/** The most recently updated successful run across any number of listings. */
+export function newestSuccess(...listings) {
+  return (
+    listings
+      .flatMap((runs) => (Array.isArray(runs) ? runs : []))
+      .filter((r) => r.conclusion === 'success')
+      .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))[0] ?? null
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -331,7 +357,7 @@ if (isCli) {
   const now = new Date();
   const results = [];
   for (const declared of deployments) {
-    const observation = await observe(declared, repoSlug, token);
+    const observation = await observe(declared, repoSlug, (path) => gh(path, token));
     const drilled = applyDrill(observation, drill);
     results.push(evaluate({ ...drilled, maxAgeDays: declared.maxAgeDays, now }));
   }

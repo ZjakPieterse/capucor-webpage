@@ -26,7 +26,7 @@ import { describe, expect, it } from 'vitest';
 // A zero-dependency .mjs, deliberately untyped (it runs without `npm ci`) — see ciSilence in the contract. The verdict shape is restated
 // here rather than inferred, so a field renamed in the script shows up as a type
 // error in the test that reads it.
-import { evaluate, applyDrill, branchesFor, firstParentChain } from '../../scripts/ci-silence.mjs';
+import { evaluate, applyDrill, branchesFor, firstParentChain, observe, MAX_LOOKUPS } from '../../scripts/ci-silence.mjs';
 import { loadContract } from '../../contracts/contract.mjs';
 
 interface Verdict {
@@ -298,5 +298,128 @@ describe('this repo is wired into the CI-silence check', () => {
     for (const w of entries) expect(w.event).toBe('schedule');
     const script = readFileSync(join(ROOT, contract.scheduledWorkflows.watchdogScript), 'utf8');
     expect(script).toContain('event=${declared.event}');
+  });
+});
+
+describe('⚠️ a stale branch listing cannot make a validated commit look silent', () => {
+  // Measured 2026-10-07: `ci.yml/runs?branch=master&event=push` returned nothing
+  // newer than 2026-08-06, so this check reported 15 commits with green push
+  // runs as unvalidated. Every apparent gap is now confirmed by a per-commit
+  // `actions/runs?head_sha=` lookup before it counts.
+  const REPO = 'owner/name';
+  const ciRun = (s: string, over: Record<string, unknown> = {}) => ({
+    head_sha: s,
+    head_branch: 'master',
+    path: '.github/workflows/ci.yml',
+    event: 'push',
+    conclusion: 'success',
+    ...over,
+  });
+
+  /** A fake API. `listed` is what the branch listing returns; `bySha` what each per-commit lookup returns. */
+  const api = (opts: { commits: unknown[]; listed: string[]; bySha?: Record<string, unknown[]> }) => {
+    const lookups: string[] = [];
+    const get = async (path: string) => {
+      if (path.includes('/commits?')) return opts.commits;
+      const m = path.match(/head_sha=([0-9a-f]+)/);
+      if (m) {
+        lookups.push(m[1]);
+        return { workflow_runs: opts.bySha?.[m[1]] ?? [] };
+      }
+      return { workflow_runs: opts.listed.map((s) => ciRun(s)) };
+    };
+    return { get, lookups };
+  };
+  const verdict = async (a: ReturnType<typeof api>, drill = '') =>
+    evaluate({
+      ...(await observe(declared, REPO, a.get, { drill, now: NOW })),
+      graceHours: declared.graceHours,
+      lookbackDays: declared.lookbackDays,
+      now: NOW,
+    }) as Verdict & { lookedUp: number; notLookedUp: number };
+
+  it('stays green when commits are missing from the branch listing but have a run by head_sha', async () => {
+    const a = api({
+      commits: linear([24, 48, 72]),
+      listed: [],
+      bySha: { [sha(0)]: [ciRun(sha(0))], [sha(1)]: [ciRun(sha(1))], [sha(2)]: [ciRun(sha(2), { conclusion: 'failure' })] },
+    });
+    const r = await verdict(a);
+    expect(r.ok).toBe(true);
+    expect(r.lookedUp).toBe(3);
+    expect(r.reason).toMatch(/3 missing from the branch listing, each found by a per-commit lookup/);
+  });
+
+  it('only looks up the commits the listing missed', async () => {
+    const a = api({ commits: linear([24, 48, 72]), listed: [sha(0), sha(2)], bySha: { [sha(1)]: [ciRun(sha(1))] } });
+    expect((await verdict(a)).ok).toBe(true);
+    expect(a.lookups).toEqual([sha(1)]);
+  });
+
+  it('⚠️ a commit with no CI run anywhere is still red, and the message says it was confirmed', async () => {
+    const r = await verdict(api({ commits: linear([24, 48, 72]), listed: [sha(0), sha(2)] }));
+    expect(r.ok).toBe(false);
+    expect(r.unvalidated?.map((c) => c.sha)).toEqual([sha(1)]);
+    expect(r.reason).toMatch(/confirmed absent by a per-commit lookup/);
+  });
+
+  it('⚠️ a lookup hit for another workflow or another branch does not count', async () => {
+    const r = await verdict(
+      api({
+        commits: linear([24]),
+        listed: [],
+        bySha: {
+          [sha(0)]: [
+            ciRun(sha(0), { path: '.github/workflows/watchdog.yml' }),
+            ciRun(sha(0), { head_branch: 'feature', event: 'pull_request' }),
+          ],
+        },
+      }),
+    );
+    expect(r.ok).toBe(false);
+  });
+
+  it('⚠️ a lookup that returns runs for OTHER commits does not count — the API ignores a bad head_sha filter', async () => {
+    const r = await verdict(api({ commits: linear([24]), listed: [], bySha: { [sha(0)]: [ciRun(sha(9))] } }));
+    expect(r.ok).toBe(false);
+  });
+
+  it('⚠️ the number of lookups is bounded, and what the bound skips stays red and says so', async () => {
+    const ages = Array.from({ length: MAX_LOOKUPS + 5 }, (_, i) => 24 + i);
+    const commits = linear(ages);
+    const bySha = Object.fromEntries(commits.map((c) => [c.sha, [ciRun(c.sha)]]));
+    const a = api({ commits, listed: [], bySha });
+    const r = await verdict(a);
+    expect(a.lookups.length).toBe(MAX_LOOKUPS);
+    expect(r.ok).toBe(false);
+    expect(r.notLookedUp).toBe(5);
+    expect(r.reason).toMatch(/5 of them were NOT confirmed by a per-commit lookup/);
+  });
+
+  it('the silent drill still goes red, after a real lookup of the drilled commit', async () => {
+    const commits = linear([24, 48, 72]);
+    const all = [sha(0), sha(1), sha(2)];
+    const a = api({ commits, listed: all, bySha: { [sha(2)]: [ciRun(sha(2))] } });
+    const r = await verdict(a, 'silent');
+    expect(a.lookups).toEqual([sha(2)]);
+    expect(r.ok).toBe(false);
+    expect(r.unvalidated?.map((c) => c.sha)).toEqual([sha(2)]);
+  });
+
+  it('the silent drill picks the oldest commit INSIDE the window, not one just past it', () => {
+    // The commit page reaches lookbackDays + 1 back, so its oldest commit can be
+    // outside the window; drilling that one would change nothing and pass green.
+    const commits = linear([24, 48, 15 * 24]);
+    const drilled = applyDrill({ declared, commits, runShas: [sha(0), sha(1), sha(2)] }, 'silent', NOW) as {
+      runShas: string[];
+    };
+    expect(drilled.runShas).toEqual([sha(0), sha(2)]);
+  });
+
+  it('⚠️ the blind drill still fails without a single lookup', async () => {
+    const a = api({ commits: linear([24]), listed: [sha(0)] });
+    const r = await verdict(a, 'blind');
+    expect(r.ok).toBe(false);
+    expect(a.lookups).toEqual([]);
   });
 });
