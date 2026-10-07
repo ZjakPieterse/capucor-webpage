@@ -3579,36 +3579,6 @@ export type Database = {
           work_item_id: string
         }[]
       }
-      create_proposal_amendment: {
-        Args: {
-          p_addons: Json
-          p_brackets: Json
-          p_business_name: string
-          p_email: string
-          p_expires_at: string
-          p_first_name: string
-          p_last_name: string
-          p_monthly_total_zar: number
-          p_original_id: string
-          p_sent_at: string
-          p_services: string[]
-          p_tier_slug: string
-          p_token: string
-          p_total_charge_zar: number
-          p_vat_zar: number
-        }
-        Returns: {
-          proposal_business_name: string
-          proposal_email: string
-          proposal_first_name: string
-          proposal_id: string
-          proposal_monthly_total_zar: number
-          proposal_ref_number: string
-          proposal_token: string
-          proposal_version: number
-          reused: boolean
-        }[]
-      }
       current_staff_id: { Args: { uid: string }; Returns: string }
       decide_request_item_match: {
         Args: { p_actor_email?: string; p_decision: string; p_match_id: string }
@@ -3865,26 +3835,6 @@ export type Database = {
           commitment_type: string
           work_item_id: string
           work_item_version: number
-        }[]
-      }
-      start_proposal_resend: {
-        Args: {
-          p_expires_at: string
-          p_proposal_id: string
-          p_sent_at: string
-          p_token: string
-        }
-        Returns: {
-          delivery_id: string
-          delivery_idempotency_key: string
-          proposal_business_name: string
-          proposal_email: string
-          proposal_first_name: string
-          proposal_id: string
-          proposal_monthly_total_zar: number
-          proposal_ref_number: string
-          proposal_token: string
-          reused: boolean
         }[]
       }
       sync_proposal_fulfilment_email: {
