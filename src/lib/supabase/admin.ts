@@ -1,8 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
 
-// Service-role Supabase client for server-only writes (portal mutations,
-// provision-on-sign, Karbon sync, Xero sync). Bypasses RLS — never import
+// Service-role Supabase client for server-only writes (the signing flow,
+// fulfilment, the crons). Bypasses RLS — never import
 // from any module that ships to the browser.
 
 export function createSupabaseAdminClient(): SupabaseClient<Database> {

@@ -154,7 +154,7 @@ export default async function ProposalPage({
 
   // Once signed, the public token view is intentionally minimal: a leaked link
   // must not expose the full document, fees, or the signature image (those live
-  // in the client portal, the owner email, and the Drive archive). Just confirm
+  // in the owner email and the signed PDF in Drive). Just confirm
   // acceptance and say what happens next.
   if (SIGNED_STATUSES.has(row.status)) {
     return (
@@ -337,8 +337,8 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
         </div>
       </div>
 
-      {/* No capucor.app portal link for new clients while the portal is being
-          sunset (decision 2026-10-06). Provisioning itself is unchanged. */}
+      {/* Signing stops at signed + PDF (web-standalone, 2026-10-07): no
+          capucor.app portal link. */}
       <p className="mt-4 text-sm text-muted-foreground">
         Thanks, that&rsquo;s accepted and there&rsquo;s nothing more you need to do right now.
         Zjak will be in touch shortly to set up your onboarding.

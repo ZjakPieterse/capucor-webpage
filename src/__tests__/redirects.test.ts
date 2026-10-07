@@ -77,7 +77,7 @@ describe('capucor.com redirect table', () => {
   it('never redirects /api', async () => {
     // A 301 on a POST downgrades it to GET and drops the body. This repo owns
     // the whole signing funnel (/api/proposals/sign*), so an /api rule here
-    // would silently break provision-on-sign.
+    // would silently break signing.
     for (const rule of await getRedirects()) {
       expect(rule.source.startsWith('/api'), `${rule.source} redirects /api`).toBe(false);
     }

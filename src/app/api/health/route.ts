@@ -5,7 +5,7 @@
  *
  * The distinction matters most here. Marketing pages are static and render
  * perfectly with every secret absent, so "capucor.com is up" says nothing about
- * whether a client can receive a proposal, sign it, or be provisioned. Several
+ * whether a client can receive a proposal, sign it, or get the signed PDF. Several
  * of this Worker's failures are silent by design — PR10's PDF archival no-ops
  * when APPS_SCRIPT_PDF_* is unset, and Resend falls back to console logging —
  * so the first sign of trouble would otherwise be a client asking where their

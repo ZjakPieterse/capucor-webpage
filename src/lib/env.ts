@@ -3,7 +3,7 @@
  *
  * WHY. Cloudflare Worker secrets are set by hand in the dashboard and were
  * named nowhere in code. This Worker owns the entire revenue funnel — proposal
- * creation, signing, provision-on-sign, PDF archival — and several of its
+ * creation, signing, signed-PDF archival — and several of its
  * failure modes are SILENT: the secret is absent, the guard skips the work, the
  * user sees a success state, and nothing is logged.
  *
@@ -30,7 +30,7 @@ export const RUNTIME_VARS: RuntimeVar[] = [
   {
     name: 'SUPABASE_SERVICE_ROLE_KEY',
     impact:
-      'createSupabaseAdminClient() throws. Breaks proposal creation, the signing flow and provision-on-sign — a client can sign and never get portal access.',
+      'createSupabaseAdminClient() throws. Breaks proposal creation and the signing flow — a client cannot sign.',
     required: true,
   },
   {
@@ -48,18 +48,18 @@ export const RUNTIME_VARS: RuntimeVar[] = [
   {
     name: 'OWNER_NOTIFICATION_EMAIL',
     impact:
-      'The internal reference copy of each new proposal and the billing-setup cue after provisioning have nowhere to go.',
+      'The internal reference copy of each new proposal and the "signed" owner email (the billing-setup cue, with the Drive link) have nowhere to go.',
     required: true,
   },
   {
     name: 'APPS_SCRIPT_PDF_URL',
     impact:
-      'Signed-proposal PDF archival to the Drive "Engagements" folder SILENTLY NO-OPS (PR10). Signing and provisioning still work, so nothing looks wrong — but the executed engagement document, which is the debit-order mandate, is never filed.',
+      'Signed-proposal PDF archival to the Drive "Engagements" folder cannot run (PR10). Signing still works, so the client sees nothing wrong — but the executed engagement document, which is the debit-order mandate, is never filed, and because the "signed" emails wait on the PDF stage, neither is sent; the retry runner fails the stage after six attempts.',
     required: true,
   },
   {
     name: 'APPS_SCRIPT_PDF_SECRET',
-    impact: 'Same as APPS_SCRIPT_PDF_URL — archival silently no-ops without it.',
+    impact: 'Same as APPS_SCRIPT_PDF_URL — archival cannot run without it.',
     required: true,
   },
 ];

@@ -13,14 +13,19 @@
 | Kind | Objects |
 |---|---|
 | Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters` |
-| Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `provision_from_signed_proposal` (removed in phase 3), `next_proposal_ref`, `proposals_set_ref`; and, until phase 4 removes their capucor.app callers, `create_proposal_amendment` / `start_proposal_resend` |
+| Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `next_proposal_ref`, `proposals_set_ref`; and, until phase 4 removes their capucor.app callers, `create_proposal_amendment` / `start_proposal_resend` |
 | Plus | their triggers, CHECKs, indexes, RLS policies and grants |
 
 The starting state is recorded in
 [`supabase/migrations/000_baseline_funnel.sql`](../supabase/migrations/000_baseline_funnel.sql),
 consolidated from capucor-os migrations 001–065 and cross-checked column by column against
 `src/types/db.ts`. ⛔ **That file is a record and is never applied** — everything in it is already
-live, and its first statement raises an exception on purpose.
+live, and its first statement raises an exception on purpose. Changes since then are this repo's
+numbered migrations:
+
+| # | What | Status |
+|---|---|---|
+| `001_signing_stops_at_signed_pdf.sql` | Drops the `portal` fulfilment stage and `provision_from_signed_proposal` (web-standalone phase 3). Fulfilment is pdf → client_email → owner_email. | Written 2026-10-07; Zjak applies |
 
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
 table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`.
@@ -30,9 +35,11 @@ capucor-os's nightly backup still copies it until os-sunset.
 ### Links across the line (until os-sunset)
 
 - `proposals.client_org_id` → `client_orgs(id)`. Written by `provision_from_signed_proposal`
-  until phase 3; afterwards left unused, not dropped.
+  until migration 001 dropped it; now unused, not dropped.
 - capucor-os also writes `email_deliveries` (`outbound_request_emails.delivery_id` points at it),
-  so a change to that table must not break capucor-os.
+  so a change to that table must not break capucor-os. This repo's retry runner claims only its
+  own sources (`lead`, `data_request`, `proposal`); capucor-os's rows (`request_email`,
+  `approval`) are never touched here, and since phase 3 nothing retries them.
 - `set_updated_at()` is shared with portal tables. Never drop or rename it from here.
 - The staff policy `internal_select_proposals` calls portal helpers. Drop it at os-sunset.
 
@@ -81,7 +88,7 @@ loss, not an error:
 - **`createSupabaseServerClient()` (`server.ts`) — for per-user reads.** Cookie-bound; adopts the
   visitor's session role. Used here for lead / data-request inserts.
 - **`createSupabaseAdminClient()` (`admin.ts`) — for privileged writes.** Service-role; bypasses
-  RLS. Server-only mutations — provision-on-sign, the signing flow, the crons. Never import into
+  RLS. Server-only mutations — the signing flow, fulfilment, the crons. Never import into
   browser code.
 
 **There is no browser client in this repo.** Every Supabase call here is server-side. Don't add

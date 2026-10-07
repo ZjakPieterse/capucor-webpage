@@ -1,7 +1,9 @@
 // Finalise a confirmed proposal signature (Step B of the email-bound flow).
-// The OS-owned RPC atomically commits the legal signature, consumes the one-time
-// confirmation token and creates its durable fulfilment record. External work
-// is then attempted synchronously but remains resumable by the OS Action.
+// The commit_proposal_signature RPC atomically commits the legal signature,
+// consumes the one-time confirmation token and creates its durable fulfilment
+// record. The signed PDF and the two "signed" emails are then attempted
+// synchronously and stay resumable by the retry runner
+// (scripts/reconcile-deliveries.mjs). Signing stops there: no portal records.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
@@ -17,14 +19,6 @@ export interface FinalizeSignRow {
   business_name: string;
   email: string;
   status: string;
-  services: string[];
-  brackets: Record<string, number>;
-  tier_slug: string;
-  addons: string[] | null;
-  monthly_total_zar: number | string;
-  vat_zar: number | string;
-  total_charge_zar: number | string;
-  client_org_id: string | null;
   pending_signature_name: string | null;
   pending_signature_method: string | null;
   pending_signature_image: string | null;
@@ -34,7 +28,6 @@ export interface FinalizeSignRow {
 export interface FinalizeResult {
   ok: boolean;
   outcome: 'signed' | 'already' | 'invalid' | 'error';
-  provisioned?: boolean;
   deliveryStatus?: DeliveryStatus;
 }
 
@@ -75,15 +68,6 @@ export async function finalizeProposalSignature(
       first_name: row.first_name,
       last_name: row.last_name,
       business_name: row.business_name,
-      services: row.services,
-      brackets: row.brackets,
-      tier_slug: row.tier_slug,
-      addons: row.addons,
-      monthly_total_zar: row.monthly_total_zar,
-      vat_zar: row.vat_zar,
-      total_charge_zar: row.total_charge_zar,
-      status: 'signed',
-      client_org_id: row.client_org_id,
     },
     signedAt,
   );
@@ -91,7 +75,6 @@ export async function finalizeProposalSignature(
   return {
     ok: true,
     outcome: 'signed',
-    provisioned: fulfilment.provisioned,
     deliveryStatus: fulfilment.deliveryStatus,
   };
 }

@@ -58,8 +58,9 @@ The script replies:
 ```
 
 On any problem it replies `{ "ok": false, "error": "…" }` and the site leaves the proposal
-un-archived; the fulfilment reconciliation Action retries it with bounded backoff and makes a
-permanent failure visible in `/internal/operations`.
+un-archived; the retry runner (`.github/workflows/cron-reconcile-deliveries.yml`) retries it
+with bounded backoff and fails its run on a permanent failure. The two "signed" emails wait on
+this stage, so the owner email always carries the Drive link.
 
 ## Re-deploying after editing the script
 

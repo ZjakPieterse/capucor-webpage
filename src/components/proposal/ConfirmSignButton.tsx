@@ -11,7 +11,6 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [completion, setCompletion] = useState<{
-    provisioned: boolean;
     deliveryStatus: 'accepted' | 'pending';
   } | null>(null);
 
@@ -29,7 +28,6 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
         throw new Error(data.error ?? 'We could not finalise your signature. Please try again.');
       }
       setCompletion({
-        provisioned: data.provisioned === true,
         deliveryStatus: data.deliveryStatus === 'accepted' ? 'accepted' : 'pending',
       });
     } catch (err) {
@@ -47,8 +45,8 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
         </div>
         <p className="text-base font-semibold">That&rsquo;s signed</p>
         <p className="mt-1.5 text-sm text-muted-foreground">
-          {/* No capucor.app portal link for new clients while the portal is
-              being sunset (decision 2026-10-06). Provisioning is unchanged. */}
+          {/* Signing stops at signed + PDF (web-standalone, 2026-10-07): no
+              capucor.app portal link. */}
           Your acceptance is recorded. Zjak will be in touch shortly to set up your onboarding.
         </p>
         {completion.deliveryStatus === 'pending' && (

@@ -2027,9 +2027,6 @@ export type Database = {
           pdf_attempt_count: number
           pdf_completed_at: string | null
           pdf_status: string
-          portal_attempt_count: number
-          portal_completed_at: string | null
-          portal_status: string
           proposal_id: string
           updated_at: string
         }
@@ -2053,9 +2050,6 @@ export type Database = {
           pdf_attempt_count?: number
           pdf_completed_at?: string | null
           pdf_status?: string
-          portal_attempt_count?: number
-          portal_completed_at?: string | null
-          portal_status?: string
           proposal_id: string
           updated_at?: string
         }
@@ -2079,9 +2073,6 @@ export type Database = {
           pdf_attempt_count?: number
           pdf_completed_at?: string | null
           pdf_status?: string
-          portal_attempt_count?: number
-          portal_completed_at?: string | null
-          portal_status?: string
           proposal_id?: string
           updated_at?: string
         }
@@ -3705,20 +3696,6 @@ export type Database = {
           work_blocker_id: string
           work_event_id: string
           work_item_version: number
-        }[]
-      }
-      provision_from_signed_proposal: {
-        Args: { p_org_slug: string; p_proposal_id: string; p_user_id: string }
-        Returns: {
-          already_provisioned: boolean
-          membership_created: boolean
-          membership_id: string
-          org_created: boolean
-          org_id: string
-          proposal_id: string
-          subscription_created: boolean
-          subscription_id: string
-          user_id: string
         }[]
       }
       request_work_item_approval: {

@@ -14,21 +14,23 @@ The original plan wired **Paystack** for both subscriptions and shop checkout. T
 billing decision** (documented in `../capucor-docs/operations/audit-portal-tasks.md`) changed that:
 
 - **Subscriptions** are collected via **Paysoft Flow** (Xero-integrated bulk debit orders). It has
-  **no developer API**, so provisioning is **manual** in Xero/Paysoft Flow — the signed proposal is
-  the debit-order mandate and **no banking details are captured on the site**. Portal access is
-  minted at signing by provision-on-sign (PR9, live), not by a payment webhook.
+  **no developer API**, so billing is set up **by hand** in Xero/Paysoft Flow — the signed proposal
+  is the debit-order mandate and **no banking details are captured on the site**. Signing stops at
+  `signed` + the signed PDF in Drive (web-standalone phase 3, 2026-10-07); the owner email, with
+  the Drive link, is the cue to set up billing. There is no payment webhook and no portal record.
 - **Shop one-offs** will use **PayFast** (signed redirect + an ITN webhook validated by MD5
   signature + a server postback) — not yet wired in code.
 
 ⛔ **There is no Paystack code here.** It was deleted on 2026-08-01 and **none of it is worth
 resurrecting** — the shop needs PayFast's ITN/MD5 scheme, not Paystack's HMAC-SHA512, and
-subscriptions are provisioned on sign rather than by a payment webhook. Inventory of what went, in
+subscriptions are set up by hand from the signed proposal rather than by a payment webhook.
+Inventory of what went, in
 [`../capucor-docs/archive/capucor-web-phase-history.md`](../../capucor-docs/archive/capucor-web-phase-history.md).
 `lib/security.ts` (`timingSafeEqual`) stayed; it is used by `/api/revalidate` and both cron routes.
 
 **When the PayFast shop path lands it starts from scratch:** a signed redirect plus an ITN webhook
 validated by MD5 signature and a server postback.
 
-(The client portal and `/onboarding` are **live**, not stubs — they run in
-[`../capucor-os`](../../capucor-os/AGENTS.md) on capucor.app. **Provision-on-sign stays in this
-repo**: `lib/portal/provision.ts` runs when a client signs on capucor.com.)
+(The client portal and `/onboarding` run in [`../capucor-os`](../../capucor-os/AGENTS.md) on
+capucor.app, which is being sunset. Since phase 3 signing on capucor.com creates no portal access;
+provision-on-sign and `lib/portal/provision.ts` were removed.)

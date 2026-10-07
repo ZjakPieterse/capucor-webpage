@@ -10,8 +10,9 @@
     "is compared with another repository: no digests of files that must match a sibling,",
     "no three-copies rule. Edit this file in this repo only.",
     "",
-    "Two entries are TEMPORARY and name the phase that removes them: `provisioning` and",
-    "`frozenUntilPhase3` both go when signing stops at signed + PDF (phase 3)."
+    "Phase 3 (2026-10-07) removed the two temporary entries, `provisioning` and",
+    "`frozenUntilPhase3`: signing no longer provisions capucor.app, and failed sends",
+    "are retried by this repo's own cron-reconcile-deliveries.yml."
   ],
   "version": 2,
   "lastReviewed": "2026-10-07",
@@ -40,28 +41,6 @@
         ".github/workflows/ci.yml"
       ]
     }
-  },
-  "provisioning": {
-    "why": "Until web-standalone phase 3, signing calls the portal-owned provision_from_signed_proposal RPC. PostgREST matches an RPC by ARGUMENT NAME, so a rename here is a 404 at signing with no compile error. Removed in phase 3 together with provision.ts.",
-    "until": "web-standalone phase 3",
-    "rpc": "provision_from_signed_proposal",
-    "args": [
-      "p_proposal_id",
-      "p_user_id",
-      "p_org_slug"
-    ],
-    "caller": "src/lib/portal/provision.ts",
-    "tripwire": "src/__tests__/portal-provision.test.ts"
-  },
-  "frozenUntilPhase3": {
-    "why": "Until web-standalone phase 3, failed email sends are retried by capucor-os's reconciliation workflow, which rebuilds the message from ITS OWN copy of messages.mjs and resends it under the ORIGINAL idempotency key. If this file changes first, a retry sends different content from the original. Phase 3 moves retries to this repo in the same release that changes the emails, and deletes this entry. This is a freeze on this repo's file, not a comparison with capucor-os.",
-    "files": [
-      {
-        "path": "src/lib/email/messages.mjs",
-        "mode": "byte",
-        "digest": "sha256:342f4fc74211b76c1a262a691491f79510b67b145069cbc384adfa30c5945f65"
-      }
-    ]
   },
   "routeSeam": {
     "why": "capucor.com bounces old portal paths to capucor.app until os-sunset. A path dropped from the list turns an old bookmark or an already-sent email link into a 404.",
@@ -115,7 +94,7 @@
   ],
   "rulesHow": "Each rule names the files in this repo that must carry it. Patterns are case-insensitive JavaScript regular expressions. mustMatch is evaluated against the whole file. ⚠️ mustNotMatch is evaluated with BLOCKQUOTE LINES REMOVED: a corrected claim stays quoted inside a '>' block beside a dated correction (docs/database.md once said 'db push is allowed'), and a checker that could not tell an assertion from a quotation would flag the file that fixed the bug. Fenced code blocks are stripped from both directions.",
   "scheduledWorkflows": {
-    "why": "This repo's irreplaceable scheduled jobs are GitHub Actions crons: the POPIA lead prune and the proposal expiry. They fail the same way — they stop, and nothing says so. `scripts/schedule-watchdog.mjs` asks the Actions API when each one last SUCCEEDED and fails the run when the answer is older than `maxAgeDays`.",
+    "why": "This repo's irreplaceable scheduled jobs are GitHub Actions crons: the POPIA lead prune, the proposal expiry and the fulfilment/email retry runner. They fail the same way — they stop, and nothing says so. `scripts/schedule-watchdog.mjs` asks the Actions API when each one last SUCCEEDED and fails the run when the answer is older than `maxAgeDays`.",
     "watchesForSilenceNotCause": "The check is deliberately cause-agnostic. Asking 'is the workflow disabled?' covers one failure mode; asking 'when did it last succeed?' covers that one plus an expired secret, an exhausted Actions allowance, a renamed file, a deleted schedule and a job that has been failing every night. A watchdog written against a named cause stops working the moment the cause is different.",
     "inactivityRule": "MEASURED 2026-08-06. GitHub's documentation scopes the auto-disable to public repositories: 'In a public repository, scheduled workflows are automatically disabled when no repository activity has occurred in 60 days.' capucor-webpage IS public (unauthenticated api.github.com read → 200), so its crons are exposed to exactly that rule. The watchdog checks recency rather than visibility, so it covers that cause and every other one.",
     "cannotFireDuringQuiet": "The watchdog runs on push. It cannot fire during the quiet period that causes the disable, and no in-repo mechanism can — every in-repo mechanism is hosted by the thing that goes quiet. Stated rather than papered over, with the one external control, in capucor-docs/operations/backup-watchdog.md.",
@@ -139,6 +118,14 @@
         "schedule": "30 3 * * *",
         "maxAgeDays": 3,
         "why": "Flips proposals past expires_at to expired. If it has stopped, an expired quote stays signable at a price that is no longer offered."
+      },
+      {
+        "repo": "web",
+        "file": "cron-reconcile-deliveries.yml",
+        "schedule": "0 * * * *",
+        "maxAgeDays": 2,
+        "notBefore": "2026-10-10T06:00:00Z",
+        "why": "Finishes signed-proposal fulfilment (signed PDF to Drive, the client and owner \"signed\" emails) and resends failed funnel emails under their original idempotency keys. If it has stopped, a signed client may never get their confirmation and Zjak may never get the owner email that starts billing — and nothing else retries them since capucor-os's reconciliation workflow was disabled (web-standalone phase 3). The hourly tier is declared because it bounds the worst case; the business-hours */10 tier rides on the same file. It fails a run only for what that run failed permanently, so an old permanent failure cannot keep it red and make it look stale. ⚠️ notBefore is the merge-day grace (see notBeforeWhy): refresh it to within three days of the merge if the merge slips, and remove it after the first successful scheduled run."
       },
       {
         "repo": "web",

@@ -20,7 +20,7 @@
  *      cycle (otherwise mint a 30-minute token); status stays `viewed`.
  *   6. Email the confirm link to the proposal address (or log it in dev).
  *
- * The actual commit (record signature → provision → archive → emails) lives in
+ * The actual commit (record signature → archive PDF → "signed" emails) lives in
  * /lib/portal/finalizeSign.ts, run by the confirm route.
  */
 

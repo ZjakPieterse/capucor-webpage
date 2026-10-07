@@ -148,7 +148,7 @@ jobs:
             exit 1
           fi
           if [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty in the CI env — provision-on-sign would fail at signing. Refusing to deploy."
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty in the CI env — signing would fail. Refusing to deploy."
             exit 1
           fi
           echo "✓ Supabase env present for the build."
