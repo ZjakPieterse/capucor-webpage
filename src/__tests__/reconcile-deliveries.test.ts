@@ -179,6 +179,18 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     ).rejects.toMatchObject({ code: 'unsupported_event' });
   });
 
+  it('refuses the retired capucor.app amend / resend events permanently (phase 4)', async () => {
+    for (const event_type of ['proposal.amended_client', 'proposal.resent_client']) {
+      await expect(
+        buildDeliveryMessage(
+          { source_type: 'proposal', source_id: PROPOSAL_ID, event_type, recipient: 'pat@example.com' },
+          fakeDb(),
+        ),
+        event_type,
+      ).rejects.toMatchObject({ code: 'unsupported_event' });
+    }
+  });
+
   it("never rebuilds capucor-os's own email sources", async () => {
     expect(FUNNEL_SOURCES).toEqual(['lead', 'data_request', 'proposal']);
     await expect(

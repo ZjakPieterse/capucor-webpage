@@ -334,27 +334,3 @@ export function buildSignedOwnerMessage(p, ownerEmail) {
     }),
   };
 }
-
-// capucor.app's staff amend / resend emails. This repo never sends them; the
-// retry runner rebuilds them only until web-standalone phase 4 removes those
-// staff tools from capucor-os. Delete both at the phase-5 clean-up.
-function renderStaffProposalEmail(d, amended) {
-  return clientShell(`${brand()}
-      ${reference(d.refNumber)}
-      <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Hi ${escapeHtml(d.firstName)}, ${amended ? 'we&rsquo;ve updated your proposal' : 'here&rsquo;s your proposal again'}</h1>
-      <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#4b5563;">${
-        amended
-          ? `We&rsquo;ve revised the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>. The updated plan comes to <strong>${formatZAR(d.monthlyZAR)}</strong> per month. Open it to review the changes and sign. This replaces any earlier version.`
-          : `Here&rsquo;s a fresh link to the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong> at <strong>${formatZAR(d.monthlyZAR)}</strong> per month. Open it to review the full details and sign.`
-      }</p>
-      ${button(d.proposalUrl, amended ? 'View &amp; sign the updated proposal' : 'View &amp; sign your proposal')}
-      <p style="margin:0;font-size:12px;color:#6b7280;text-align:center;">Billed monthly in advance · cancel any time with 30 days&rsquo; notice</p>`);
-}
-
-export function renderAmendEmail(d) {
-  return renderStaffProposalEmail(d, true);
-}
-
-export function renderResendEmail(d) {
-  return renderStaffProposalEmail(d, false);
-}

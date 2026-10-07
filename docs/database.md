@@ -13,7 +13,7 @@
 | Kind | Objects |
 |---|---|
 | Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters` |
-| Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `next_proposal_ref`, `proposals_set_ref`; and, until phase 4 removes their capucor.app callers, `create_proposal_amendment` / `start_proposal_resend` |
+| Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `next_proposal_ref`, `proposals_set_ref`; and, until migration 002 is applied, `create_proposal_amendment` / `start_proposal_resend` (no callers once capucor-os's phase-4 PR is deployed) |
 | Plus | their triggers, CHECKs, indexes, RLS policies and grants |
 
 The starting state is recorded in
@@ -25,7 +25,8 @@ numbered migrations:
 
 | # | What | Status |
 |---|---|---|
-| `001_signing_stops_at_signed_pdf.sql` | Drops the `portal` fulfilment stage and `provision_from_signed_proposal` (web-standalone phase 3). Fulfilment is pdf → client_email → owner_email. | Written 2026-10-07; Zjak applies |
+| `001_signing_stops_at_signed_pdf.sql` | Drops the `portal` fulfilment stage and `provision_from_signed_proposal` (web-standalone phase 3). Fulfilment is pdf → client_email → owner_email. | Applied 2026-10-07 |
+| `002_drop_staff_proposal_rpcs.sql` | Drops `create_proposal_amendment` and `start_proposal_resend` (web-standalone phase 4). Apply only after capucor-os's phase-4 PR is deployed. | Written 2026-10-07; Zjak applies |
 
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
 table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`.
