@@ -196,18 +196,22 @@ describe('colour is never the only signal (§5)', () => {
     return readFileSync(join(process.cwd(), path), 'utf8');
   }
 
-  it('pairs every status colour in the hero dashboard with text or an icon', () => {
-    const hero = source('src/components/landing/HeroSection.tsx');
+  it('pairs every status colour in the hero story with text or an icon', () => {
+    const story = source('src/components/landing/HeroStory.tsx');
 
-    // The VAT status chip is the one place a bare coloured pill could appear.
-    // It carries an AlertCircle icon and a "{n} days" label; assert the icon
-    // stays, because the label alone would still leave the severity encoded
-    // only in the colour.
-    expect(hero).toMatch(/AlertCircle/);
+    // Green "done" states (reconciled rows, filed chips) carry a Check icon and
+    // say what is done in words.
+    expect(story).toMatch(/<Check /);
+    expect(story).toMatch(/of {txCount} reconciled/);
+    expect(story).toMatch(/EMP201 filed/);
 
-    // The payroll and books-closed rows state their status in words.
-    expect(hero).toMatch(/EMP201 submitted/);
-    expect(hero).toMatch(/reconciled/);
+    // Bank amounts are signed, and the amber flag on a bank line says "Unmatched".
+    expect(story).toMatch(/amount: "−\d/);
+    expect(story).toMatch(/amount: "\+\d/);
+    expect(story).toMatch(/Unmatched/);
+
+    // The red/amber invoice tag states the problem in words.
+    expect(story).toMatch(/\d+ days overdue/);
   });
 
   it('pairs the margin trend in the service dashboards with a direction icon', () => {
