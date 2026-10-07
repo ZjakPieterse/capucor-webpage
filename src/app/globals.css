@@ -1571,3 +1571,93 @@
     box-shadow: none !important;
   }
 }
+
+/* ─── Hero story (HeroStory.tsx) ──────────────────────────────────────────── */
+/* Layered contact + drop shadow so paper and phone notifications read as real
+   objects lying on a surface. */
+.hero-shadow,
+.hero-thermal {
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.35),
+    0 3px 6px -2px rgba(0, 0, 0, 0.45),
+    0 16px 32px -14px rgba(0, 0, 0, 0.85);
+}
+
+/* Office paper: faint top light and fibre noise. */
+.hero-paper {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(236, 238, 242, 0.95)),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.015) 0 1px, transparent 1px 3px),
+    #f4f5f7;
+}
+
+/* Thermal till slip: slightly grey, uneven print, torn bottom edge. */
+.hero-thermal {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.05)),
+    linear-gradient(180deg, #f7f6f2, #ebe9e3);
+}
+.hero-receipt {
+  -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 7px 100%;
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 7px 100%;
+}
+
+/* Receipt barcode. */
+.hero-barcode {
+  background: repeating-linear-gradient(
+    90deg,
+    #2d2d2a 0 1px,
+    transparent 1px 3px,
+    #2d2d2a 3px 5px,
+    transparent 5px 6px,
+    #2d2d2a 6px 7px,
+    transparent 7px 10px
+  );
+}
+
+/* Sticky note on the pile. */
+.hero-sticky {
+  background: linear-gradient(180deg, #fff3a3 0%, #fde97a 100%);
+  border-radius: 1px 1px 2px 14px / 1px 1px 2px 6px;
+}
+
+/* Top and bottom fade on the scrolling statement in the order beat. */
+.hero-ledger-fade {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
+}
+
+/* The month's report email in the decision beat: a light, real-mail surface
+   that stands out against the dark panel. */
+.hero-email {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 -24px 60px -20px rgba(0, 0, 0, 0.85),
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    0 30px 60px -30px color-mix(in oklch, var(--brand-cyan) 45%, transparent);
+}
+
+/* Hero headline: large, tight and calm, with a quiet white-to-silver tone. */
+.hero-headline {
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  background: linear-gradient(180deg, #ffffff 30%, color-mix(in oklch, var(--foreground) 72%, #8fa3bf) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Static brand gradient on the outcome half of the hero headline. */
+.hero-headline-accent {
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklch, var(--foreground) 92%, var(--brand-cyan)) 0%,
+    var(--brand-cyan) 55%,
+    color-mix(in oklch, var(--primary) 85%, var(--brand-cyan)) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.06em;
+}
