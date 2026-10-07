@@ -20,7 +20,7 @@ import { describe, expect, it } from 'vitest';
 // A zero-dependency .mjs, deliberately untyped (it runs without `npm ci`) — see scheduledWorkflows in the contract. The verdict shape is
 // restated here rather than inferred, so a field renamed in the script shows up
 // as a type error in the test that reads it.
-import { evaluate, applyDrill, workflowsFor } from '../../scripts/schedule-watchdog.mjs';
+import { evaluate, applyDrill, workflowsFor, observe, pickRuns, freshest } from '../../scripts/schedule-watchdog.mjs';
 import { loadContract } from '../../contracts/contract.mjs';
 
 interface Verdict {
@@ -280,5 +280,126 @@ describe('⚠️ an `event` entry is asked whether it FIRED, not whether it succ
     });
     expect(r.ok).toBe(false);
     expect(r.reason).toMatch(/last succeeded 5\.4 days ago/);
+  });
+});
+
+describe('⚠️ a stale filtered listing cannot turn a healthy cron red', () => {
+  // Measured 2026-10-07: the `status=success` listing returned a run ~19 days
+  // old for two crons that had succeeded that morning, and this watchdog went
+  // red on healthy crons three times in one day. A filtered listing is not
+  // evidence of absence; a red verdict has to survive a second, differently
+  // shaped listing (the unfiltered page).
+  const REPO = 'owner/name';
+  const run = (iso: string, conclusion = 'success', event = 'schedule') => ({
+    updated_at: iso,
+    conclusion,
+    event,
+    html_url: 'https://x',
+  });
+  const listing = (...runs: unknown[]) => ({ workflow_runs: runs });
+
+  /** A fake Actions API: the unfiltered page and the status-filtered queries answer separately. */
+  const api = (opts: {
+    state?: string | null;
+    page?: unknown[];
+    success?: unknown[];
+    failure?: unknown[];
+  }) => {
+    const calls: string[] = [];
+    const get = async (path: string) => {
+      calls.push(path);
+      if (!path.includes('/runs')) return opts.state === null ? null : { state: opts.state ?? 'active' };
+      if (path.includes('status=success')) return listing(...(opts.success ?? []));
+      if (path.includes('status=failure')) return listing(...(opts.failure ?? []));
+      return listing(...(opts.page ?? []));
+    };
+    return { get, calls };
+  };
+
+  const verdict = async (a: ReturnType<typeof api>, d: Record<string, unknown> = declared) => {
+    const o = await observe(d, REPO, a.get);
+    return evaluate({ ...o, maxAgeDays: (d as { maxAgeDays: number }).maxAgeDays, now: NOW }) as Verdict;
+  };
+
+  it('stays green when status=success is 19 days stale but the unfiltered page has today’s success', async () => {
+    const a = api({ page: [run('2026-08-06T03:20:00Z')], success: [run('2026-07-18T03:20:00Z')] });
+    const r = await verdict(a);
+    expect(r.ok).toBe(true);
+    expect(r.lastSuccess).toBe('2026-08-06T03:20:00Z');
+    // Both shapes were actually asked, so neither is trusted alone.
+    expect(a.calls.some((c) => /\/runs\?per_page=\d+&exclude_pull_requests=true$/.test(c))).toBe(true);
+    expect(a.calls.some((c) => c.includes('status=success'))).toBe(true);
+  });
+
+  it('stays green the other way round too: a stale page, a current exact query', async () => {
+    const r = await verdict(api({ page: [run('2026-07-18T03:20:00Z')], success: [run('2026-08-06T03:20:00Z')] }));
+    expect(r.ok).toBe(true);
+  });
+
+  it('a newest run that failed does not hide an older success on the same page', async () => {
+    const r = await verdict(api({ page: [run('2026-08-06T03:20:00Z', 'failure'), run('2026-08-05T03:20:00Z')] }));
+    expect(r.ok).toBe(true);
+    expect(r.lastRunConclusion).toBe('failure');
+  });
+
+  it('⚠️ a genuinely stale cron is still red — both listings agree, and the message says so', async () => {
+    const r = await verdict(
+      api({ page: [run('2026-08-06T03:20:00Z', 'failure'), run('2026-07-30T03:20:00Z')], success: [run('2026-07-30T03:20:00Z')] }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/last succeeded 7\.4 days ago/);
+    expect(r.reason).toMatch(/All 2 differently shaped run listings agree/);
+  });
+
+  it('⚠️ a cron that has never succeeded in either listing is still red', async () => {
+    const r = await verdict(api({ page: [run('2026-08-06T03:20:00Z', 'failure')] }));
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/never completed successfully/);
+  });
+
+  it('⚠️ a disabled cron is still red, however fresh its last success', async () => {
+    const r = await verdict(api({ state: 'disabled_inactivity', page: [run('2026-08-06T03:20:00Z')] }));
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/A push does NOT re-enable it/);
+  });
+
+  it('⚠️ a workflow the API does not know is still red', async () => {
+    expect((await verdict(api({ state: null }))).ok).toBe(false);
+  });
+
+  it('⚠️ an `event` entry ignores runs from other triggers on the unfiltered page', async () => {
+    // watchdog.yml: a push run today must not satisfy "has the schedule fired".
+    const self = { ...declared, file: 'watchdog.yml', event: 'schedule' };
+    const r = await verdict(
+      api({ page: [run('2026-08-06T09:00:00Z', 'success', 'push'), run('2026-07-30T06:00:00Z')], success: [run('2026-07-30T06:00:00Z')] }),
+      self,
+    );
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/last fired 7\.3 days ago/);
+  });
+
+  it('an `event` entry is rescued by a fresh scheduled run on the page when the exact queries are stale', async () => {
+    const self = { ...declared, file: 'watchdog.yml', event: 'schedule' };
+    const r = await verdict(
+      api({ page: [run('2026-08-06T06:30:00Z', 'failure')], success: [run('2026-07-18T06:00:00Z')], failure: [run('2026-07-19T06:00:00Z', 'failure')] }),
+      self,
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it('the stale drill still goes red through both listings', async () => {
+    const a = api({ page: [run('2026-08-06T03:20:00Z')], success: [run('2026-08-06T03:20:00Z')] });
+    const o = await observe(declared, REPO, a.get);
+    const r = evaluate({ ...applyDrill({ ...o, maxAgeDays: 3 }, 'stale'), now: NOW }) as Verdict;
+    expect(r.ok).toBe(false);
+  });
+
+  it('pickRuns / freshest choose by updated_at and ignore nulls', () => {
+    const picked = pickRuns([run('2026-08-01T00:00:00Z'), run('2026-08-03T00:00:00Z', 'cancelled')], undefined);
+    expect(picked.newestRun?.conclusion).toBe('cancelled');
+    expect(picked.newestSuccess?.updated_at).toBe('2026-08-01T00:00:00Z');
+    expect(picked.newestFired?.updated_at).toBe('2026-08-01T00:00:00Z');
+    expect(freshest(null, run('2026-08-01T00:00:00Z'), run('2026-08-02T00:00:00Z'))?.updated_at).toBe('2026-08-02T00:00:00Z');
+    expect(freshest(null, null)).toBeNull();
   });
 });

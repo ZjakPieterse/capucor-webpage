@@ -120,7 +120,9 @@ const STATE_ADVICE = {
  * failing run is already emailed. Cancelled and startup_failure runs do not
  * count — they never reached the steps.
  */
-export function evaluate({ declared, workflow, newestRun, newestSuccess, newestFired = null, maxAgeDays, now }) {
+export function evaluate({ declared, workflow, newestRun, newestSuccess, newestFired = null, maxAgeDays, now, listings = 0 }) {
+  // Stated on a red verdict, so a reader knows it is not one listing's say-so.
+  const agreed = listings > 1 ? ` All ${listings} differently shaped run listings agree.` : '';
   const base = { file: declared.file, why: declared.why, maxAgeDays, state: workflow?.state ?? null };
   const firedIsEnough = Boolean(declared.event);
   const evidence = firedIsEnough ? newestFired : newestSuccess;
@@ -170,7 +172,8 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, newestF
           ? `it has never fired on its ${declared.event} trigger, so that dispatch path is not running it.`
           : `it has never completed successfully. Either it has only ever failed, or it has never ` +
             `been triggered — both mean the job this workflow exists to do is not being done.`) +
-        (declared.notBefore ? ` Its first run was expected by ${declared.notBefore} and has not happened.` : ''),
+        (declared.notBefore ? ` Its first run was expected by ${declared.notBefore} and has not happened.` : '') +
+        agreed,
     };
   }
 
@@ -190,7 +193,7 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, newestF
       reason:
         `last ${verb} ${ageDays.toFixed(1)} days ago, and the contract allows ${maxAgeDays}. ` +
         `${declared.why} Check the Actions tab: a schedule that has gone quiet, an expired ` +
-        `secret and an exhausted minutes allowance all look identical from here.`,
+        `secret and an exhausted minutes allowance all look identical from here.${agreed}`,
     };
   }
 
@@ -237,39 +240,72 @@ async function gh(path, token) {
   return res.json();
 }
 
-async function observe(declared, repoSlug, token) {
+/** How many runs the unfiltered listing reads. Daily crons: weeks. Hourly: most of a day. */
+const PAGE = 50;
+
+/**
+ * Builds one observation from two DIFFERENTLY SHAPED run listings. `get` is
+ * `(path) => json | null`, injected so the tests can drive the stale-listing
+ * case off fixtures.
+ *
+ * ⚠️ A FILTERED LISTING IS NOT EVIDENCE OF ABSENCE. Measured 2026-10-07: the
+ * `status=success` listing returned a run ~19 days old for two crons that had
+ * succeeded that morning, so this watchdog went red three times in one day on
+ * healthy crons. What a listing DOES return is real — a stale listing only
+ * ever makes a workflow look older, never newer — so the freshest qualifying
+ * run across both listings is a safe answer, and a stale or "never" verdict
+ * only stands when both agree:
+ *
+ *   1. the newest PAGE runs with no status or event filter, the newest
+ *      success / fired run picked here. This shape stayed current throughout.
+ *   2. the exact `status=success` (and, for an `event` entry,
+ *      `status=failure`) queries this watchdog used to rely on alone.
+ *
+ * ⚠️ OPTIONAL `event`, AND IT IS LOAD-BEARING ON EXACTLY ONE ENTRY. watchdog.yml
+ * runs on push AND schedule, so without it one of its own push runs would
+ * satisfy its own staleness check. It filters listing 2 on the server and
+ * listing 1 here. See scheduledWorkflows.eventWhy.
+ */
+export async function observe(declared, repoSlug, get) {
   const base = `/repos/${repoSlug}/actions/workflows/${declared.file}`;
-  const workflow = await gh(base, token);
-  if (!workflow) return { declared, workflow: null, newestRun: null, newestSuccess: null, newestFired: null };
+  const workflow = await get(base);
+  if (!workflow) return { declared, workflow: null, newestRun: null, newestSuccess: null, newestFired: null, listings: 0 };
 
-  // ⚠️ OPTIONAL `event` FILTER, AND IT IS LOAD-BEARING ON EXACTLY ONE ENTRY.
-  // The four cron files are only ever run by their schedule, so an unfiltered
-  // question is the right one for them and they carry no `event`. watchdog.yml
-  // is different — since R-12b it runs on BOTH push and schedule — so without
-  // this filter one of its own push runs would satisfy its own staleness check
-  // and a dead schedule would be invisible behind the very pushes it exists to
-  // outlive. See scheduledWorkflows.eventWhy.
   const event = declared.event ? `&event=${declared.event}` : '';
-
-  // Two exact queries rather than one paged window: "the newest run" and "the
-  // newest SUCCESSFUL run" are different questions, and deriving the second
-  // from a page of the first quietly assumes the success is on that page.
-  //
-  // An `event` entry also needs the newest FAILED run, because for it a failure
-  // still proves the trigger fired — see evaluate(). Again an exact query, not
-  // a page of completed runs that may be all cancellations.
-  const [runs, successes, failures] = await Promise.all([
-    gh(`${base}/runs?per_page=1&exclude_pull_requests=true${event}`, token),
-    gh(`${base}/runs?status=success&per_page=1&exclude_pull_requests=true${event}`, token),
-    declared.event ? gh(`${base}/runs?status=failure&per_page=1&exclude_pull_requests=true${event}`, token) : null,
+  const [page, successes, failures] = await Promise.all([
+    get(`${base}/runs?per_page=${PAGE}&exclude_pull_requests=true`),
+    get(`${base}/runs?status=success&per_page=1&exclude_pull_requests=true${event}`),
+    declared.event ? get(`${base}/runs?status=failure&per_page=1&exclude_pull_requests=true${event}`) : null,
   ]);
 
-  const newestSuccess = successes?.workflow_runs?.[0] ?? null;
-  const newestFailure = failures?.workflow_runs?.[0] ?? null;
-  const newestFired =
-    [newestSuccess, newestFailure].filter(Boolean).sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))[0] ?? null;
+  const fromPage = pickRuns(page?.workflow_runs, declared.event);
+  const fromExact = pickRuns([...(successes?.workflow_runs ?? []), ...(failures?.workflow_runs ?? [])], declared.event);
 
-  return { declared, workflow, newestRun: runs?.workflow_runs?.[0] ?? null, newestSuccess, newestFired };
+  return {
+    declared,
+    workflow,
+    newestRun: fromPage.newestRun ?? fromExact.newestRun,
+    newestSuccess: freshest(fromPage.newestSuccess, fromExact.newestSuccess),
+    newestFired: freshest(fromPage.newestFired, fromExact.newestFired),
+    listings: 2,
+  };
+}
+
+/** The newest run, newest success and newest fired (success or failure) run in a listing. */
+export function pickRuns(runs, event) {
+  const mine = (Array.isArray(runs) ? runs : [])
+    .filter((r) => !event || r.event === event)
+    .sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+  return {
+    newestRun: mine[0] ?? null,
+    newestSuccess: mine.find((r) => r.conclusion === 'success') ?? null,
+    newestFired: mine.find((r) => r.conclusion === 'success' || r.conclusion === 'failure') ?? null,
+  };
+}
+
+/** The most recently updated of the given runs; nulls ignored. */
+export function freshest(...runs) {
+  return runs.filter(Boolean).sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at))[0] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -321,7 +357,7 @@ if (isCli) {
   const now = new Date();
   const results = [];
   for (const declared of workflows) {
-    const observation = await observe(declared, repoSlug, token);
+    const observation = await observe(declared, repoSlug, (path) => gh(path, token));
     const drilled = applyDrill({ ...observation, maxAgeDays: declared.maxAgeDays }, drill);
     results.push(evaluate({ ...drilled, now }));
   }

@@ -22,7 +22,7 @@ import { describe, expect, it } from 'vitest';
 // A zero-dependency .mjs, deliberately untyped (it runs without `npm ci`) — see deployDrift in the contract. The verdict shape is restated
 // here rather than inferred, so a field renamed in the script shows up as a type
 // error in the test that reads it.
-import { evaluate, applyDrill, deploymentsFor } from '../../scripts/deploy-drift.mjs';
+import { evaluate, applyDrill, deploymentsFor, observe, newestSuccess } from '../../scripts/deploy-drift.mjs';
 import { loadContract } from '../../contracts/contract.mjs';
 
 interface Verdict {
@@ -256,5 +256,82 @@ describe('this repo is wired into the deploy-drift check', () => {
       .map((d: { file: string }) => d.file)
       .sort();
     expect(onDisk).toEqual(declaredHere);
+  });
+});
+
+describe('⚠️ a stale filtered listing cannot invent drift', () => {
+  // Measured 2026-10-07: a deploy workflow's `status=success` listing returned
+  // a run four weeks old while that day's successful deploy sat at the top of
+  // the unfiltered listing. Relying on it alone reports a month of drift on a
+  // surface deployed that morning.
+  const REPO = 'owner/name';
+  const TIP = 'c'.repeat(40);
+  const OLD = 'd'.repeat(40);
+  const ok = (sha: string, updated: string) => ({ ...run(sha, updated), conclusion: 'success' });
+  const failed = (sha: string, updated: string) => ({ ...run(sha, updated), conclusion: 'failure' });
+
+  /** A fake API: page, exact query and compare answer separately; compare is keyed by the base sha. */
+  const api = (opts: { page?: unknown[]; success?: unknown[]; compare: Record<string, unknown> }) => {
+    const compared: string[] = [];
+    const get = async (path: string) => {
+      const m = path.match(/\/compare\/([0-9a-f]+)\.\.\./);
+      if (m) {
+        compared.push(m[1]);
+        return opts.compare[m[1]] ?? null;
+      }
+      if (path.includes('status=success')) return { workflow_runs: opts.success ?? [] };
+      return { workflow_runs: opts.page ?? [] };
+    };
+    return { get, compared };
+  };
+  const identical = { status: 'identical', ahead_by: 0, behind_by: 0, commits: [] };
+  const verdict = async (a: ReturnType<typeof api>) =>
+    evaluate({ ...(await observe(declared, REPO, a.get)), maxAgeDays: declared.maxAgeDays, now: NOW }) as Verdict;
+
+  it('stays green when status=success is four weeks stale but the page shows today’s deploy at the tip', async () => {
+    const a = api({
+      page: [ok(TIP, '2026-08-24T09:00:00Z')],
+      success: [ok(OLD, '2026-07-27T09:00:00Z')],
+      compare: { [TIP]: identical, [OLD]: ahead(30, '2026-07-27T10:00:00Z') },
+    });
+    const r = await verdict(a);
+    expect(r.ok).toBe(true);
+    expect(r.deployedSha).toBe(TIP);
+    expect(a.compared).toEqual([TIP]);
+  });
+
+  it('a newer FAILED deploy does not count as shipped', async () => {
+    const r = await verdict(
+      api({
+        page: [failed(TIP, '2026-08-24T09:00:00Z'), ok(OLD, '2026-08-01T09:00:00Z')],
+        success: [ok(OLD, '2026-08-01T09:00:00Z')],
+        compare: { [OLD]: ahead(3, '2026-08-01T10:00:00Z') },
+      }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.deployedSha).toBe(OLD);
+  });
+
+  it('⚠️ genuine drift is still red when both listings agree', async () => {
+    const r = await verdict(
+      api({
+        page: [ok(OLD, '2026-08-10T09:00:00Z')],
+        success: [ok(OLD, '2026-08-10T09:00:00Z')],
+        compare: { [OLD]: ahead(4, '2026-08-11T10:00:00Z') },
+      }),
+    );
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/oldest has been waiting 13\.1 days/);
+  });
+
+  it('⚠️ a surface with no successful deploy in either listing is still red', async () => {
+    const r = await verdict(api({ page: [failed(TIP, '2026-08-24T09:00:00Z')], compare: {} }));
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/never completed a successful run/);
+  });
+
+  it('newestSuccess picks the most recently updated success across listings', () => {
+    expect(newestSuccess([ok(OLD, '2026-08-01T00:00:00Z')], [ok(TIP, '2026-08-02T00:00:00Z')], undefined)?.head_sha).toBe(TIP);
+    expect(newestSuccess([failed(TIP, '2026-08-02T00:00:00Z')], null)).toBeNull();
   });
 });
