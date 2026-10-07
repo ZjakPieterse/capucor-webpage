@@ -128,8 +128,8 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
 
 // Packages sold by application rather than self-serve acceptance. The
 // calculator shows a "from" price and ends in a request (tweaks round 1);
-// /api/proposals creates no proposal for them. Staff can still prepare and
-// amend a proposal on capucor.app.
+// /api/proposals creates no proposal for them, and nothing else does either
+// (staff proposal tools removed 2026-10-07, web-standalone phase 4).
 export const TIERS_BY_APPLICATION: readonly string[] = ['premium'];
 
 // Canonical display names for the three package slugs. The Supabase `tiers`
@@ -206,8 +206,8 @@ export const TIER_ORDER: readonly string[] = ['basic', 'pro', 'premium'];
 // Add-ons, flat monthly fees added on top of the bracket-based package price,
 // unless the chosen package includes the add-on (includedFromTier), in which
 // case it is carried at no charge. Server-side proposal pricing reads from this
-// same list, so a slug here is the whitelist for /api/proposals and the staff
-// amend form.
+// same list, so a slug here is the whitelist for /api/proposals and for
+// re-pricing at signing.
 //
 // A proposal stores add-ons as a list of tokens in proposals.addons: the slug,
 // or "slug:count" for a per-unit add-on (e.g. "personal-tax:3"). See

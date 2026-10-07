@@ -1,9 +1,9 @@
 # Capucor — Voice & Copy Guide
 
 > **This guide is the website-specific extension of the cross-product Capucor Brand Voice &
-> Content Standard**, which lives at `capucor-docs/rules/brand-voice-and-content.md` in the
-> private `capucor-docs` repository. (Named in prose, not linked: the two repositories are
-> separate and a relative link from here would not resolve.)
+> Content Standard**, which lives on the brand voice-and-content page in the owner's private
+> workspace (migrated from `capucor-docs/rules/brand-voice-and-content.md`; `capucor-docs` is
+> archived and read-only). (Named in prose, not linked: a relative link from here would not resolve.)
 >
 > **The cross-product standard governs shared brand rules — voice, tone, banned vocabulary and
 > sentence structure. This guide governs implementation details that apply only to capucor.com**

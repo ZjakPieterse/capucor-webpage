@@ -39,8 +39,8 @@ export const metadata: Metadata = {
 };
 
 // Bare shell: <html> + fonts + globals + metadata only. Marketing chrome (Navbar/
-// Footer) moved to app/(site)/layout.tsx so /proposal, /portal and /internal can
-// render standalone with their own layouts (PR11). Every group inherits the fonts,
+// Footer) moved to app/(site)/layout.tsx so /proposal can render standalone
+// with its own layout (PR11). Every group inherits the fonts,
 // globals.css and metadata from here.
 export default function RootLayout({
   children,
