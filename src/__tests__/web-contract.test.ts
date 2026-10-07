@@ -2,7 +2,7 @@
  * The web contract — the invariants this repository enforces on itself.
  *
  * The manifest is contracts/web-contract.json. Since web-standalone phase 2
- * (2026-10-07) it is web-owned and compares nothing with capucor-os: pricing,
+ * (2026-10-07) it is web-owned and compares nothing with another repo: pricing,
  * tiers, db.ts and the rest are this repo's own files. What stays is what still
  * protects this repo alone — exact runtime pins, the redirect table, two
  * written rules, schema ownership. Phase 3 (2026-10-07) deleted the two

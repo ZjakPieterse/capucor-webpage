@@ -157,17 +157,15 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     expect(toResendPayload(runnerClient).reply_to).toBe('info@capucor.com');
   });
 
-  it('finishes a pre-phase-3 portal_ready_client send as the same "signed" email', async () => {
-    const db = fakeDb();
-    const legacy = await buildDeliveryMessage(
-      { source_type: 'proposal', source_id: PROPOSAL_ID, event_type: 'proposal.portal_ready_client', recipient: 'pat@example.com' },
-      db,
-    );
-    const current = await buildDeliveryMessage(
-      { source_type: 'proposal', source_id: PROPOSAL_ID, event_type: 'proposal.signed_client', recipient: 'pat@example.com' },
-      db,
-    );
-    expect(legacy).toEqual(current);
+  it('refuses the pre-phase-3 signed events permanently (migration 003)', async () => {
+    for (const event_type of ['proposal.portal_ready_client', 'proposal.provisioned_owner']) {
+      await expect(
+        buildDeliveryMessage(
+          { source_type: 'proposal', source_id: PROPOSAL_ID, event_type, recipient: 'pat@example.com' },
+          fakeDb(),
+        ),
+      ).rejects.toMatchObject({ code: 'unsupported_event' });
+    }
   });
 
   it('refuses a retired provisioning event permanently', async () => {
@@ -191,7 +189,7 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     }
   });
 
-  it("never rebuilds capucor-os's own email sources", async () => {
+  it("never rebuilds the legacy portal's own email sources", async () => {
     expect(FUNNEL_SOURCES).toEqual(['lead', 'data_request', 'proposal']);
     await expect(
       buildDeliveryMessage({ source_type: 'request_email', source_id: PROPOSAL_ID, event_type: 'request.monthly_close_sent', recipient: 'x@y.z' }, fakeDb()),

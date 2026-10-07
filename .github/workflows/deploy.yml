@@ -9,14 +9,12 @@ name: Deploy — production
 # anywhere in the path. This is the repository where signing and debit-order
 # mandates happen, which is why it was the highest-severity item in `O-2`.
 #
-# This mirrors the design ADR 0003 already accepted for capucor-os. It EXTENDS
-# that decision to the second production surface; it does not supersede it.
+# This applies ADR 0003 (validation separated from deployment) to capucor.com.
 #
-# ⚠️ NOTE THE DIFFERENCE FROM capucor-os. There, the intended control — a
-# GitHub Environment with a required reviewer — is unavailable, because the
-# repository is private and the account is on Free (HTTP 422). THIS repository
-# is public, and environment required reviewers are available on public
-# repositories at no cost (ADR 0010, pricing table). Declaring the environment
+# ⚠️ A GitHub Environment with a required reviewer is available here: this
+# repository is public, and environment required reviewers are free on public
+# repositories (ADR 0010, pricing table; private repositories on Free get
+# HTTP 422). Declaring the environment
 # below creates it; adding a required reviewer to it afterwards is a settings
 # change that would make this the strongest deploy gate in the estate. That has
 # deliberately NOT been done here, because it is a repository-settings decision
@@ -27,8 +25,9 @@ name: Deploy — production
 # unwanted dispatch from finishing one. They address different failure modes.
 # Keep both.
 #
-# See capucor-os/docs/adr/0010-capucor-webpage-visibility-and-deployment-governance.md
-# and capucor-os/docs/adr/0003-ci-validation-and-deployment-separation.md.
+# ADR 0010 (2026-08-20, capucor-webpage visibility and deployment governance)
+# and ADR 0003 (CI validation and deployment separation) are the rationale;
+# both are recorded in the owner's private workspace.
 #
 # Every validation gate from ci.yml is repeated here on purpose. A dispatch can
 # target any ref, including one CI never saw or one whose CI failed, so this
@@ -89,9 +88,8 @@ jobs:
       # look identical from the Actions API. This repository is the one the
       # 2026-08-24 measurement found four days and twenty-one commits adrift.
       #
-      # ⚠️ Hand-synced with ../capucor-os/.github/workflows/deploy.yml. Both
-      # Workers report a release the same way and both gates compare it the same
-      # way; see contracts/web-contract.json → releaseProvenance.
+      # How the Worker reports a release and how the gate compares it: see
+      # contracts/web-contract.json → releaseProvenance.
       CAPUCOR_RELEASE: ${{ github.sha }}
 
     steps:
@@ -133,13 +131,10 @@ jobs:
       # build. A missing value ships a site whose every funnel form 500s.
       #
       # This deliberately does NOT grep .open-next/assets/_next/static for the
-      # Supabase host. That assertion was removed in Phase 3 of the OS split and
-      # must not be restored here: this repo no longer has a browser Supabase
-      # client (it went to capucor-os with /login), so every Supabase call is
-      # server-side and the host is correctly absent from the client bundle. The
-      # grep would now fail 100% of the time. The bundle-inlining gate still
-      # exists, armed and meaningful, in the capucor-os repo — that is where
-      # login lives.
+      # Supabase host. That assertion was removed on 2026-08-02 and must not be
+      # restored: this repo has no browser Supabase client (no login here), so
+      # every Supabase call is server-side and the host is correctly absent from
+      # the client bundle. The grep would fail 100% of the time.
       - name: Assert Supabase env reached the build
         run: |
           set -euo pipefail
@@ -211,16 +206,13 @@ jobs:
       # itself succeeded.
       #
       # Targets capucor.com/pricing — the funnel's entry point, and a
-      # Supabase-backed page. It used to hit capucor.app/login, but since Phase
-      # 3 of the OS split that hostname is a DIFFERENT Worker from a different
-      # repo: the check was reporting capucor-os's health and said nothing about
-      # this deploy. Do not point it back across the seam.
+      # Supabase-backed page. It once hit capucor.app/login, which is a
+      # DIFFERENT Worker and said nothing about this deploy. Do not point it at
+      # another host.
       #
-      # The host is hardcoded rather than read from a repository variable, which
-      # is the opposite of capucor-os's SMOKE_BASE_URL arrangement and is correct
-      # here: this Worker only ever answers on capucor.com, and a variable could
-      # be pointed across the seam at capucor.app. capucor-os needs the variable
-      # because its origin moved during the Phase 1c cutover; this one has not.
+      # The host is hardcoded rather than read from a repository variable: this
+      # Worker only ever answers on capucor.com, and a variable could be pointed
+      # at a host this deploy does not serve.
       - name: Smoke test deployed /pricing CSP
         # ⚠️ THE CONDITION BELOW IS LOAD-BEARING ON EVERY POST-DEPLOY STEP.
         # Each of them exits 1 on failure, so without this the first to fail
@@ -253,8 +245,8 @@ jobs:
       # Post-deploy proof that the Worker's RUNTIME SECRETS are actually set.
       #
       # This is a different question from "does a page render", and the one that
-      # has actually bitten: capucor-os ran for two entire phases with NO
-      # Cloudflare secrets while every check stayed green, because anonymous
+      # has actually bitten: the sibling portal Worker ran for two entire phases
+      # with NO Cloudflare secrets while every check stayed green, because anonymous
       # traffic returns early and never reaches the code that needs them. Worse,
       # several failures here are silent by design — PDF archival no-ops and
       # Resend falls back to console logging — so nothing looks wrong until a
@@ -332,7 +324,7 @@ jobs:
       #
       # The origin is hard-coded, matching the runtime-secrets step above: this
       # repository has no SMOKE_BASE_URL variable and capucor.com is not a
-      # rebindable target the way capucor.app was during the Phase 1c cutover.
+      # rebindable target.
       - name: Verify the deployed release is this commit
         # ⚠️ THE CONDITION BELOW IS LOAD-BEARING ON EVERY POST-DEPLOY STEP.
         # Each of them exits 1 on failure, so without this the first to fail

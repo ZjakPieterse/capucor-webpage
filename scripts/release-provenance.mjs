@@ -2,8 +2,6 @@
 /**
  * Did the Worker that is live RIGHT NOW come from the commit we just deployed?
  *
- * ⚠️ Hand-synced with ../capucor-os/scripts/release-provenance.mjs.
- *
  * WHY THIS IS A SCRIPT AND NOT MORE BASH. The verdict logic started life inline
  * in `deploy.yml`, and inline is where it could not be tested: the step only
  * runs inside a production deployment, which is the one thing no check here may

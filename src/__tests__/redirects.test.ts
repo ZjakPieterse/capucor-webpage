@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import nextConfig from '../../next.config';
 
-// This repo's half of the domain seam (capucor.com → capucor.app) had NO test
-// at all until 2026-08-03, while ../capucor-os has guarded its half since
-// Phase 1c. The table has no type-level guard and no runtime consumer that
+// The legacy redirects (capucor.com → capucor.app, kept until os-sunset) had NO
+// test at all until 2026-08-03. The table has no type-level guard and no runtime consumer that
 // fails loudly, so these assertions are the only thing between an edit and a
 // silently broken production route. The gap was not theoretical: the www→apex
 // rule shipped a live 404 on https://www.capucor.com/ (see below).
@@ -97,8 +96,8 @@ describe('capucor.com redirect table', () => {
   });
 
   it('does not re-add the capucor.app half of the seam', async () => {
-    // capucor-os owns capucor.app→capucor.com. Duplicating it here would be
-    // dead code on a hostname this Worker never answers on, and would read as
+    // A capucor.app→capucor.com rule here would be dead code on a hostname
+    // this Worker never answers on, and would read as
     // authoritative to the next person editing the table.
     for (const rule of await getRedirects()) {
       expect(hostOf(rule)).not.toBe('capucor.app');
@@ -108,8 +107,8 @@ describe('capucor.com redirect table', () => {
 
   it('keeps /proposal on this domain', async () => {
     // The signing document lives here. A rule sending it to capucor.app would
-    // break every outstanding proposal link, and capucor-os bounces it back —
-    // an infinite redirect across the seam.
+    // break every outstanding proposal link, and capucor.app bounces it back —
+    // an infinite redirect.
     for (const rule of await getRedirects()) {
       expect(rule.source.startsWith('/proposal'), `${rule.source} moves the signing document`).toBe(
         false

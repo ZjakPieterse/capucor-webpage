@@ -4,8 +4,8 @@
  * emails) and resend failed funnel emails, without installing dependencies.
  * Run by .github/workflows/cron-reconcile-deliveries.yml.
  *
- * Moved here from capucor-os in web-standalone phase 3 (2026-10-07), minus the
- * portal stage and the portal's own email sources. Why an Action and not the
+ * Owned here since web-standalone phase 3 (2026-10-07); funnel sources only,
+ * no portal stage. Why an Action and not the
  * Worker: Workers Free gives 10 ms CPU and 50 subrequests per request, and a
  * full fulfilment needs more of both (decision 2026-08-03: background jobs run
  * on GitHub Actions as zero-dependency .mjs over PostgREST).
@@ -60,16 +60,9 @@ const DATA_REQUEST_TOKEN_TTL_HOURS = 24;
 const DATA_REQUEST_SLA_DAYS = 30;
 
 // The email sources this repository creates. email_deliveries is shared with
-// capucor-os (`request_email`, `approval`); those rows are capucor-os's and are
-// never claimed, rebuilt or failed here.
+// the legacy portal (`request_email`, `approval`) until os-sunset; those rows
+// are not ours and are never claimed, rebuilt or failed here.
 export const FUNNEL_SOURCES = ['lead', 'data_request', 'proposal'];
-
-// Signed-proposal events written by the pre-phase-3 Worker. Rebuilt as the new
-// "signed" emails so that a send still open across the release is finished,
-// not failed. Remove once no open delivery of either type exists (migration
-// 001's pre-flight query 3).
-const LEGACY_SIGNED_CLIENT_EVENT = 'proposal.portal_ready_client';
-const LEGACY_SIGNED_OWNER_EVENT = 'proposal.provisioned_owner';
 
 const AMBIGUOUS_CODES = new Set([
   'timeout',
@@ -161,7 +154,7 @@ export class Postgrest {
 
   // `idColumn` is not decoration: proposal_fulfilment is keyed by
   // `proposal_id` and has no `id` column. Defaulting to `id` there once made
-  // every recovery lookup 400 and reschedule forever (capucor-os, 2026-08).
+  // every recovery lookup 400 and reschedule forever (2026-08).
   async one(table, id, select = '*', idColumn = 'id') {
     const rows = await this.request(table, {
       params: { select, [idColumn]: `eq.${id}`, limit: 1 },
@@ -781,9 +774,7 @@ async function buildProposalMessage(row, db, marketingUrl) {
 
   if (
     row.event_type === SIGNED_CLIENT_EVENT ||
-    row.event_type === SIGNED_OWNER_EVENT ||
-    row.event_type === LEGACY_SIGNED_CLIENT_EVENT ||
-    row.event_type === LEGACY_SIGNED_OWNER_EVENT
+    row.event_type === SIGNED_OWNER_EVENT
   ) {
     if (!proposal.signed_at) {
       throw new PermanentDeliveryError(
@@ -994,9 +985,7 @@ export async function reconcileOne(db, row, config, dueAt) {
     if (rows.length !== 1) return 'lost_claim';
     if (
       claimed.row.source_type === 'proposal' &&
-      [SIGNED_CLIENT_EVENT, LEGACY_SIGNED_CLIENT_EVENT].includes(
-        claimed.row.event_type,
-      )
+      claimed.row.event_type === SIGNED_CLIENT_EVENT
     ) {
       await db.request('proposals', {
         method: 'PATCH',

@@ -33,13 +33,12 @@ UI work so the front end stays visually consistent. Canonical examples are cited
 ### Client portal surfaces — moved out
 
 The portal's design rules (card-based surface, `PORTAL_CARD` / `PORTAL_PANEL`, the shared header
-components) left with the code in Phase 3. They now live in
-[`../capucor-os/AGENTS.md`](../../capucor-os/AGENTS.md).
+components) left with the code on 2026-08-02 and do not apply here.
 
 **Everything below this line is marketing design guidance and still applies here.** The one portal
 rule worth remembering on this side: the app surface deliberately does *not* use the
-`premium-section` / `SectionDivider` rhythm — so don't reach for capucor-os as a precedent when
-building a marketing section, or vice versa.
+`premium-section` / `SectionDivider` rhythm — so don't reach for the old portal as a precedent when
+building a marketing section.
 
 The exception is `/proposal/*`, which is neither: it's a standalone document with its own bare
 layout, no Navbar/Footer and no section rhythm. It lives here and stays here.

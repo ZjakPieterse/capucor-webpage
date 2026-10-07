@@ -6,7 +6,7 @@
  * with them. The consumers are /api/proposals (create) and the signing flow.
  *
  * Web-owned since 2026-10-07 (web-standalone phase 2), as are ./pricing.ts and
- * ../config/tiers.ts. capucor-os's old copy is not kept in step.
+ * ../config/tiers.ts.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';

@@ -2,7 +2,7 @@
  * Loader for the web contract (`web-contract.json` beside this file).
  *
  * WEB-OWNED since 2026-10-07 (web-standalone phase 2). This used to be a
- * byte-identical copy shared with capucor-os and capucor-docs; it is now this
+ * byte-identical copy shared with two other repositories; it is now this
  * repo's own file and is never compared with another repository. Phase 3
  * removed the digest helper with the one freeze that used it.
  *

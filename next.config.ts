@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
 
-// Supabase URL is added to connect-src. Since Phase 3 of the OS split this repo
-// has NO browser Supabase client — every query runs server-side (API routes,
+// Supabase URL is added to connect-src. This repo has NO browser Supabase
+// client (there is no login here) — every query runs server-side (API routes,
 // server components, lib/). The directive is kept because it costs nothing and
-// keeps the header honest about the origin this app talks to; login moved to
-// ../capucor-os along with the browser client.
+// keeps the header honest about the origin this app talks to.
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 // Fail the build loudly in CI when the Supabase env never reached `next build`.
@@ -75,16 +74,15 @@ const SECURITY_HEADERS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Domain seam — capucor.com (marketing) vs capucor.app (Capucor OS)
+// Domain seam — legacy redirects to capucor.app (the old client portal)
 // ---------------------------------------------------------------------------
-// SINCE PHASE 3 OF THE OS SPLIT, THIS WORKER SERVES capucor.com AND www ONLY.
-// capucor.app is a separate repo (../capucor-os) on its own Worker, and it owns
-// the mirror-image half of this table — the capucor.app→capucor.com rules that
-// used to live here. Do not re-add them; they would be dead code on a hostname
-// this Worker never sees, and editing them here would not affect capucor.app.
+// THIS WORKER SERVES capucor.com AND www ONLY. capucor.app is a different
+// Worker; do not add capucor.app→capucor.com rules here — they would be dead
+// code on a hostname this Worker never sees.
 //
-// What remains is one-directional: someone asks capucor.com for an OS path, we
-// send them across. Host matching uses `has: [{ type: "host" }]`, which keeps
+// What remains is one-directional and LEGACY, kept until os-sunset: someone
+// asks capucor.com for an old portal path, we send them across. At os-sunset
+// APP_PATHS, /client-portal and siteConfig.appUrl go together. Host matching uses `has: [{ type: "host" }]`, which keeps
 // this in the Next routing layer — deliberately avoiding a middleware.ts, since
 // OpenNext bundling is the fragile part of this stack (see AGENTS.md).
 const MARKETING_ORIGIN = "https://capucor.com";
@@ -92,7 +90,7 @@ const APP_ORIGIN = "https://capucor.app";
 
 const MARKETING_HOST = "capucor.com";
 
-// Paths Capucor OS owns. Reached on capucor.com → bounce to capucor.app.
+// Old portal paths. Reached on capucor.com → bounce to capucor.app.
 // Auth is here because a session cookie set on one eTLD+1 can never be read
 // from the other, so login has to live on the domain that needs the session.
 // These paths no longer exist in this repo at all — the redirect is the only
@@ -185,9 +183,8 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: SECURITY_HEADERS,
       },
-      // The capucor.app noindex rule moved to ../capucor-os in Phase 3 — this
-      // Worker no longer answers on that hostname, so a rule here could never
-      // fire. capucor.com is the indexable domain by design.
+      // No capucor.app noindex rule here — this Worker does not answer on
+      // that hostname, so a rule here could never fire. capucor.com is the indexable domain by design.
     ];
   },
   async redirects() {

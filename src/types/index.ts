@@ -89,9 +89,8 @@ export interface PricingState {
   selectedAddons: string[];
 }
 
-// SubscriptionStatus / SubscriptionSummary moved to capucor-os in Phase 3 of the
-// OS split — they described the portal's billing view, which lives on
-// capucor.app. Since web-standalone phase 3 signing writes no portal record.
+// No SubscriptionStatus / SubscriptionSummary here: they described the portal's
+// billing view (removed 2026-08-02). Signing writes no portal record.
 
 export interface LeadPayload {
   source:
@@ -113,7 +112,6 @@ export interface LeadPayload {
   website?: string;
 }
 
-// The shared ProposalRow moved to capucor-os in Phase 3 — it described the row
-// as read by the /internal surfaces and orgData.ts, both of which live there
-// now. app/proposal/[token]/page.tsx keeps its own narrower local interface of
+// No shared ProposalRow here: it described the row as read by the old
+// /internal surfaces (removed 2026-08-02). app/proposal/[token]/page.tsx keeps its own narrower local interface of
 // the same name for the columns the signing document actually renders.

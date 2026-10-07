@@ -56,8 +56,8 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   `revalidate` to `/proposal/[token]` — it mutates status on view.
 - Prod smoke-check: `curl -sD- -o /dev/null https://capucor.com/pricing | grep -i content-security-policy`
   should show the Supabase host in `connect-src`. `deploy.yml` runs this same check post-deploy.
-  **Don't point it at capucor.app** — that is a different Worker from a different repo, so it would
-  report capucor-os's health, not this deploy's.
+  **Don't point it at capucor.app** — that is a different Worker, so it would report that Worker's
+  health, not this deploy's.
 
 ---
 
@@ -95,9 +95,6 @@ the shape of bug that matters:
 The child environment is scrubbed too: every credential-shaped variable name is deleted before the
 placeholders are set, so an exported `SUPABASE_SERVICE_ROLE_KEY` cannot ride past the file guards.
 
-⚠️ **Hand-synced with `../capucor-os/scripts/build-cf-offline.mjs`** and its guards module beside
-it. Both repositories build the same way and need the same boundary.
-
 ### ⚠️ What it proves, and what it does not
 
 - **It proves build compatibility.** The tree still compiles, bundles and packages into a worker.
@@ -107,11 +104,11 @@ it. Both repositories build the same way and need the same boundary.
   `.github/workflows/deploy.yml`, with real repository secrets, is still the only build that ships.
 - **It needs the npm registry**, because it runs `npm ci` in the snapshot. "Offline" here means
   *credential-free*, not *network-free*.
-- **The client-bundle half of its final assertion is skipped in this repository, correctly.** The
-  browser Supabase client went to capucor-os with `/login` in Phase 3, so nothing here inlines the
+- **The client-bundle half of its final assertion is skipped in this repository, correctly.** This
+  repo has no browser Supabase client (no login here since 2026-08-02), so nothing here inlines the
   Supabase URL into the client bundle — the same fact that removed the client-asset grep from this
   repo's `deploy.yml`. The check arms itself if `src/lib/supabase/client.ts` ever appears. The
-  server-bundle half runs in both repositories, because `next.config.ts` bakes the Supabase URL
+  server-bundle half always runs, because `next.config.ts` bakes the Supabase URL
   into the CSP.
 - **The static build logs three failed `[pricing]` fetches.** That is the placeholder Supabase host
   refusing to resolve, which is the point of using a reserved `.invalid` domain. The page falls
@@ -206,12 +203,10 @@ That file defines six custom variants nothing else defines: `data-open` and `dat
 Tailwind's native `data-*` shorthand would read a bare `data-horizontal:` as `[data-horizontal]`,
 an attribute Base UI never sets, so losing the definition would silently unstyle the divider rather
 than error.
-`../capucor-os` hit exactly this on 2026-08-19 and resolved it the same way; the fix here is
-deliberately identical.
+The sibling portal repo hit exactly this on 2026-08-19 and resolved it the same way.
 
-**The CSS is now vendored into `src/app/globals.css`**, in a commented block byte-identical to
-capucor-os's — the first 95 lines of `shadcn@4.21.0`'s `dist/tailwind.css`, which are unchanged
-from the `4.4.0` capucor-os captured.
+**The CSS is now vendored into `src/app/globals.css`**, in a commented block — the first 95 lines of
+`shadcn@4.21.0`'s `dist/tailwind.css`, which are unchanged from `4.4.0`.
 
 #### What the vendoring cost, measured rather than assumed
 
@@ -236,8 +231,8 @@ stylesheet is unchanged.
 > covers every rule rather than the states someone thought to open — including the three variants
 > that are NOT in the vendored block at all (`data-placeholder` in `select.tsx`,
 > `data-starting-style` and `data-ending-style` in `sheet.tsx`), whose emitted rules are byte-for-byte
-> unchanged, confirming Tailwind resolves them natively. capucor-os's 2026-08-19 removal *was*
-> visually verified, on the same vendored block.
+> unchanged, confirming Tailwind resolves them natively. The same vendored block was visually verified
+> in the sibling portal repo on 2026-08-19.
 
 ### 💡 Adding a shadcn component now
 
@@ -249,16 +244,11 @@ still names the `base-nova` style, the `neutral` base colour, the `lucide` icon 
 npx shadcn@latest add <component>
 ```
 
-Then, before committing:
-
-1. **Re-check the vendored block.** Compare `src/app/globals.css`'s vendored section against the
-   `dist/tailwind.css` of whatever version `npx` just fetched. A new component may rely on a
-   variant or utility added upstream since `4.21.0`, and nothing here will tell you it is missing —
-   Tailwind drops an unknown variant silently. This is the upstream-drift seam the block's comment
-   describes.
-2. **Keep the byte-pair.** `src/components/ui/*.tsx` is a `knownDuplicates` entry with
-   `pairMode: byte` against `../capucor-os`. A component regenerated on one side only turns
-   `npm run audit` red. Regenerate both, or neither.
+Then, before committing, **re-check the vendored block.** Compare `src/app/globals.css`'s vendored section against the
+`dist/tailwind.css` of whatever version `npx` just fetched. A new component may rely on a
+variant or utility added upstream since `4.21.0`, and nothing here will tell you it is missing —
+Tailwind drops an unknown variant silently. This is the upstream-drift seam the block's comment
+describes.
 
 ### What remains, and the trigger that would clear each
 

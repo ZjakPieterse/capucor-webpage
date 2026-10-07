@@ -1,16 +1,12 @@
-// Two domains, two jobs. Keep them straight — picking the wrong one sends a
-// client to a host that 301s them away, or mints a session on the wrong origin.
+// capucor.com is this site: landing, service pages, pricing calculator and the
+// sales funnel through proposal signing. Everything indexable and every
+// canonical URL uses MARKETING_URL.
 //
-//   capucor.com — the public company: landing, service pages, pricing
-//                 calculator, and the sales funnel through proposal signing.
-//                 Everything indexable and every canonical URL.
-//   capucor.app — Capucor OS: the client portal and the internal command
-//                 centre. Auth lives here, because a session cookie set on one
-//                 eTLD+1 is unreachable from the other — the two domains cannot
-//                 share a login no matter what cookie domain is set.
-//
-// Both hosts are served by the same Worker today; the split is enforced by the
-// host-based redirect table in next.config.ts. See "Domain seam" in AGENTS.md.
+// APP_URL is the legacy client portal (capucor.app), kept ONLY as the target of
+// the Navbar's Client Portal link until os-sunset — the same lifetime as the
+// /portal, /login, /internal redirects in next.config.ts. Do not add a new
+// consumer: no email, signing page or API here links or calls capucor.app.
+// See "Domain seam" in AGENTS.md.
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL ?? 'https://capucor.com';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://capucor.app';
 
@@ -21,7 +17,7 @@ export const siteConfig = {
     'Monthly accounting, bookkeeping, payroll and SARS work for owner-run South African businesses with staff. One fixed monthly subscription, run in Xero.',
   // Public site: canonicals, sitemap, OG tags, proposal + POPIA email links.
   marketingUrl: MARKETING_URL,
-  // Capucor OS: login, portal, internal. Used for the portal invite on signing.
+  // Legacy client portal: the Navbar's Client Portal link only, until os-sunset.
   appUrl: APP_URL,
   ogImage: '/api/og',
   // Email senders. The domain (capucor.com) must be verified in Resend before

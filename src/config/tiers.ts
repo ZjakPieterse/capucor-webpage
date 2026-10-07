@@ -1,5 +1,4 @@
-// Web-owned since 2026-10-07 (web-standalone phase 2); capucor-os's old copy is
-// not kept in step.
+// Web-owned since 2026-10-07 (web-standalone phase 2).
 //
 // Package content follows the package simplification (2026-10-06): a
 // bare-minimum baseline of five core services in every package, tiers defined

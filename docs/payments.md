@@ -11,7 +11,7 @@
 ## Payments status (billing model changed — read before touching payment code)
 
 The original plan wired **Paystack** for both subscriptions and shop checkout. The **2026-06-17
-billing decision** (documented in `../capucor-docs/operations/audit-portal-tasks.md`) changed that:
+billing decision** changed that:
 
 - **Subscriptions** are collected via **Paysoft Flow** (Xero-integrated bulk debit orders). It has
   **no developer API**, so billing is set up **by hand** in Xero/Paysoft Flow — the signed proposal
@@ -24,13 +24,11 @@ billing decision** (documented in `../capucor-docs/operations/audit-portal-tasks
 ⛔ **There is no Paystack code here.** It was deleted on 2026-08-01 and **none of it is worth
 resurrecting** — the shop needs PayFast's ITN/MD5 scheme, not Paystack's HMAC-SHA512, and
 subscriptions are set up by hand from the signed proposal rather than by a payment webhook.
-Inventory of what went, in
-[`../capucor-docs/archive/capucor-web-phase-history.md`](../../capucor-docs/archive/capucor-web-phase-history.md).
+Git history keeps what went.
 `lib/security.ts` (`timingSafeEqual`) stayed; it is used by `/api/revalidate` and both cron routes.
 
 **When the PayFast shop path lands it starts from scratch:** a signed redirect plus an ITN webhook
 validated by MD5 signature and a server postback.
 
-(The client portal and `/onboarding` run in [`../capucor-os`](../../capucor-os/AGENTS.md) on
-capucor.app, which is being sunset. Since phase 3 signing on capucor.com creates no portal access;
-provision-on-sign and `lib/portal/provision.ts` were removed.)
+Signing creates no portal access or other account: provision-on-sign and `lib/portal/provision.ts`
+were removed in web-standalone phase 3 (2026-10-07).

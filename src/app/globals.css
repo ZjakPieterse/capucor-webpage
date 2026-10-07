@@ -6,8 +6,7 @@
    Dependabot advisories through @modelcontextprotocol/sdk, and no release
    clears them. It was never a pure CLI: this @import was a real build-time
    dependency on node_modules/shadcn. Vendoring keeps the emitted CSS
-   byte-identical and matches ../capucor-os, which vendored the same block on
-   2026-08-19. This creates an upstream-drift seam: whenever generated UI
+   byte-identical. This creates an upstream-drift seam: whenever generated UI
    components are refreshed, compare this block with shadcn's tailwind.css and
    visually re-check the affected component states. */
 @theme inline {

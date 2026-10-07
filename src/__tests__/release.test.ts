@@ -8,10 +8,8 @@
  * collapse to the sentinel rather than be passed through — a short SHA, a tag
  * or a branch name would each read as provenance while proving nothing.
  *
- * ⚠️ Hand-synced with ../capucor-os/src/__tests__/release.test.ts. Both Workers
- * report a release on their signed /api/health, both deploy workflows compare
- * it the same way, and a divergence would let one repo's gate pass on a value
- * the other would reject.
+ * The Worker reports a release on its signed /api/health and deploy.yml
+ * compares it; a divergence would let the gate pass on a value it should reject.
  */
 import { describe, expect, it, vi } from 'vitest';
 
