@@ -2,11 +2,6 @@
 /**
  * Credential-free OpenNext/Cloudflare production build.
  *
- * ⚠️ Hand-synced with ../capucor-os/scripts/build-cf-offline.mjs, together with
- * scripts/offline-build-guards.mjs beside it. Both repositories build the same
- * way and both need the same credential boundary; a one-sided edit is exactly
- * the drift knownDuplicates exists for.
- *
  * WHY THIS EXISTS. `npm run build:cf` is a production-shaped build, and until
  * now it could only be proved in CI — because on the dev box it reads
  * `.env.local`, and the credential-restricted sandbox that does the engineering
@@ -35,10 +30,8 @@
  *
  *   1. STRUCTURAL. The file set copied into the snapshot is whatever
  *      `git ls-files --cached --others --exclude-standard` reports — i.e.
- *      tracked files plus untracked files git does NOT ignore. Both repos
- *      ignore `.env*`, `.dev.vars*` and `*.pem`; capucor-os additionally
- *      ignores `*.key`, `backups/` and `e2e/.state/`, which it has and
- *      capucor-web does not.
+ *      tracked files plus untracked files git does NOT ignore. This repo
+ *      ignores `.env*`, `.dev.vars*`, `*.pem` and `*.key` (see .gitignore).
  *      ⚠️ THE TWO `.gitignore` FILES DIFFER, so guard 1's strength differs
  *      between the repositories even though this script does not. That is
  *      precisely why guard 2 exists and is not merely belt-and-braces: it is
@@ -307,10 +300,9 @@ function assertSyntheticValuesReachedTheBundle(root) {
 
   // SELF-ARMING, and for exactly the reason capucor-web's deploy.yml gives for
   // NOT grepping the client bundle there: the client inlining only happens when
-  // a BROWSER Supabase client exists to inline it for. capucor-os has one
-  // (/login); capucor-web does not — that went to capucor-os in Phase 3 — so a
-  // hardcoded client-asset assertion would fail 100% of the time in one repo
-  // while proving something real in the other. Checking for the file arms the
+  // a BROWSER Supabase client exists to inline it for. capucor-web has none
+  // (there is no login here), so a hardcoded client-asset assertion would fail
+  // 100% of the time. Checking for the file arms the
   // gate where it means something and stays quiet where it does not, so the two
   // copies of this script stay identical. MEASURED 2026-09-04: without this,
   // capucor-web's first credential-free build failed on precisely that.

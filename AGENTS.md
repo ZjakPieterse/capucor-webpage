@@ -12,20 +12,19 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 > Antigravity, Cursor, and any future tool — should read this file. `CLAUDE.md` and `GEMINI.md`
 > are thin pointers to it; **edit this file, not them.**
 
-> ⚠️ **Status 2026-10-05.** `capucor-docs` is archived (read-only) and the old
-> `capucor-workspace` root is retired. Planning, decisions and cross-product brand/voice knowledge
-> now live in the owner's private workspace. Links into `../capucor-docs/` below are historical
-> references, not live rules; `npm run audit` in capucor-os no longer applies. Direction: this repo
-> becomes a stand-alone product (site, pricing calculator, proposals).
+> ⚠️ **Status 2026-10-07.** This repo is a stand-alone product: the site, the pricing calculator
+> and the whole proposal funnel (web-standalone, 2026-10-07). Planning, decisions and cross-product
+> brand/voice knowledge live in the owner's private workspace. `capucor-docs` is archived
+> (read-only); paths into it that remain in these docs are historical references, not live rules.
 
 # Capucor Web — Project Reference
 
 Capucor Business Solutions public website and sales funnel — capucor.com. South African outsourced
 accounting firm targeting modern SMEs. Deployed to Cloudflare Workers via OpenNext.
 
-**This repo is marketing only.** The client portal, `/internal` and login are **Capucor OS**, a
-separate repo and Worker on capucor.app — see [`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md)
-and the "Domain seam" section below.
+**This repo is capucor.com: the site and the sales funnel, end to end** (calculator → proposal →
+email → sign → `signed` + PDF in Drive). It has no login, portal or staff area; old portal paths
+only redirect away (see "Domain seam" below).
 
 ## Tech Stack
 
@@ -44,7 +43,7 @@ and the "Domain seam" section below.
 this repo's 39 Dependabot advisories and no release clears them). `components.json` stays, the
 required CSS is vendored into `src/app/globals.css`, and a component is added with
 `npx shadcn@latest add` — do not reinstall the package. See
-[`docs/deploy.md`](docs/deploy.md#-adding-a-shadcn-component-now) for the two checks that follow.
+[`docs/deploy.md`](docs/deploy.md#-adding-a-shadcn-component-now) for the check that follows.
 
 ## Prerequisites
 
@@ -76,7 +75,7 @@ cp .env.example .env.local
 | `RESEND_API_KEY` | Resend dashboard. Optional locally (delivery reports `pending` and link-bearing routes log their URL); required in production. |
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
-| `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. See "Domain seam" below |
+| `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. `NEXT_PUBLIC_APP_URL` feeds only the legacy Client Portal link (see "Domain seam" below) |
 | `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10/PH-06). Apps Script web-app `/exec` URL + its shared secret. Archival does not run until both are set. See `scripts/apps-script/README.md` |
 
 ## Dev Scripts
@@ -107,26 +106,24 @@ the build is **pinned to webpack** because OpenNext cannot bundle a Turbopack bu
 `@opennextjs/cloudflare` and Wrangler are **pinned exact and move together**. Recovery from a bad
 deploy is `wrangler rollback`.
 
-## Domain seam — capucor.com vs capucor.app
+## Domain seam — capucor.com only
 
-**Two domains, two repos, two Cloudflare Workers. This repo is capucor.com only.** Marketing and
-the whole sales funnel — including `/proposal/*`, the signing document — live here. `/login`,
-`/onboarding`, `/portal/*` and `/internal/*` are **Capucor OS**, a separate repo and Worker on
-capucor.app.
+**This repo is capucor.com only.** Marketing and the whole sales funnel — including
+`/proposal/*`, the signing document — live here. The only things left pointing at capucor.app
+(the legacy client portal) are kept until os-sunset: the `APP_PATHS` redirects in
+`next.config.ts` (`/portal`, `/login`, `/internal`, `/onboarding`, `/client-portal`) and the
+Navbar's Client Portal link (`siteConfig.appUrl`). Nothing else here reads, writes or links it.
 
-> **Working on the portal, `/internal`, login, or anything a signed-in user sees? Wrong repo — go
-> to [`../capucor-os/AGENTS.md`](../capucor-os/AGENTS.md).**
-
-⛔ **[`docs/domain-seam.md`](docs/domain-seam.md) — the seam itself, and four operational
+⛔ **[`docs/domain-seam.md`](docs/domain-seam.md) — the redirects, and four operational
 contracts filed under it.** Read it before touching the redirect table, a cron, a route handler
 that reads a body, or anything that sends email.
 
 - **Signing stops at `signed` + the signed PDF in Drive** (web-standalone phase 3, migration
   `001`): fulfilment is pdf → client email → owner email (with the Drive link). Nothing here
-  writes a capucor.app portal table; `proposals.client_org_id` is left unused until os-sunset.
+  writes a portal table; `proposals.client_org_id` is left unused until os-sunset.
 - **Web contract** — exact version pins, the redirect table and the declared crons live in
   `contracts/web-contract.json`, checked by `npm test`. It is web-owned: pricing, tiers, emails
-  and `db.ts` are this repo's files and nothing is compared with capucor-os.
+  and `db.ts` are this repo's files and nothing is compared with another repository.
 - **Retries run here.** `cron-reconcile-deliveries.yml` (zero-dependency
   `scripts/reconcile-deliveries.mjs`) finishes fulfilment and resends failed funnel emails,
   rebuilt from `src/lib/email/messages.mjs` under the original idempotency key. It runs from
@@ -142,11 +139,11 @@ that reads a body, or anything that sends email.
 
 ## Database (Supabase)
 
-Both apps share **one Supabase project**. ⚠️ **Since 2026-10-07 this repo owns the sales-funnel
+capucor.com shares **one Supabase project** with the legacy portal. ⚠️ **Since 2026-10-07 this repo owns the sales-funnel
 schema** (`leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`,
 `proposal_fulfilment`, `email_deliveries` and the signing/fulfilment functions). **New funnel
-migrations are written in this repo's [`supabase/migrations/`](supabase/migrations/) only** —
-never in capucor-os. Portal tables stay in capucor-os until os-sunset.
+migrations are written in this repo's [`supabase/migrations/`](supabase/migrations/) only.**
+Portal tables are not this repo's; what still crosses the line is in `docs/database.md`.
 `supabase/migrations/000_baseline_funnel.sql` records the live starting state and is ⛔ **never
 applied**.
 
@@ -179,7 +176,7 @@ src/
 │   ├── log.ts        # structured one-line-JSON logging into Workers Logs.
 │   │                 #   Use logError/logWarn/logInfo, not console.*; `evt` is a
 │   │                 #   stable dotted id you can query on in the Cloudflare
-│   │                 #   dashboard. Byte-identical to capucor-os's copy.
+│   │                 #   dashboard.
 │   ├── portal/       # ⚠️ NAME IS HISTORICAL — this is the SIGNING half, not a portal:
 │   │                 #   finalizeSign, fulfilment, proposalPdf, signEmails,
 │   │                 #   reconciliationAuth (the retry runner's PDF bridge).
@@ -201,17 +198,8 @@ metadata only, no chrome. Chrome is applied per area by nested layouts:
 Root `not-found.tsx` / `error.tsx` stay at `app/` root and render bare (the global 404 has no
 marketing chrome by design).
 
-The `app/(app)/`, `app/portal/` and `app/internal/` layouts were deleted in Phase 3 — they belong
-to [`../capucor-os`](../capucor-os/AGENTS.md) now. Two route groups remain here, `(site)` and the
-bare `proposal/`.
-
-## Project Tracker
-
-`../capucor-docs/operations/audit-portal-tasks.md` (in the private `capucor-docs` repo, a sibling
-of this one) is the living
-tracker for the audit + client-portal plan. When you start or finish any tracked item, update
-its checkbox and the "Last reviewed" date, and keep the `## Changelog` at the foot of that file
-current. It lives outside this git repo by design (it is not pushed to GitHub).
+There are no `(app)`, `portal/` or `internal/` route groups here (removed 2026-08-02). Two route
+groups remain, `(site)` and the bare `proposal/`.
 
 ## Maintenance & self-review
 

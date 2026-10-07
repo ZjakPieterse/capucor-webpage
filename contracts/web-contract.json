@@ -6,7 +6,7 @@
     "ci-silence).",
     "",
     "WEB-OWNED SINCE 2026-10-07 (web-standalone phase 2). It replaces the vendored",
-    "cross-repo contract that was shared with capucor-os and capucor-docs. Nothing here",
+    "cross-repo contract that was shared with two other repositories. Nothing here",
     "is compared with another repository: no digests of files that must match a sibling,",
     "no three-copies rule. Edit this file in this repo only.",
     "",
@@ -125,7 +125,7 @@
         "schedule": "0 * * * *",
         "maxAgeDays": 2,
         "notBefore": "2026-10-10T06:00:00Z",
-        "why": "Finishes signed-proposal fulfilment (signed PDF to Drive, the client and owner \"signed\" emails) and resends failed funnel emails under their original idempotency keys. If it has stopped, a signed client may never get their confirmation and Zjak may never get the owner email that starts billing — and nothing else retries them since capucor-os's reconciliation workflow was disabled (web-standalone phase 3). The hourly tier is declared because it bounds the worst case; the business-hours */10 tier rides on the same file. It fails a run only for what that run failed permanently, so an old permanent failure cannot keep it red and make it look stale. ⚠️ notBefore is the merge-day grace (see notBeforeWhy): refresh it to within three days of the merge if the merge slips, and remove it after the first successful scheduled run."
+        "why": "Finishes signed-proposal fulfilment (signed PDF to Drive, the client and owner \"signed\" emails) and resends failed funnel emails under their original idempotency keys. If it has stopped, a signed client may never get their confirmation and Zjak may never get the owner email that starts billing — and nothing else retries them (the old portal-side runner was disabled in web-standalone phase 3). The hourly tier is declared because it bounds the worst case; the business-hours */10 tier rides on the same file. It fails a run only for what that run failed permanently, so an old permanent failure cannot keep it red and make it look stale. ⚠️ notBefore is the merge-day grace (see notBeforeWhy): refresh it to within three days of the merge if the merge slips, and remove it after the first successful scheduled run."
       },
       {
         "repo": "web",
@@ -144,7 +144,7 @@
     "zeroDependencyWhy": "These jobs are checkout + setup-node + `node script.mjs` BY DESIGN. No `npm ci`, which is the difference between a run billing one minute against the free 2,000 and billing five. Do not add one."
   },
   "deployDrift": {
-    "why": "R-12. Nothing watched capucor-os `master` drifting ahead of what is actually deployed, and on 2026-08-24 it drifted by two merges before being closed by hand. ADR 0010 part 1 made this the NORMAL state rather than an exception: deployment is now a manual dispatch on both surfaces, so a merged fix is no longer a shipped fix and drift no longer self-corrects. `scripts/deploy-drift.mjs` asks the Actions API for the newest SUCCESSFUL run of each repo's deploy workflow, takes its `head_sha`, and compares that commit to the tip of the release branch.",
+    "why": "R-12. Nothing watched `master` drifting ahead of what is actually deployed; on 2026-08-24 this repo was measured four days and twenty-one commits behind its last production deploy. ADR 0010 part 1 made this the NORMAL state rather than an exception: deployment is a manual dispatch, so a merged fix is no longer a shipped fix and drift no longer self-corrects. `scripts/deploy-drift.mjs` asks the Actions API for the newest SUCCESSFUL run of each repo's deploy workflow, takes its `head_sha`, and compares that commit to the tip of the release branch.",
     "measuredEvidence": "MEASURED 2026-08-24, and it is why this exists rather than being proposed. capucor-webpage's last successful production deploy was `f99bc85` at 14:20Z on 2026-08-20 — the ADR 0010 verification dispatch. `master` was `3896e1c`, `ahead_by` 21, including the Node 24 Actions upgrade and four `db.ts` regenerations. Four days, twenty-one commits, no signal anywhere. The gap this check closes was open and occupied at the moment the check was written.",
     "questionIsComparisonNotAge": "⚠️ THE OBVIOUS SHAPE IS WRONG. The cron watchdog beside this asks 'when did the workflow last succeed?' and that question does not transfer. A deploy is not scheduled and has no cadence it is supposed to keep, so an age threshold on the WORKFLOW silently invents a release cadence ADR 0010 deliberately declined to set — and it is reset by a deploy that happened for an unrelated reason while the drift that matters persists. The question here is a COMPARISON: is the deployed commit still the tip of the branch, and if not, how long has the oldest unshipped commit been sitting there.",
     "measuresOldestUnshippedCommitNotCommitCount": "The gate is the AGE OF THE OLDEST UNSHIPPED COMMIT, never `ahead_by`. Commit count is noise: twenty-one commits of generated types is not riskier than one broken route, and gating on it would go red on a busy afternoon and green on a fortnight of neglect. Age measures the thing that actually went wrong — how long a merged fix has not been a shipped fix. `ahead_by` is reported as context and must not become a threshold.",

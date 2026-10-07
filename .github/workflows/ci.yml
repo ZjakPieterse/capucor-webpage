@@ -14,8 +14,9 @@ name: CI
 # The build still runs, because a build failure is a validation failure worth
 # catching on a pull request. What no longer happens is `wrangler deploy`.
 #
-# See capucor-os/docs/adr/0010-capucor-webpage-visibility-and-deployment-governance.md
-# and capucor-os/docs/adr/0003-ci-validation-and-deployment-separation.md.
+# ADR 0010 (2026-08-20, capucor-webpage visibility and deployment governance)
+# and ADR 0003 (CI validation and deployment separation) are the rationale;
+# both are recorded in the owner's private workspace.
 
 on:
   push:
@@ -72,12 +73,10 @@ jobs:
       #
       # This used to additionally grep .open-next/assets/_next/static for the
       # Supabase host, proving the URL was inlined into the CLIENT bundle. That
-      # assertion was removed in Phase 3 of the OS split and must not be
-      # restored here: this repo no longer has a browser Supabase client (it
-      # went to capucor-os with /login), so every Supabase call is server-side
-      # and the host is correctly absent from the client bundle. The grep would
-      # now fail 100% of the time. The bundle-inlining gate still exists, armed
-      # and meaningful, in the capucor-os repo — that is where login lives.
+      # assertion was removed on 2026-08-02 and must not be restored: this repo
+      # has no browser Supabase client (no login here), so every Supabase call
+      # is server-side and the host is correctly absent from the client bundle.
+      # The grep would fail 100% of the time.
       - name: Assert Supabase env reached the build
         run: |
           set -euo pipefail

@@ -7,10 +7,10 @@
  * failure modes are SILENT: the secret is absent, the guard skips the work, the
  * user sees a success state, and nothing is logged.
  *
- * The sibling repo learned this the hard way: capucor-os ran for two whole
+ * The sibling portal Worker learned this the hard way: it ran for two whole
  * phases with no Cloudflare secrets at all and every check stayed green,
  * because anonymous traffic returns early and never reaches the code that needs
- * them. See "Outstanding infrastructure" in ../capucor-os/AGENTS.md.
+ * them.
  *
  * BUILD-TIME vs RUNTIME. `NEXT_PUBLIC_*` are NOT listed here — they are inlined
  * into the bundle by `next build` and guarded by their own CI step. Everything

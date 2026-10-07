@@ -98,9 +98,8 @@ export const ProposalRequestSchema = z.object({
 
 export type ProposalRequestInput = z.infer<typeof ProposalRequestSchema>;
 
-// Proposal amend / resend moved to capucor-os with the /internal surface in
-// Phase 3 of the OS split (AmendProposalSchema + ResendProposalSchema, alongside
-// /api/proposals/{amend,resend}). Staff amend and resend on capucor.app now.
+// There is no proposal amend / resend (staff proposal tools were removed
+// everywhere on 2026-10-07, web-standalone phase 4).
 
 // ── Proposal e-signature (PR7 — /proposal/<token> sign step) ─────────────
 //
@@ -142,8 +141,7 @@ export const SignProposalSchema = z.object({
 export type SignProposalInput = z.infer<typeof SignProposalSchema>;
 
 // The staff client-record schemas (OrgDetailsSchema, ManualSubscriptionSchema,
-// CreateClientSchema) moved to capucor-os with /internal in Phase 3. They only
-// ever backed the "Add client" and Organisation-card forms on capucor.app.
+// CreateClientSchema) left with /internal on 2026-08-02; they never applied here.
 
 // ── POPIA data-subject request (P1) ─────────────────────────────────────
 //

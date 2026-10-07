@@ -18,7 +18,7 @@ import { isAbsolute, join } from 'node:path';
  *    indistinguishable from a working guard until the day it is needed.
  *
  * The second shape is why the normalisation belongs at the read boundary rather
- * than in each assertion. Copied from `../capucor-os`, which learned it first.
+ * than in each assertion.
  *
  * @param parts Path segments. Absolute first segment is used as-is; otherwise
  *              the path is resolved against the repository root.

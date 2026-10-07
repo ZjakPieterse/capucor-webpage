@@ -1,7 +1,8 @@
 # Database — the sales-funnel schema this repo owns
 
-> Both apps still share **one Supabase project**. Since **2026-10-07** (web-standalone, phase 1)
-> **this repo owns the sales-funnel schema**; capucor-os keeps the portal tables until os-sunset.
+> capucor.com shares **one Supabase project** with the legacy client portal. Since **2026-10-07**
+> (web-standalone, phase 1) **this repo owns the sales-funnel schema**; the portal's tables are not
+> this repo's and go at os-sunset.
 > Picking the wrong Supabase client here causes silent data loss rather than an error.
 >
 > Canonical agent instructions: [`../AGENTS.md`](../AGENTS.md).
@@ -18,20 +19,21 @@
 
 The starting state is recorded in
 [`supabase/migrations/000_baseline_funnel.sql`](../supabase/migrations/000_baseline_funnel.sql),
-consolidated from capucor-os migrations 001–065 and cross-checked column by column against
-`src/types/db.ts`. ⛔ **That file is a record and is never applied** — everything in it is already
+consolidated from the funnel's former migrations (001–065, in the portal repo) and cross-checked
+column by column against `src/types/db.ts`. ⛔ **That file is a record and is never applied** — everything in it is already
 live, and its first statement raises an exception on purpose. Changes since then are this repo's
 numbered migrations:
 
 | # | What | Status |
 |---|---|---|
 | `001_signing_stops_at_signed_pdf.sql` | Drops the `portal` fulfilment stage and `provision_from_signed_proposal` (web-standalone phase 3). Fulfilment is pdf → client_email → owner_email. | Applied 2026-10-07 |
-| `002_drop_staff_proposal_rpcs.sql` | Drops `create_proposal_amendment` and `start_proposal_resend` (web-standalone phase 4). Applied after capucor-os#157 was deployed. | Applied 2026-10-07 |
+| `002_drop_staff_proposal_rpcs.sql` | Drops `create_proposal_amendment` and `start_proposal_resend` (web-standalone phase 4), after capucor.app's staff proposal tools were removed. | Applied 2026-10-07 |
+| `003_drop_legacy_signed_event_types.sql` | `finish_proposal_fulfilment_stage` stops accepting the pre-phase-3 `proposal.portal_ready_client` / `proposal.provisioned_owner` deliveries (web-standalone phase 5). | Written 2026-10-07, not applied |
 
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
 table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`.
 `testimonials` was adopted into the baseline on 2026-10-07: capucor.com is its only reader, and
-capucor-os's nightly backup still copies it until os-sunset.
+the portal's nightly backup still copies it until os-sunset.
 
 ### Links across the line (until os-sunset)
 
@@ -43,13 +45,17 @@ capucor-os's nightly backup still copies it until os-sunset.
   `approval`) are never touched here, and since phase 3 nothing retries them.
 - `set_updated_at()` is shared with portal tables. Never drop or rename it from here.
 - The staff policy `internal_select_proposals` calls portal helpers. Drop it at os-sunset.
+- ⚠️ capucor-os's CI and deploys run a schema-drift check over its own old migrations. A migration
+  here that **drops a funnel column** (as `001` did) turns every capucor-os CI run and deploy red
+  until that column is added to `DROPPED_BY_CAPUCOR_WEBPAGE` in its
+  `scripts/check-schema-drift.mjs`. Tell Zjak in the hand-over when a migration drops a column.
 
 ## Writing a migration
 
 1. Write it in **this repo's** `supabase/migrations/`, numbered from `001_…` (the baseline is
-   `000`). ⛔ Never write a funnel migration in capucor-os again.
+   `000`). ⛔ Funnel migrations are written here and nowhere else.
 2. Head it with what it changes, why, pre-flight and verify queries, and a rollback — as
-   capucor-os `065` does.
+   `001` and `002` do.
 3. ⚠️ **Price changes are new `brackets` rows, never edits.** Proposals store bracket ordinals and
    re-pricing does not filter on `active`, so editing a live row re-prices every unsigned
    proposal. Issue a new ladder and retire the old rows (see the baseline's `brackets` note).
@@ -67,14 +73,14 @@ re-open push.
 ## Types
 
 `src/types/db.ts` is **generated in this repo** (since 2026-10-07, web-standalone phase 2) and is
-not pinned or compared with capucor-os. After Zjak confirms a funnel migration is applied, run
+not pinned or compared with another repository. After Zjak confirms a funnel migration is applied, run
 `npm run db:types` and commit the regenerated file with the code that uses it.
 
 - It needs `npx supabase login` on the machine. ⚠️ A `SUPABASE_ACCESS_TOKEN` environment variable
   takes precedence over the login; a stale one fails with `Unauthorized`.
 - ⚠️ If the CLI fails, the shell redirect still truncates `src/types/db.ts` and writes an error
   into it — restore it with `git checkout src/types/db.ts`.
-- The file covers the whole shared project, portal tables included, so a capucor-os migration
+- The file covers the whole shared project, portal tables included, so a portal-side migration
   also shows up in the next regeneration. That is expected; commit it.
 
 ### Supabase clients — pick the right one (load-bearing)

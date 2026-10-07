@@ -1,6 +1,5 @@
-// Web-owned since 2026-10-07 (web-standalone phase 2). capucor-os keeps an old
-// copy for its staff amend form until phase 4 switches that off; it is not kept
-// in step and nothing here compares the two. Keep pricing.test.ts passing.
+// Web-owned since 2026-10-07 (web-standalone phase 2). Keep pricing.test.ts
+// passing.
 
 import { PRICING_ADDONS, addonIncludedInTier, tierDisplayName, type PricingAddon } from '@/config/tiers';
 import type { Bracket, BracketValue, Service } from '@/types';

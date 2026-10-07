@@ -1,8 +1,6 @@
 /**
  * The credential boundary of the offline Cloudflare build, on its own.
  *
- * ⚠️ Hand-synced with ../capucor-os/scripts/offline-build-guards.mjs.
- *
  * WHY IT IS A SEPARATE MODULE. `scripts/build-cf-offline.mjs` runs a build the
  * moment it is imported, so a unit test cannot import it to check its rules —
  * it would spend three minutes running a webpack build instead. Everything that

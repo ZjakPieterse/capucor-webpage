@@ -4,8 +4,7 @@
  * THE TIP OF THE BRANCH, AND IF NOT, HOW LONG HAS THAT BEEN TRUE?
  *
  * WHY THIS EXISTS. Risk R-12. Nothing watched `master` drifting ahead of what
- * is actually deployed. On 2026-08-24 capucor-os drifted by two merges before
- * being closed by hand, and the same day capucor-webpage was measured four days
+ * is actually deployed. On 2026-08-24 capucor-webpage was measured four days
  * and TWENTY-ONE commits behind its last successful production deploy — the
  * Node 24 Actions upgrade and four `db.ts` regenerations among them — with no
  * signal anywhere. ADR 0010 part 1 is why this now matters more, not less:

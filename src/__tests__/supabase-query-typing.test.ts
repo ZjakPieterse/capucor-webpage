@@ -16,8 +16,8 @@
  *
  * Either way the column list is unchecked and `tsc` stays green over it.
  *
- * ⚠️ THIS REPLACED A NINE-FILE ALLOWLIST ON 2026-09-04. `../capucor-os` cleaned
- * its casts in AE-02 and pinned the nine files it had touched. That guard is
+ * ⚠️ THIS REPLACED A NINE-FILE ALLOWLIST ON 2026-09-04. The sibling portal repo
+ * cleaned its casts in AE-02 and pinned the nine files it had touched. That guard is
  * correct and blind in the one direction that matters: a NEW module written with
  * the escape hatch is invisible to it, because it is not on the list. The
  * failure mode of an allowlist is that it protects the files that already

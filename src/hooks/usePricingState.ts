@@ -36,8 +36,8 @@ const DEFAULT_STATE: PricingState = {
 // proposal. Crosses the server→client boundary, so it's plain arrays/objects —
 // the Set is rebuilt here.
 //
-// Its original caller was the staff amend page, which moved to capucor-os in
-// Phase 3 of the OS split. Nothing seeds the calculator today; the hook is kept
+// Its original caller was the staff amend page, removed with the staff
+// proposal tools (2026-10-07). Nothing seeds the calculator today; the hook is kept
 // because it is the supported way to do so and costs nothing dormant.
 export interface PricingSeed {
   services: string[];

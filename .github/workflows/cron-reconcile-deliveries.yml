@@ -3,9 +3,8 @@ name: Cron — signed-proposal fulfilment and email retries
 # Web-standalone phase 3 (2026-10-07). Finishes signed-proposal fulfilment
 # (signed PDF to Drive, the client and owner "signed" emails) and resends failed
 # funnel emails (leads, POPIA data requests, proposals) under their original
-# idempotency keys. Replaces capucor-os's cron-email-reconciliation.yml, which
-# must be disabled before this first runs: it does not know the new
-# `proposal.signed_*` events and would fail them permanently.
+# idempotency keys. It is the only retry runner for funnel emails (the old
+# portal-side runner was disabled at this workflow's release, 2026-10-07).
 #
 # Why an Action and not the Worker: Workers Free allows 10 ms CPU and 50
 # subrequests per request; a full fulfilment needs more of both. Zero

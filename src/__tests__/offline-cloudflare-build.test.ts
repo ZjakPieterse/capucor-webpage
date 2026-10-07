@@ -14,10 +14,6 @@
  * file set from git rather than from a hand-written list, that it asserts
  * before AND after the build, and that its cleanup cannot be pointed at a
  * directory it did not create.
- *
- * ⚠️ Hand-synced with
- * ../capucor-os/src/__tests__/offline-cloudflare-build.test.ts. Both repositories
- * build the same way and carry the same credential boundary.
  */
 import { afterAll, describe, expect, it } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -282,7 +278,7 @@ describe('offline Cloudflare build — environment scrub', () => {
     // recording because it is the shape a copied test fails in. It claimed this
     // repo had "no equivalent guard to arm" and pinned
     // `not.toContain('PHASE_PRODUCTION_BUILD')` — which goes RED if this repo
-    // ever gains capucor-os's phase gate (an improvement) and stays GREEN if
+    // ever gains a phase gate (an improvement) and stays GREEN if
     // someone deletes the guard entirely (the regression it was meant to
     // catch). It also asserted something untrue: the guard is right there in
     // next.config.ts and predates this change.
@@ -290,11 +286,10 @@ describe('offline Cloudflare build — environment scrub', () => {
     expect(readSource('next.config.ts')).toContain('process.env.CI && !SUPABASE_URL');
   });
 
-  it('9a. pins WHERE that guard fires, because it differs from capucor-os', () => {
-    // ⚠️ A REAL DIFFERENCE, PINNED SO IT STAYS A DECISION RATHER THAN A DRIFT.
-    // capucor-os wraps the same throw in `phase === PHASE_PRODUCTION_BUILD`
-    // precisely so unrelated CI importers — Vitest among them — do not need
-    // deployment secrets. This repo throws on ANY import under CI, and
+  it('9a. pins WHERE that guard fires', () => {
+    // ⚠️ PINNED SO IT STAYS A DECISION RATHER THAN A DRIFT. Wrapping the throw
+    // in `phase === PHASE_PRODUCTION_BUILD` would spare unrelated CI importers
+    // — Vitest among them — the deployment secrets. This repo throws on ANY import under CI, and
     // redirects.test.ts imports next.config directly, so this suite depends on
     // NEXT_PUBLIC_SUPABASE_URL being set in CI (ci.yml supplies it).
     //
@@ -312,8 +307,7 @@ describe('offline Cloudflare build — environment scrub', () => {
   });
 
   it('9b. guards vitest.config.ts, which carries the same credential boundary', () => {
-    // AE-01 gave capucor-os `envDir: false` and a regression test; this repo got
-    // the setting in AE-03 and, until now, nothing asserting it. Deleting the
+    // This repo got `envDir: false` in AE-03 and, until now, nothing asserting it. Deleting the
     // line silently restores Vite's .env.local discovery during unit tests —
     // exactly the boundary crossing the setting exists to close, and a deletion
     // that no check would notice.
@@ -356,10 +350,10 @@ describe('offline Cloudflare build — the script itself', () => {
 
   it('14. proves the build consumed the synthetic environment', () => {
     // Without this the script could pass while silently building from some
-    // other env — the failure mode it exists to rule out. The SERVER half holds
-    // in both repositories, because next.config.ts bakes the Supabase URL into
-    // the CSP; the client half is self-arming, because only capucor-os has a
-    // browser Supabase client to inline it for.
+    // other env — the failure mode it exists to rule out. The SERVER half always
+    // holds, because next.config.ts bakes the Supabase URL into the CSP; the
+    // client half is self-arming, because this repo has no browser Supabase
+    // client to inline it for.
     expect(script).toContain('assertSyntheticValuesReachedTheBundle(snapshot)');
     expect(script).toContain("search(join(root, '.open-next', 'server-functions'))");
     expect(script).toContain('is nowhere in the server');
@@ -367,9 +361,8 @@ describe('offline Cloudflare build — the script itself', () => {
   });
 
   it('14a. correctly SKIPS the client-bundle half, because this repo has no browser client', () => {
-    // ⚠️ THE MIRROR IMAGE OF THE capucor-os ASSERTION, AND A MEASURED FACT
-    // RATHER THAN AN ASSUMPTION. The browser Supabase client went to capucor-os
-    // with /login in Phase 3, so nothing here inlines the URL into the client
+    // ⚠️ A MEASURED FACT RATHER THAN AN ASSUMPTION. There is no browser
+    // Supabase client here (no login since 2026-08-02), so nothing here inlines the URL into the client
     // bundle — capucor-web's deploy.yml says the same thing about its own
     // removed grep. A hardcoded client-asset assertion fails 100% of the time
     // here, which is exactly what the first credential-free build did on

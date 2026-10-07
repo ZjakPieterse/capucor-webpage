@@ -30,10 +30,10 @@ import { MobileTotalBar } from './MobileTotalBar';
 import { StickyConfigChip } from './StickyConfigChip';
 import type { CalculatorStep, PricingData, Testimonial } from '@/types';
 
-// Amend mode was removed in Phase 3 of the OS split. Staff amend a proposal on
-// capucor.app now, through a plain form in the capucor-os repo — this calculator
-// is once again public-only, and `seed` is the sole remaining pre-population
-// hook. Do not re-add an amend branch here; the staff surface lives elsewhere.
+// Amend mode was removed on 2026-08-02, and there are no staff proposal tools
+// anywhere since 2026-10-07 (web-standalone). This calculator is public-only,
+// and `seed` is the sole remaining pre-population hook. Do not re-add an amend
+// branch here.
 interface PricingCalculatorProps {
   data: PricingData;
   testimonials?: Testimonial[];

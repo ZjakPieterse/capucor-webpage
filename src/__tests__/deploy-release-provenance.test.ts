@@ -8,10 +8,7 @@
  * public, a production secret that migrates into a workflow that runs on every
  * push. Each of those leaves every other check green.
  *
- * ⚠️ Hand-synced with
- * ../capucor-os/src/__tests__/deploy-release-provenance.test.ts.
- * Both repositories carry the same gates for the same reason; see
- * contracts/web-contract.json → releaseProvenance.
+ * See contracts/web-contract.json → releaseProvenance.
  *
  * ⚠️ THE WATCHDOG ASSERTION AT THE END IS THE ONE THAT MATTERS MOST. The
  * cross-repo contract records why the deployed-SHA question was left open:

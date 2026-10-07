@@ -3,10 +3,9 @@ import 'server-only';
 /**
  * Which commit is this Worker actually running?
  *
- * ⚠️ Hand-synced with ../capucor-os/src/lib/release.ts (not enforced since
- * web-standalone phase 2; reviewed in phase 5). Both Workers report a
- * release on their signed /api/health and both deploy workflows compare it the
- * same way; a divergence would let one gate accept a value the other rejects.
+ * The Worker reports its release on the signed /api/health and deploy.yml
+ * compares it (see contracts/web-contract.json → releaseProvenance); keep the
+ * two in step.
  *
  * WHY THIS EXISTS. `scripts/deploy-drift.mjs` asks the Actions API for the
  * newest successful deploy run and compares its `head_sha` to the tip of

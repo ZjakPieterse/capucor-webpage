@@ -7,8 +7,7 @@ export default defineConfig({
   // both crosses the sandbox credential boundary and makes an offline gate depend
   // on developer-only secrets it does not use.
   //
-  // ⚠️ Same reasoning as ../capucor-os/vitest.config.mts (AE-01), and the same
-  // reason npm run build:cf:offline exists: verification here must not need a
+  // ⚠️ The same reason npm run build:cf:offline exists: verification here must not need a
   // credential it does not use.
   envDir: false,
   test: {

@@ -14,8 +14,7 @@
 // every real proposal is unaffected. A malformed value narrows to empty rather
 // than throwing, because these sit on the proposal display, the signing confirm
 // and the archived-PDF paths: refusing would take a signable proposal off the
-// air over a display-only field. `../capucor-os`'s `amendPayload.ts` made the
-// same call for the same reason.
+// air over a display-only field.
 //
 // ⚠️ Narrowing away a non-empty value is therefore NOT silent — it is logged at
 // warn level with the proposal id, because "the mandate lost its bracket map"

@@ -17,8 +17,6 @@
  * Same shape as `deploy-drift.test.ts`, and for the same stated reason: the
  * verdicts that would actually be reached in an emergency cannot be
  * manufactured against a healthy system.
- *
- * ⚠️ Hand-synced with ../capucor-os/src/__tests__/release-provenance.test.ts.
  */
 import { describe, expect, it } from 'vitest';
 

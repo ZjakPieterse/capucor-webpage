@@ -35,12 +35,6 @@
  * Callers own their own response shape — this returns a status and a message
  * rather than a NextResponse, so each route keeps the error envelope its client
  * already parses.
- *
- * ⚠️ Duplicated in capucor-os, deliberately NOT added to the hand-synced list in
- * AGENTS.md. That list exists for files where drift causes a real bug across the
- * seam (two different quotes from one selection). This is self-contained logic
- * with no cross-repo contract: each repo's routes only ever call their own copy,
- * so the copies drifting costs nothing.
  */
 
 import type { NextRequest } from 'next/server';
