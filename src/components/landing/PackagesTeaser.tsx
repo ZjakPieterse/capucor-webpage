@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { commonItemIcon } from "@/components/pricing/commonItemIcons";
+import { CoreServicesPanel } from "@/components/pricing/CoreServicesPanel";
 import { TierNudge } from "@/components/pricing/TierNudge";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -45,28 +45,11 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
           />
         </ScrollReveal>
 
-        {/* Included in every package */}
+        {/* The same core services panel as the calculator's packages step,
+            so both read as one product (tweaks round 3). */}
         <ScrollReveal delay={0.1}>
-          <div className="premium-glass mt-10 rounded-2xl border border-white/10 bg-card/75 px-8 py-6">
-            <p className="text-xs font-medium uppercase tracking-widest text-center text-muted-foreground mb-5">
-              Included in every package
-            </p>
-            {/* Constrained + centered so the items cluster toward the middle of
-                the strip, leading the eye down to the "Recommended" card. */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-4 max-w-5xl mx-auto">
-              {packageCommonItemsFor(true).map((item) => {
-                const Icon = commonItemIcon(item.text);
-                return (
-                  <div
-                    key={item.text}
-                    className="flex items-center justify-center gap-2.5"
-                  >
-                    <Icon className="h-4 w-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium">{item.text}</span>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="mt-10">
+            <CoreServicesPanel items={packageCommonItemsFor(true)} />
           </div>
         </ScrollReveal>
 
@@ -104,14 +87,6 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
                     isMiddle ? "popular-card" : "border-white/10",
                   )}
                 >
-                  {isMiddle && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                        Recommended
-                      </span>
-                    </div>
-                  )}
-
                   <div className="mb-6">
                     <h3 className="text-lg font-semibold mb-1">{tier.name}</h3>
                     {TIER_BUYER_FIT[tier.slug] ? (

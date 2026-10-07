@@ -83,7 +83,8 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   vary only the icon and copy, keep the styling byte-identical. Example: the tier nudge pills
   (`components/pricing/TierNudge.tsx`) — all three pricing tiers carry the same pill
   (`bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1`), differing only in icon and
-  label (`TIER_NUDGES` in `config/calculatorCopy.ts`).
+  label (`TIER_NUDGES` in `config/calculatorCopy.ts`). The one deliberate exception: the
+  featured package (Pro) gets a filled pill so it reads as the recommendation.
 
 ### Price display
 

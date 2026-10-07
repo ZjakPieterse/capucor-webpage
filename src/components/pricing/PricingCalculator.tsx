@@ -16,7 +16,6 @@ import {
   PRICING_PAGE_HEADING,
   PRICING_PAGE_INTRO,
   QUESTION_COPY,
-  TRANSACTIONS_FIT_CALL_PROMPT,
 } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
@@ -199,8 +198,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             onChange={(v) => pickAndNext(slug, v)}
             onNext={next}
             onBack={step === 'revenue' ? undefined : back}
-            showFitCall
-            fitCallPrompt={step === 'transactions' ? TRANSACTIONS_FIT_CALL_PROMPT : undefined}
             // Payroll starts at a headcount: a payroll Yes with no employees is a
             // fit call, so the "Dormant" band is not offered here (F18).
             excludeLabels={step === 'employees' ? ['Dormant'] : undefined}
@@ -217,7 +214,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             onAnswer={(v) => answerAndNext(key, v)}
             onNext={next}
             onBack={back}
-            showFitCall={step === 'payroll'}
           />
         );
       }
