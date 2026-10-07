@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { siteConfig } from '@/config/site';
 import { DATA_REQUEST_SLA_DAYS, LEAD_RETENTION_DAYS } from '@/lib/consent';
 
 const LEAD_RETENTION_MONTHS = Math.round(LEAD_RETENTION_DAYS / 30);
@@ -10,6 +11,14 @@ export const metadata: Metadata = {
   description:
     'How Capucor Business Solutions collects, uses, and protects your personal information under POPIA.',
   robots: { index: true, follow: true },
+  alternates: { canonical: `${siteConfig.marketingUrl}/privacy` },
+  openGraph: {
+    type: 'website',
+    locale: 'en_ZA',
+    siteName: siteConfig.name,
+    url: `${siteConfig.marketingUrl}/privacy`,
+    images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
+  },
 };
 
 export default function PrivacyPage() {

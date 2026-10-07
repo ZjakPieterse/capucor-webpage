@@ -310,13 +310,14 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
             autoComplete="name"
             placeholder="As it should appear on the agreement"
             aria-invalid={errors.signatureName ? 'true' : undefined}
+            aria-describedby={errors.signatureName ? 'signatureName-error' : undefined}
             {...nameField}
             onChange={(e) => {
               nameField.onChange(e);
               setTypedName(e.target.value);
             }}
           />
-          {errors.signatureName && <p className="mt-1 text-xs text-destructive">{errors.signatureName.message}</p>}
+          {errors.signatureName && <p id="signatureName-error" className="mt-1 text-xs text-destructive">{errors.signatureName.message}</p>}
         </div>
 
         {/* Method-specific input */}

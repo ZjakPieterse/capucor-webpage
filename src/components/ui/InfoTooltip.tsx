@@ -80,10 +80,16 @@ export function InfoTooltip({ content }: InfoTooltipProps) {
         aria-describedby={open ? id : undefined}
         aria-label="More information"
         className={cn(
-          'ml-1.5 inline-flex items-center rounded-sm transition-colors',
-          'text-muted-foreground/40 hover:text-muted-foreground/70',
+          // 24x24 hit area (WCAG 2.5.8) around the 12px icon: 6px padding on
+          // every side, cancelled by negative margins on top, right and bottom
+          // so the line box and the icon's position stay as they were. The
+          // left gap keeps its old 6px from the padding (ml-1.5 → ml-0).
+          'ml-0 -mr-1.5 -my-1.5 p-1.5 inline-flex items-center rounded-sm transition-colors',
+          // /60 is 3.3:1 on the page background, clearing SC 1.4.11's 3:1 for a
+          // control's icon (/40 was 2.1:1). See contrast.test.ts.
+          'text-muted-foreground/60 hover:text-muted-foreground/80',
           'focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
-          open && 'text-muted-foreground/70'
+          open && 'text-muted-foreground/80'
         )}
         onMouseEnter={() => { if (!clickOpenRef.current) setOpen(true); }}
         onMouseLeave={() => { if (!clickOpenRef.current) setOpen(false); }}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { siteConfig } from '@/config/site';
 import {
   PROPOSAL_TERMS,
   RESPONSIBILITIES_OURS,
@@ -13,6 +14,14 @@ export const metadata: Metadata = {
   description:
     'The full terms of engagement that apply to a signed Capucor proposal: fees, fair usage, responsibilities, debit-order authorisation, and more.',
   robots: { index: true, follow: true },
+  alternates: { canonical: `${siteConfig.marketingUrl}/terms/engagement` },
+  openGraph: {
+    type: 'website',
+    locale: 'en_ZA',
+    siteName: siteConfig.name,
+    url: `${siteConfig.marketingUrl}/terms/engagement`,
+    images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
+  },
 };
 
 export default function EngagementTermsPage() {

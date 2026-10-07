@@ -276,9 +276,10 @@ export function ActivateProposalModal({
                   type="text"
                   autoComplete="given-name"
                   aria-invalid={errors.firstName ? 'true' : undefined}
+                  aria-describedby={errors.firstName ? 'firstName-error' : undefined}
                   {...register('firstName')}
                 />
-                {errors.firstName && <p className="mt-1 text-xs text-destructive">{errors.firstName.message}</p>}
+                {errors.firstName && <p id="firstName-error" className="mt-1 text-xs text-destructive">{errors.firstName.message}</p>}
               </div>
               <div>
                 <Label htmlFor="lastName" className="mb-1.5 block text-sm">
@@ -289,9 +290,10 @@ export function ActivateProposalModal({
                   type="text"
                   autoComplete="family-name"
                   aria-invalid={errors.lastName ? 'true' : undefined}
+                  aria-describedby={errors.lastName ? 'lastName-error' : undefined}
                   {...register('lastName')}
                 />
-                {errors.lastName && <p className="mt-1 text-xs text-destructive">{errors.lastName.message}</p>}
+                {errors.lastName && <p id="lastName-error" className="mt-1 text-xs text-destructive">{errors.lastName.message}</p>}
               </div>
             </div>
 
@@ -302,11 +304,13 @@ export function ActivateProposalModal({
               <Input
                 id="businessName"
                 type="text"
+                autoComplete="organization"
                 placeholder="e.g. Cape Town Roastery"
                 aria-invalid={errors.businessName ? 'true' : undefined}
+                aria-describedby={errors.businessName ? 'businessName-error' : undefined}
                 {...register('businessName')}
               />
-              {errors.businessName && <p className="mt-1 text-xs text-destructive">{errors.businessName.message}</p>}
+              {errors.businessName && <p id="businessName-error" className="mt-1 text-xs text-destructive">{errors.businessName.message}</p>}
             </div>
 
             <div>
@@ -318,9 +322,10 @@ export function ActivateProposalModal({
                 type="email"
                 autoComplete="email"
                 aria-invalid={errors.email ? 'true' : undefined}
+                aria-describedby={errors.email ? 'proposal-email-error' : undefined}
                 {...register('email')}
               />
-              {errors.email && <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
+              {errors.email && <p id="proposal-email-error" className="mt-1 text-xs text-destructive">{errors.email.message}</p>}
             </div>
 
             {/* Honeypot */}

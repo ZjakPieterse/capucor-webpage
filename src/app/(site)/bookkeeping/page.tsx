@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
+    siteName: siteConfig.name,
     url: `${siteConfig.marketingUrl}/bookkeeping`,
     description:
       'Monthly bookkeeping for owner-run South African businesses. Bank reconciliations, management accounts and Xero included.',

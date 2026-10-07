@@ -58,7 +58,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
       </div>
 
       {error.digest && (
-        <p className="mt-8 text-[10px] uppercase tracking-widest text-muted-foreground/70 font-mono">
+        <p className="mt-8 text-[10px] uppercase tracking-widest text-muted-foreground/80 font-mono">
           ref: {error.digest}
         </p>
       )}

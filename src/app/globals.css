@@ -1660,3 +1660,27 @@
   color: transparent;
   padding-bottom: 0.06em;
 }
+
+/* ─── Skip link (WCAG 2.4.1) ─────────────────────────────────────────────────
+   First focusable element on every (site) page. Off-screen until it receives
+   keyboard focus, then pinned top-left above the sticky navbar (z-50). A named
+   class rather than `sr-only focus:not-sr-only` utilities, for the same reason
+   hover styling lives here: state variants do not reliably emit in this build. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0.75rem;
+  z-index: 60;
+  transform: translateY(-200%);
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+}

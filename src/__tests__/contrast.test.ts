@@ -109,6 +109,26 @@ describe('canonical dark theme contrast', () => {
       expect(contrast(ringHalf(bg), bg)).toBeGreaterThanOrEqual(AA_NON_TEXT);
     }
   });
+
+  // Translucent muted text (2026-10-07 technical review). `/70` measured 4.15:1
+  // on the background and 3.98:1 on a card, and `/60` 3.3:1, so small text
+  // set that way failed AA: the "not included" rows in TierComparison, the
+  // partner-strip label, the error-page footnote. Text now uses `/80`.
+  it('holds AA for translucent muted text at the opacity the site uses', () => {
+    for (const bg of [BACKGROUND, SURFACE]) {
+      const fg = over(hexToRgb(MUTED_FOREGROUND), 0.8, hexToRgb(bg));
+      expect(contrast(fg, bg)).toBeGreaterThanOrEqual(AA_TEXT);
+    }
+  });
+
+  // InfoTooltip's trigger and TierComparison's "not included" mark are icons
+  // that carry meaning, so SC 1.4.11 (3:1) applies. `/40` was 2.1:1.
+  it('holds 3:1 for the muted informational icons', () => {
+    for (const bg of [BACKGROUND, SURFACE]) {
+      const fg = over(hexToRgb(MUTED_FOREGROUND), 0.6, hexToRgb(bg));
+      expect(contrast(fg, bg)).toBeGreaterThanOrEqual(AA_NON_TEXT);
+    }
+  });
 });
 
 describe('BD-02b status colour convergence (shipped)', () => {

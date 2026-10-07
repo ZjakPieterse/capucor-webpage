@@ -1,0 +1,15 @@
+# https://developers.cloudflare.com/workers/static-assets/headers
+# https://opennext.js.org/cloudflare/caching#static-assets-caching
+# Cloudflare Workers Static Assets response headers (copied to .open-next/assets/).
+# Applies only to files served straight from the assets bucket, never to Worker
+# (SSR/API) responses. Without this, every hashed build file was served with
+# "public, max-age=0, must-revalidate", so each repeat visit revalidated ~35 files.
+# /_next/static/* names are content-hashed: safe to cache for a year, immutable.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Brand and partner logos are not hashed; a day is a safe middle ground.
+/brand/*
+  Cache-Control: public, max-age=86400
+/logos/*
+  Cache-Control: public, max-age=86400
