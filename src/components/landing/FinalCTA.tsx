@@ -26,13 +26,12 @@ export function FinalCTA() {
 
       <div className="max-w-3xl mx-auto px-5 sm:px-6 text-center">
         <ScrollReveal>
-          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight mb-4 leading-[1.1]">
-            Start in any month
+          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
+            Ready to make finance work better?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Build your subscription in a few minutes and see your full monthly
-            price, or book a short fit call. We set up Xero and your bank
-            feeds and bring the backlog up to date.
+            Build your subscription in a few minutes, or book a short fit call
+            and we&apos;ll help you choose the right level of monthly support.
           </p>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
