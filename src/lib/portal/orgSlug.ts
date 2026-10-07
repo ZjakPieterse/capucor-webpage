@@ -4,12 +4,10 @@ import type { Database } from '@/types/db';
 // client_orgs.slug is unique (migration 004). Used here by provision-on-sign
 // (PR9, provision.ts), which still runs on capucor.com when a client signs.
 //
-// ⚠️ DUPLICATED, NOT MOVED — capucor-os keeps its own copy at the same path for
-// the admin "Add client" create flow. Both repos mint into the SAME unique
-// client_orgs.slug column from two different Workers, so the slugify rule and
-// the collision-suffix behaviour must stay identical in both. A divergence
-// surfaces as a unique-constraint violation on a paying client's first insert.
-// The Phase 3 deletion PR explicitly KEPT this file; it is not a leftover.
+// Web-owned since 2026-10-07 (web-standalone phase 2) and deleted with
+// provision.ts in phase 3. capucor-os keeps its own copy for its "Add client"
+// flow. Both mint into the unique client_orgs.slug column; the collision suffix
+// below handles a clash, so the two copies need not match.
 
 export function slugify(name: string): string {
   const base = name

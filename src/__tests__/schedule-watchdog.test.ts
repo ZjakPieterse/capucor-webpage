@@ -17,8 +17,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-// A zero-dependency .mjs, deliberately untyped and shared byte-identically with
-// capucor-os — see scheduledWorkflows in the contract. The verdict shape is
+// A zero-dependency .mjs, deliberately untyped (it runs without `npm ci`) — see scheduledWorkflows in the contract. The verdict shape is
 // restated here rather than inferred, so a field renamed in the script shows up
 // as a type error in the test that reads it.
 import { evaluate, applyDrill, workflowsFor } from '../../scripts/schedule-watchdog.mjs';
@@ -126,9 +125,8 @@ describe('a newly declared workflow that has not run yet', () => {
   });
 
   it('⚠️ the contract keeps every notBefore inside the three-day bound', () => {
-    // A notBefore far in the future silences a dead cron indefinitely. The
-    // audit refuses one more than three days out; this pins the contract's own
-    // values so a widened date fails here too, offline.
+    // A notBefore far in the future silences a dead cron indefinitely. This
+    // pins the contract's values so a date more than three days out fails, offline.
     for (const w of contract.scheduledWorkflows.workflows as { file: string; notBefore?: string }[]) {
       if (!w.notBefore) continue;
       const when = new Date(w.notBefore).getTime();
@@ -223,7 +221,7 @@ describe('this repo is wired into the watchdog', () => {
     expect(wf).toContain(contract.scheduledWorkflows.watchdogScript);
     // Same zero-dependency rule as the crons it watches — and this one runs on
     // EVERY push.
-    expect(wf, contract.backup.zeroDependencyWhy).not.toMatch(/^\s*run:\s*npm (ci|install)\b/m);
+    expect(wf, contract.scheduledWorkflows.zeroDependencyWhy).not.toMatch(/^\s*run:\s*npm (ci|install)\b/m);
   });
 
   it('declares every cron workflow in this repo', () => {

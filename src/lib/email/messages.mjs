@@ -1,8 +1,12 @@
 /**
- * Dependency-free transactional email renderers shared by the applications
- * and the GitHub reconciliation runner. Keep the copy in capucor-web byte-for-
- * byte identical; CI checks this contract. No secrets or delivery state live
- * here, so a queued event can be rebuilt from its source row.
+ * Dependency-free transactional email renderers. No secrets or delivery state
+ * live here, so a queued event can be rebuilt from its source row.
+ *
+ * Web-owned since 2026-10-07 (web-standalone phase 2). ⛔ FROZEN UNTIL PHASE 3:
+ * capucor-os's reconciliation workflow still retries failed sends by rebuilding
+ * them from its own copy of this file under the original idempotency key, so
+ * the rendered output must not change until retries move here. Enforced by
+ * frozenUntilPhase3 in contracts/web-contract.json.
  */
 
 export const EMAIL_SENDER = 'Capucor <noreply@capucor.com>';

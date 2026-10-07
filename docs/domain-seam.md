@@ -1,6 +1,6 @@
 # The domain seam, and the operational rules that sit on it
 
-> capucor.com (this repo) and capucor.app (`capucor-os`) are two domains, two repositories and two Cloudflare Workers. This page is everything this repo still has to know about that boundary — **plus four operational contracts that were filed under it**: the cross-repo manifest, the scheduled-workflow watchdog, the request-body caps, and the email delivery adapter.
+> capucor.com (this repo) and capucor.app (`capucor-os`) are two domains, two repositories and two Cloudflare Workers. This page is everything this repo still has to know about that boundary — **plus four operational contracts that were filed under it**: the web contract manifest, the scheduled-workflow watchdog, the request-body caps, and the email delivery adapter.
 >
 > ⚠️ **The schema seam is the one that breaks silently** — a change in `capucor-os` can break this repo's provisioning path with no compile error and no failing test here.
 >
@@ -79,46 +79,50 @@ Since 2026-10-07 **this repo owns the funnel schema** ([`database.md`](database.
 tables provisioning writes are still capucor-os's. Marketing still starts provisioning at signing
 (until web-standalone phase 3):
 [`src/lib/portal/provision.ts`](../src/lib/portal/provision.ts) idempotently mints/locates the Auth
-user, then calls the OS-owned `provision_from_signed_proposal` transaction.
+user, then calls the `provision_from_signed_proposal` transaction, which writes the portal tables.
 
 ⚠️ **A change on the capucor-os side can break this repo's provisioning path with no compile error
 and no failing test here.** `src/__tests__/portal-provision.test.ts` pins the RPC argument boundary
 but cannot see the database. The live check is `npm run e2e` **in capucor-os** — run it there after
-any change to this path. Regenerate both repositories' database types whenever that RPC changes.
+any change to this path.
 
 ⚠️ **Read this before changing provisioning, and before changing any table it touches:**
 [`../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md`](../../capucor-os/docs/engineering/prototype/CAPUCOR_WEB_SEAMS.md).
 
-### The cross-repo contract — one command, in the other repo
+### The web contract — `contracts/web-contract.json`
 
-⚠️ **`next.config.ts`'s `APP_PATHS`, the pinned runtime versions, the provisioning RPC boundary and
-every file hand-synced with capucor-os are declared in
-[`contracts/cross-repo-contract.json`](../contracts/cross-repo-contract.json)** — canonical in
-`capucor-docs/contracts/`, vendored byte-identical here. Change one of those things and you must
-change the manifest too, in all three copies.
+Since 2026-10-07 (web-standalone phase 2) this repo's invariants live in one **web-owned** manifest,
+checked by `npm test` (`src/__tests__/web-contract.test.ts` plus the three watchdog tests). It
+replaced the cross-repo contract shared with capucor-os and capucor-docs; nothing in it is compared
+with another repository, and `npm run audit` in capucor-os no longer covers this repo.
 
-- **CI enforces this repo's half** via `src/__tests__/cross-repo-contract.test.ts` (`npm test`).
-  It cannot see capucor-os; the recorded **digest** of each hand-synced file is what covers that gap.
-  Edit `src/lib/pricing.ts` here without editing capucor-os's copy and this repo goes red, naming
-  the counterpart.
-- **The full audit lives in capucor-os** — `npm run audit` there, read-only, all three repos, eight
-  checks. It is the only thing that can compare the two repos to each other, so run it from a full
-  workspace checkout before pushing a cross-repo change.
-- Re-record digests after a sanctioned change with `npm run audit -- --print-digests` (in
-  capucor-os) and paste into all three copies of the manifest.
+- **Exact pins** — Next, `@opennextjs/cloudflare` and Wrangler move together; React,
+  supabase-js and resend are pinned exact too; Node matches in `.nvmrc` and `ci.yml`.
+- **Redirect table** — `APP_PATHS` keeps its entries; no redirect from `/api`, `/_next` or
+  `/brand`.
+- **Written rules** — `AGENTS.md` and `docs/database.md` say no agent applies a migration;
+  `AGENTS.md` and `docs/deploy.md` say production deploys by manual dispatch.
+- **Schema ownership** — the funnel baseline exists and its first statement raises.
+- **Until phase 3 only:** the provisioning RPC name and argument names, and a freeze on
+  `src/lib/email/messages.mjs` (see the email section below). Phase 3 deletes both entries.
+- **Watchdogs** — the declared crons, deploy surface and release branch (next section).
+
+`src/lib/pricing.ts`, `src/lib/proposalPricing.ts`, `src/config/tiers.ts`,
+`src/lib/portal/orgSlug.ts` and `src/types/db.ts` are this repo's own files; change them here
+only. capucor-os keeps its old copies, which are not kept in step.
 
 ### Scheduled workflows and the watchdog
 
 This repo runs two scheduled workflows, and `.github/workflows/watchdog.yml` checks on every push
 that each one is still succeeding, via `scripts/schedule-watchdog.mjs`.
 
-- **The script is byte-identical to capucor-os's copy** and selects this repo's crons by matching
-  `GITHUB_REPOSITORY` against `scheduledWorkflows.githubRepos`. Change one copy and the audit's
-  `duplicate-file` check goes red.
-- ⚠️ **A new cron must be declared in `scheduledWorkflows`** in all three copies of the manifest, or
-  the audit's `schedule` check fails — an undeclared cron is a job nothing watches.
-- **Zero dependencies and `actions: read` only.** Keep it that way; the audit's `schedule` check
-  fails if `npm ci` appears in that workflow.
+- The script selects this repo's crons by matching `GITHUB_REPOSITORY` against
+  `scheduledWorkflows.githubRepos` in `contracts/web-contract.json`; the same manifest declares
+  the deploy surface (`deployDrift`) and release branch (`ciSilence`) the other two steps check.
+- ⚠️ **A new cron must be declared in `scheduledWorkflows`**, or `schedule-watchdog.test.ts`
+  fails — an undeclared cron is a job nothing watches.
+- **Zero dependencies and `actions: read` only.** Keep it that way; the watchdog tests fail if
+  `npm ci` appears in that workflow.
 - `SCHEDULE_WATCHDOG_DRILL` (`stale` / `disabled`) is a `workflow_dispatch` input that forces the
   failure path against the real API. Re-run it after changing the script or the workflow.
 
@@ -169,6 +173,8 @@ stale processing lease is reclaimable with the same provider key. Callers must s
 (`lead`, `data_request` or `proposal`) and a dotted event type; store no subject, body, snippet,
 recipient link token or other message content in the operational table. The weekday business-hours
 GitHub Action in capucor-os now drains due work every ten minutes with six bounded attempts and
-fails visibly on permanent work. It rebuilds messages through the dependency-free
-`src/lib/email/messages.mjs`; keep that file byte-equivalent to capucor-os's copy so the retry sends
-the exact original provider payload.
+fails visibly on permanent work. It rebuilds messages through its own copy of the dependency-free
+`src/lib/email/messages.mjs`, so ⛔ **this repo's copy is frozen until web-standalone phase 3**
+(`frozenUntilPhase3` in `contracts/web-contract.json`): a change here would make a retry send
+different content under the original idempotency key. Phase 3 moves retries into this repo in the
+same release that changes the emails.

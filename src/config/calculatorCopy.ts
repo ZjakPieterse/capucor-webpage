@@ -1,6 +1,5 @@
-// Web-only copy for the calculator-v2 wizard (Phase 1). Lives here, not in
-// config/tiers.ts, because tiers.ts is hand-synced with capucor-os and pinned
-// by digest in contracts/cross-repo-contract.json.
+// Copy for the calculator-v2 wizard (Phase 1). Kept apart from config/tiers.ts,
+// which holds the package definitions.
 
 import type { CalculatorStep } from '@/types';
 
@@ -37,7 +36,7 @@ export const TIER_NUDGES: Record<string, string> = {
 };
 
 // The merged core line ("Monthly accounting") and its slugs live in
-// lib/pricing.ts, shared with capucor-os, so every surface uses one name.
+// lib/pricing.ts, so every surface uses one name.
 
 // Revenue above R50m goes to a call (decision 2026-10-06): from the
 // "50 Mil – 75 Mil" band (accounting ordinal 13 in migration 002) upward.

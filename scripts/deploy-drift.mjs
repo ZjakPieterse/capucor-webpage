@@ -317,7 +317,7 @@ if (isCli) {
     fail(
       `${repoSlug} is not in scheduledWorkflows.githubRepos in the contract manifest, so the ` +
         `deploy-drift check does not know which surface to expect here. Declare it in ` +
-        `capucor-docs/contracts/cross-repo-contract.json and copy it into both app repos.`,
+        `contracts/web-contract.json.`,
     );
   }
   if (!deployments.length) {
@@ -382,7 +382,7 @@ if (isCli) {
     for (const r of broken) console.error(`::error::${r.file}: ${r.reason}`);
     console.error(
       `\n${broken.length} of ${results.length} deployment surface(s) are behind the release branch. ` +
-        `See deployDrift in contracts/cross-repo-contract.json.`,
+        `See deployDrift in contracts/web-contract.json.`,
     );
     process.exitCode = 1;
   } else {

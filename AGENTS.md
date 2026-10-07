@@ -91,9 +91,9 @@ npm run test:ui      # Open Vitest browser UI
 npm run db:types     # Regenerate src/types/db.ts from the live schema (needs `npx supabase login`)
 ```
 
-⛔ **Do not commit a regenerated `src/types/db.ts` yet.** It is still pinned by digest in
-`contracts/cross-repo-contract.json`, so `npm test` fails if it moves; web-standalone phase 2
-replaces that arrangement. See [`docs/database.md`](docs/database.md#types).
+`src/types/db.ts` is **generated in this repo** (since 2026-10-07): after Zjak applies a funnel
+migration, run `npm run db:types` and commit the result. See
+[`docs/database.md`](docs/database.md#types).
 
 ## Build and deploy (Cloudflare)
 
@@ -126,9 +126,12 @@ route handler that reads a body, or anything that sends email.
   the portal-owned `client_orgs` / `client_org_members` / `subscriptions` in capucor-os. **A change
   to those tables on the capucor-os side breaks this repo's provisioning path with no compile
   error and no failing test here.**
-- **Cross-repo contract** — change a hand-synced file or a pinned version and you must change the
-  manifest in all three copies, or CI goes red naming the counterpart.
-- **Scheduled workflows** — an undeclared cron is a job nothing watches, and the audit fails.
+- **Web contract** — exact version pins, the redirect table, the provisioning RPC arguments (until
+  phase 3) and the declared crons live in `contracts/web-contract.json`, checked by `npm test`.
+  It is web-owned: pricing, tiers, emails and `db.ts` are this repo's files and nothing is
+  compared with capucor-os. ⛔ **`src/lib/email/messages.mjs` is frozen until web-standalone
+  phase 3** — capucor-os still retries failed sends from its own copy.
+- **Scheduled workflows** — an undeclared cron is a job nothing watches, and `npm test` fails.
 - ⚠️ **Never call `req.json()` in a route handler** — it is unbounded. Use
   `readJsonBody(req, MAX_BODY_BYTES)`.
 - **Every transactional send goes through `src/lib/email/sendEmail.ts`.** Never construct

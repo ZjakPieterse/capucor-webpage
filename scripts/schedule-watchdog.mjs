@@ -32,7 +32,7 @@
  * GITHUB_TOKEN. The watchdog workflow is checkout + setup-node + this file, with
  * no `npm ci`, for the same reason the cron jobs it watches have none: that is
  * the difference between a run billing one minute against the free 2,000 and
- * billing five. The audit's `schedule` check fails if an `npm ci` ever appears.
+ * billing five. src/__tests__/schedule-watchdog.test.ts fails if an `npm ci` ever appears.
  *
  * USAGE
  *   node scripts/schedule-watchdog.mjs                 # in CI; reads GITHUB_REPOSITORY
@@ -150,7 +150,7 @@ export function evaluate({ declared, workflow, newestRun, newestSuccess, newestF
     // push that MERGES a new cron turns every subsequent push red until the
     // schedule first fires, which is a gate going red for a reason nobody can
     // act on: the fix is to wait. `notBefore` is the deadline by which the first
-    // successful run must exist, and the audit refuses one more than two days
+    // successful run must exist, and schedule-watchdog.test.ts refuses one more than three days
     // out so this cannot become an indefinite mute. Reported, never silent.
     if (declared.notBefore && now.getTime() < new Date(declared.notBefore).getTime()) {
       return {
@@ -306,7 +306,7 @@ if (isCli) {
     fail(
       `${repoSlug} is not in scheduledWorkflows.githubRepos in the contract manifest, so the ` +
         `watchdog does not know which crons to expect here. Declare it in ` +
-        `capucor-docs/contracts/cross-repo-contract.json and copy it into both app repos.`,
+        `contracts/web-contract.json.`,
     );
   }
   if (!workflows.length) {
@@ -364,7 +364,7 @@ if (isCli) {
     for (const r of broken) console.error(`::error::${r.file}: ${r.reason}`);
     console.error(
       `\n${broken.length} of ${results.length} scheduled workflow(s) are not running as declared. ` +
-        `See scheduledWorkflows in contracts/cross-repo-contract.json.`,
+        `See scheduledWorkflows in contracts/web-contract.json.`,
     );
     process.exitCode = 1;
   } else {

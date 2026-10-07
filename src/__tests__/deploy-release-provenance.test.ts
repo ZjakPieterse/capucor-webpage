@@ -11,7 +11,7 @@
  * ⚠️ Hand-synced with
  * ../capucor-os/src/__tests__/deploy-release-provenance.test.ts.
  * Both repositories carry the same gates for the same reason; see
- * contracts/cross-repo-contract.json → releaseProvenance.
+ * contracts/web-contract.json → releaseProvenance.
  *
  * ⚠️ THE WATCHDOG ASSERTION AT THE END IS THE ONE THAT MATTERS MOST. The
  * cross-repo contract records why the deployed-SHA question was left open:
