@@ -59,12 +59,6 @@ export const PRICING_PAGE_INTRO = 'A few quick questions, then your price. No si
 // Dropdown placeholder on the bracket questions.
 export const QUESTION_PLACEHOLDER = 'Choose an option';
 
-// Add-on descriptions on the calculator, where they differ from PRICING_ADDONS
-// in the paired tiers.ts: kept evergreen, so no figures (tweaks round 2).
-export const ADDON_DESCRIPTIONS: Record<string, string> = {
-  'personal-tax': 'An annual personal income tax return (ITR12) prepared and submitted for each person.',
-};
-
 // The packages differ by rhythm, so the side-by-side table shows these rows
 // as a value per package instead of cumulative ticks (a tick for Premium on
 // "processed monthly" and "processed weekly" read as all three at once).
