@@ -97,7 +97,7 @@ function FlipCard({ item }: { item: Problem }) {
       transition={
         prefersReducedMotion
           ? { duration: 0 }
-          : { type: "spring", stiffness: 90, damping: 15, mass: 0.9 }
+          : { duration: 0.6, ease: [0.45, 0, 0.55, 1] }
       }
     >
       {/* Front: the problem */}
