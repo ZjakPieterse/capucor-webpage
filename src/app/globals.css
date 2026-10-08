@@ -1853,9 +1853,9 @@
   transform: translateY(-10px) rotate(var(--r)) scale(calc(var(--s) * 0.9));
 }
 
-/* Later stories: each piece drops onto the pile. The first story's pile is
-   already built in the server HTML. */
-.hero-stage[data-phase="chaos"] .hero-pile[data-arrive] .hero-pile-card {
+/* Each piece drops onto the pile. The page opens on the order beat, so this
+   first plays on the second story. */
+.hero-stage[data-phase="chaos"] .hero-pile-card {
   animation: hero-pile-arrive 700ms var(--hero-ease) var(--d) both;
 }
 
@@ -1991,7 +1991,7 @@
     transition-delay: var(--on);
   }
 
-  .hero-stage[data-phase="chaos"] .hero-pile[data-arrive] .hero-pile-card {
+  .hero-stage[data-phase="chaos"] .hero-pile-card {
     animation-delay: var(--dn);
   }
 

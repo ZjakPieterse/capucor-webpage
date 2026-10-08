@@ -30,8 +30,9 @@ import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 // one, and pieces, ledger rows and the email animated left/top/height: layout
 // work every frame, layout shift from the animation itself, and a third of
 // frames dropped on a throttled phone. So:
-//   - The first story renders its pile already built, so the first frame is
-//     settled; the pile only "arrives" on later loops.
+//   - The page opens on the order beat (Zjak, 2026-10-08): the statement is
+//     visible and settled in the server HTML, its lines tick in once the
+//     panel is on screen, and the chaos beat first plays on the second story.
 //   - Pile layout is CSS (custom properties per breakpoint), never a JS switch,
 //     so server and client agree on every screen size.
 //   - Every beat animates transform and opacity only, as CSS transitions keyed
@@ -44,9 +45,7 @@ import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 type StoryPhase = "chaos" | "order" | "arriving" | "decision" | "leaving";
 
 interface Timing {
-  /** First chaos beat: the pile is already there, so it only holds. */
-  chaosFirst: number;
-  /** Later chaos beats: the pile arrives, then holds. */
+  /** The chaos beat: the pile arrives, then holds. */
   chaos: number;
   /** Lines reconciled in the order beat, one count per story. */
   txCounts: number[];
@@ -62,7 +61,6 @@ interface Timing {
 
 const TIMING: Record<"wide" | "narrow", Timing> = {
   wide: {
-    chaosFirst: 2600,
     chaos: 4800,
     txCounts: [23, 29, 18],
     perTx: 140,
@@ -72,7 +70,6 @@ const TIMING: Record<"wide" | "narrow", Timing> = {
     arriveStep: 0.3,
   },
   narrow: {
-    chaosFirst: 1800,
     chaos: 3000,
     txCounts: [12, 13, 11],
     perTx: 110,
@@ -86,10 +83,10 @@ const TIMING: Record<"wide" | "narrow", Timing> = {
 const LEAVE_MS = 500;
 const ROW_PX = 26;
 
-function phaseMs(phase: StoryPhase, scene: number, t: Timing, looped: boolean): number {
+function phaseMs(phase: StoryPhase, scene: number, t: Timing): number {
   switch (phase) {
     case "chaos":
-      return looped ? t.chaos : t.chaosFirst;
+      return t.chaos;
     case "order":
       return t.txCounts[scene] * t.perTx + t.orderTail;
     case "arriving":
@@ -393,10 +390,9 @@ function buildStatement(pool: string[], seed: number, count: number): Tx[] {
 function useStoryTimeline(timing: Timing) {
   const reduce = useReducedMotion();
   const observeRef = useRef<HTMLDivElement | null>(null);
-  const [phase, setPhase] = useState<StoryPhase>("chaos");
+  // The page opens on the order beat; chaos first plays on the next story.
+  const [phase, setPhase] = useState<StoryPhase>("order");
   const [scene, setScene] = useState(0);
-  // False until the first story has played: that one opens on a built pile.
-  const [looped, setLooped] = useState(false);
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
 
@@ -424,35 +420,34 @@ function useStoryTimeline(timing: Timing) {
         setPhase(next);
       } else {
         setScene((s) => (s + 1) % 3);
-        setLooped(true);
         setPhase("chaos");
       }
-    }, phaseMs(phase, scene, timing, looped));
+    }, phaseMs(phase, scene, timing));
     return () => clearTimeout(timer);
-  }, [phase, scene, looped, timing, inView, pageVisible, reduce]);
+  }, [phase, scene, timing, inView, pageVisible, reduce]);
 
   return {
     observeRef,
     phase: reduce ? ("decision" as const) : phase,
     scene: reduce ? 0 : scene,
-    looped: !reduce && looped,
     paused: !inView || !pageVisible,
     reduce: !!reduce,
   };
 }
 
-/** Counts 0 → `total`, one step every `stepMs`, while `running`; reads `total` otherwise. */
-function useCounter(running: boolean, stepMs: number, total: number) {
+/**
+ * Counts 0 → `total`, one step every `stepMs`, while `active` and `ticking`;
+ * reads `total` when not active. A pause (off-screen) holds the count rather
+ * than resetting it; the ledger remounts per story, which resets it.
+ */
+function useCounter(active: boolean, ticking: boolean, stepMs: number, total: number) {
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (!running) return;
+    if (!active || !ticking) return;
     const id = setInterval(() => setN((v) => Math.min(total, v + 1)), stepMs);
-    return () => {
-      clearInterval(id);
-      setN(0);
-    };
-  }, [running, stepMs, total]);
-  return running ? n : total;
+    return () => clearInterval(id);
+  }, [active, ticking, stepMs, total]);
+  return active ? Math.min(n, total) : total;
 }
 
 // ── Pieces of the pile ────────────────────────────────────────────────────────────
@@ -718,16 +713,21 @@ function Ledger({
   filed,
   phase,
   perTx,
+  paused,
+  counts,
 }: {
   statement: Tx[];
   month: string;
   filed: string[];
   phase: StoryPhase;
   perTx: number;
+  paused: boolean;
+  /** Line counts per breakpoint, so the server render shows the right total on any screen. */
+  counts: { wide: number; narrow: number };
 }) {
   const txCount = statement.length;
   const processing = phase === "order";
-  const reconciled = useCounter(processing, perTx, txCount);
+  const reconciled = useCounter(processing, !paused, perTx, txCount);
   const done = phase !== "chaos" && reconciled >= txCount;
   const rows = useMemo(() => [...statement].reverse(), [statement]);
 
@@ -745,7 +745,9 @@ function Ledger({
           >
             <Check className="h-3 w-3" strokeWidth={3} style={{ opacity: done ? 1 : 0 }} />
             <span>
-              <span className="inline-block w-[2ch] text-right">{reconciled}</span> of {txCount} reconciled
+              <span className="inline-block w-[2ch] text-right">{reconciled}</span> of{" "}
+              <span className="sm:hidden">{counts.narrow}</span>
+              <span className="hidden sm:inline">{counts.wide}</span> reconciled
             </span>
           </span>
         </div>
@@ -893,7 +895,7 @@ const STEPS: { label: string; phases: StoryPhase[] }[] = [
 export function HeroStory() {
   const narrow = useNarrowScreen();
   const timing = narrow ? TIMING.narrow : TIMING.wide;
-  const { observeRef, phase, scene, looped, paused, reduce } = useStoryTimeline(timing);
+  const { observeRef, phase, scene, paused, reduce } = useStoryTimeline(timing);
   const dates = useMemo(() => computeStoryDates(), []);
   const scenes = useMemo(() => buildScenes(dates), [dates]);
   const s = scenes[scene];
@@ -968,9 +970,9 @@ export function HeroStory() {
             "Hero story"); a new scene remounts it so the next pile arrives fresh. */}
         <div aria-hidden className="relative z-10 h-[440px] sm:h-[390px]">
           <div key={scene} className="hero-stage absolute inset-0" data-phase={phase}>
-            {/* Chaos: the pile. The first story opens on it already built. */}
+            {/* Chaos: the pile. The page opens on the order beat, so it first arrives on the second story. */}
             {!reduce && (
-              <div className="hero-pile" data-arrive={looped || undefined}>
+              <div className="hero-pile">
                 {PILE.map((slot, i) => (
                   <div
                     key={slot.piece}
@@ -993,6 +995,8 @@ export function HeroStory() {
               filed={s.filed}
               phase={phase}
               perTx={timing.perTx}
+              paused={paused}
+              counts={{ wide: TIMING.wide.txCounts[scene], narrow: TIMING.narrow.txCounts[scene] }}
             />
 
             <ReportEmail email={s.email} month={dates.month} />
