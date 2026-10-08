@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { useSectionScrollProgress } from "@/hooks/useSectionScrollProgress";
@@ -37,7 +36,7 @@ const STEPS = [
 ];
 
 export function HowItWorks() {
-  const { ref: sectionRef, progress } = useSectionScrollProgress<HTMLElement>();
+  const { ref: sectionRef } = useSectionScrollProgress<HTMLElement>();
 
   return (
     <section
@@ -52,10 +51,7 @@ export function HowItWorks() {
           subtitle="Great finance work needs a clear monthly rhythm. We process, review, report and advise so the month closes properly."
         />
 
-        <div
-          className="how-timeline mt-12"
-          style={{ "--scroll-progress": progress } as CSSProperties}
-        >
+        <div className="how-timeline mt-12">
           <div className="how-spine" aria-hidden="true" />
           {STEPS.map((step, i) => (
             <div

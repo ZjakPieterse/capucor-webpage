@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight, Calendar } from "lucide-react";
 import { siteConfig } from "@/config/site";

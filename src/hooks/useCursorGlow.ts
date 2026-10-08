@@ -17,16 +17,21 @@ export function useCursorGlow<T extends HTMLElement>() {
     if (!el) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+    // Measure and write once per frame, not per event: reading the rect in the
+    // event handler right after last frame's write forced a layout every move.
     let raf = 0;
+    let clientX = 0;
+    let clientY = 0;
     function onMove(e: PointerEvent) {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      cancelAnimationFrame(raf);
+      clientX = e.clientX;
+      clientY = e.clientY;
+      if (raf) return;
       raf = requestAnimationFrame(() => {
-        el.style.setProperty('--cursor-x', `${x}px`);
-        el.style.setProperty('--cursor-y', `${y}px`);
+        raf = 0;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        el.style.setProperty('--cursor-x', `${clientX - rect.left}px`);
+        el.style.setProperty('--cursor-y', `${clientY - rect.top}px`);
       });
     }
     function onEnter() {

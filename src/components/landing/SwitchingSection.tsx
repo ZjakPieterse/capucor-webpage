@@ -1,5 +1,3 @@
-"use client";
-
 import { Calendar, CalendarCheck, History, PhoneCall, Settings2 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
