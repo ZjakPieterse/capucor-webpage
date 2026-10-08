@@ -3,7 +3,6 @@
 import { Component, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/config/site';
-import { FitCallNote } from '@/components/ui/FitCallNote';
 
 interface Props {
   children: ReactNode;
@@ -58,7 +57,6 @@ export function PricingUnavailable() {
       >
         Book a fit call
       </Button>
-      <FitCallNote className="mt-3 max-w-sm" />
     </div>
   );
 }

@@ -63,33 +63,49 @@ describe('funnel copy (F13, F14, F25)', () => {
     expect(AFTER_YOU_SIGN.join(' ')).not.toMatch(/\d|day|hour|week/);
   });
 
-  it('says what the fit call is beside every "Book a fit call"', () => {
-    expect(siteConfig.fitCallNote).toMatch(/free 30-minute call with Zjak/);
+  // Decision 2026-10-08: the booking page explains the fit call (it will scale
+  // with the team), and customer-facing copy speaks as a team, never one name.
+  it('"Book a fit call" carries no duration or personal name, and no copy names Zjak', () => {
     for (const file of [
+      'components/layout/Navbar.tsx',
       'components/landing/HeroSection.tsx',
       'components/landing/FinalCTA.tsx',
       'components/landing/SwitchingSection.tsx',
       'components/services/ServiceCtaPair.tsx',
+      'components/pricing/PricingCalculator.tsx',
       'components/pricing/PricingErrorBoundary.tsx',
+      'components/proposal/ProposalSignForm.tsx',
+      'components/proposal/ConfirmSignButton.tsx',
+      'app/proposal/[token]/page.tsx',
+      'app/proposal/confirm/[ctoken]/page.tsx',
       'app/not-found.tsx',
       'app/error.tsx',
+      'config/calculatorCopy.ts',
+      'config/site.ts',
     ]) {
-      const s = src(file);
-      if (/Book a fit call/.test(s)) expect(s, file).toMatch(/FitCallNote/);
+      // Comments may credit decisions to Zjak; rendered strings may not.
+      const code = src(file)
+        .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/^\s*\/\/.*$/gm, '');
+      expect(code, file).not.toMatch(/Zjak|30-minute/);
     }
+  });
+
+  it('the header shows Home, Pricing and Contact only', () => {
+    expect(siteConfig.nav.map((n) => n.label)).toEqual(['Home', 'Pricing', 'Contact']);
   });
 });
 
-describe('navigation (F01, F02)', () => {
-  it('links the three service pages from the nav and footer', () => {
-    const hrefs = siteConfig.nav.map((n) => n.href);
-    for (const p of ['/accounting', '/bookkeeping', '/payroll']) expect(hrefs).toContain(p);
+describe('navigation (decision 2026-10-08)', () => {
+  it('the footer links the three service pages', () => {
     expect(src('components/layout/Footer.tsx')).not.toMatch(/\/#services/);
   });
 
-  it('makes /pricing the header button and the portal a plain link', () => {
+  it('the header button books a fit call, and there is no Client Portal link', () => {
     const nav = src('components/layout/Navbar.tsx');
-    expect(nav).toMatch(/href="\/pricing"/);
-    expect(nav).not.toMatch(/render=\{<Link href=\{`\$\{siteConfig\.appUrl\}/);
+    expect(nav).toMatch(/siteConfig.links.booking/);
+    expect(nav).toMatch(/Book a fit call/);
+    expect(nav).not.toMatch(/Client Portal|appUrl/);
   });
 });

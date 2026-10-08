@@ -130,11 +130,12 @@ describe('emails after signing (F10, F25)', () => {
     proposal_pdf_drive_id: 'drive_file_1',
   };
 
-  it('the signed email has no portal link and says Zjak will be in touch', () => {
+  it('the signed email has no portal link and says we will be in touch', () => {
     const html = renderSignedClientEmail(d);
     expect(html).not.toContain('capucor.app');
     expect(html).not.toMatch(/portal|log ?in/i);
-    expect(html).toContain('Zjak will be in touch');
+    expect(html).toContain('We’ll be in touch');
+    expect(html).not.toMatch(/Zjak/);
     expect(html).not.toMatch(/our team|the Capucor team/i);
   });
 

@@ -75,7 +75,7 @@ cp .env.example .env.local
 | `RESEND_API_KEY` | Resend dashboard. Optional locally (delivery reports `pending` and link-bearing routes log their URL); required in production. |
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
-| `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. `NEXT_PUBLIC_APP_URL` feeds only the legacy Client Portal link (see "Domain seam" below) |
+| `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. `NEXT_PUBLIC_APP_URL` feeds `siteConfig.appUrl`, unused since the header's Client Portal link was removed (2026-10-08) |
 | `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10/PH-06). Apps Script web-app `/exec` URL + its shared secret. Archival does not run until both are set. See `scripts/apps-script/README.md` |
 
 ## Dev Scripts
@@ -111,8 +111,9 @@ deploy is `wrangler rollback`.
 **This repo is capucor.com only.** Marketing and the whole sales funnel — including
 `/proposal/*`, the signing document — live here. The only things left pointing at capucor.app
 (the legacy client portal) are kept until os-sunset: the `APP_PATHS` redirects in
-`next.config.ts` (`/portal`, `/login`, `/internal`, `/onboarding`, `/client-portal`) and the
-Navbar's Client Portal link (`siteConfig.appUrl`). Nothing else here reads, writes or links it.
+`next.config.ts` (`/portal`, `/login`, `/internal`, `/onboarding`, `/client-portal`). The header's
+Client Portal link was removed 2026-10-08 (its button now books a fit call). Nothing else here reads,
+writes or links it.
 
 ⛔ **[`docs/domain-seam.md`](docs/domain-seam.md) — the redirects, and four operational
 contracts filed under it.** Read it before touching the redirect table, a cron, a route handler

@@ -41,12 +41,7 @@ export const siteConfig = {
   // not only from the homepage cards (funnel review F02, 2026-10-08).
   nav: [
     { label: 'Home', href: '/' },
-    { label: 'Accounting', href: '/accounting' },
-    { label: 'Bookkeeping', href: '/bookkeeping' },
-    { label: 'Payroll', href: '/payroll' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'Contact', href: '/#contact' },
   ],
-  // Shown beside every "Book a fit call" button (Zjak, 2026-10-08, F25).
-  fitCallNote: 'A free 30-minute call with Zjak, for anyone who wants to find out more first.',
 };

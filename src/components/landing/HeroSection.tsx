@@ -4,7 +4,6 @@ import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { ArrowRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FitCallNote } from "@/components/ui/FitCallNote";
 import { siteConfig } from "@/config/site";
 import { HeroStory } from "@/components/landing/HeroStory";
 
@@ -109,7 +108,6 @@ export function HeroSection() {
             </div>
 
             <div className="hero-enter hero-enter-fade" style={{ animationDelay: "0.75s" }}>
-              <FitCallNote className="mt-3" />
               <p className="mt-4 text-sm text-muted-foreground/80">
                 Fixed monthly fee <span aria-hidden className="mx-1.5">·</span> No lock-in contracts{" "}
                 <span aria-hidden className="mx-1.5">·</span> Start in any month

@@ -64,7 +64,7 @@ function BottomCTA() {
       <div className="max-w-4xl mx-auto px-6">
         <p className="text-lg font-semibold mb-1">Not ready to commit?</p>
         <p className="text-sm text-muted-foreground mb-6">
-          {siteConfig.fitCallNote}
+          Book a fit call and we&rsquo;ll walk you through which services fit your business.
         </p>
         <a
           href={siteConfig.links.booking}

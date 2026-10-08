@@ -5,7 +5,6 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { Button } from "@/components/ui/button";
-import { FitCallNote } from "@/components/ui/FitCallNote";
 import { siteConfig } from "@/config/site";
 
 // Onboarding steps (website-v2, message pillar 4: switch in any month).
@@ -99,7 +98,6 @@ export function SwitchingSection() {
             >
               <Calendar className="h-4 w-4" /> Book a fit call
             </Button>
-            <FitCallNote />
           </div>
         </ScrollReveal>
       </div>

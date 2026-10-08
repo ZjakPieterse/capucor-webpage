@@ -6,7 +6,6 @@ import { siteConfig } from "@/config/site";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { Button } from "@/components/ui/button";
-import { FitCallNote } from "@/components/ui/FitCallNote";
 
 export function FinalCTA() {
   return (
@@ -58,7 +57,6 @@ export function FinalCTA() {
               Book a fit call
             </a>
           </div>
-          <FitCallNote className="mt-4" />
         </ScrollReveal>
       </div>
     </section>

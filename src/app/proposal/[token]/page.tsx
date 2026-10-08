@@ -346,7 +346,7 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
           capucor.app portal link. */}
       <p className="mt-4 text-sm text-muted-foreground">
         Thanks, that&rsquo;s accepted and there&rsquo;s nothing more you need to do right now.
-        Zjak will be in touch shortly to set up your onboarding.
+        We&rsquo;ll be in touch shortly to set up your onboarding.
       </p>
     </div>
   );

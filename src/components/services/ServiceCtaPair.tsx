@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FitCallNote } from "@/components/ui/FitCallNote";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +37,6 @@ export function ServiceCtaPair({ centered = false }: { centered?: boolean }) {
           <Calendar className="h-4 w-4" /> Book a fit call
         </Button>
       </div>
-      <FitCallNote />
     </div>
   );
 }

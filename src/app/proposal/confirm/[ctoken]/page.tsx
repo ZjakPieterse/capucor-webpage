@@ -121,7 +121,7 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
     },
     signed: {
       title: 'Already signed',
-      body: 'This proposal has already been signed. Zjak will be in touch to set up your onboarding.',
+      body: 'This proposal has already been signed. We’ll be in touch to set up your onboarding.',
     },
     error: {
       title: 'Something went wrong',

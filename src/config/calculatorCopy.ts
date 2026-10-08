@@ -42,7 +42,7 @@ export const TIER_NUDGES: Record<string, string> = {
 // "50 Mil – 75 Mil" band (accounting ordinal 13 in migration 002) upward.
 export const REVENUE_CALL_FROM_ORDINAL = 13;
 export const REVENUE_CALL_COPY = {
-  note: 'Above R50m in revenue, we start with a free 30-minute call with Zjak, so the package fits how your business runs.',
+  note: 'Above R50m in revenue, we start with a conversation so the package fits how your business runs.',
   action: 'Book a call',
   apiError: 'Businesses above R50m in revenue start with a call. Please book a call and we will prepare your proposal.',
 } as const;
@@ -108,12 +108,12 @@ export const PREMIUM_REQUEST_COPY = {
 
 // The review step's "what happens next" note (funnel review F14, 2026-10-08).
 // Facts only, no timelines: the proposal is emailed on both paths, signing is
-// online, and Zjak sets up the Paysoft debit order and onboarding by hand
+// online, and we set up the Paysoft debit order and onboarding by hand
 // after the owner email (docs/payments.md).
 export const AFTER_YOU_SIGN = [
   'We email you your proposal.',
   'You review it and sign online.',
-  'Zjak sets up your debit order and your onboarding.',
+  'We set up your debit order and your onboarding.',
 ] as const;
 
 // The /pricing trust bar. Sentence case, one fact each (funnel review F13,
