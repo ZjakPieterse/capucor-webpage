@@ -65,8 +65,8 @@ export function HeroSection() {
 
             <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
               We close your books, run payroll and handle SARS submissions every
-              month. You get your time back, and clear action points that turn
-              the numbers into your next move.
+              month. You get your time back, with clear action points to move
+              your business forward.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
