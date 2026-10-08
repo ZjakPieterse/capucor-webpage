@@ -1736,79 +1736,265 @@
   }
 }
 
-/* ─── Hero entrance (HeroSection, technical review T01) ───────────────────
-   The same choreography the `motion` version had, run in CSS so the copy
-   paints at first paint instead of after hydration. `both` fill holds the
-   "from" frame through each delay. Reduced motion: no animation at all, so
-   everything is simply there. Per-element delays are inline styles. */
+/* ─── Hero first paint (HeroSection, hero-smooth-load 2026-10-08) ──────────
+   The copy has no entrance: headline, subtext and buttons are in their final
+   state in the server HTML, so the first frame is settled. Measured before:
+   the headline's blur-in (a `filter` animation, which cannot run on the
+   compositor) stalled behind hydration, so the subtext, buttons and an empty
+   card painted first and the headline arrived up to 1.9 s later on a phone.
+   Only the story panel eases in, with opacity and transform. */
 @media (prefers-reduced-motion: no-preference) {
-  .hero-enter {
-    animation: hero-enter-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  .hero-enter-headline {
-    animation-name: hero-enter-headline;
-    animation-duration: 0.8s;
-    animation-delay: 0.1s;
-  }
-
-  .hero-enter-fade {
-    animation-name: hero-enter-fade;
-  }
-
   .hero-enter-panel {
-    animation-name: hero-enter-panel;
-    animation-duration: 0.9s;
+    animation: hero-enter-panel 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
   }
 }
 
-@keyframes hero-enter-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes hero-enter-headline {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-    filter: blur(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
-}
-
-@keyframes hero-enter-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+@media (max-width: 639px) and (prefers-reduced-motion: no-preference) {
+  .hero-enter-panel {
+    animation-duration: 0.5s;
+    animation-delay: 0s;
   }
 }
 
 @keyframes hero-enter-panel {
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(16px) scale(0.985);
   }
 }
 
-/* Hero story pile on phones: fewer, wider pieces whose contents are zoomed so
-   receipt and statement text reads at 10 px and up (HeroStory PILE_NARROW). */
+/* Glow orbs behind the hero: compositor-only (transform, opacity), paused
+   while the hero is off-screen, and still on phones and for reduced motion. */
+.hero-orb-a {
+  opacity: 0.9;
+  animation: hero-orb-a 4.5s ease-in-out infinite alternate;
+}
+
+.hero-orb-b {
+  opacity: 0.6;
+  animation: hero-orb-b 5.5s ease-in-out 1.5s infinite alternate;
+}
+
+@keyframes hero-orb-a {
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes hero-orb-b {
+  to {
+    opacity: 0.85;
+    transform: scale(1.12);
+  }
+}
+
+[data-hero-paused] .hero-orb {
+  animation-play-state: paused;
+}
+
+@media (max-width: 639px), (prefers-reduced-motion: reduce) {
+  .hero-orb {
+    animation: none;
+  }
+}
+
+/* ─── Hero story beats (HeroStory.tsx) ────────────────────────────────────
+   Every beat is a CSS transition or keyframe on transform and opacity, keyed
+   off `data-phase` on `.hero-stage`, so it runs on the compositor and does
+   not wait on the main thread. Do not animate left, top, height, width,
+   filter or colours here. */
+.hero-story {
+  --hero-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* No backdrop blur on the story card: behind it are only the already-blurred
+   glow orbs, so the blur was invisible but cost a re-blur every frame, and an
+   ancestor's entrance opacity made it pop in at the end of the entrance. */
+.hero-story-card.premium-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Off-screen or in a background tab: freeze any running loop. */
+.hero-story[data-paused] * {
+  animation-play-state: paused !important;
+}
+
+/* The scene fades out before the next owner's story. */
+.hero-stage {
+  transition: opacity 450ms ease;
+}
+.hero-stage[data-phase="leaving"] {
+  opacity: 0;
+}
+
+/* Chaos: the pile. Positions are custom properties set per slot. */
+.hero-pile-slot {
+  position: absolute;
+  left: var(--l);
+  top: var(--t);
+  width: var(--w);
+}
+
+.hero-pile-back {
+  filter: brightness(0.8);
+}
+
+.hero-pile-card {
+  transform: rotate(var(--r)) scale(var(--s));
+  transition:
+    opacity 550ms var(--hero-ease) var(--o),
+    transform 550ms var(--hero-ease) var(--o);
+}
+
+.hero-stage:not([data-phase="chaos"]) .hero-pile-card {
+  opacity: 0;
+  transform: translateY(-10px) rotate(var(--r)) scale(calc(var(--s) * 0.9));
+}
+
+/* Later stories: each piece drops onto the pile. The first story's pile is
+   already built in the server HTML. */
+.hero-stage[data-phase="chaos"] .hero-pile[data-arrive] .hero-pile-card {
+  animation: hero-pile-arrive 700ms var(--hero-ease) var(--d) both;
+}
+
+@keyframes hero-pile-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(14px) rotate(var(--r)) scale(calc(var(--s) * 1.04));
+  }
+}
+
+/* A slow drift on the pile, desktop only. */
+@media (min-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .hero-stage[data-phase="chaos"] .hero-pile-piece {
+    animation: hero-pile-drift 6.4s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-pile-drift {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Reduced motion opens on the decision frame; hide the pile in CSS too, so
+   the server render never shows it. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-pile {
+    display: none;
+  }
+}
+
+/* Order: the month's statement. */
+.hero-ledger {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 550ms var(--hero-ease),
+    transform 550ms var(--hero-ease);
+}
+.hero-stage[data-phase="order"] .hero-ledger {
+  opacity: 1;
+  transform: none;
+  transition-delay: 250ms;
+}
+.hero-stage:is([data-phase="arriving"], [data-phase="decision"], [data-phase="leaving"]) .hero-ledger {
+  opacity: 0.35;
+  transform: scale(0.97);
+}
+
+.hero-ledger-rows[data-moving] {
+  transition: transform 300ms var(--hero-ease);
+}
+
+.hero-ledger-progress {
+  transform-origin: left;
+  transition: transform 150ms linear;
+}
+
+.hero-ledger-current {
+  transition: opacity 200ms ease;
+}
+
+.hero-filed {
+  transition: opacity 600ms ease;
+}
+.hero-stage:is([data-phase="arriving"], [data-phase="decision"], [data-phase="leaving"]) .hero-filed {
+  opacity: 0.35;
+}
+
+.hero-filed-chip {
+  opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transition:
+    opacity 400ms var(--hero-ease),
+    transform 400ms var(--hero-ease);
+}
+.hero-ledger-wrap[data-done] .hero-filed-chip {
+  opacity: 1;
+  transform: none;
+}
+.hero-stage[data-phase="order"] .hero-ledger-wrap[data-done] .hero-filed-chip {
+  transition-delay: calc(150ms + var(--i) * 150ms);
+}
+
+/* Decision: the unread report arrives, then opens (a cross-fade). */
+.hero-email-wrap {
+  opacity: 0;
+  transform: translateY(48px);
+  transition:
+    opacity 600ms var(--hero-ease),
+    transform 600ms var(--hero-ease);
+}
+.hero-stage:is([data-phase="arriving"], [data-phase="decision"], [data-phase="leaving"]) .hero-email-wrap {
+  opacity: 1;
+  transform: none;
+}
+
+.hero-email-open {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 500ms var(--hero-ease),
+    transform 500ms var(--hero-ease);
+}
+.hero-stage:is([data-phase="decision"], [data-phase="leaving"]) .hero-email-open {
+  opacity: 1;
+  transform: none;
+}
+
+.hero-email-unread {
+  transition: opacity 350ms ease;
+}
+.hero-stage:is([data-phase="decision"], [data-phase="leaving"]) .hero-email-unread {
+  opacity: 0;
+}
+
+/* Phones: the calmer cut. Five pieces (the rest are `.hero-pile-wide`), each
+   in its narrow slot, with contents zoomed so receipt and statement text reads
+   at 10 px and up. */
 @media (max-width: 639px) {
+  .hero-pile-wide {
+    display: none;
+  }
+
+  .hero-pile-slot {
+    left: var(--ln);
+    top: var(--tn);
+    width: var(--wn);
+  }
+
+  .hero-pile-card {
+    --r: var(--rn);
+    transition-delay: var(--on);
+  }
+
+  .hero-stage[data-phase="chaos"] .hero-pile[data-arrive] .hero-pile-card {
+    animation-delay: var(--dn);
+  }
+
   .hero-pile-piece {
     zoom: 1.3;
   }

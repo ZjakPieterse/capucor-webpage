@@ -59,6 +59,19 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
 - Standard motion easing across hovers, price animation, and reveals is
   `cubic-bezier(0.16, 1, 0.3, 1)`. Reuse it; respect `useReducedMotion` (see `AnimatedPrice`).
 
+### Motion and first paint
+
+- **Animate `transform` and `opacity` only.** `left`/`top`/`height`/`width` animations cost
+  layout every frame and count as layout shift; a `filter` animation cannot run on the
+  compositor, so it stalls behind hydration. Measured on the hero (2026-10-08): the blurred-in
+  headline painted up to 1.9 s after the buttons on a phone. See `HeroStory.tsx` and the
+  "Hero story beats" block in `globals.css`.
+- **Above-the-fold copy is final in the server HTML**: no `opacity: 0` or `filter` starting
+  frame on a headline or primary button.
+- **Layout that differs by screen size is CSS, not a `matchMedia` switch in React.** The server
+  renders the desktop branch, so a JS switch makes phones jump after hydration.
+- Loops pause off-screen, and phones get a calmer cut rather than a smaller one.
+
 ### Multi-card alignment (pricing, comparison rows)
 
 - Rows of peer cards align their internal rows via CSS subgrid, not hand-tuned heights. The
