@@ -14,6 +14,7 @@ import { ContactSection } from '@/components/landing/ContactSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { ScrollToTopOnMount } from '@/components/landing/ScrollToTopOnMount';
+import { RevealObserver } from '@/components/ui/RevealObserver';
 
 // ISR: cache for an hour via the OpenNext KV incremental cache. Pricing edits
 // in Supabase show up after POST /api/revalidate?secret=... (or within the hour).
@@ -73,6 +74,7 @@ export default async function HomePage() {
   return (
     <>
       <ScrollToTopOnMount />
+      <RevealObserver />
       {/* Structured data */}
       <script
         type="application/ld+json"

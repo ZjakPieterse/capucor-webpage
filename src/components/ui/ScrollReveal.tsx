@@ -1,30 +1,26 @@
-'use client';
-
-import { motion, useInView, useReducedMotion } from 'motion/react';
-import { useRef, type ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface ScrollRevealProps {
   children: ReactNode;
   className?: string;
+  /** Stagger, in seconds. */
   delay?: number;
 }
 
+// A plain server-rendered wrapper: the fade-up is CSS (`.reveal` in
+// globals.css), armed by one shared observer (`RevealObserver`), not a `motion`
+// component per block (home-hydration, 2026-10-08). With `motion`, every block
+// shipped at `opacity: 0` in the server HTML, so a phone that scrolled before
+// hydration saw empty sections, and each block was a client component to
+// hydrate. Content is visible without JavaScript and under reduced motion.
 export function ScrollReveal({ children, className, delay = 0 }: ScrollRevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: '-60px' });
-  // Reduced-motion visitors get the content in place, with no slide or fade.
-  const prefersReducedMotion = useReducedMotion();
-
   return (
-    <motion.div
-      ref={ref}
-      className={cn(className)}
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.4, ease: 'easeOut', delay }}
+    <div
+      className={cn('reveal', className)}
+      style={delay ? ({ '--reveal-delay': `${delay}s` } as CSSProperties) : undefined}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

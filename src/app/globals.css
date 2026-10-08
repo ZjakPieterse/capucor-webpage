@@ -802,7 +802,10 @@
   top: 0;
   left: 0;
   right: 0;
-  height: calc(var(--scroll-progress, 0) * 100%);
+  /* Scaled, not resized, so scrolling costs no layout (home-hydration). */
+  height: 100%;
+  transform: scaleY(var(--scroll-progress, 0));
+  transform-origin: top;
   border-radius: 1px;
   background: linear-gradient(
     to bottom,
@@ -1997,5 +2000,23 @@
 
   .hero-pile-piece {
     zoom: 1.3;
+  }
+}
+
+/* ─── Scroll reveal (ScrollReveal + RevealObserver, home-hydration) ───────
+   Content is in place in the server HTML. Once RevealObserver arms the page,
+   blocks below the fold wait at the "from" frame and fade up once as they
+   scroll in; blocks already on screen are marked revealed first, so nothing
+   visible ever hides. Transform and opacity only. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    transition:
+      opacity 0.4s ease-out var(--reveal-delay, 0s),
+      transform 0.4s ease-out var(--reveal-delay, 0s);
+  }
+
+  .reveal-armed .reveal:not([data-revealed]) {
+    opacity: 0;
+    transform: translateY(20px);
   }
 }

@@ -1,5 +1,3 @@
-'use client';
-
 import type { CSSProperties } from 'react';
 
 // Real brand marks, painted monochrome via `.logo-mark` (see globals.css) so they

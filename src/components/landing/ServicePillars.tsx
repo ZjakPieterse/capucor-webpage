@@ -1,5 +1,3 @@
-"use client";
-
 import { BarChart2, BookMarked, Users, Wallet, KeyRound, Unlock } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
