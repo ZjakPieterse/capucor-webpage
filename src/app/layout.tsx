@@ -19,26 +19,21 @@ export const metadata: Metadata = {
     'SAICA',
   ],
   authors: [{ name: 'Capucor Business Solutions', url: siteConfig.marketingUrl }],
+  // No og title, description or url here. A page that sets no openGraph of its
+  // own (privacy, terms, 404) inherits this object, and a fixed title/url would
+  // make every such page share as the homepage. Left out, Next fills og:title
+  // and og:description from the page's own metadata.
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
-    url: siteConfig.marketingUrl,
-    title: {
-      default: 'Capucor Business Solutions | Outsourced Finance for SMEs',
-      template: '%s | Capucor Business Solutions',
-    },
-    description: siteConfig.description,
     siteName: siteConfig.name,
     images: [{ url: '/api/og', width: 1200, height: 630 }],
   },
+  // Card type only. With no twitter title/description/images set, Next copies
+  // them from the page's resolved openGraph, so each page's share card matches
+  // its own title. Setting them here pinned every page to the same card.
   twitter: {
     card: 'summary_large_image',
-    title: {
-      default: 'Capucor Business Solutions',
-      template: '%s | Capucor Business Solutions',
-    },
-    description: siteConfig.description,
-    images: ['/api/og'],
   },
   robots: { index: true, follow: true },
 };

@@ -178,13 +178,13 @@ export function TierComparison({
                         key={row.text}
                         className={cn(
                           'flex items-start gap-2 text-xs',
-                          covered ? 'text-foreground' : 'text-muted-foreground/60'
+                          covered ? 'text-foreground' : 'text-muted-foreground/80'
                         )}
                       >
                         {covered ? (
                           <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/80" />
                         ) : (
-                          <Minus className="h-3 w-3 shrink-0 mt-1 text-muted-foreground/40" />
+                          <Minus className="h-3 w-3 shrink-0 mt-1 text-muted-foreground/60" />
                         )}
                         <span>
                           {row.text}
@@ -236,7 +236,7 @@ export function TierComparison({
                         ) : isCovered(t.slug, row.lowestTier) ? (
                           <Check className="inline h-4 w-4 text-foreground/70" aria-label="Included" />
                         ) : (
-                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/40" aria-label="Not included" />
+                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
                         )}
                       </td>
                     ))}

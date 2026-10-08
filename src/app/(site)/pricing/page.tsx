@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
+    siteName: siteConfig.name,
     url: `${siteConfig.marketingUrl}/pricing`,
     description:
       'Build your exact subscription. Transparent, fixed monthly pricing for accounting, bookkeeping, and payroll.',

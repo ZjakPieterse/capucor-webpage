@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
+    siteName: siteConfig.name,
     url: `${siteConfig.marketingUrl}/accounting`,
     description:
       'Annual financial statements, income and provisional tax, VAT201 and CIPC returns for owner-run South African businesses, on one fixed monthly subscription.',

@@ -26,7 +26,7 @@ export function PartnersAndTech() {
       className="relative -mt-12 lg:-mt-20 border-y border-border/40 bg-background py-8 lg:py-10"
     >
       <ScrollReveal>
-        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70 mb-6">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/80 mb-6">
           Trusted partners &amp; tools
         </p>
       </ScrollReveal>

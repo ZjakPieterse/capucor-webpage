@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_ZA',
+    siteName: siteConfig.name,
     url: `${siteConfig.marketingUrl}/payroll`,
     description:
       'Monthly payroll for South African employers: payslips, EMP201, EMP501, UIF, COIDA and IRP5s, on one fixed monthly subscription.',

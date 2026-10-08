@@ -1,11 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
+import { SITEMAP_PATHS } from '@/config/sitemap';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = siteConfig.marketingUrl;
-  return [
-    { url: `${base}/`, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
-    { url: `${base}/pricing`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${base}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-  ];
+  return SITEMAP_PATHS.map(({ path, changeFrequency, priority }) => ({
+    url: path === '/' ? `${base}/` : `${base}${path}`,
+    lastModified: new Date(),
+    changeFrequency,
+    priority,
+  }));
 }

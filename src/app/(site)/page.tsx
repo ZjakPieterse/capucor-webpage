@@ -80,10 +80,15 @@ export default async function HomePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'AccountingService',
+            '@id': `${siteConfig.marketingUrl}/#organization`,
             name: 'Capucor Business Solutions',
             url: siteConfig.marketingUrl,
+            // The light-background mark: search results render logos on white.
+            logo: `${siteConfig.marketingUrl}/brand/capucor-logo-on-light.png`,
+            image: `${siteConfig.marketingUrl}/api/og`,
+            email: siteConfig.email.contact,
             description: siteConfig.description,
-            areaServed: 'ZA',
+            areaServed: { '@type': 'Country', name: 'South Africa' },
             sameAs: [
               siteConfig.links.facebook,
               siteConfig.links.instagram,
