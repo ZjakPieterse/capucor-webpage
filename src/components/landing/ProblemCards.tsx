@@ -10,6 +10,8 @@ import {
   Link2,
   Users,
   Zap,
+  ArrowRight,
+  RotateCcw,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -61,7 +63,12 @@ const PROBLEMS = [
 ];
 
 export function ProblemCards() {
-  const [isResolved, setIsResolved] = useState(false);
+  // Each card flips on its own, so the reader turns problems into answers one at a time.
+  const [resolved, setResolved] = useState<boolean[]>(() =>
+    PROBLEMS.map(() => false),
+  );
+  const toggle = (i: number) =>
+    setResolved((prev) => prev.map((v, j) => (j === i ? !v : v)));
   const prefersReducedMotion = useReducedMotion();
 
   const flipInitial = prefersReducedMotion
@@ -88,38 +95,10 @@ export function ProblemCards() {
           />
         </ScrollReveal>
 
-        {/* The Toggle */}
-        <ScrollReveal delay={0.1}>
-          <div className="flex justify-center mt-8 mb-12">
-            <div className="premium-glass inline-flex items-center p-1.5 rounded-full bg-input/20 border border-white/10">
-              <button
-                onClick={() => setIsResolved(false)}
-                className={cn(
-                  "px-5 sm:px-6 h-11 inline-flex items-center rounded-full text-sm font-semibold transition-all duration-300",
-                  !isResolved
-                    ? "bg-destructive text-destructive-foreground shadow-md"
-                    : "quiet-hover text-muted-foreground",
-                )}
-              >
-                Without Capucor
-              </button>
-              <button
-                onClick={() => setIsResolved(true)}
-                className={cn(
-                  "px-5 sm:px-6 h-11 inline-flex items-center rounded-full text-sm font-semibold transition-all duration-300",
-                  isResolved
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "quiet-hover text-muted-foreground",
-                )}
-              >
-                With Capucor
-              </button>
-            </div>
-          </div>
-        </ScrollReveal>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[280px]">
-          {PROBLEMS.map((item, i) => (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[280px] mt-12">
+          {PROBLEMS.map((item, i) => {
+            const isResolved = resolved[i];
+            return (
             <div
               key={item.title}
               className="h-full"
@@ -186,10 +165,34 @@ export function ProblemCards() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+                  <button
+                    type="button"
+                    onClick={() => toggle(i)}
+                    data-state={isResolved ? "solution" : "problem"}
+                    className={cn(
+                      "flip-cue mt-5 self-start inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold",
+                      isResolved
+                        ? "border-white/10 text-muted-foreground"
+                        : "border-primary/30 bg-primary/10 text-primary",
+                    )}
+                  >
+                    {isResolved ? (
+                      <>
+                        <RotateCcw className="h-4 w-4" aria-hidden />
+                        Back to the problem
+                      </>
+                    ) : (
+                      <>
+                        We can fix this
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </>
+                    )}
+                  </button>
                 </div>
               </ScrollReveal>
             </div>
-          ))}
+            );
+          })}
         </div>
 
       </div>
