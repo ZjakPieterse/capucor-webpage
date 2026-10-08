@@ -70,8 +70,7 @@ export function ContactForm() {
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-5 text-sm text-muted-foreground leading-relaxed">
         Thanks{name.trim() ? `, ${name.trim().split(' ')[0]}` : ''}. We&apos;ve got your
         message and will reply to{' '}
-        <span className="text-foreground font-medium">{email.trim()}</span> within one working
-        day.
+        <span className="text-foreground font-medium">{email.trim()}</span> by email.
       </div>
     );
   }

@@ -120,7 +120,7 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
     {
       text: 'On-call Partner Support',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A direct line to your partner, with a reply the same business day.',
+      tooltip: 'A direct line to your partner for questions as they come up.',
     },
     PAYROLL_SERVICES,
   ],

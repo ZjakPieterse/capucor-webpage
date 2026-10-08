@@ -121,7 +121,7 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
     },
     signed: {
       title: 'Already signed',
-      body: 'This proposal has already been signed. Zjak will be in touch to set up your onboarding.',
+      body: 'This proposal has already been signed. We’ll be in touch to set up your onboarding.',
     },
     error: {
       title: 'Something went wrong',
@@ -137,7 +137,7 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
       {/* A signed proposal needs nothing more from the visitor. */}
       {reason !== 'signed' && (
         <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
-          Build your plan
+          Build your package
         </Button>
       )}
     </div>

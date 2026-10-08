@@ -26,7 +26,7 @@ const INCLUDED = [
   {
     title: 'Payroll processing and payslips',
     description:
-      'Your payroll calculated correctly each month: gross pay, deductions, net pay, and any variable items like overtime or commissions. Payslips issued to every employee before pay day, and your payroll records kept up to date.',
+      'Your payroll calculated correctly each month: gross pay, deductions, net pay, and any variable items like overtime or commissions. Payslips ready for pay day once the month’s changes are in, and your payroll records kept up to date.',
   },
   {
     title: 'PAYE and UIF submissions',
@@ -58,9 +58,6 @@ export default function PayrollPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">
-                Payroll
-              </p>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
                 Payroll for employers: payslips, EMP201, UIF and COIDA on their cycles
               </h1>
@@ -114,7 +111,7 @@ export default function PayrollPage() {
           <p className="text-muted-foreground mb-8">
             Flat monthly pricing. Build your exact subscription in minutes.
           </p>
-          <ServiceCtaPair className="justify-center" />
+          <ServiceCtaPair centered />
         </div>
       </section>
 

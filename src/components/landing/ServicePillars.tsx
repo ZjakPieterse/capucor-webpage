@@ -33,7 +33,7 @@ const SERVICES = [
       "Xero business software included",
       "Transaction processing and categorisation",
       "Monthly bank reconciliations",
-      "Monthly management accounts",
+      "Insights Report with your management accounts",
     ],
     href: "/bookkeeping",
     ctaLabel: "View bookkeeping support",
@@ -66,7 +66,7 @@ const TRUST = [
   {
     icon: KeyRound,
     title: "Your own login",
-    body: "You keep full, real-time access to your numbers. Outsourcing the admin doesn't cost you visibility.",
+    body: "You keep your own Xero login, and your numbers are as current as your package’s processing rhythm. Outsourcing the admin doesn't cost you visibility.",
   },
   {
     icon: Unlock,
@@ -85,7 +85,6 @@ export function ServicePillars() {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            eyebrow="What we do"
             title="Three disciplines. One subscription."
             subtitle="Accounting, bookkeeping and payroll for employers, on one fixed monthly subscription."
           />

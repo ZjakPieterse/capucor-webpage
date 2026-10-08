@@ -33,15 +33,15 @@ old portal path, we bounce them to capucor.app. That is all.
 do not add a capucor.app→capucor.com rule or a capucor.app `noindex` header rule here — it could
 not fire. Adding a new public page needs no redirect entry.
 
-At os-sunset, `APP_PATHS`, `/client-portal`, `siteConfig.appUrl` and the Navbar's Client Portal
-link go together (see `redirects.test.ts` and the contract's `redirects` entry).
+At os-sunset, `APP_PATHS`, `/client-portal` and the now-unused `siteConfig.appUrl` go together (the
+Navbar's Client Portal link was removed 2026-10-08) (see `redirects.test.ts` and the contract's `redirects` entry).
 
 ### Rules that still hold
 
 - **`siteConfig.url` does not exist.** Use `siteConfig.marketingUrl` (`src/config/site.ts`,
-  overridable via `NEXT_PUBLIC_MARKETING_URL`). `siteConfig.appUrl` exists **only** for the
-  Navbar's Client Portal link until os-sunset; the redirect table carries its own `APP_ORIGIN`.
-  No email, signing page or API route links capucor.app — signed clients are told Zjak will be in
+  overridable via `NEXT_PUBLIC_MARKETING_URL`). `siteConfig.appUrl` is unused since the Navbar's
+  Client Portal link was removed (2026-10-08); the redirect table carries its own `APP_ORIGIN`.
+  No email, signing page or API route links capucor.app — signed clients are told we will be in
   touch. Do not add a consumer.
 - **Links to capucor.app must be absolute.** It is a different Worker; a relative route can never
   reach it.

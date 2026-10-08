@@ -33,7 +33,7 @@ const STEPS = [
     number: "04",
     icon: CalendarCheck,
     title: "First month",
-    body: "Your first month closes on the rhythm, with a report and a conversation.",
+    body: "Your first month closes, and your Insights Report and review follow on your package’s rhythm.",
   },
 ];
 
@@ -44,7 +44,6 @@ export function SwitchingSection() {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            eyebrow="Getting started"
             title="Switching in any month"
             subtitle="You don't have to wait for year-end. Start in whichever month suits you, and we take it from there."
           />
@@ -83,7 +82,7 @@ export function SwitchingSection() {
         </ol>
 
         <ScrollReveal delay={0.3}>
-          <div className="mt-10 flex justify-center">
+          <div className="mt-10 flex flex-col items-center gap-3 text-center">
             <Button
               nativeButton={false}
               render={

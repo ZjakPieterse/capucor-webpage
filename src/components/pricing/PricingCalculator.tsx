@@ -15,6 +15,7 @@ import { parseAddonToken } from '@/lib/pricing';
 import {
   PRICING_PAGE_HEADING,
   PRICING_PAGE_INTRO,
+  PRICING_TRUST_ITEMS,
   QUESTION_COPY,
 } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
@@ -41,13 +42,7 @@ interface PricingCalculatorProps {
   seed?: PricingSeed;
 }
 
-const TRUST_ITEMS = [
-  'SARS Registered',
-  'Fixed Monthly Pricing',
-  'No Lock-in Contracts',
-  'Dedicated Finance Team',
-  "Cancel with 30 Days’ Notice",
-];
+const TRUST_ITEMS = PRICING_TRUST_ITEMS;
 
 function TrustBar() {
   return (

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip } from "lucide-react";
 import { use3DTilt } from "@/hooks/use3DTilt";
 import { signatureFont } from "@/lib/fonts";
+import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 
 // ── The hero story ────────────────────────────────────────────────────────────────
 // One owner's month told in three beats:
@@ -20,8 +21,9 @@ import { signatureFont } from "@/lib/fonts";
 // panel in website-v2 (Zjak, 2026-10-05). The decision arrives as an email, not a
 // chat, so the panel doesn't promise instant replies.
 
-// "intro" runs once, on first load only: a loading bar before the pile builds.
-type StoryPhase = "intro" | "chaos" | "order" | "arriving" | "decision";
+// The story starts straight into the chaos beat: the old 2-second "intro"
+// loading bar read as an empty card (funnel review F07, 2026-10-08).
+type StoryPhase = "chaos" | "order" | "arriving" | "decision";
 
 /** Lines reconciled in the order beat, one count per story. */
 const TX_COUNTS = [23, 29, 18];
@@ -32,8 +34,6 @@ const ROW_PX = 26;
 /** The order beat lasts as long as its statement takes, plus time for the filed chips. */
 function phaseMs(phase: StoryPhase, scene: number): number {
   switch (phase) {
-    case "intro":
-      return 2000;
     case "chaos":
       return 4800;
     case "order":
@@ -46,7 +46,6 @@ function phaseMs(phase: StoryPhase, scene: number): number {
 }
 
 const NEXT_PHASE: Record<StoryPhase, StoryPhase | null> = {
-  intro: "chaos",
   chaos: "order",
   order: "arriving",
   arriving: "decision",
@@ -69,16 +68,18 @@ interface StoryDates {
   emp201Due: string;
 }
 
+// Due dates follow the site's own compliance calendar (VAT201 on eFiling: the
+// last business day; EMP201: the 7th or the business day before), F06.
 function computeStoryDates(): StoryDates {
   const now = new Date();
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const vat = new Date(now.getFullYear(), now.getMonth() + (now.getDate() > 25 ? 1 : 0), 25);
-  const emp = new Date(now.getFullYear(), now.getMonth() + (now.getDate() > 7 ? 1 : 0), 7);
+  const vat = nextVat201Due(now);
+  const emp = nextEmp201Due(now);
   return {
     month: MONTH_FULL[prev.getMonth()],
     period: `${MONTH_SHORT[prev.getMonth()]} ${prev.getFullYear()}`,
-    vatDue: `25 ${MONTH_FULL[vat.getMonth()]}`,
-    emp201Due: `7 ${MONTH_FULL[emp.getMonth()]}`,
+    vatDue: `${vat.getDate()} ${MONTH_FULL[vat.getMonth()]}`,
+    emp201Due: `${emp.getDate()} ${MONTH_FULL[emp.getMonth()]}`,
   };
 }
 
@@ -168,7 +169,7 @@ function buildScenes(d: StoryDates): Scene[] {
       ],
       filed: ["Books closed", "EMP201 filed", "VAT201 filed"],
       email: {
-        subject: `${d.month} report: cash covers 4.2 months`,
+        subject: `${d.month} Insights Report: cash covers 4.2 months`,
         preview: "Books are closed and VAT201 is filed. Cash covers 4.2 months…",
         before: "Books are closed and VAT201 is filed. Cash covers ",
         figure: "4.2 months",
@@ -211,7 +212,7 @@ function buildScenes(d: StoryDates): Scene[] {
       ],
       filed: ["Books closed", "EMP201 filed", "UIF declared"],
       email: {
-        subject: `${d.month} report: margin held at 38%`,
+        subject: `${d.month} Insights Report: margin held at 38%`,
         preview: "Books are closed and your margin held at 38%…",
         before: "Books are closed and your margin held at ",
         figure: "38%",
@@ -253,7 +254,7 @@ function buildScenes(d: StoryDates): Scene[] {
       ],
       filed: ["Books closed", "EMP201 filed", "IRP6 estimate ready"],
       email: {
-        subject: `${d.month} report: R 60 500 is 60+ days late`,
+        subject: `${d.month} Insights Report: R 60 500 is 60+ days late`,
         preview: "Books are closed. Two clients owe R 60 500 and are more than 60 days late…",
         before: "Books are closed. Two clients owe ",
         figure: "R 60 500",
@@ -276,6 +277,39 @@ function formatRand(n: number): string {
   return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ")}.${cents}`;
 }
 
+// Plausible monthly amounts per statement line for an SME with 9 to 22 staff,
+// in rand: [min, max]. Owners know their own bank charges, so a figure like
+// "BANK CHARGES −16 570.85" undercut the panel (funnel review F05, 2026-10-08).
+const EXPENSE_RANGES: Record<string, [number, number]> = {
+  "BANK CHARGES": [150, 900],
+  "CARD FEES": [300, 2500],
+  "TOLL GATES": [200, 2000],
+  "SAFETY GEAR": [400, 4500],
+  "DIESEL SITE BAKKIE": [800, 3500],
+  FUEL: [600, 3000],
+  "CELL CONTRACT": [400, 1500],
+  "CELL CONTRACTS": [900, 4000],
+  "INSURANCE PREMIUM": [1500, 6500],
+  "PROF INDEMNITY": [1200, 4500],
+  RENT: [12000, 35000],
+  ELECTRICITY: [2500, 9000],
+  "SOFTWARE SUBSCRIPTION": [300, 3500],
+  COURIER: [150, 2500],
+  PACKAGING: [500, 4000],
+  ADVERTISING: [1000, 8000],
+  "REFUND CUSTOMER": [150, 1800],
+  SHOPFITTING: [3000, 15000],
+  TRAINING: [1500, 8000],
+  "OFFICE SUPPLIES": [150, 1500],
+  "HARDWARE & TIMBER": [1500, 12000],
+  "PLANT HIRE": [3000, 18000],
+  "CEMENT SUPPLIER": [2000, 15000],
+  SUBCONTRACTOR: [5000, 30000],
+  "STOCK COASTAL TEXTILES": [8000, 40000],
+  SALARIES: [40000, 190000],
+};
+const DEFAULT_EXPENSE_RANGE: [number, number] = [150, 3000];
+
 /** A deterministic month of statement lines, so server and client render the same. */
 function buildStatement(pool: string[], seed: number, count: number): Tx[] {
   let x = seed * 7919;
@@ -287,11 +321,8 @@ function buildStatement(pool: string[], seed: number, count: number): Tx[] {
     const raw = pool[Math.floor(rand() * pool.length)];
     const income = raw.startsWith("+");
     const desc = income ? raw.slice(1) : raw;
-    const value = income
-      ? 2000 + rand() * 60000
-      : desc === "SALARIES"
-        ? 40000 + rand() * 150000
-        : 120 + rand() * 18000;
+    const [min, max] = EXPENSE_RANGES[desc] ?? DEFAULT_EXPENSE_RANGE;
+    const value = income ? 2000 + rand() * 60000 : min + rand() * (max - min);
     return {
       id: i,
       date: String(1 + Math.floor((i * 30) / count)).padStart(2, "0"),
@@ -305,7 +336,7 @@ function buildStatement(pool: string[], seed: number, count: number): Tx[] {
 function useStoryTimeline() {
   const reduce = useReducedMotion();
   const observeRef = useRef<HTMLDivElement | null>(null);
-  const [phase, setPhase] = useState<StoryPhase>("intro");
+  const [phase, setPhase] = useState<StoryPhase>("chaos");
   const [scene, setScene] = useState(0);
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
@@ -539,19 +570,60 @@ function StickyNote({ text }: { text: string }) {
 // Where each piece of the pile lands (percent of the stage), in the order it
 // arrives; later pieces sit on top. Notifications stay level, as on a phone;
 // paper lies at a slight angle. Depth 1 sits a little further back and dimmer.
-const PILE = [
-  { left: 2, top: 1, width: "36%", rotate: -3, depth: 1 },
-  { left: 54, top: 0, width: "44%", rotate: 0, depth: 0 },
-  { left: 22, top: 22, width: "58%", rotate: 0.6, depth: 0 },
-  { left: 63, top: 34, width: "35%", rotate: 3, depth: 1 },
-  { left: 1, top: 42, width: "44%", rotate: 0, depth: 0 },
-  { left: 33, top: 56, width: "35%", rotate: -1.5, depth: 1 },
-  { left: 40, top: 10, width: "24%", rotate: 4, depth: 1 },
-  { left: 3, top: 66, width: "27%", rotate: -5, depth: 0 },
-  { left: 52, top: 63, width: "46%", rotate: 0, depth: 0 },
-  { left: 72, top: 54, width: "25%", rotate: 6, depth: 1 },
-  { left: 24, top: 80, width: "46%", rotate: 0, depth: 0 },
+interface PileSlot {
+  /** Index into the panel's `pile` array. */
+  piece: number;
+  left: number;
+  top: number;
+  width: string;
+  rotate: number;
+  depth: 0 | 1;
+}
+
+const PILE: PileSlot[] = [
+  { piece: 0, left: 2, top: 1, width: "36%", rotate: -3, depth: 1 },
+  { piece: 1, left: 54, top: 0, width: "44%", rotate: 0, depth: 0 },
+  { piece: 2, left: 22, top: 22, width: "58%", rotate: 0.6, depth: 0 },
+  { piece: 3, left: 63, top: 34, width: "35%", rotate: 3, depth: 1 },
+  { piece: 4, left: 1, top: 42, width: "44%", rotate: 0, depth: 0 },
+  { piece: 5, left: 33, top: 56, width: "35%", rotate: -1.5, depth: 1 },
+  { piece: 6, left: 40, top: 10, width: "24%", rotate: 4, depth: 1 },
+  { piece: 7, left: 3, top: 66, width: "27%", rotate: -5, depth: 0 },
+  { piece: 8, left: 52, top: 63, width: "46%", rotate: 0, depth: 0 },
+  { piece: 9, left: 72, top: 54, width: "25%", rotate: 6, depth: 1 },
+  { piece: 10, left: 24, top: 80, width: "46%", rotate: 0, depth: 0 },
 ];
+
+// Below 640 px the pile shows fewer, wider pieces, and `.hero-pile-piece`
+// zooms their contents so receipt and statement text stays readable (it was
+// 8 to 9.5 px at 375 px wide; funnel review F07, 2026-10-08).
+const PILE_NARROW: PileSlot[] = [
+  { piece: 0, left: 1, top: 0, width: "54%", rotate: -3, depth: 1 },
+  { piece: 1, left: 44, top: 2, width: "55%", rotate: 0, depth: 0 },
+  { piece: 2, left: 2, top: 21, width: "96%", rotate: 0.6, depth: 0 },
+  { piece: 3, left: 47, top: 45, width: "52%", rotate: 3, depth: 1 },
+  { piece: 4, left: 1, top: 50, width: "58%", rotate: 0, depth: 0 },
+  { piece: 5, left: 6, top: 64, width: "52%", rotate: -1.5, depth: 1 },
+  { piece: 7, left: 64, top: 64, width: "34%", rotate: 5, depth: 0 },
+  { piece: 10, left: 30, top: 84, width: "68%", rotate: 0, depth: 0 },
+];
+
+const NARROW_QUERY = "(max-width: 639px)";
+
+function subscribeNarrow(onChange: () => void) {
+  const mq = window.matchMedia(NARROW_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+
+/** True below Tailwind's `sm` breakpoint; false on the server. */
+function useNarrowScreen(): boolean {
+  return useSyncExternalStore(
+    subscribeNarrow,
+    () => window.matchMedia(NARROW_QUERY).matches,
+    () => false,
+  );
+}
 
 // ── The panel ─────────────────────────────────────────────────────────────────────
 const STEPS: { label: string; phases: StoryPhase[] }[] = [
@@ -569,8 +641,9 @@ export function HeroStory() {
   const { ref: tiltRef, rotateX, rotateY, lift, scale, onMouseMove, onMouseLeave } =
     use3DTilt<HTMLDivElement>({ maxTiltDeg: 3 });
 
-  const intro = phase === "intro";
-  const ordered = phase !== "chaos" && !intro;
+  const ordered = phase !== "chaos";
+  const narrow = useNarrowScreen();
+  const slots = narrow ? PILE_NARROW : PILE;
   const processing = phase === "order";
   const emailIn = phase === "arriving" || phase === "decision";
   const emailOpen = phase === "decision";
@@ -607,7 +680,7 @@ export function HeroStory() {
         style={{ rotateX, rotateY, y: lift, scale, transformPerspective: 1200 }}
         className="tilt-card premium-card relative overflow-hidden rounded-2xl border-[0.5px] border-white/10 bg-card/80 p-4 shadow-2xl sm:p-5"
         role="figure"
-        aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's report arrives by email with one recommendation to discuss at your review. Figures are for illustration."
+        aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's Insights Report arrives by email with one recommendation to discuss at your review. Shown on the Pro package, which reports monthly. Figures are for illustration."
       >
         <div aria-hidden className="pointer-events-none absolute -inset-16 z-0 rounded-full bg-primary/10 blur-3xl" />
 
@@ -643,30 +716,6 @@ export function HeroStory() {
 
         {/* Stage */}
         <div aria-hidden className="relative z-10 h-[440px] sm:h-[390px]">
-          {/* First load only: a quiet loading bar before the pile builds */}
-          <AnimatePresence>
-            {intro && (
-              <motion.div
-                key="intro"
-                className="absolute inset-0 z-[80] flex flex-col items-center justify-center text-center"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
-                transition={{ duration: 0.5, delay: 0.35, ease: EASE }}
-              >
-                <div className="h-[2px] w-40 overflow-hidden rounded-full bg-white/[0.08]">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: "linear-gradient(to right, var(--brand-cyan), var(--primary))" }}
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 1.5, delay: 0.45, ease: "easeInOut" }}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           <AnimatePresence mode="wait">
             <motion.div
               key={scene}
@@ -678,9 +727,8 @@ export function HeroStory() {
             >
               {/* Chaos: the pile builds, faster as it goes */}
               {!reduce &&
-                !intro &&
-                pile.map((piece, i) => {
-                  const slot = PILE[i];
+                slots.map((slot, i) => {
+                  const piece = pile[slot.piece];
                   const back = slot.depth === 1;
                   const arrive = 0.1 + i * 0.36 - i * i * 0.011;
                   return (
@@ -717,6 +765,7 @@ export function HeroStory() {
                       }
                     >
                       <motion.div
+                        className="hero-pile-piece"
                         animate={ordered ? { y: 0 } : { y: [0, back ? -2 : -3, 0] }}
                         transition={
                           ordered
@@ -768,7 +817,7 @@ export function HeroStory() {
                       {filled.map((tx, i) => (
                         <motion.li
                           key={tx.id}
-                          className="flex items-center gap-2.5 overflow-hidden rounded-md px-2 font-mono text-[10.5px]"
+                          className="flex items-center gap-2.5 overflow-hidden rounded-md px-2 font-mono text-[12px] sm:text-[10.5px]"
                           initial={reduce ? false : { opacity: 0, height: 0 }}
                           animate={{
                             opacity: 1,
@@ -880,7 +929,7 @@ export function HeroStory() {
                       </span>
                       <div className="min-w-0">
                         <div className="truncate text-[11px] font-medium text-[#111827]" suppressHydrationWarning>
-                          {dates.month} management report.pdf
+                          {dates.month} Insights Report.pdf
                         </div>
                         <div className="text-[10px] text-[#6b7280]">6 pages · 284 KB</div>
                       </div>
@@ -893,9 +942,11 @@ export function HeroStory() {
         </div>
 
         {/* Footnote */}
-        <div className="relative z-50 mt-3 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+        <div className="relative z-50 mt-3 flex items-center gap-1.5 text-[11px] sm:text-[10px] text-muted-foreground">
           <Info className="h-3 w-3 shrink-0" />
-          Example figures for illustration.
+          <span>
+            Example figures. Shown on Pro, which reports monthly.
+          </span>
           <span className="ml-auto truncate">{s.business}</span>
         </div>
       </motion.div>

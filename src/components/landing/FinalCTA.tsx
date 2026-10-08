@@ -30,7 +30,7 @@ export function FinalCTA() {
             Ready to make finance work better?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Build your subscription in a few minutes, or book a short fit call
+            Build your subscription in a few minutes, or book a fit call
             and we&apos;ll help you choose the right level of monthly support.
           </p>
 

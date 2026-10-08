@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Check, X, RefreshCw } from 'lucide-react';
 import type { FairUsageLine } from '@/lib/schedule';
 import { FEES_NOTES, type TermsBlock } from '@/config/proposalTerms';
+import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 
 // Server-rendered building blocks for the proposal document. No interactivity
 // (the sign step is the only client island), so these stay plain components.
@@ -108,7 +109,7 @@ export function ScheduleOfServices({
       {fairUsage.length > 0 && (
         <>
           <p className="mb-2 text-xs font-semibold text-foreground">Your allowances</p>
-          <ul className="mb-5 space-y-3">
+          <ul className="mb-3 space-y-3">
             {fairUsage.map((f) => (
               <li key={f.slug} className="rounded-lg border border-border bg-card/40 p-3">
                 <div className="flex items-baseline justify-between gap-3">
@@ -121,6 +122,7 @@ export function ScheduleOfServices({
               </li>
             ))}
           </ul>
+          <p className="mb-5 text-xs leading-relaxed text-muted-foreground">{ALLOWANCE_CHANGE_NOTE}</p>
         </>
       )}
 
@@ -153,8 +155,7 @@ export function FeesNotes() {
   );
 }
 
-export function FeeChangesSection({ fairUsage }: { fairUsage: FairUsageLine[] }) {
-  const overages = fairUsage.filter((f) => f.overage);
+export function FeeChangesSection() {
   return (
     <div>
       <SectionLabel>How your fee stays fair</SectionLabel>
@@ -166,15 +167,6 @@ export function FeeChangesSection({ fairUsage }: { fairUsage: FairUsageLine[] })
           Any change applies from the next billing cycle and is never back-dated.
         </p>
       </div>
-      {overages.length > 0 && (
-        <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
-          {overages.map((f) => (
-            <li key={f.slug} className="text-xs leading-relaxed text-muted-foreground">
-              <span className="font-medium text-foreground">{f.name}:</span> {f.overage}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }

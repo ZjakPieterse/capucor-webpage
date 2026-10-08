@@ -65,10 +65,10 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           <Button
             nativeButton={false}
-            render={<Link href={`${siteConfig.appUrl}/portal`} />}
+            render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
             size="sm"
           >
-            Client Portal
+            Book a fit call
           </Button>
         </div>
 
@@ -108,10 +108,10 @@ export function Navbar() {
                 <div className="mt-4 pt-4 border-t border-white/10">
                   <Button
                     nativeButton={false}
-                    render={<Link href={`${siteConfig.appUrl}/portal`} />}
+                    render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
                     className="w-full h-11"
                   >
-                    Client Portal
+                    Book a fit call
                   </Button>
                 </div>
               </nav>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 
 // The confirm page renders read-only; the actual signature commit happens on
 // this button's POST so an email link-scanner that prefetches the GET can't
-// auto-sign. On success we say Zjak will be in touch (no portal link).
+// auto-sign. On success we say we will be in touch (no portal link).
 export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
         <p className="mt-1.5 text-sm text-muted-foreground">
           {/* Signing stops at signed + PDF (web-standalone, 2026-10-07): no
               capucor.app portal link. */}
-          Your acceptance is recorded. Zjak will be in touch shortly to set up your onboarding.
+          Your acceptance is recorded. We&rsquo;ll be in touch shortly to set up your onboarding.
         </p>
         {completion.deliveryStatus === 'pending' && (
           <p className="mt-2 text-sm text-muted-foreground">

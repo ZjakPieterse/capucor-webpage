@@ -104,6 +104,11 @@ Avoid "not X, but Y" and "A system, not ad-hoc work" constructions:
 - **Short sentences over long compound ones.** If a sentence needs an em dash or semicolon to hold together, split it.
 - **South African specificity is a strength.** SARS, CIPC, EMP201, VAT201, POPIA, SAICA, UIF, PAYE, COIDA, IRP5, B-BBEE — use these. They signal genuine local expertise and should never be softened into generic equivalents.
 - **Headings are sentence case.**
+- **Speak as a team, never as one person (owner decision, 2026-10-08).** "We'll be in touch", "Book a
+  call with us". No personal name in customer-facing copy (site, emails, proposal, PDF), so the
+  practice can grow without rewriting it. `site-copy.test.ts` checks the main surfaces.
+- **"Book a fit call" stays a plain button.** The booking page explains the call (length, cost, who
+  takes it), so the site does not repeat it and the page can change as the team grows.
 
 ---
 

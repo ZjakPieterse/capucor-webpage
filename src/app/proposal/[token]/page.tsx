@@ -230,7 +230,7 @@ export default async function ProposalPage({
 
         <div className="space-y-8 p-6 sm:p-8">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Hi {row.first_name}, here&apos;s your proposed plan. Everything we&apos;ll do, what it
+            Hi {row.first_name}, here&apos;s your proposed package. Everything we&apos;ll do, what it
             costs, and the terms are set out below. Review it, then sign at the bottom to get started.
             There&apos;s no payment needed up front.
           </p>
@@ -262,7 +262,7 @@ export default async function ProposalPage({
             </p>
           </div>
 
-          <FeeChangesSection fairUsage={fairUsage} />
+          <FeeChangesSection />
 
           <ResponsibilitiesSection ours={RESPONSIBILITIES_OURS} yours={RESPONSIBILITIES_YOURS} />
 
@@ -346,7 +346,7 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
           capucor.app portal link. */}
       <p className="mt-4 text-sm text-muted-foreground">
         Thanks, that&rsquo;s accepted and there&rsquo;s nothing more you need to do right now.
-        Zjak will be in touch shortly to set up your onboarding.
+        We&rsquo;ll be in touch shortly to set up your onboarding.
       </p>
     </div>
   );
@@ -360,11 +360,11 @@ function ProposalUnavailable({
   const copy: Record<typeof reason, { title: string; body: string }> = {
     invalid: {
       title: 'Proposal not found',
-      body: 'This proposal link is not recognised. Please check the link in your email, or configure a new plan.',
+      body: 'We don’t recognise this proposal link. Check the link in your proposal email, or build your package again on our pricing page and we’ll send you a new proposal.',
     },
     expired: {
       title: 'Proposal expired',
-      body: 'This proposal link is no longer valid. Configure a new plan and we’ll send you a fresh one.',
+      body: 'Proposals stay open for a limited time, and this one has closed. Build your package again on our pricing page and we’ll email you a fresh proposal.',
     },
     ratelimited: {
       title: 'Please try again shortly',
@@ -382,7 +382,7 @@ function ProposalUnavailable({
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{body}</p>
       <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
-        Build your plan
+        Build your package
       </Button>
     </div>
   );

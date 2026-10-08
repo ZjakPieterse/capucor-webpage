@@ -27,12 +27,20 @@ const CSP_DIRECTIVES: Record<string, string[]> = {
   //   - The JSON-LD <script> on /
   // A nonce-based CSP would be tighter but requires middleware wiring;
   // park that as a future hardening pass.
-  "script-src": ["'self'", "'unsafe-inline'"],
+  //
+  // Cloudflare Web Analytics (technical review T07, Zjak 2026-10-08): the zone
+  // injects the beacon from static.cloudflareinsights.com (a versioned path,
+  // beacon.min.js/v…, so the whole host is allowed). With automatic injection
+  // it reports to the same origin (/cdn-cgi/rum, covered by 'self');
+  // cloudflareinsights.com in connect-src covers a manual snippet. Cookieless,
+  // so no consent banner. Per Cloudflare's Web Analytics FAQ, "Content
+  // Security Policy". Without this the CSP blocked the beacon on every page.
+  "script-src": ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
   // Tailwind v4 + Next inject inline style tags; unavoidable today.
   "style-src": ["'self'", "'unsafe-inline'"],
   "img-src": ["'self'", "data:", "blob:", "https:"],
   "font-src": ["'self'", "data:"],
-  "connect-src": ["'self'", SUPABASE_URL].filter(Boolean),
+  "connect-src": ["'self'", "https://cloudflareinsights.com", SUPABASE_URL].filter(Boolean),
   "frame-ancestors": ["'none'"],
   "base-uri": ["'self'"],
   "form-action": ["'self'"],

@@ -190,8 +190,8 @@ export function renderCreatedProposalClientEmail(d) {
       ${reference(d.refNumber)}
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Hi ${escapeHtml(d.firstName)}, here&rsquo;s your proposal</h1>
       <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#4b5563;">
-        Thanks for configuring a plan for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
-        of your ${escapeHtml(d.tierName)} subscription. Open your proposal to review the full details and
+        Thanks for building a package for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
+        of your ${escapeHtml(d.tierName)} package. Open your proposal to review the full details and
         sign electronically. There&rsquo;s no payment required to get started.
       </p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 8px;">${rows}
@@ -241,7 +241,7 @@ export function renderSignedClientEmail(d) {
   return clientShell(`${brand()}
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">That&rsquo;s signed, ${escapeHtml(d.firstName)}</h1>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We&rsquo;ve recorded your acceptance of the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>. There&rsquo;s nothing more you need to do right now.</p>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Zjak will be in touch shortly to set up your onboarding and get your first month underway. Questions in the meantime? Just reply to this email.</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We’ll be in touch shortly to set up your onboarding and get your first month underway. Questions in the meantime? Just reply to this email.</p>
       ${signedAlertBlock(d.businessName, d.signedAt)}`);
 }
 

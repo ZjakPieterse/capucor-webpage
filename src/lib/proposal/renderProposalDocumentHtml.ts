@@ -17,6 +17,7 @@ import {
   RESPONSIBILITIES_OURS,
   RESPONSIBILITIES_YOURS,
 } from '@/config/proposalTerms';
+import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 import { CAPUCOR_LOGO_LIGHT_DATA_URL } from '@/lib/proposal/capucorLogo';
 import { formatZAR, firstOfNextMonth } from '@/lib/utils';
 
@@ -110,16 +111,6 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     )
     .join('');
 
-  const overages = d.fairUsage.filter((f) => f.overage);
-  const overageRows = overages
-    .map(
-      (f) =>
-        `<li style="${LI}"><strong style="color:#111827;">${escapeHtml(f.name)}:</strong> ${escapeHtml(
-          f.overage!,
-        )}</li>`,
-    )
-    .join('');
-
   const termsHtml = PROPOSAL_TERMS.map(
     (b) =>
       `<div style="margin:0 0 12px;">
@@ -173,7 +164,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     <p style="${LABEL}">Schedule of services</p>
     <p style="${SUBHEAD}">What&#39;s included</p>
     ${list(d.inclusions)}
-    ${allowanceRows ? `<p style="${SUBHEAD}">Your allowances</p><ul style="margin:0 0 8px;padding-left:18px;">${allowanceRows}</ul>` : ''}
+    ${allowanceRows ? `<p style="${SUBHEAD}">Your allowances</p><ul style="margin:0 0 8px;padding-left:18px;">${allowanceRows}</ul><p style="${PARA}">${escapeHtml(ALLOWANCE_CHANGE_NOTE)}</p>` : ''}
     <p style="${SUBHEAD}">What&#39;s not included</p>
     ${list(d.outOfScope)}
 
@@ -193,7 +184,6 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     <!-- Fee fairness -->
     <p style="${LABEL}">How your fee stays fair</p>
     <p style="${PARA}">We review your engagement every quarter against your rolling average over the last 3 to 12 months. One busy month won&#39;t move your price and a quiet one won&#39;t count against you. Any change applies from the next billing cycle and is never back-dated.</p>
-    ${overageRows ? `<ul style="margin:0 0 8px;padding-left:18px;">${overageRows}</ul>` : ''}
 
     <!-- Responsibilities -->
     <p style="${LABEL}">What each of us does</p>

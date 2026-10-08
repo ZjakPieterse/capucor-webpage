@@ -10,6 +10,14 @@ import { HeroStory } from "@/components/landing/HeroStory";
 // ── Hero Section ──────────────────────────────────────────────────────────────────
 // No eyebrow, and no motion inside the headline (Zjak, 2026-10-07). On load the
 // hero builds in order: headline, panel, subtext, buttons, trust line.
+//
+// ⚠️ The entrance is CSS (`.hero-enter*` in globals.css), not `motion`
+// (technical review T01, 2026-10-08). With `motion`, the server HTML shipped
+// every line at `opacity:0` and nothing painted until ~280 KB of JS had
+// hydrated: 91 % of a 5.5 s mobile LCP. The CSS keyframes start at first paint,
+// need no JS, and are skipped under prefers-reduced-motion. Do not move the
+// copy back into `motion.*` with an `initial` state. `motion` stays only on the
+// decorative, aria-hidden glow orbs.
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();
 
@@ -54,37 +62,23 @@ export function HeroSection() {
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           {/* Copy */}
           <div className="hero-copy-container">
-            <motion.h1
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 18, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="hero-headline text-[2.6rem] sm:text-6xl lg:text-[4.1rem] font-semibold leading-[1.02] pb-1 mb-6">
+            <h1 className="hero-enter hero-enter-headline hero-headline text-[2.6rem] sm:text-6xl lg:text-[4.1rem] font-semibold leading-[1.02] pb-1 mb-6">
               From monthly chaos to{" "}
               <span className="hero-headline-accent">numbers that work for you</span>
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg"
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.4,
-                delay: prefersReducedMotion ? 0 : 0.45,
-              }}
+            <p
+              className="hero-enter text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg"
+              style={{ animationDelay: "0.45s" }}
             >
               We close your books, run payroll and handle SARS submissions every
               month. You get your time back, and clear action points that turn
               the numbers into your next move.
-            </motion.p>
+            </p>
 
-            <motion.div
-              className="flex flex-col sm:flex-row gap-3"
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.4,
-                delay: prefersReducedMotion ? 0 : 0.6,
-              }}
+            <div
+              className="hero-enter flex flex-col sm:flex-row gap-3"
+              style={{ animationDelay: "0.6s" }}
             >
               <Button
                 nativeButton={false}
@@ -111,28 +105,20 @@ export function HeroSection() {
               >
                 <Calendar className="h-4 w-4" /> Book a fit call
               </Button>
-            </motion.div>
+            </div>
 
-            <motion.p
-              className="mt-5 text-sm text-muted-foreground/80"
-              initial={prefersReducedMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: prefersReducedMotion ? 0 : 0.75 }}
-            >
-              Fixed monthly fee <span aria-hidden className="mx-1.5">·</span> No lock-in contracts{" "}
-              <span aria-hidden className="mx-1.5">·</span> Start in any month
-            </motion.p>
+            <div className="hero-enter hero-enter-fade" style={{ animationDelay: "0.75s" }}>
+              <p className="mt-4 text-sm text-muted-foreground/80">
+                Fixed monthly fee <span aria-hidden className="mx-1.5">·</span> No lock-in contracts{" "}
+                <span aria-hidden className="mx-1.5">·</span> Start in any month
+              </p>
+            </div>
           </div>
 
           {/* The story: chaos → order → decision */}
-          <motion.div
-            className="relative"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          >
+          <div className="hero-enter hero-enter-panel relative" style={{ animationDelay: "0.3s" }}>
             <HeroStory />
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

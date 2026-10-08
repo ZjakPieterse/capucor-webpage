@@ -84,7 +84,7 @@ export function outOfScopeItems(selectedServices: string[], allServices: Service
   const items: string[] = [];
 
   for (const svc of allServices) {
-    if (!sel.has(svc.slug)) items.push(`${svc.name} (not part of this plan)`);
+    if (!sel.has(svc.slug)) items.push(`${svc.name} (not part of this package)`);
   }
   for (const slug of selectedServices) {
     for (const x of SERVICE_OUT_OF_SCOPE[slug] ?? []) items.push(x);

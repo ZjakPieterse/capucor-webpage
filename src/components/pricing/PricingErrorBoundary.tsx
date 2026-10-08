@@ -37,9 +37,6 @@ export class PricingErrorBoundary extends Component<Props, State> {
 export function PricingUnavailable() {
   return (
     <div className="flex flex-col items-center justify-center py-32 px-6 text-center">
-      <p className="text-sm font-medium uppercase tracking-widest text-primary mb-4">
-        Pricing
-      </p>
       <h1 className="text-2xl font-bold tracking-tight mb-3">
         Pricing temporarily unavailable
       </h1>

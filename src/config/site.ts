@@ -37,6 +37,8 @@ export const siteConfig = {
     linkedin: 'https://www.linkedin.com/company/capucor/',
     booking: process.env.NEXT_PUBLIC_BOOKING_URL ?? 'https://calendar.app.google/ixopmxLuGgNH5Lkk8',
   },
+  // The service pages sit in the nav so they are reachable from every page,
+  // not only from the homepage cards (funnel review F02, 2026-10-08).
   nav: [
     { label: 'Home', href: '/' },
     { label: 'Pricing', href: '/pricing' },

@@ -31,7 +31,7 @@ const INCLUDED = [
   {
     title: 'Income tax and provisional tax',
     description:
-      'Your income tax return filed before the SARS deadline, and your provisional tax calculated and submitted on time for both the August and February cycles. No late-filing penalties, no guesswork on the estimates.',
+      'Your income tax return prepared and filed before the SARS deadline, and your provisional tax calculated and submitted for both the August and February cycles, when we have your information in time.',
   },
   {
     title: 'VAT201 reporting and submission',
@@ -58,9 +58,6 @@ export default function AccountingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">
-                Accounting
-              </p>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
                 Financial statements, tax returns and CIPC, handled before the deadlines move
               </h1>
@@ -115,7 +112,7 @@ export default function AccountingPage() {
           <p className="text-muted-foreground mb-8">
             Flat monthly pricing. Build your exact subscription in minutes.
           </p>
-          <ServiceCtaPair className="justify-center" />
+          <ServiceCtaPair centered />
         </div>
       </section>
 
