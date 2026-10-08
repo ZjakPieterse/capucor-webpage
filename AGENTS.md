@@ -32,7 +32,7 @@ only redirect away (see "Domain seam" below).
 |-------|-----------|
 | Framework | Next.js 16 (App Router, React Server Components) |
 | UI | React 19, Tailwind CSS v4, shadcn/ui (Base Nova) |
-| Database & Auth | Supabase (PostgreSQL) |
+| Database | Supabase (PostgreSQL); no auth here (no login since 2026-08-02) |
 | Forms | React Hook Form + Zod |
 | Email | Resend |
 | Payments | Subscriptions: Paysoft Flow debit orders (Xero-integrated, manual — no API). Shop one-offs: PayFast (not yet wired) — see "Payments status" below. |
@@ -171,18 +171,24 @@ src/
 │   ├── layout/       # Navbar, Footer
 │   └── services/     # Service page components
 ├── config/           # siteConfig, tier config, proposal terms, compliance calendar
-├── hooks/            # usePricingState, useCursorGlow
+├── hooks/            # usePricingState, useCursorGlow, use3DTilt, useSectionScrollProgress
 ├── lib/              # utils, pricing logic, Supabase clients, validations
 │   ├── log.ts        # structured one-line-JSON logging into Workers Logs.
 │   │                 #   Use logError/logWarn/logInfo, not console.*; `evt` is a
 │   │                 #   stable dotted id you can query on in the Cloudflare
 │   │                 #   dashboard.
 │   ├── portal/       # ⚠️ NAME IS HISTORICAL — this is the SIGNING half, not a portal:
-│   │                 #   finalizeSign, fulfilment, proposalPdf, signEmails,
-│   │                 #   reconciliationAuth (the retry runner's PDF bridge).
+│   │                 #   finalizeSign, fulfilment, proposalPdf (+ proposalPdfPayload),
+│   │                 #   proposalJson, signEmails, reconciliationAuth (the retry
+│   │                 #   runner's PDF bridge).
 │   └── proposal/     # Proposal document rendering (HTML → PDF, inlined logo)
 └── types/            # TypeScript interfaces
 ```
+
+**Pricing** lives in `src/lib/pricing.ts`, `src/lib/proposalPricing.ts` (server re-pricing) and
+`src/config/tiers.ts`; bracket figures are rows in the Supabase `brackets` table (a price change
+is new rows, never an edit). `src/__tests__/pricing-decisions.test.ts` locks each pricing decision
+to the code: change a rule there only when the decision changes.
 
 ### App Router layouts (route-group topology, PR11)
 
@@ -235,8 +241,9 @@ nothing to put in it, or peer cards stop aligning.
 
 It also carries the section rhythm (`premium-section` + `SectionDivider`), price display, and the
 **voice and copy** essentials — whose full guide is [`docs/voice-and-copy.md`](docs/voice-and-copy.md).
-⚠️ **Neither owns Capucor brand voice**: the canonical cross-product standard is
-`capucor-docs/rules/brand-voice-and-content.md`, and it wins on anything shared.
+⚠️ **Neither owns Capucor brand voice**: the canonical cross-product standard is the brand
+voice-and-content page in the owner's private workspace (migrated from the archived
+`capucor-docs/rules/brand-voice-and-content.md`), and it wins on anything shared.
 
 ## Payments status
 

@@ -25,10 +25,6 @@ export function formatZAR(amount: number): string {
   return 'R ' + formatZARNumber(amount);
 }
 
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
 // The 1st of the next calendar month at 00:00:00 UTC. New subscriptions always
 // start here, aligned to the billing cycle, rather than on the signing date — and
 // the same date is shown on the proposal, PDF, and email so the client sees when

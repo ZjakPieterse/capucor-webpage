@@ -19,9 +19,8 @@ export default function NotFound() {
         The page you wanted doesn&rsquo;t exist or has moved. We&rsquo;re accountants &mdash; we appreciate when things are properly categorised. Help us out:
       </p>
 
-      {/* Absolute marketing URLs: this 404 is the app-root one, so it also
-          renders on capucor.app, where a relative /pricing would only 301
-          back to capucor.com anyway. */}
+      {/* Absolute marketing URLs (siteConfig.marketingUrl), so the links stay
+          right on any host this Worker answers for (capucor.com and www). */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Button
           nativeButton={false}

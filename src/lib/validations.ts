@@ -43,10 +43,6 @@ export const LeadSchema = z.object({
 
 export type LeadInput = z.infer<typeof LeadSchema>;
 
-export const RevalidateSchema = z.object({
-  secret: z.string().min(1),
-});
-
 // ── Proposal request (Activate modal of the calculator) ─────────────────
 //
 // Contract between the ActivateProposalModal form and /api/proposals. The

@@ -47,9 +47,8 @@ export const CORE_LINE_NAME = 'Monthly accounting';
 
 /**
  * Null when the selection carries the core service (accounting and
- * bookkeeping, each with a priced bracket), else the message to show. Shared
- * by /api/proposals and the staff amend form so neither accepts a proposal
- * without it.
+ * bookkeeping, each with a priced bracket), else the message to show.
+ * /api/proposals refuses a proposal without it.
  */
 export function coreServiceError(
   services: string[],

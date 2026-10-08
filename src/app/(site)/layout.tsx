@@ -6,6 +6,9 @@ import { Footer } from '@/components/layout/Footer';
 // a route group: it does not appear in the URL. Fonts, globals.css and the
 // default metadata are inherited from the root layout.
 //
+// /login, /portal, /internal and /onboarding are not served here at all: they
+// redirect to capucor.app (APP_PATHS in next.config.ts) until os-sunset.
+//
 // The skip link is the first tab stop on every page, so keyboard and
 // screen-reader visitors can bypass the navbar (WCAG 2.4.1). `tabIndex={-1}`
 // on <main> lets the jump move focus there, not only scroll.

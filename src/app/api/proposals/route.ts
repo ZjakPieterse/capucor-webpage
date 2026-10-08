@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
   const input = parsed.data;
 
   // Premium is sold by application (calculator-v2 Phase 0): the calculator
-  // sends a request, never a proposal. Staff can still prepare a Premium
-  // proposal on capucor.app. A request is only for such a package.
+  // sends a request, never a proposal, and Zjak handles it outside the system
+  // (web-standalone decision 5). A request is only for such a package.
   const byApplication = TIERS_BY_APPLICATION.includes(input.tierSlug);
   if (byApplication && input.intent !== 'request') {
     return NextResponse.json(
@@ -114,8 +114,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Monthly accounting (accounting plus bookkeeping) is in every package. The
-  // same check guards the staff amend form on capucor.app (F30).
+  // Monthly accounting (accounting plus bookkeeping) is in every package (F30).
   const coreError = coreServiceError(input.services, input.brackets);
   if (coreError) {
     return NextResponse.json({ error: coreError, field: 'services' }, { status: 422 });
