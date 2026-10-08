@@ -1,7 +1,6 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
 // Real brand marks, painted monochrome via `.logo-mark` (see globals.css) so they
 // inherit the marquee's muted text colour. `ratio` is each asset's natural aspect
@@ -25,12 +24,6 @@ export function PartnersAndTech() {
       aria-label="Partners and tech we work with"
       className="relative -mt-12 lg:-mt-20 border-y border-border/40 bg-background py-8 lg:py-10"
     >
-      <ScrollReveal>
-        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/80 mb-6">
-          Trusted partners &amp; tools
-        </p>
-      </ScrollReveal>
-
       <div className="partners-marquee-mask relative overflow-hidden">
         <ul
           className="animate-marquee flex w-max items-center gap-x-12 lg:gap-x-16 px-6"

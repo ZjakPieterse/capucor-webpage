@@ -1683,6 +1683,8 @@
 .skip-link:focus,
 .skip-link:focus-visible {
   transform: translateY(0);
+}
+
 /* ─── Phone sticky CTA (MobileCtaBar, funnel review F03) ──────────────────
    Slides up once the visitor is past the first screen. `inert` keeps the
    hidden bar out of the tab order. */

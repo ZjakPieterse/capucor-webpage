@@ -39,7 +39,6 @@ export function PackagesTeaser({ tiers }: PackagesTeaserProps) {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            eyebrow="Packages"
             title="Choose the level of support your business needs right now"
             subtitle="Every package includes the core accounting and bookkeeping. Choose how often we process, report and review with you. You see the monthly fee before any conversation, and your subscription can grow with the business."
           />

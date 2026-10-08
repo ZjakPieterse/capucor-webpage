@@ -11,7 +11,6 @@ export function ContactSection() {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            eyebrow="Talk to us"
             title="Start a conversation"
             subtitle="Grab the free compliance calendar, or tell us about your business. A real accountant reads every message."
           />
