@@ -143,9 +143,9 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text).join(' ')).not.toMatch(/supplier/i);
   });
 
-  it('on-call partner support promises a same-day reply', () => {
+  it('on-call partner support makes no reply-time promise (decision 2026-10-08)', () => {
     const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'On-call Partner Support');
-    expect(item!.tooltip).toMatch(/same business day/);
+    expect(item!.tooltip).not.toMatch(/same business day|within|hour/i);
   });
 
   it('one Payroll Services line, the same on every card, covering the statutory basics only', () => {
