@@ -5,6 +5,7 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { Button } from "@/components/ui/button";
+import { FitCallNote } from "@/components/ui/FitCallNote";
 import { siteConfig } from "@/config/site";
 
 // Onboarding steps (website-v2, message pillar 4: switch in any month).
@@ -33,7 +34,7 @@ const STEPS = [
     number: "04",
     icon: CalendarCheck,
     title: "First month",
-    body: "Your first month closes on the rhythm, with a report and a conversation.",
+    body: "Your first month closes, and your Insights Report and review follow on your package’s rhythm.",
   },
 ];
 
@@ -44,7 +45,6 @@ export function SwitchingSection() {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            eyebrow="Getting started"
             title="Switching in any month"
             subtitle="You don't have to wait for year-end. Start in whichever month suits you, and we take it from there."
           />
@@ -83,7 +83,7 @@ export function SwitchingSection() {
         </ol>
 
         <ScrollReveal delay={0.3}>
-          <div className="mt-10 flex justify-center">
+          <div className="mt-10 flex flex-col items-center gap-3 text-center">
             <Button
               nativeButton={false}
               render={
@@ -99,6 +99,7 @@ export function SwitchingSection() {
             >
               <Calendar className="h-4 w-4" /> Book a fit call
             </Button>
+            <FitCallNote />
           </div>
         </ScrollReveal>
       </div>

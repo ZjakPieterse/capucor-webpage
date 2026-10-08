@@ -190,8 +190,8 @@ export function renderCreatedProposalClientEmail(d) {
       ${reference(d.refNumber)}
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">Hi ${escapeHtml(d.firstName)}, here&rsquo;s your proposal</h1>
       <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#4b5563;">
-        Thanks for configuring a plan for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
-        of your ${escapeHtml(d.tierName)} subscription. Open your proposal to review the full details and
+        Thanks for building a package for <strong>${escapeHtml(d.businessName)}</strong>. Below is a summary
+        of your ${escapeHtml(d.tierName)} package. Open your proposal to review the full details and
         sign electronically. There&rsquo;s no payment required to get started.
       </p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 8px;">${rows}

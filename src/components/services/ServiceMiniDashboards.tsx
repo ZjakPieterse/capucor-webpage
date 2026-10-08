@@ -22,28 +22,20 @@ const tileVariants = {
   }),
 };
 
-function Header({ eyebrow, status }: { eyebrow: string; status: string }) {
+// Illustrative panels, labelled as such: no hard-coded month, no pulsing
+// "live" dot (funnel review F18, 2026-10-08), the same honesty rule as the
+// homepage hero panel's static "Example" badge.
+function Header({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-between mb-4">
       <div>
         <div className="text-[10px] font-bold tracking-widest uppercase text-muted-foreground">
-          {eyebrow}
+          {label}
         </div>
-        <div className="text-sm font-bold tracking-tight mt-0.5">
-          March 2026 close
-        </div>
+        <div className="text-sm font-bold tracking-tight mt-0.5">Month-end close</div>
       </div>
-      <div
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-success"
-        style={{ background: 'var(--success-soft)' }}
-      >
-        <motion.div
-          className="w-1.5 h-1.5 rounded-full bg-success"
-          style={{ boxShadow: '0 0 5px var(--success)' }}
-          animate={{ opacity: [1, 0.4, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-        {status}
+      <div className="shrink-0 rounded-md border border-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Example
       </div>
     </div>
   );
@@ -83,7 +75,7 @@ export function BookkeepingDashboard() {
   ];
   return (
     <Shell>
-      <Header eyebrow="Bank reconciliation" status="In sync" />
+      <Header label="Bank reconciliation" />
       <div className="space-y-2.5">
         {rows.map((r, i) => (
           <motion.div
@@ -125,7 +117,7 @@ export function BookkeepingDashboard() {
 export function AccountingDashboard() {
   return (
     <Shell>
-      <Header eyebrow="Management pack" status="Signed off" />
+      <Header label="Insights Report" />
       <div className="grid grid-cols-3 gap-2.5">
         <motion.div
           custom={0}
@@ -219,7 +211,7 @@ export function AccountingDashboard() {
 export function PayrollDashboard() {
   return (
     <Shell>
-      <Header eyebrow="Monthly payroll run" status="Submitted" />
+      <Header label="Monthly payroll run" />
       <motion.div
         custom={0}
         variants={tileVariants}
@@ -270,7 +262,7 @@ export function PayrollDashboard() {
             <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
             <span className="text-xs font-semibold">Submitted</span>
           </div>
-          <div className="text-[10px] text-muted-foreground mt-1.5">Reference 21/03/2026</div>
+          <div className="text-[10px] text-muted-foreground mt-1.5">Reference on file</div>
         </motion.div>
         <motion.div
           custom={2}

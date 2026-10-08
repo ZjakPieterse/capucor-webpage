@@ -39,9 +39,9 @@ const INCLUDED = [
       'Every bank account and credit card reconciled against your actual statements each month. Each month, your books match your bank, and any differences have already been investigated.',
   },
   {
-    title: 'Monthly management accounts',
+    title: 'Insights Report',
     description:
-      'A profit and loss statement and balance sheet delivered every month. Pull them any time to see how the business is performing, what your cash position is, and whether your margins are holding.',
+      'Your management accounts, a profit and loss statement and balance sheet, with what they mean for the business. It comes quarterly on Basic, monthly on Pro and weekly on Premium, and in between you can pull the same reports from Xero any time.',
   },
 ];
 
@@ -58,14 +58,11 @@ export default function BookkeepingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-4">
-                Bookkeeping
-              </p>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
                 Your ledger reconciled every month, with numbers you can act on
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Every transaction processed, categorised and reconciled against your bank statements each month. Your P&amp;L and balance sheet arrive on a schedule, and your accountant talks you through them.
+                Every transaction processed, categorised and reconciled against your bank statements each month. Your P&amp;L and balance sheet arrive on your package&apos;s rhythm, and your accountant talks you through them.
               </p>
               <ServiceCtaPair />
             </div>
@@ -115,7 +112,7 @@ export default function BookkeepingPage() {
           <p className="text-muted-foreground mb-8">
             Flat monthly pricing. Build your exact subscription in minutes.
           </p>
-          <ServiceCtaPair className="justify-center" />
+          <ServiceCtaPair centered />
         </div>
       </section>
 

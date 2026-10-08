@@ -54,8 +54,8 @@ const PROBLEMS = [
     body: "Your evenings go on chasing slips and answering basic finance questions. The work doesn't stop. The growth does.",
     solution: {
       icon: Zap,
-      title: "A finance rhythm that runs without you.",
-      body: "You upload what we ask for. We run the month. You only focus on the decisions that actually need an owner in the seat.",
+      title: "The decisions stay yours.",
+      body: "You send what we ask for, we run the month, and we talk the numbers through with you.",
     },
   },
 ];
@@ -83,7 +83,6 @@ export function ProblemCards() {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            eyebrow="The reality"
             title="Your business has outgrown a year-end accountant"
             subtitle="You hear from them once a year, with a bill. Meanwhile EMP201, VAT201 and provisional tax keep coming, and you're the one chasing."
           />

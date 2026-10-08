@@ -137,7 +137,7 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
       {/* A signed proposal needs nothing more from the visitor. */}
       {reason !== 'signed' && (
         <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
-          Build your plan
+          Build your package
         </Button>
       )}
     </div>
