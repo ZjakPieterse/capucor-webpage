@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
 import type { FairUsageLine } from '@/lib/schedule';
 import { formatZAR, firstOfNextMonth } from '@/lib/utils';
+import { ALLOWANCE_CHANGE_NOTE, FAIR_USAGE } from '@/config/serviceScope';
 
 const PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -28,11 +29,10 @@ function sampleData(overrides: Record<string, unknown> = {}) {
         slug: 'accounting',
         name: 'Accounting',
         allowance: 'Up to 50 transactions a month',
-        overage: 'R200 per 25 extra transactions',
         bracketLabel: 'R0–1 Mil',
       },
     ] as unknown as FairUsageLine[],
-    outOfScope: ['Payroll (not part of this plan)', 'SARS audits'],
+    outOfScope: ['Payroll (not part of this package)', 'SARS audits'],
     lineItems: [{ name: 'Accounting', label: 'R0–1 Mil', price: 1325 }],
     totalChargeZAR: 1325,
     ...overrides,
@@ -40,6 +40,21 @@ function sampleData(overrides: Record<string, unknown> = {}) {
 }
 
 describe('renderProposalDocumentHtml', () => {
+  // No overage rate is quoted anywhere (Zjak, 2026-10-08): the signed PDF
+  // carries only the one neutral line under the allowances.
+  it('quotes no overage rate, only the neutral allowance line', () => {
+    const html = renderProposalDocumentHtml(sampleData());
+    expect(html).not.toMatch(/R ?200 per|R ?75 per|trued up|per 25/i);
+    expect(html).toContain(ALLOWANCE_CHANGE_NOTE.replace(/'/g, '&#39;'));
+  });
+
+  it('keeps every fair-usage entry free of overage wording', () => {
+    for (const fu of Object.values(FAIR_USAGE)) {
+      expect(fu).not.toHaveProperty('overage');
+      expect(fu.allowance).not.toMatch(/R ?\d+ per|trued up/i);
+    }
+  });
+
   it('includes the reference, totals, schedule, full terms, and the signature', () => {
     const html = renderProposalDocumentHtml(sampleData());
 

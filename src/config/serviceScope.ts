@@ -6,8 +6,9 @@
  * cumulativeInclusions in src/lib/schedule.ts), so there's one source of truth.
  *
  * This file adds the two things a proposal needs on top of that:
- *   1. FAIR_USAGE — what each service's bracket limit means and how work beyond
- *      it is billed.
+ *   1. FAIR_USAGE — what each service's bracket limit means, plus the one
+ *      neutral line on what happens if the business outgrows its band
+ *      (ALLOWANCE_CHANGE_NOTE).
  *   2. The out-of-scope lists — ALWAYS_OUT_OF_SCOPE (shown on every proposal)
  *      plus any service-specific exclusions.
  *
@@ -24,9 +25,13 @@ export interface ServiceFairUsage {
   allowance: string;
   /** Package-specific allowance wording, keyed by tier slug; falls back to `allowance`. */
   allowanceByTier?: Record<string, string>;
-  /** How work beyond the allowance is handled. null = no per-unit overage. */
-  overage: string | null;
 }
+
+// No overage rates are quoted anywhere (Zjak, 2026-10-08: "don't reference any
+// of this for now"). Wherever an allowance is shown (calculator review step,
+// proposal page, signed PDF) the one neutral ALLOWANCE_CHANGE_NOTE stands in.
+export const ALLOWANCE_CHANGE_NOTE =
+  "If your business grows beyond your band, we'll agree any change in fees with you at your review before it applies.";
 
 // Keyed by service slug (services.slug in Supabase: accounting / bookkeeping / payroll).
 export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
@@ -35,8 +40,6 @@ export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
     unit: 'annual turnover band',
     allowance:
       'Your fee is set against the turnover band you selected. It covers the compliance and reporting work for a business of that size.',
-    overage:
-      'If your turnover grows into a higher band, we flag it at the next quarterly review and adjust the fee from there. We never back-date a change.',
   },
   bookkeeping: {
     name: 'Bookkeeping & monthly processing',
@@ -45,16 +48,12 @@ export const FAIR_USAGE: Record<string, ServiceFairUsage> = {
     // process in a month counts, whatever the package includes.
     allowance:
       'Your processing allowance is the transaction count in your selected bracket, measured per month: every bank line, invoice, supplier bill and journal we process.',
-    overage:
-      'Months that run over the allowance are billed at R200 per extra 25 transactions. We measure this on the quarterly review against your rolling average, not on a single busy month.',
   },
   payroll: {
     name: 'Payroll',
     unit: 'active employees',
     allowance:
       'Your fee covers payroll for the headcount band you selected, including payslips and the EMP201, EMP501 and UIF submissions on their cycles.',
-    overage:
-      'Each active employee above your band is billed at R75 per month, trued up at the quarterly review.',
   },
 };
 

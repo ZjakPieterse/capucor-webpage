@@ -3,8 +3,9 @@
 import { ArrowRight, CalendarClock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProposalSummary } from './ProposalSummary';
-import { ANSWER_LABELS, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
+import { AFTER_YOU_SIGN, ANSWER_LABELS, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
 import { TIERS_BY_APPLICATION } from '@/config/tiers';
+import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 import type { Bracket, BracketValue, CalculatorAnswers, Service, Tier } from '@/types';
 
 // 'request' is for a package sold by application (Premium): Capucor follows
@@ -65,7 +66,7 @@ export function ReviewStep({
       />
 
       <p className="text-xs text-muted-foreground leading-relaxed">
-        If your business grows, extra transactions cost R200 per 25 and each employee above your band costs R75 a month, trued up at the quarterly review. Catch-up for the 3 months before you accept is included.
+        {ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.
       </p>
 
       <dl className="rounded-2xl border border-border bg-card/40 p-5 space-y-2 text-sm">
@@ -115,6 +116,17 @@ export function ReviewStep({
               Send proposal
             </Button>
           </div>
+        </div>
+      )}
+
+      {!byApplication && (
+        <div className="rounded-2xl border border-border bg-card/40 p-4">
+          <p className="font-semibold text-sm">What happens next</p>
+          <ol className="mt-2 space-y-1.5 text-xs text-muted-foreground leading-relaxed list-decimal pl-4">
+            {AFTER_YOU_SIGN.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
         </div>
       )}
 
