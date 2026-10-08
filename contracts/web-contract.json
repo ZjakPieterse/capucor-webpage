@@ -19,11 +19,11 @@
   "version": 2,
   "lastReviewed": "2026-10-07",
   "coupledDependencies": {
-    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.6 requires Next >=16.3.3 AND wrangler ^4.125.0, and moving one side alone can make a clean install select an adapter whose peer range the app does not satisfy. React, supabase-js and resend are pinned for the same reason: a range lets a clean install pick a runtime nobody has built against. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped. ⚠️ THE PEER RANGES ARE NOW TIGHTER IN BOTH DIRECTIONS THAN THEY WERE AT 1.20.2, so the triple is less separable than it used to be: 1.20.2 accepted wrangler ^4.86.0, while every release from 1.20.3 onward names ^4.125.0. Bumping wrangler for a security fix therefore drags OpenNext, and OpenNext drags Next. That is the whole reason AE-04 moved four packages to close alerts against two.",
+    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.8 requires Next >=16.3.8 AND wrangler ^4.125.0, and moving one side alone can make a clean install select an adapter whose peer range the app does not satisfy. React, supabase-js and resend are pinned for the same reason: a range lets a clean install pick a runtime nobody has built against. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped. ⚠️ THE PEER RANGES ARE NOW TIGHTER IN BOTH DIRECTIONS THAN THEY WERE AT 1.20.2, so the triple is less separable than it used to be: 1.20.2 accepted wrangler ^4.86.0, while every release from 1.20.3 onward names ^4.125.0. Bumping wrangler for a security fix therefore drags OpenNext, and OpenNext drags Next. That is the whole reason AE-04 moved four packages to close alerts against two.",
     "exact": {
-      "next": "16.3.4",
-      "eslint-config-next": "16.3.4",
-      "@opennextjs/cloudflare": "1.20.6",
+      "next": "16.3.8",
+      "eslint-config-next": "16.3.8",
+      "@opennextjs/cloudflare": "1.20.8",
       "wrangler": "4.131.0",
       "react": "19.2.4",
       "react-dom": "19.2.4",
