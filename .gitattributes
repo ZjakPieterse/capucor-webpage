@@ -1,5 +1,4 @@
 # Keep these LF in the worktree. Node parses .mjs byte-exactly and the
-# schedule-watchdog test reads scripts/*.mjs as source; CRLF breaks it on a
-# Windows checkout. The blobs are already LF, so this changes no content.
+# tests read scripts/*.mjs as source; CRLF breaks them on a Windows checkout. The blobs are already LF, so this changes no content.
 *.mjs text eol=lf
 *.sql text eol=lf

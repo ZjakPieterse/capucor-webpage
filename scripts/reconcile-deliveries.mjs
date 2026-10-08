@@ -1102,8 +1102,7 @@ async function main() {
   // Every permanent failure on record, for the summary. Listed as warnings, not
   // failures: GitHub emails on a failed run, so the run fails only for what it
   // failed itself. Failing on every old row would keep each run red until the
-  // row was cleaned up by hand, and the watchdog would then read this cron as
-  // stale and hide a real stop behind a known failure.
+  // row was cleaned up by hand, and a real new failure would hide behind it.
   const [oldDeliveries, oldFulfilments] = await Promise.all([
     db.deliveries({
       select: 'id,event_type,attempt_count,last_error_code',

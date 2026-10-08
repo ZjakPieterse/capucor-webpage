@@ -9,9 +9,8 @@
  * that is NOT the one we shipped — had no test at all, while the cases that did
  * have tests (absent, unknown) were the ones a unit test could reach anyway.
  *
- * `scripts/deploy-drift.mjs` already solved this shape in this estate: a pure
- * `evaluate()` with a test per verdict, called from a workflow. This is the
- * same pattern, for the same reason.
+ * So the verdict is a pure `evaluate()` with a test per verdict, called from
+ * the workflow.
  *
  * ⚠️ IT REPORTS; IT DOES NOT ROLL BACK. A failure here means production is
  * serving something other than the commit this run deployed. Deciding what to
@@ -20,9 +19,7 @@
  * ⚠️ AND THE GUARANTEE IS BOUNDED. Answering "yes" proves the expected revision
  * was serving at the moment this ran, immediately after a deploy. It says
  * nothing about ten minutes later. Continuous detection would need this to run
- * unattended with SUPABASE_SERVICE_ROLE_KEY, and the cross-repo contract
- * (`deployDrift.cannotSeeProduction`) records why the push-triggered watchdog is
- * the wrong home for that key.
+ * unattended with SUPABASE_SERVICE_ROLE_KEY, which is a separate decision.
  *
  * Reads no secret itself: the caller signs the request and passes in what came
  * back, so this file can be unit-tested with no credential anywhere near it.

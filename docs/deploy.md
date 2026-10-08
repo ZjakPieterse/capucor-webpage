@@ -143,8 +143,7 @@ matters is precisely the one with several faults at once.
 ### ⚠️ What this proves
 
 That the expected revision was serving **immediately after that deploy**. It does **not**
-continuously detect a later rollback: nothing re-asks the question, and giving the push-triggered
-watchdog the key needed to ask is a trade the cross-repo contract deliberately refused.
+continuously detect a later rollback: nothing re-asks the question after the deploy.
 
 ### ⚠️ A hand-run `npm run deploy:cf` now reports `release: "unknown"`
 

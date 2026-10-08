@@ -26,7 +26,7 @@
  *
  * RELEASE PROVENANCE (2026-09-04). The signed view also carries `release`: the
  * full git SHA this bundle was built from, baked in at build time. It answers
- * the question the deploy-drift check explicitly could not — not "did we intend
+ * the question a green deploy run cannot — not "did we intend
  * to ship this commit?" but "is that commit the one actually serving?".
  * deploy.yml compares it to the SHA it just deployed and fails the run if they
  * differ. It is on the SIGNED view only: the public body stays `{ ok, app }`,

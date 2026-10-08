@@ -14,7 +14,7 @@
  * `scripts/release-provenance.mjs` is what makes it reachable, and this is the
  * test that reaches it.
  *
- * Same shape as `deploy-drift.test.ts`, and for the same stated reason: the
+ * A test per verdict, because the
  * verdicts that would actually be reached in an emergency cannot be
  * manufactured against a healthy system.
  */

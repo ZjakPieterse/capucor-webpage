@@ -81,9 +81,8 @@ jobs:
       # next.config.ts and reported on the signed /api/health response.
       #
       # ⚠️ THIS IS THE ONLY THING THAT CAN PROVE PRODUCTION IS SERVING THE CODE
-      # WE THINK IT IS. The deploy-drift watchdog compares the newest successful
-      # deploy run's head_sha to the tip of master, which answers "did we intend
-      # to ship this?" — a green wrangler upload, a dashboard rollback, a
+      # WE THINK IT IS. A green deploy run only answers "did we intend to ship
+      # this?" — a green wrangler upload, a dashboard rollback, a
       # hand-run deploy from a laptop and a deploy against the wrong account all
       # look identical from the Actions API. This repository is the one the
       # 2026-08-24 measurement found four days and twenty-one commits adrift.
@@ -220,7 +219,6 @@ jobs:
         # one where several things are wrong at once. A rollback PLUS an unset
         # Worker secret would report only the secret, the operator would fix
         # it and re-dispatch, and the rollback would never be named.
-        # watchdog.yml already carries this reasoning; it belongs here too.
         #
         # Gated on the DEPLOY step rather than bare always(): after a failed
         # upload the previous revision is legitimately still serving, and a
@@ -266,7 +264,6 @@ jobs:
         # one where several things are wrong at once. A rollback PLUS an unset
         # Worker secret would report only the secret, the operator would fix
         # it and re-dispatch, and the rollback would never be named.
-        # watchdog.yml already carries this reasoning; it belongs here too.
         #
         # Gated on the DEPLOY step rather than bare always(): after a failed
         # upload the previous revision is legitimately still serving, and a
@@ -308,19 +305,14 @@ jobs:
       # the commit this run set out to deploy?
       #
       # Everything before this proves an upload succeeded. This proves the thing
-      # that was uploaded is the thing being served. It closes the half of
-      # contracts/web-contract.json → deployDrift.cannotSeeProduction that
-      # could be closed without putting a production secret somewhere it does not
-      # belong: the release rides on the SIGNED /api/health view, and this job
-      # already holds SUPABASE_SERVICE_ROLE_KEY, which the push-triggered
-      # watchdog deliberately does not and must not.
+      # that was uploaded is the thing being served. The release rides on the
+      # SIGNED /api/health view, and this job already holds
+      # SUPABASE_SERVICE_ROLE_KEY to sign the request.
       #
       # ⚠️ BE PRECISE ABOUT THE GUARANTEE. This proves the expected revision was
       # serving IMMEDIATELY AFTER THIS DEPLOY. It does NOT continuously detect a
-      # later rollback in the Cloudflare dashboard: nothing re-asks the question,
-      # and giving the every-push watchdog the key needed to ask is the trade that
-      # was already refused. That residual is stated in the contract, not papered
-      # over.
+      # later rollback in the Cloudflare dashboard: nothing re-asks the question.
+      # That residual is stated in the contract, not papered over.
       #
       # The origin is hard-coded, matching the runtime-secrets step above: this
       # repository has no SMOKE_BASE_URL variable and capucor.com is not a
@@ -332,7 +324,6 @@ jobs:
         # one where several things are wrong at once. A rollback PLUS an unset
         # Worker secret would report only the secret, the operator would fix
         # it and re-dispatch, and the rollback would never be named.
-        # watchdog.yml already carries this reasoning; it belongs here too.
         #
         # Gated on the DEPLOY step rather than bare always(): after a failed
         # upload the previous revision is legitimately still serving, and a
@@ -346,7 +337,7 @@ jobs:
           # can be unit-tested. Inline, the MISMATCH case — a well-formed SHA
           # that is not ours — could only be exercised by a real production
           # deploy, which is the one thing no check here may run.
-          # Same pattern as scripts/deploy-drift.mjs. Exit 2 means "ask again".
+          # Exit 2 means "ask again".
           for attempt in 1 2 3 4 5 6; do
             ts="$(date +%s)000"
             sig="$(printf '%s.health' "$ts" \
