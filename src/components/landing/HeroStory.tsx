@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip } from "lucide-react";
 import { use3DTilt } from "@/hooks/use3DTilt";
 import { signatureFont } from "@/lib/fonts";
@@ -23,25 +23,78 @@ import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 
 // The story starts straight into the chaos beat: the old 2-second "intro"
 // loading bar read as an empty card (funnel review F07, 2026-10-08).
-type StoryPhase = "chaos" | "order" | "arriving" | "decision";
+//
+// ⚠️ Smooth first load and phones (hero-smooth-load, 2026-10-08). Measured
+// before: the server HTML shipped every pile piece at opacity 0 (an empty card
+// until hydration), phones got the desktop pile and then jumped to the narrow
+// one, and pieces, ledger rows and the email animated left/top/height: layout
+// work every frame, layout shift from the animation itself, and a third of
+// frames dropped on a throttled phone. So:
+//   - The page opens on the order beat (Zjak, 2026-10-08): the statement is
+//     visible and settled in the server HTML, its lines tick in once the
+//     panel is on screen, and the chaos beat first plays on the second story.
+//   - Pile layout is CSS (custom properties per breakpoint), never a JS switch,
+//     so server and client agree on every screen size.
+//   - Every beat animates transform and opacity only, as CSS transitions keyed
+//     off `data-phase`; React re-renders on a phase change and, in the order
+//     beat, only the ledger re-renders, once per line.
+//   - Phones get a calmer cut: five pieces, a dozen lines, a 12 s loop (18 s
+//     on desktop), no drifting and no backdrop blur (TIMING.narrow, `.hero-pile-wide`).
+// Do not move pieces with left/top/height animations or back into `motion`
+// (it keeps only the mouse tilt and the step pill).
+type StoryPhase = "chaos" | "order" | "arriving" | "decision" | "leaving";
 
-/** Lines reconciled in the order beat, one count per story. */
-const TX_COUNTS = [23, 29, 18];
-/** Pace of the order beat: one statement line every PER_TX_MS. */
-const PER_TX_MS = 140;
+interface Timing {
+  /** The chaos beat: the pile arrives, then holds. */
+  chaos: number;
+  /** Lines reconciled in the order beat, one count per story. */
+  txCounts: number[];
+  /** Pace of the order beat: one statement line every perTx ms. */
+  perTx: number;
+  /** Time after the last line for the filed chips. */
+  orderTail: number;
+  arriving: number;
+  decision: number;
+  /** Delay between pile pieces arriving. */
+  arriveStep: number;
+}
+
+const TIMING: Record<"wide" | "narrow", Timing> = {
+  wide: {
+    chaos: 4800,
+    txCounts: [23, 29, 18],
+    perTx: 140,
+    orderTail: 1700,
+    arriving: 1300,
+    decision: 7500,
+    arriveStep: 0.3,
+  },
+  narrow: {
+    chaos: 3000,
+    txCounts: [12, 13, 11],
+    perTx: 110,
+    orderTail: 1200,
+    arriving: 900,
+    decision: 5500,
+    arriveStep: 0.28,
+  },
+};
+/** The scene fades out for this long before the next owner's story. */
+const LEAVE_MS = 500;
 const ROW_PX = 26;
 
-/** The order beat lasts as long as its statement takes, plus time for the filed chips. */
-function phaseMs(phase: StoryPhase, scene: number): number {
+function phaseMs(phase: StoryPhase, scene: number, t: Timing): number {
   switch (phase) {
     case "chaos":
-      return 4800;
+      return t.chaos;
     case "order":
-      return TX_COUNTS[scene] * PER_TX_MS + 1700;
+      return t.txCounts[scene] * t.perTx + t.orderTail;
     case "arriving":
-      return 1300;
+      return t.arriving;
     case "decision":
-      return 7500;
+      return t.decision;
+    case "leaving":
+      return LEAVE_MS;
   }
 }
 
@@ -49,7 +102,8 @@ const NEXT_PHASE: Record<StoryPhase, StoryPhase | null> = {
   chaos: "order",
   order: "arriving",
   arriving: "decision",
-  decision: null,
+  decision: "leaving",
+  leaving: null,
 };
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -333,10 +387,11 @@ function buildStatement(pool: string[], seed: number, count: number): Tx[] {
 }
 
 // ── Timeline ─────────────────────────────────────────────────────────────────────
-function useStoryTimeline() {
+function useStoryTimeline(timing: Timing) {
   const reduce = useReducedMotion();
   const observeRef = useRef<HTMLDivElement | null>(null);
-  const [phase, setPhase] = useState<StoryPhase>("chaos");
+  // The page opens on the order beat; chaos first plays on the next story.
+  const [phase, setPhase] = useState<StoryPhase>("order");
   const [scene, setScene] = useState(0);
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
@@ -367,35 +422,32 @@ function useStoryTimeline() {
         setScene((s) => (s + 1) % 3);
         setPhase("chaos");
       }
-    }, phaseMs(phase, scene));
+    }, phaseMs(phase, scene, timing));
     return () => clearTimeout(timer);
-  }, [phase, scene, inView, pageVisible, reduce]);
+  }, [phase, scene, timing, inView, pageVisible, reduce]);
 
   return {
     observeRef,
     phase: reduce ? ("decision" as const) : phase,
     scene: reduce ? 0 : scene,
+    paused: !inView || !pageVisible,
     reduce: !!reduce,
   };
 }
 
-/** Counts 0 → `total` over `ms` while `running`; reads `total` otherwise. */
-function useCounter(running: boolean, ms: number, total: number) {
+/**
+ * Counts 0 → `total`, one step every `stepMs`, while `active` and `ticking`;
+ * reads `total` when not active. A pause (off-screen) holds the count rather
+ * than resetting it; the ledger remounts per story, which resets it.
+ */
+function useCounter(active: boolean, ticking: boolean, stepMs: number, total: number) {
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (!running) return;
-    const start = performance.now();
-    const id = setInterval(() => {
-      const t = Math.min(1, (performance.now() - start) / ms);
-      setN(Math.floor(t * total));
-      if (t >= 1) clearInterval(id);
-    }, 40);
-    return () => {
-      clearInterval(id);
-      setN(0);
-    };
-  }, [running, ms, total]);
-  return running ? n : total;
+    if (!active || !ticking) return;
+    const id = setInterval(() => setN((v) => Math.min(total, v + 1)), stepMs);
+    return () => clearInterval(id);
+  }, [active, ticking, stepMs, total]);
+  return active ? Math.min(n, total) : total;
 }
 
 // ── Pieces of the pile ────────────────────────────────────────────────────────────
@@ -493,7 +545,7 @@ const APP_ICON: Record<Notice["app"], React.ReactNode> = {
 
 function PhoneNotification({ n }: { n: Notice }) {
   return (
-    <div className="hero-shadow rounded-[14px] border border-white/10 bg-[rgba(52,56,66,0.8)] px-3 py-2 backdrop-blur-xl">
+    <div className="hero-shadow rounded-[14px] border border-white/10 bg-[rgba(52,56,66,0.94)] px-3 py-2">
       <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wide text-white/55">
         {APP_ICON[n.app]}
         {n.app}
@@ -567,46 +619,68 @@ function StickyNote({ text }: { text: string }) {
   );
 }
 
+
 // Where each piece of the pile lands (percent of the stage), in the order it
 // arrives; later pieces sit on top. Notifications stay level, as on a phone;
-// paper lies at a slight angle. Depth 1 sits a little further back and dimmer.
+// paper lies at a slight angle. Back pieces sit a little further back and dimmer.
+//
+// `narrow` is the phone layout (below 640 px): five wider pieces, whose
+// contents `.hero-pile-piece` zooms so receipt and statement text stays
+// readable (it was 8 to 9.5 px at 375 px wide; funnel review F07, 2026-10-08).
+// A piece with no `narrow` slot is hidden on phones by CSS, so the server
+// render is right on every screen.
+type Place = [left: number, top: number, width: string, rotate: number];
+
 interface PileSlot {
   /** Index into the panel's `pile` array. */
   piece: number;
-  left: number;
-  top: number;
-  width: string;
-  rotate: number;
-  depth: 0 | 1;
+  wide: Place;
+  narrow?: Place;
+  back?: boolean;
 }
 
 const PILE: PileSlot[] = [
-  { piece: 0, left: 2, top: 1, width: "36%", rotate: -3, depth: 1 },
-  { piece: 1, left: 54, top: 0, width: "44%", rotate: 0, depth: 0 },
-  { piece: 2, left: 22, top: 22, width: "58%", rotate: 0.6, depth: 0 },
-  { piece: 3, left: 63, top: 34, width: "35%", rotate: 3, depth: 1 },
-  { piece: 4, left: 1, top: 42, width: "44%", rotate: 0, depth: 0 },
-  { piece: 5, left: 33, top: 56, width: "35%", rotate: -1.5, depth: 1 },
-  { piece: 6, left: 40, top: 10, width: "24%", rotate: 4, depth: 1 },
-  { piece: 7, left: 3, top: 66, width: "27%", rotate: -5, depth: 0 },
-  { piece: 8, left: 52, top: 63, width: "46%", rotate: 0, depth: 0 },
-  { piece: 9, left: 72, top: 54, width: "25%", rotate: 6, depth: 1 },
-  { piece: 10, left: 24, top: 80, width: "46%", rotate: 0, depth: 0 },
+  { piece: 0, wide: [2, 1, "36%", -3], narrow: [2, 0, "50%", -3], back: true },
+  { piece: 1, wide: [54, 0, "44%", 0], narrow: [45, 4, "54%", 0] },
+  { piece: 2, wide: [22, 22, "58%", 0.6], narrow: [2, 29, "96%", 0.6] },
+  { piece: 3, wide: [63, 34, "35%", 3], narrow: [43, 64, "55%", 3], back: true },
+  { piece: 4, wide: [1, 42, "44%", 0] },
+  { piece: 5, wide: [33, 56, "35%", -1.5], back: true },
+  { piece: 6, wide: [40, 10, "24%", 4], back: true },
+  { piece: 7, wide: [3, 66, "27%", -5], narrow: [6, 67, "34%", -5] },
+  { piece: 8, wide: [52, 63, "46%", 0] },
+  { piece: 9, wide: [72, 54, "25%", 6], back: true },
+  { piece: 10, wide: [24, 80, "46%", 0] },
 ];
 
-// Below 640 px the pile shows fewer, wider pieces, and `.hero-pile-piece`
-// zooms their contents so receipt and statement text stays readable (it was
-// 8 to 9.5 px at 375 px wide; funnel review F07, 2026-10-08).
-const PILE_NARROW: PileSlot[] = [
-  { piece: 0, left: 1, top: 0, width: "54%", rotate: -3, depth: 1 },
-  { piece: 1, left: 44, top: 2, width: "55%", rotate: 0, depth: 0 },
-  { piece: 2, left: 2, top: 21, width: "96%", rotate: 0.6, depth: 0 },
-  { piece: 3, left: 47, top: 45, width: "52%", rotate: 3, depth: 1 },
-  { piece: 4, left: 1, top: 50, width: "58%", rotate: 0, depth: 0 },
-  { piece: 5, left: 6, top: 64, width: "52%", rotate: -1.5, depth: 1 },
-  { piece: 7, left: 64, top: 64, width: "34%", rotate: 5, depth: 0 },
-  { piece: 10, left: 30, top: 84, width: "68%", rotate: 0, depth: 0 },
-];
+/** CSS custom properties for one slot: position, angle and stagger per breakpoint. */
+function slotVars(slot: PileSlot, i: number, narrowIndex: number): React.CSSProperties {
+  const [l, t, w, r] = slot.wide;
+  const n = PILE.length;
+  const vars: Record<string, string | number> = {
+    zIndex: 10 + i,
+    "--l": `${l}%`,
+    "--t": `${t}%`,
+    "--w": w,
+    "--r": `${r}deg`,
+    "--s": slot.back ? 0.95 : 1,
+    // The pile builds faster as it goes.
+    "--d": `${(0.1 + i * 0.36 - i * i * 0.011).toFixed(3)}s`,
+    "--o": `${((n - 1 - i) * 0.035).toFixed(3)}s`,
+  };
+  if (slot.narrow) {
+    const [ln, tn, wn, rn] = slot.narrow;
+    Object.assign(vars, {
+      "--ln": `${ln}%`,
+      "--tn": `${tn}%`,
+      "--wn": wn,
+      "--rn": `${rn}deg`,
+      "--dn": `${(0.1 + narrowIndex * TIMING.narrow.arriveStep).toFixed(3)}s`,
+      "--on": `${((4 - narrowIndex) * 0.04).toFixed(3)}s`,
+    });
+  }
+  return vars as React.CSSProperties;
+}
 
 const NARROW_QUERY = "(max-width: 639px)";
 
@@ -616,7 +690,11 @@ function subscribeNarrow(onChange: () => void) {
   return () => mq.removeEventListener("change", onChange);
 }
 
-/** True below Tailwind's `sm` breakpoint; false on the server. */
+/**
+ * True below Tailwind's `sm` breakpoint; false on the server. Only timing and
+ * the ledger's line count read it, and both are invisible until the order
+ * beat, so the post-hydration switch never shows. Layout is CSS, never this.
+ */
 function useNarrowScreen(): boolean {
   return useSyncExternalStore(
     subscribeNarrow,
@@ -625,34 +703,206 @@ function useNarrowScreen(): boolean {
   );
 }
 
+// ── The order beat: the month's statement, reconciled line by line ───────────────
+// Its own component, so the per-line counter re-renders the ledger and nothing
+// else. Newest first: the list is laid out newest-at-top and slides down one
+// row per reconciled line (a transform), revealing each new line at the top.
+function Ledger({
+  statement,
+  month,
+  filed,
+  phase,
+  perTx,
+  paused,
+  counts,
+}: {
+  statement: Tx[];
+  month: string;
+  filed: string[];
+  phase: StoryPhase;
+  perTx: number;
+  paused: boolean;
+  /** Line counts per breakpoint, so the server render shows the right total on any screen. */
+  counts: { wide: number; narrow: number };
+}) {
+  const txCount = statement.length;
+  const processing = phase === "order";
+  const reconciled = useCounter(processing, !paused, perTx, txCount);
+  const done = phase !== "chaos" && reconciled >= txCount;
+  const rows = useMemo(() => [...statement].reverse(), [statement]);
+
+  return (
+    <div className="hero-ledger-wrap absolute inset-0 flex flex-col gap-2.5" data-done={done || undefined}>
+      <div className="hero-ledger flex min-h-0 flex-1 origin-top flex-col rounded-xl border-[0.5px] border-white/10 bg-background/60 p-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <span className="text-xs font-bold" suppressHydrationWarning>
+            {month} bank statement
+          </span>
+          {/* Fixed-width count and an always-present tick, so nothing reflows per line. */}
+          <span
+            className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-[10px] font-semibold tabular-nums"
+            style={{ color: done ? "var(--success)" : "var(--muted-foreground)" }}
+          >
+            <Check className="h-3 w-3" strokeWidth={3} style={{ opacity: done ? 1 : 0 }} />
+            <span>
+              <span className="inline-block w-[2ch] text-right">{reconciled}</span> of{" "}
+              <span className="sm:hidden">{counts.narrow}</span>
+              <span className="hidden sm:inline">{counts.wide}</span> reconciled
+            </span>
+          </span>
+        </div>
+        <div className="mb-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+          <div
+            className="hero-ledger-progress h-full rounded-full"
+            style={{
+              transform: `scaleX(${reconciled / txCount})`,
+              background: "linear-gradient(to right, var(--brand-cyan), var(--success))",
+            }}
+          />
+        </div>
+        <div className="hero-ledger-fade relative min-h-0 flex-1 overflow-hidden">
+          <div
+            className="hero-ledger-current pointer-events-none absolute inset-x-0 top-0 rounded-md bg-white/[0.06]"
+            style={{ height: ROW_PX, opacity: processing && reconciled > 0 ? 1 : 0 }}
+          />
+          <ul
+            className="hero-ledger-rows"
+            data-moving={(processing && reconciled > 0) || undefined}
+            style={{ transform: `translateY(${-(txCount - reconciled) * ROW_PX}px)` }}
+          >
+            {rows.map((tx) => (
+              <li
+                key={tx.id}
+                className="flex items-center gap-2.5 px-2 font-mono text-[12px] sm:text-[10.5px]"
+                style={{ height: ROW_PX }}
+              >
+                <span className="w-4 shrink-0 text-muted-foreground">{tx.date}</span>
+                <span className="truncate text-foreground/85">{tx.desc}</span>
+                <span className="ml-auto shrink-0 whitespace-nowrap text-foreground/90">{tx.amount}</span>
+                <span
+                  className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full"
+                  style={{ background: "color-mix(in oklch, var(--success) 22%, transparent)" }}
+                >
+                  <Check className="h-2.5 w-2.5 text-success" strokeWidth={3} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="hero-filed flex flex-wrap gap-1.5">
+        {filed.map((label, i) => (
+          <span
+            key={label}
+            className="hero-filed-chip inline-flex items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success"
+            style={{ "--i": i } as React.CSSProperties}
+          >
+            <Check className="h-3 w-3" strokeWidth={3} />
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── The decision beat: the month's report lands in the inbox ─────────────────────
+// Two layers cross-fade (opacity and transform only): the unread message as it
+// arrives, then the opened email. The opened one sets the height, so nothing
+// animates height.
+function EmailHeader({ unread }: { unread: boolean }) {
+  return (
+    <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
+      <div className="gradient-cta flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-primary-foreground">
+        <span className="relative z-[2]">C</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-[12px] font-semibold text-[#111827]">Your accountant · Capucor</span>
+          <span className="flex shrink-0 items-center gap-1.5 text-[10px] text-[#6b7280]">
+            {unread && <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />}
+            08:02
+          </span>
+        </div>
+        <div className="text-[10.5px] text-[#6b7280]">to me</div>
+      </div>
+    </div>
+  );
+}
+
+function EmailSubject({ subject }: { subject: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="truncate text-[14px] font-semibold text-[#111827]" suppressHydrationWarning>
+        {subject}
+      </span>
+      <Paperclip className="h-3.5 w-3.5 shrink-0 text-[#9ca3af]" />
+    </div>
+  );
+}
+
+function ReportEmail({ email, month }: { email: Scene["email"]; month: string }) {
+  return (
+    <div className="hero-email-wrap absolute inset-x-0 bottom-0 z-[70]">
+      <div className="hero-email hero-email-open overflow-hidden rounded-xl">
+        <EmailHeader unread={false} />
+        <div className="px-4 pb-3.5">
+          <EmailSubject subject={email.subject} />
+          <div className="mt-2.5 border-t border-[#e5e7eb] pt-2.5 text-[12.5px] leading-relaxed text-[#374151]">
+            <p>
+              {email.before}
+              <span className="font-semibold text-[#111827]">{email.figure}</span>
+              {email.after}
+            </p>
+            <p className="mt-2 text-[#6b7280]">
+              Kind regards,
+              <br />
+              Your accountant
+            </p>
+          </div>
+          <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-2.5 py-2">
+            <span className="flex h-7 w-6 items-center justify-center rounded-[3px] bg-[#dc2626] text-[7px] font-bold text-white">
+              PDF
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-[11px] font-medium text-[#111827]" suppressHydrationWarning>
+                {month} Insights Report.pdf
+              </div>
+              <div className="text-[10px] text-[#6b7280]">6 pages · 284 KB</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="hero-email hero-email-unread absolute inset-x-0 bottom-0 overflow-hidden rounded-xl">
+        <EmailHeader unread />
+        <div className="px-4 pb-3.5">
+          <EmailSubject subject={email.subject} />
+          <p className="truncate pt-0.5 text-[11.5px] text-[#6b7280]">{email.preview}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── The panel ─────────────────────────────────────────────────────────────────────
 const STEPS: { label: string; phases: StoryPhase[] }[] = [
   { label: "Chaos", phases: ["chaos"] },
   { label: "Order", phases: ["order"] },
-  { label: "Decision", phases: ["arriving", "decision"] },
+  { label: "Decision", phases: ["arriving", "decision", "leaving"] },
 ];
 
 export function HeroStory() {
-  const { observeRef, phase, scene, reduce } = useStoryTimeline();
-  const dates = computeStoryDates();
-  const s = buildScenes(dates)[scene];
-  const txCount = TX_COUNTS[scene];
-  const statement = buildStatement(s.pool, scene + 1, txCount);
+  const narrow = useNarrowScreen();
+  const timing = narrow ? TIMING.narrow : TIMING.wide;
+  const { observeRef, phase, scene, paused, reduce } = useStoryTimeline(timing);
+  const dates = useMemo(() => computeStoryDates(), []);
+  const scenes = useMemo(() => buildScenes(dates), [dates]);
+  const s = scenes[scene];
+  const txCount = timing.txCounts[scene];
+  const statement = useMemo(() => buildStatement(s.pool, scene + 1, txCount), [s.pool, scene, txCount]);
   const { ref: tiltRef, rotateX, rotateY, lift, scale, onMouseMove, onMouseLeave } =
     use3DTilt<HTMLDivElement>({ maxTiltDeg: 3 });
-
-  const ordered = phase !== "chaos";
-  const narrow = useNarrowScreen();
-  const slots = narrow ? PILE_NARROW : PILE;
-  const processing = phase === "order";
-  const emailIn = phase === "arriving" || phase === "decision";
-  const emailOpen = phase === "decision";
-
-  const reconciled = Math.min(txCount, useCounter(processing, txCount * PER_TX_MS, txCount));
-  const allDone = ordered && reconciled >= txCount;
-  // Newest first: each reconciled line slides in at the top, so the statement
-  // fills from empty rather than emptying out.
-  const filled = statement.slice(0, reconciled).reverse();
 
   const pile = [
     <ReceiptSlip key="receipt" r={s.receipt} />,
@@ -671,14 +921,16 @@ export function HeroStory() {
     />,
   ];
 
+  let narrowIndex = 0;
+
   return (
-    <div ref={observeRef}>
+    <div ref={observeRef} className="hero-story" data-paused={paused || undefined}>
       <motion.div
         ref={tiltRef}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         style={{ rotateX, rotateY, y: lift, scale, transformPerspective: 1200 }}
-        className="tilt-card premium-card relative overflow-hidden rounded-2xl border-[0.5px] border-white/10 bg-card/80 p-4 shadow-2xl sm:p-5"
+        className="hero-story-card tilt-card premium-card relative overflow-hidden rounded-2xl border-[0.5px] border-white/10 bg-card/80 p-4 shadow-2xl sm:p-5"
         role="figure"
         aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's Insights Report arrives by email with one recommendation to discuss at your review. Shown on the Pro package, which reports monthly. Figures are for illustration."
       >
@@ -693,7 +945,7 @@ export function HeroStory() {
                 <li key={step.label} className="flex items-center gap-1">
                   {i > 0 && <span className="px-0.5 text-muted-foreground/50">→</span>}
                   <span
-                    className="relative rounded-full px-2.5 py-1 transition-colors duration-500"
+                    className="relative rounded-full px-2.5 py-1"
                     style={{ color: active ? "var(--foreground)" : "var(--muted-foreground)" }}
                   >
                     {active && (
@@ -714,231 +966,41 @@ export function HeroStory() {
           </div>
         </div>
 
-        {/* Stage */}
+        {/* Stage. Every beat is a CSS transition keyed off data-phase (globals.css,
+            "Hero story"); a new scene remounts it so the next pile arrives fresh. */}
         <div aria-hidden className="relative z-10 h-[440px] sm:h-[390px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={scene}
-              className="absolute inset-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, filter: "blur(6px)" }}
-              transition={{ duration: 0.6, ease: "easeInOut" }}
-            >
-              {/* Chaos: the pile builds, faster as it goes */}
-              {!reduce &&
-                slots.map((slot, i) => {
-                  const piece = pile[slot.piece];
-                  const back = slot.depth === 1;
-                  const arrive = 0.1 + i * 0.36 - i * i * 0.011;
-                  return (
-                    <motion.div
-                      key={i}
-                      className="absolute"
-                      style={{
-                        width: slot.width,
-                        zIndex: 10 + i,
-                        filter: back ? "brightness(0.8)" : undefined,
-                      }}
-                      initial={{
-                        opacity: 0,
-                        scale: back ? 0.92 : 1.04,
-                        left: `${slot.left}%`,
-                        top: `${slot.top + 4}%`,
-                        rotate: slot.rotate,
-                      }}
-                      animate={
-                        ordered
-                          ? { opacity: 0, scale: 0.5, left: "30%", top: "20%", rotate: 0 }
-                          : {
-                              opacity: 1,
-                              scale: back ? 0.95 : 1,
-                              left: `${slot.left}%`,
-                              top: `${slot.top}%`,
-                              rotate: slot.rotate,
-                            }
-                      }
-                      transition={
-                        ordered
-                          ? { duration: 0.55, delay: (10 - i) * 0.035, ease: EASE }
-                          : { duration: 0.7, delay: arrive, ease: EASE }
-                      }
-                    >
-                      <motion.div
-                        className="hero-pile-piece"
-                        animate={ordered ? { y: 0 } : { y: [0, back ? -2 : -3, 0] }}
-                        transition={
-                          ordered
-                            ? { duration: 0.3 }
-                            : { duration: 6 + (i % 4) * 0.8, repeat: Infinity, ease: "easeInOut" }
-                        }
-                      >
-                        {piece}
-                      </motion.div>
-                    </motion.div>
-                  );
-                })}
-
-              {/* Order: the month's statement, reconciled line by line */}
-              <div className="absolute inset-0 flex flex-col gap-2.5">
-                <motion.div
-                  className="flex min-h-0 flex-1 origin-top flex-col rounded-xl border-[0.5px] border-white/10 bg-background/60 p-3"
-                  initial={false}
-                  animate={{
-                    opacity: ordered ? (emailIn ? 0.35 : 1) : 0,
-                    y: ordered ? 0 : 14,
-                    scale: emailIn ? 0.97 : 1,
-                  }}
-                  transition={{ duration: 0.55, delay: processing ? 0.25 : 0, ease: EASE }}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold" suppressHydrationWarning>
-                      {dates.month} bank statement
-                    </span>
-                    <span
-                      className="flex items-center gap-1.5 text-[10px] font-semibold tabular-nums transition-colors duration-300"
-                      style={{ color: allDone ? "var(--success)" : "var(--muted-foreground)" }}
-                    >
-                      {allDone && <Check className="h-3 w-3" strokeWidth={3} />}
-                      {reconciled} of {txCount} reconciled
-                    </span>
-                  </div>
-                  <div className="mb-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
-                    <div
-                      className="h-full rounded-full transition-[width] duration-150 ease-linear"
-                      style={{
-                        width: `${(reconciled / txCount) * 100}%`,
-                        background: "linear-gradient(to right, var(--brand-cyan), var(--success))",
-                      }}
-                    />
-                  </div>
-                  <div className="hero-ledger-fade relative min-h-0 flex-1 overflow-hidden">
-                    <ul>
-                      {filled.map((tx, i) => (
-                        <motion.li
-                          key={tx.id}
-                          className="flex items-center gap-2.5 overflow-hidden rounded-md px-2 font-mono text-[12px] sm:text-[10.5px]"
-                          initial={reduce ? false : { opacity: 0, height: 0 }}
-                          animate={{
-                            opacity: 1,
-                            height: ROW_PX,
-                            backgroundColor:
-                              i === 0 && processing ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0)",
-                          }}
-                          transition={{ duration: 0.3, ease: EASE }}
-                        >
-                          <span className="w-4 shrink-0 text-muted-foreground">{tx.date}</span>
-                          <span className="truncate text-foreground/85">{tx.desc}</span>
-                          <span className="ml-auto shrink-0 whitespace-nowrap text-foreground/90">{tx.amount}</span>
-                          <motion.span
-                            className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full"
-                            style={{ background: "color-mix(in oklch, var(--success) 22%, transparent)" }}
-                            initial={reduce ? false : { scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ type: "spring", stiffness: 480, damping: 20, delay: 0.15 }}
-                          >
-                            <Check className="h-2.5 w-2.5 text-success" strokeWidth={3} />
-                          </motion.span>
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="flex flex-wrap gap-1.5"
-                  initial={false}
-                  animate={{ opacity: emailIn ? 0.35 : 1 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  {s.filed.map((label, i) => (
-                    <motion.span
-                      key={label}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-success/25 bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success"
-                      initial={false}
-                      animate={{ opacity: allDone ? 1 : 0, y: allDone ? 0 : 6, scale: allDone ? 1 : 0.9 }}
-                      transition={{ duration: 0.4, delay: allDone && processing ? 0.15 + i * 0.15 : 0, ease: EASE }}
-                    >
-                      <Check className="h-3 w-3" strokeWidth={3} />
-                      {label}
-                    </motion.span>
-                  ))}
-                </motion.div>
-              </div>
-
-              {/* Decision: the month's report lands in the inbox */}
-              <motion.div
-                className="hero-email absolute inset-x-0 bottom-0 z-[70] overflow-hidden rounded-xl"
-                initial={false}
-                animate={{ opacity: emailIn ? 1 : 0, y: emailIn ? 0 : 48 }}
-                transition={{ duration: 0.6, ease: EASE }}
-              >
-                <div className="flex items-center gap-2.5 px-4 pb-2 pt-3">
-                  <div className="gradient-cta flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-primary-foreground">
-                    <span className="relative z-[2]">C</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-[12px] font-semibold text-[#111827]">
-                        Your accountant · Capucor
-                      </span>
-                      <span className="flex shrink-0 items-center gap-1.5 text-[10px] text-[#6b7280]">
-                        {!emailOpen && <span className="h-1.5 w-1.5 rounded-full bg-[#2563eb]" />}
-                        08:02
-                      </span>
-                    </div>
-                    <div className="text-[10.5px] text-[#6b7280]">to me</div>
-                  </div>
-                </div>
-                <div className="px-4 pb-3.5">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-[14px] font-semibold text-[#111827]" suppressHydrationWarning>
-                      {s.email.subject}
-                    </span>
-                    <Paperclip className="h-3.5 w-3.5 shrink-0 text-[#9ca3af]" />
-                  </div>
-                  <motion.div
-                    initial={false}
-                    animate={{ height: emailOpen ? 0 : "auto", opacity: emailOpen ? 0 : 1 }}
-                    transition={{ duration: 0.35, ease: EASE }}
-                    className="overflow-hidden"
+          <div key={scene} className="hero-stage absolute inset-0" data-phase={phase}>
+            {/* Chaos: the pile. The page opens on the order beat, so it first arrives on the second story. */}
+            {!reduce && (
+              <div className="hero-pile">
+                {PILE.map((slot, i) => (
+                  <div
+                    key={slot.piece}
+                    className={`hero-pile-slot${slot.narrow ? "" : " hero-pile-wide"}${slot.back ? " hero-pile-back" : ""}`}
+                    style={slotVars(slot, i, slot.narrow ? narrowIndex++ : 0)}
                   >
-                    <p className="truncate pt-0.5 text-[11.5px] text-[#6b7280]">{s.email.preview}</p>
-                  </motion.div>
-                  <motion.div
-                    initial={false}
-                    animate={{ height: emailOpen ? "auto" : 0, opacity: emailOpen ? 1 : 0 }}
-                    transition={{ duration: 0.6, ease: EASE }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-2.5 border-t border-[#e5e7eb] pt-2.5 text-[12.5px] leading-relaxed text-[#374151]">
-                      <p>
-                        {s.email.before}
-                        <span className="font-semibold text-[#111827]">{s.email.figure}</span>
-                        {s.email.after}
-                      </p>
-                      <p className="mt-2 text-[#6b7280]">
-                        Kind regards,
-                        <br />
-                        Your accountant
-                      </p>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-2.5 py-2">
-                      <span className="flex h-7 w-6 items-center justify-center rounded-[3px] bg-[#dc2626] text-[7px] font-bold text-white">
-                        PDF
-                      </span>
-                      <div className="min-w-0">
-                        <div className="truncate text-[11px] font-medium text-[#111827]" suppressHydrationWarning>
-                          {dates.month} Insights Report.pdf
-                        </div>
-                        <div className="text-[10px] text-[#6b7280]">6 pages · 284 KB</div>
+                    <div className="hero-pile-card">
+                      <div className="hero-pile-piece" style={{ animationDelay: `${-(i % 4) * 1.4}s` }}>
+                        {pile[slot.piece]}
                       </div>
                     </div>
-                  </motion.div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </AnimatePresence>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Ledger
+              statement={statement}
+              month={dates.month}
+              filed={s.filed}
+              phase={phase}
+              perTx={timing.perTx}
+              paused={paused}
+              counts={{ wide: TIMING.wide.txCounts[scene], narrow: TIMING.narrow.txCounts[scene] }}
+            />
+
+            <ReportEmail email={s.email} month={dates.month} />
+          </div>
         </div>
 
         {/* Footnote */}
