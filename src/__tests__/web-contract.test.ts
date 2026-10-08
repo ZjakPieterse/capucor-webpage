@@ -7,9 +7,6 @@
  * protects this repo alone — exact runtime pins, the redirect table, two
  * written rules, schema ownership. Phase 3 (2026-10-07) deleted the two
  * temporary entries, the provisioning RPC boundary and the messages.mjs freeze.
- *
- * The cron, deploy-drift and CI-silence declarations in the same manifest are
- * tested beside their scripts (schedule-watchdog / deploy-drift / ci-silence).
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

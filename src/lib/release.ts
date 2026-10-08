@@ -7,11 +7,7 @@ import 'server-only';
  * compares it (see contracts/web-contract.json → releaseProvenance); keep the
  * two in step.
  *
- * WHY THIS EXISTS. `scripts/deploy-drift.mjs` asks the Actions API for the
- * newest successful deploy run and compares its `head_sha` to the tip of
- * `master`. That answers "did we intend to ship this?" and it is genuinely
- * useful — but the contract has always been explicit that it CANNOT see
- * production (`deployDrift.cannotSeeProduction`). A green deploy run proves
+ * WHY THIS EXISTS. A green deploy run proves
  * `wrangler` uploaded a build. It does not prove the Worker is serving it. A
  * dashboard rollback, a hand-run `npx wrangler deploy` from a laptop, or a
  * deploy that succeeded against the wrong Cloudflare account are all invisible
@@ -40,9 +36,8 @@ import 'server-only';
  * ⚠️ WHAT THE ANSWER PROVES. That the code serving this request was BUILT from
  * that commit. Paired with the post-deploy check in deploy.yml, that proves the
  * expected revision was serving immediately after the deploy. It does NOT
- * continuously detect a later rollback — nothing re-asks, and the push-triggered
- * watchdog deliberately does not carry the production secret needed to ask.
- * Closing that half needs its own design and its own decision.
+ * continuously detect a later rollback — nothing re-asks. Closing that half
+ * needs its own design and its own decision.
  */
 
 /** What a build with no release identifier reports. Never a silent empty string. */

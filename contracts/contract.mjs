@@ -6,9 +6,7 @@
  * repo's own file and is never compared with another repository. Phase 3
  * removed the digest helper with the one freeze that used it.
  *
- * Zero dependencies, plain `.mjs`, no build step: it is imported by Vitest and
- * by the watchdog scripts, which run in a workflow that deliberately skips
- * `npm ci`.
+ * Zero dependencies, plain `.mjs`, no build step. Imported by Vitest.
  */
 
 import { readFileSync } from 'node:fs';

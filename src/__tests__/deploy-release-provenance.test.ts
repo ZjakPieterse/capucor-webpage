@@ -9,15 +9,6 @@
  * push. Each of those leaves every other check green.
  *
  * See contracts/web-contract.json → releaseProvenance.
- *
- * ⚠️ THE WATCHDOG ASSERTION AT THE END IS THE ONE THAT MATTERS MOST. The
- * cross-repo contract records why the deployed-SHA question was left open:
- * asking it needs SUPABASE_SERVICE_ROLE_KEY, and putting a production secret in
- * a job that runs on EVERY push was judged a worse trade than the gap. This
- * change asks the question from the manual deploy workflow, which already holds
- * that key. If the same check ever migrates into watchdog.yml it will look like
- * an improvement — continuous instead of once — and it will have made exactly
- * the trade that was refused.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -37,7 +28,6 @@ function readSource(...parts: string[]): string {
 }
 
 const deploy = readSource('.github', 'workflows', 'deploy.yml');
-const watchdog = readSource('.github', 'workflows', 'watchdog.yml');
 const nextConfig = readSource('next.config.ts');
 const healthRoute = readSource('src', 'app', 'api', 'health', 'route.ts');
 
@@ -113,7 +103,7 @@ describe('release provenance — the deploy workflow', () => {
     // the incident where that matters is precisely the one with several faults
     // at once. A rollback PLUS an unset Worker secret would have reported only
     // the secret; the operator fixes it, re-dispatches, and the rollback is
-    // never named. watchdog.yml already documents this exact reasoning.
+    // never named.
     const guard = "if: ${{ !cancelled() && steps.deploy.outcome == 'success' }}";
     expect(deploy.split(guard).length - 1).toBeGreaterThanOrEqual(3);
 
@@ -150,23 +140,6 @@ describe('release provenance — the deploy workflow', () => {
 });
 
 describe('release provenance — what it deliberately does NOT do', () => {
-  it('10. keeps the production secret out of the push-triggered watchdog', () => {
-    // watchdog.yml runs on EVERY push and on a schedule. It has actions:read
-    // and contents:read and no credential of its own, by design.
-    expect(watchdog).toContain('on:');
-    expect(watchdog).toMatch(/^\s{2}push:/m);
-    expect(watchdog).not.toContain('SUPABASE_SERVICE_ROLE_KEY');
-    expect(watchdog).not.toContain('/api/health');
-    expect(watchdog).not.toContain('CAPUCOR_RELEASE');
-
-    // ⚠️ AN ALLOW-LIST, NOT A DENY-LIST. The contract's invariant is that this
-    // workflow holds NO credential of its own — naming three secrets leaves
-    // RESEND_API_KEY, CLOUDFLARE_API_TOKEN and SUPABASE_ACCESS_TOKEN unasserted,
-    // and the next one nobody thought of unasserted too.
-    const secrets = [...watchdog.matchAll(/secrets\.([A-Z_]+)/g)].map((m) => m[1]);
-    expect([...new Set(secrets)]).toEqual(['GITHUB_TOKEN']);
-  });
-
   it('11. states the residual rather than implying continuous detection', () => {
     // The guarantee is "the expected revision was serving immediately after
     // this deploy", not "production is still serving it". A doc that overstates

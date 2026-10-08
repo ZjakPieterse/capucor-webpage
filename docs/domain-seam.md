@@ -1,6 +1,6 @@
 # The domain seam, and the operational rules that sit on it
 
-> This repo is capucor.com: the site and the whole sales funnel, on one Cloudflare Worker. Since web-standalone (2026-10-07) it depends on no other repository. This page covers the one boundary it still has — **legacy redirects to the old client portal on capucor.app, kept until os-sunset** — **plus four operational contracts that were filed under it**: the web contract manifest, the scheduled-workflow watchdog, the request-body caps, and the email delivery adapter.
+> This repo is capucor.com: the site and the whole sales funnel, on one Cloudflare Worker. Since web-standalone (2026-10-07) it depends on no other repository. This page covers the one boundary it still has — **legacy redirects to the old client portal on capucor.app, kept until os-sunset** — **plus four operational contracts that were filed under it**: the web contract manifest, the scheduled workflows, the request-body caps, and the email delivery adapter.
 >
 > **Signing stops at `signed` + the signed PDF in Drive**: nothing in this repo writes a portal table, and failed sends are retried from this repo.
 >
@@ -72,7 +72,7 @@ portal's tables until os-sunset are listed under "Links across the line" in
 ### The web contract — `contracts/web-contract.json`
 
 Since 2026-10-07 (web-standalone phase 2) this repo's invariants live in one **web-owned** manifest,
-checked by `npm test` (`src/__tests__/web-contract.test.ts` plus the three watchdog tests). It
+checked by `npm test` (`src/__tests__/web-contract.test.ts`). It
 replaced an older cross-repo contract; nothing in it is compared with another repository.
 
 - **Exact pins** — Next, `@opennextjs/cloudflare` and Wrangler move together; React,
@@ -82,38 +82,22 @@ replaced an older cross-repo contract; nothing in it is compared with another re
 - **Written rules** — `AGENTS.md` and `docs/database.md` say no agent applies a migration;
   `AGENTS.md` and `docs/deploy.md` say production deploys by manual dispatch.
 - **Schema ownership** — the funnel baseline exists and its first statement raises.
-- **Watchdogs** — the declared crons, deploy surface and release branch (next section).
 
 `src/lib/pricing.ts`, `src/lib/proposalPricing.ts`, `src/config/tiers.ts`,
 `src/lib/email/messages.mjs` and `src/types/db.ts` are this repo's own files; change them here
 only. Copies elsewhere are not kept in step.
 
-### Scheduled workflows and the watchdog
+### Scheduled workflows
 
-This repo runs three scheduled workflows — the POPIA lead prune, the proposal expiry and the
-fulfilment/email retry runner (`cron-reconcile-deliveries.yml`, see the email section below) — and
-`.github/workflows/watchdog.yml` checks on every push that each one is still succeeding, via
-`scripts/schedule-watchdog.mjs`.
+This repo runs three scheduled workflows — the POPIA lead prune (daily), the proposal expiry
+(daily) and the fulfilment/email retry runner (`cron-reconcile-deliveries.yml`, hourly; see the
+email section below). GitHub emails the owner when a run fails.
 
-- The script selects this repo's crons by matching `GITHUB_REPOSITORY` against
-  `scheduledWorkflows.githubRepos` in `contracts/web-contract.json`; the same manifest declares
-  the deploy surface (`deployDrift`) and release branch (`ciSilence`) the other two steps check.
-- ⚠️ **A new cron must be declared in `scheduledWorkflows`**, or `schedule-watchdog.test.ts`
-  fails — an undeclared cron is a job nothing watches.
-- **Zero dependencies and `actions: read` only.** Keep it that way; the watchdog tests fail if
-  `npm ci` appears in that workflow.
-- `SCHEDULE_WATCHDOG_DRILL` (`stale` / `disabled`) is a `workflow_dispatch` input that forces the
-  failure path against the real API. Re-run it after changing the script or the workflow.
-- ⚠️ **A filtered Actions run listing is not evidence of absence.** Listings filtered by
-  `status`, `branch` or `event` intermittently return stale data (2026-10-07: three false red
-  watchdog runs in one day on healthy crons and green CI). So none of the three scripts goes red on
-  one filtered listing: the cron and deploy-drift checks take the freshest success across an
-  unfiltered page and the exact `status=success` query, and the CI-silence check confirms every
-  commit the branch listing misses with a bounded `actions/runs?head_sha=` lookup. See
-  `scheduledWorkflows.filteredListingsAreNotEvidenceOfAbsence` in the contract. Keep it that way
-  when changing any of them.
-
-⚠️ **Why this watchdog exists, and what it deliberately cannot cover,** is kept out of this public repository on purpose (ADR 0010 part 3, 2026-08-20) and recorded in the owner's private workspace (Capucor wiki, `systems/capucor-com`).
+- ⚠️ **Nothing watches for a cron that stops silently.** The watchdog (`watchdog.yml`, with its
+  cron, deploy-drift and CI-silence checks) was removed on 2026-10-08: its push-time checks were
+  mostly false alarms, and production deploys already verify themselves in `deploy.yml`. A
+  schedule GitHub disables (60 days without activity on a public repo) has to be noticed by eye
+  on the Actions tab.
 
 ### Cloudflare
 
@@ -179,8 +163,7 @@ route, because Workers Free allows 10 ms CPU and 50 subrequests per request.
 - Six attempts, then `permanently_failed`; an ambiguous attempt older than 23 hours (outside
   Resend's 24-hour idempotency window) also fails permanently rather than risk a duplicate.
 - A run fails only for what **that run** failed permanently (GitHub then emails); older permanent
-  failures are listed as warnings, so one stuck row cannot keep the job red and make the watchdog
-  read it as stale.
+  failures are listed as warnings, so one stuck row cannot keep the job red.
 - ⚠️ **This repository is public, so the runner's logs are public.** It logs ids, event types,
   counts and error codes only — never a recipient, a link token, a message body or a provider
   error message. Keep it that way.

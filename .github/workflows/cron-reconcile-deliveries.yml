@@ -15,13 +15,11 @@ name: Cron — signed-proposal fulfilment and email retries
 
 on:
   schedule:
-    # 07:00–17:50 SAST, Monday to Friday: a client who has just signed is
-    # waiting on the "signed" email, and ten-minute latency is the point.
-    - cron: '*/10 5-15 * * 1-5'
-    # Hourly, every day. THIS is the tier declared in the web contract's
-    # scheduledWorkflows, because it bounds the worst case: without it a send
-    # that failed at 18:00 on a Friday would wait until Monday. Hourly rather
-    # than denser because the backoff runs from 10 minutes to a 6-hour ceiling.
+    # Hourly, every day. The ten-minute weekday tier was dropped on 2026-10-08:
+    # signing volume is low during development, and the Worker sends the
+    # "signed" emails itself on the first attempt; this only catches failures.
+    # Hourly rather than denser because the backoff runs from 10 minutes to a
+    # 6-hour ceiling. Dispatch it by hand if a client is waiting.
     - cron: '0 * * * *'
   workflow_dispatch:
 

@@ -122,14 +122,15 @@ that reads a body, or anything that sends email.
 - **Signing stops at `signed` + the signed PDF in Drive** (web-standalone phase 3, migration
   `001`): fulfilment is pdf → client email → owner email (with the Drive link). Nothing here
   writes a portal table; `proposals.client_org_id` is left unused until os-sunset.
-- **Web contract** — exact version pins, the redirect table and the declared crons live in
+- **Web contract** — exact version pins and the redirect table live in
   `contracts/web-contract.json`, checked by `npm test`. It is web-owned: pricing, tiers, emails
   and `db.ts` are this repo's files and nothing is compared with another repository.
 - **Retries run here.** `cron-reconcile-deliveries.yml` (zero-dependency
   `scripts/reconcile-deliveries.mjs`) finishes fulfilment and resends failed funnel emails,
   rebuilt from `src/lib/email/messages.mjs` under the original idempotency key. It runs from
   `master`, so deploy soon after merging a `messages.mjs` change.
-- **Scheduled workflows** — an undeclared cron is a job nothing watches, and `npm test` fails.
+- **Scheduled workflows** — lead prune and proposal expiry (daily), retries (hourly). No watchdog
+  since 2026-10-08: GitHub emails on a failed run; a cron that stops silently is not detected.
 - ⚠️ **Never call `req.json()` in a route handler** — it is unbounded. Use
   `readJsonBody(req, MAX_BODY_BYTES)`.
 - **Every transactional send in the Worker goes through `src/lib/email/sendEmail.ts`.** Never
