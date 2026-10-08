@@ -439,7 +439,7 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
             rel="noopener noreferrer"
             className="text-primary underline underline-offset-2"
           >
-            Book a call
+            Book a free 30-minute call with Zjak
           </a>
         </p>
       </form>

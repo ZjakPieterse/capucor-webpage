@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Calendar, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/config/site';
+import { FitCallNote } from '@/components/ui/FitCallNote';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -56,6 +57,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
           Book a fit call
         </Button>
       </div>
+      <FitCallNote className="mt-4 max-w-md" />
 
       {error.digest && (
         <p className="mt-8 text-[10px] uppercase tracking-widest text-muted-foreground/80 font-mono">

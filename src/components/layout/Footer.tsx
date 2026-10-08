@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { siteConfig } from "@/config/site";
 import { Separator } from "@/components/ui/separator";
+import { MobileCtaBar } from "@/components/layout/MobileCtaBar";
 
 function IconFacebook({ className }: { className?: string }) {
   return (
@@ -46,9 +47,9 @@ function IconLinkedIn({ className }: { className?: string }) {
 }
 
 const services = [
-  { label: "Accounting", href: "/#services" },
-  { label: "Bookkeeping", href: "/#services" },
-  { label: "Payroll", href: "/#services" },
+  { label: "Accounting", href: "/accounting" },
+  { label: "Bookkeeping", href: "/bookkeeping" },
+  { label: "Payroll", href: "/payroll" },
   { label: "Pricing", href: "/pricing" },
 ];
 
@@ -199,6 +200,7 @@ export function Footer() {
           </div>
         </div>
       </div>
+      <MobileCtaBar />
     </footer>
   );
 }

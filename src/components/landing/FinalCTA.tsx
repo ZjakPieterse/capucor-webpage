@@ -6,6 +6,7 @@ import { siteConfig } from "@/config/site";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { Button } from "@/components/ui/button";
+import { FitCallNote } from "@/components/ui/FitCallNote";
 
 export function FinalCTA() {
   return (
@@ -30,7 +31,7 @@ export function FinalCTA() {
             Ready to make finance work better?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            Build your subscription in a few minutes, or book a short fit call
+            Build your subscription in a few minutes, or book a fit call
             and we&apos;ll help you choose the right level of monthly support.
           </p>
 
@@ -57,6 +58,7 @@ export function FinalCTA() {
               Book a fit call
             </a>
           </div>
+          <FitCallNote className="mt-4" />
         </ScrollReveal>
       </div>
     </section>

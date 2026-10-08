@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/config/site';
+import { FitCallNote } from '@/components/ui/FitCallNote';
 
 export default function NotFound() {
   return (
@@ -54,6 +55,7 @@ export default function NotFound() {
           Book a fit call
         </Button>
       </div>
+      <FitCallNote className="mt-4 max-w-md" />
     </div>
   );
 }
