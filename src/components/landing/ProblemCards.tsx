@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AlertCircle,
   Unplug,
@@ -16,8 +16,7 @@ import {
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { cn } from "@/lib/utils";
+import { motion, useReducedMotion } from "motion/react";
 
 const PROBLEMS = [
   {
@@ -62,28 +61,127 @@ const PROBLEMS = [
   },
 ];
 
-export function ProblemCards() {
-  // Each card flips on its own, so the reader turns problems into answers one at a time.
-  const [resolved, setResolved] = useState<boolean[]>(() =>
-    PROBLEMS.map(() => false),
-  );
-  const toggle = (i: number) =>
-    setResolved((prev) => prev.map((v, j) => (j === i ? !v : v)));
+type Problem = (typeof PROBLEMS)[number];
+
+const FACE_STYLE = {
+  backfaceVisibility: "hidden",
+  WebkitBackfaceVisibility: "hidden",
+} as const;
+
+/**
+ * One problem card that turns over like a real card: the problem is printed on
+ * the front, the Capucor answer on the back. Both faces share one grid cell, so
+ * the card is as tall as its longer side and never jumps in height mid-flip.
+ */
+function FlipCard({ item }: { item: Problem }) {
+  const [isResolved, setIsResolved] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  const frontButton = useRef<HTMLButtonElement>(null);
+  const backButton = useRef<HTMLButtonElement>(null);
 
-  const flipInitial = prefersReducedMotion
-    ? { opacity: 0 }
-    : { opacity: 0, rotateX: 90 };
-  const flipAnimate = prefersReducedMotion
-    ? { opacity: 1 }
-    : { opacity: 1, rotateX: 0 };
-  const flipExit = prefersReducedMotion
-    ? { opacity: 0 }
-    : { opacity: 0, rotateX: -90 };
-  const flipTransition = prefersReducedMotion
-    ? { duration: 0.15 }
-    : { duration: 0.4, ease: "backOut" as const };
+  // Keyboard users land on the button of the side that just turned up.
+  const flip = () => {
+    const next = !isResolved;
+    setIsResolved(next);
+    requestAnimationFrame(() =>
+      (next ? backButton : frontButton).current?.focus({ preventScroll: true }),
+    );
+  };
 
+  return (
+    <motion.div
+      className="grid h-full"
+      style={{ transformStyle: "preserve-3d", transformPerspective: 1200 }}
+      initial={false}
+      animate={{ rotateY: isResolved ? 180 : 0 }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { type: "spring", stiffness: 90, damping: 15, mass: 0.9 }
+      }
+    >
+      {/* Front: the problem */}
+      <div
+        className="[grid-area:1/1]"
+        style={FACE_STYLE}
+        aria-hidden={isResolved}
+        inert={isResolved}
+      >
+        <div
+          data-state="problem"
+          className="problem-card premium-card h-full rounded-2xl border border-destructive/30 bg-destructive/5 p-6 flex flex-col"
+        >
+          <div className="flex-1">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10">
+                <item.icon className="h-5 w-5 text-destructive animate-pulse" />
+              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-destructive/80">
+                The Problem
+              </div>
+            </div>
+            <h3 className="text-base font-semibold mb-2">{item.title}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {item.body}
+            </p>
+          </div>
+          <button
+            ref={frontButton}
+            type="button"
+            onClick={flip}
+            data-state="problem"
+            className="flip-cue mt-5 self-start inline-flex h-10 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary"
+          >
+            We can fix this
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      </div>
+
+      {/* Back: the solution, pre-turned so it reads correctly once flipped */}
+      <div
+        className="[grid-area:1/1]"
+        style={{ ...FACE_STYLE, transform: "rotateY(180deg)" }}
+        aria-hidden={!isResolved}
+        inert={!isResolved}
+      >
+        <div
+          data-state="solution"
+          className="problem-card premium-card h-full rounded-2xl border border-primary/30 bg-card shadow-[0_0_20px_rgba(45,212,255,0.05)] p-6 flex flex-col"
+        >
+          <div className="flex-1">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
+                <item.solution.icon className="h-5 w-5 text-primary" />
+              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                Capucor Solution
+              </div>
+            </div>
+            <h3 className="text-base font-semibold mb-2">
+              {item.solution.title}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {item.solution.body}
+            </p>
+          </div>
+          <button
+            ref={backButton}
+            type="button"
+            onClick={flip}
+            data-state="solution"
+            className="flip-cue mt-5 self-start inline-flex h-10 items-center gap-2 rounded-full border border-white/10 px-4 text-sm font-semibold text-muted-foreground"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            Back to the problem
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export function ProblemCards() {
   return (
     <section className="premium-section py-14 lg:py-20">
       <SectionDivider />
@@ -95,106 +193,14 @@ export function ProblemCards() {
           />
         </ScrollReveal>
 
+        {/* Each card flips on its own, so the reader turns problems into answers one at a time. */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[280px] mt-12">
-          {PROBLEMS.map((item, i) => {
-            const isResolved = resolved[i];
-            return (
-            <div
-              key={item.title}
-              className="h-full"
-              style={{ perspective: "1000px" }}
-            >
-              <ScrollReveal delay={i * 0.08} className="h-full">
-                <div
-                  data-state={isResolved ? "solution" : "problem"}
-                  className={cn(
-                    "problem-card premium-card h-full rounded-2xl border p-6 flex flex-col transition-colors duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-                    isResolved
-                      ? "border-primary/30 bg-card shadow-[0_0_20px_rgba(45,212,255,0.05)]"
-                      : "border-destructive/30 bg-destructive/5",
-                  )}
-                >
-                  <AnimatePresence mode="wait">
-                    {!isResolved ? (
-                      <motion.div
-                        key="problem"
-                        initial={flipInitial}
-                        animate={flipAnimate}
-                        exit={flipExit}
-                        transition={flipTransition}
-                        className="flex-1 origin-center"
-                      >
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10">
-                            <item.icon className="h-5 w-5 text-destructive animate-pulse" />
-                          </div>
-                          <div className="text-[10px] font-semibold uppercase tracking-wider text-destructive/80">
-                            The Problem
-                          </div>
-                        </div>
-                        <h3 className="text-base font-semibold mb-2">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {item.body}
-                        </p>
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="solution"
-                        initial={flipInitial}
-                        animate={flipAnimate}
-                        exit={flipExit}
-                        transition={flipTransition}
-                        className="flex-1 origin-center"
-                      >
-                        <div className="mb-4 flex items-center gap-3">
-                          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
-                            <item.solution.icon className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                            Capucor Solution
-                          </div>
-                        </div>
-                        <h3 className="text-base font-semibold mb-2">
-                          {item.solution.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {item.solution.body}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  <button
-                    type="button"
-                    onClick={() => toggle(i)}
-                    data-state={isResolved ? "solution" : "problem"}
-                    className={cn(
-                      "flip-cue mt-5 self-start inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold",
-                      isResolved
-                        ? "border-white/10 text-muted-foreground"
-                        : "border-primary/30 bg-primary/10 text-primary",
-                    )}
-                  >
-                    {isResolved ? (
-                      <>
-                        <RotateCcw className="h-4 w-4" aria-hidden />
-                        Back to the problem
-                      </>
-                    ) : (
-                      <>
-                        We can fix this
-                        <ArrowRight className="h-4 w-4" aria-hidden />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </ScrollReveal>
-            </div>
-            );
-          })}
+          {PROBLEMS.map((item, i) => (
+            <ScrollReveal key={item.title} delay={i * 0.08} className="h-full">
+              <FlipCard item={item} />
+            </ScrollReveal>
+          ))}
         </div>
-
       </div>
     </section>
   );
