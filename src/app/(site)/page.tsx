@@ -100,9 +100,10 @@ export default async function HomePage() {
         }}
       />
 
-      <PageCursorGlow>
-        {/* 1. Hero */}
-        <HeroSection />
+        {/* 1. Hero — the only place with the cursor glow; the story below stays calm */}
+        <PageCursorGlow>
+          <HeroSection />
+        </PageCursorGlow>
         {/* 2. Partners & tech logo strip (real brand marks, monochrome via .logo-mark) */}
         <PartnersAndTech />
         {/* 3. Problem */}
@@ -120,7 +121,6 @@ export default async function HomePage() {
         <ContactSection />
         {/* 10. Final CTA */}
         <FinalCTA />
-      </PageCursorGlow>
     </>
   );
 }

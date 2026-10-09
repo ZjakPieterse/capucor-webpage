@@ -11,7 +11,6 @@ import { TierNudge } from './TierNudge';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
-import { useCursorGlow } from '@/hooks/useCursorGlow';
 import { siteConfig } from '@/config/site';
 import {
   TIER_HIGHLIGHTS,
@@ -71,7 +70,6 @@ export function Step2Tiers({
 }: Step2TiersProps) {
   const sortedTiers = [...tiers].sort((a, b) => a.display_order - b.display_order);
   const activeServices = services.filter((s) => selectedServices.has(s.slug));
-  const containerRef = useCursorGlow<HTMLDivElement>();
   // Only the answer-driven add-ons belong in the card price (today only the
   // zero-price VAT flag); chosen add-ons wait for the next step.
   const answerAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
@@ -113,8 +111,7 @@ export function Step2Tiers({
       )}
 
       <div
-        ref={containerRef}
-        className="cursor-glow grid grid-cols-1 gap-4 sm:gap-6 sm:pt-5 pricing-grid-container"
+        className="grid grid-cols-1 gap-4 sm:gap-6 sm:pt-5 pricing-grid-container"
       >
         {sortedTiers.map((tier) => {
           const isSelected = selectedTier === tier.slug;

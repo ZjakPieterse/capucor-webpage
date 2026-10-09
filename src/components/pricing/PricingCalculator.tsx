@@ -20,7 +20,6 @@ import {
 } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
-import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { CalculatorProgress } from './CalculatorProgress';
 import { BracketQuestion, YesNoQuestion } from './QuestionStep';
 import { Step2Tiers } from './Step2Tiers';
@@ -267,7 +266,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
 
   return (
     <MotionConfig reducedMotion="user">
-      <PageCursorGlow>
+      <>
         {/* Heading, one promise and a single progress bar (tweaks round 1) */}
         <section
           id="pricing-summary"
@@ -306,7 +305,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         </section>
 
         <BottomCTA />
-      </PageCursorGlow>
+      </>
 
       {showPackageBar && (
         <MobileTotalBar
