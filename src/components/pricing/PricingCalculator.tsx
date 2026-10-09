@@ -266,7 +266,10 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
 
   return (
     <MotionConfig reducedMotion="user">
-      <>
+      {/* Keep one wrapper element first: on a client-side navigation Next.js
+          scrolls the page's first DOM node into view, and without it the
+          page landed scrolled to the bottom CTA. */}
+      <div>
         {/* Heading, one promise and a single progress bar (tweaks round 1) */}
         <section
           id="pricing-summary"
@@ -305,7 +308,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         </section>
 
         <BottomCTA />
-      </>
+      </div>
 
       {showPackageBar && (
         <MobileTotalBar
