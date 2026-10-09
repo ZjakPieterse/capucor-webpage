@@ -3,7 +3,6 @@ import { BarChart2, BookMarked } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { PayrollDashboard } from '@/components/services/ServiceMiniDashboards';
 import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
-import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
@@ -52,7 +51,7 @@ const OTHER_SERVICES = [
 
 export default function PayrollPage() {
   return (
-    <PageCursorGlow>
+    <>
       {/* Hero */}
       <section className="premium-section relative py-24 lg:py-28">
         <div className="max-w-7xl mx-auto px-6">
@@ -137,6 +136,6 @@ export default function PayrollPage() {
           </div>
         </div>
       </section>
-    </PageCursorGlow>
+    </>
   );
 }
