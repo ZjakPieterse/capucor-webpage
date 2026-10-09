@@ -21,21 +21,21 @@ import { motion, useReducedMotion } from "motion/react";
 const PROBLEMS = [
   {
     icon: Unplug,
-    title: "Your accountant has gone quiet",
+    title: "You never hear from your accountant",
     body: "It's the 15th. The bank wants management accounts for a facility review. You've emailed your accountant twice this week. The last thing you heard from them was the year-end invoice.",
     solution: {
       icon: CheckCircle2,
-      title: "You hear from us on a schedule.",
+      title: "We reach out to you every month",
       body: "Each month is closed and reconciled before the next one gets busy. When the bank asks for numbers, they're already there, and you didn't have to chase anyone for them.",
     },
   },
   {
     icon: AlertCircle,
-    title: "A letter from SARS",
+    title: "An unexpected letter from SARS comes in",
     body: "A penalty notice arrives for a missed EMP201. You thought it was filed. It wasn't. Now you're paying for a mistake that should never have reached your desk.",
     solution: {
       icon: CalendarCheck,
-      title: "Deadlines that don’t depend on memory.",
+      title: "Deadlines that don’t depend on memory",
       body: "EMP201, VAT201, provisional tax and CIPC sit on one calendar with review dates. Each return is prepared, checked and filed on its own cycle, and you can see that it's done.",
     },
   },
@@ -45,18 +45,18 @@ const PROBLEMS = [
     body: "You've just hired your twelfth person and registered for VAT. Payroll lives in a spreadsheet, the EMP201 is due on the 7th, and the UIF and COIDA paperwork keeps piling up.",
     solution: {
       icon: Link2,
-      title: "Payroll on the same rhythm as your books.",
+      title: "Payroll on the same rhythm as your books",
       body: "Payslips, EMP201, UIF and COIDA run on their cycles next to your VAT201. New hires and the VAT registration are set up properly from the start, and EMP501 is ready when it's due.",
     },
   },
   {
     icon: Clock,
-    title: "Too much owner involvement",
-    body: "Your evenings go on chasing slips and answering basic finance questions. The work doesn't stop. The growth does.",
+    title: "Too much owner dependence",
+    body: "Your evenings and weekends are consumed by paperwork, missing receipts, and basic finance questions. The work never stops. But your growth does.",
     solution: {
       icon: Zap,
-      title: "The decisions stay yours.",
-      body: "You send what we ask for, we run the month, and we talk the numbers through with you.",
+      title: "The decisions become priority",
+      body: "Each month, you send us your data, and we handle the finances and monthly close. Then, we review the numbers together to map out your next strategic moves.",
     },
   },
 ];
@@ -188,8 +188,8 @@ export function ProblemCards() {
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
-            title="Your business has outgrown a year-end accountant"
-            subtitle="You hear from them once a year, with a bill. Meanwhile EMP201, VAT201 and provisional tax keep coming, and you're the one chasing."
+            title="Your business has outgrown year-end accounting"
+            subtitle="You hear from your accountant once a year, with a huge bill. Meanwhile EMP201, VAT201 and provisional tax keep coming, and you're the one chasing."
           />
         </ScrollReveal>
 

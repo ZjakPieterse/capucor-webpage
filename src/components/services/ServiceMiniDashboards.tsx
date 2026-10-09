@@ -24,7 +24,7 @@ const tileVariants = {
 
 // Illustrative panels, labelled as such: no hard-coded month, no pulsing
 // "live" dot (funnel review F18, 2026-10-08), the same honesty rule as the
-// homepage hero panel's static "Example" badge.
+// homepage hero panel's "Example figures" footnote.
 function Header({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-between mb-4">

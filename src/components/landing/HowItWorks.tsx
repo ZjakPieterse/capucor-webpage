@@ -47,8 +47,8 @@ export function HowItWorks() {
       <SectionDivider />
       <div className="mx-auto w-full max-w-6xl px-6">
         <SectionHeading
-          title="A monthly rhythm that keeps you in control"
-          subtitle="Great finance work needs a clear monthly rhythm. We process, review, report and advise so the month closes properly."
+          title="A rhythm that keeps you in control"
+          subtitle="Great finance work needs a clear rhythm. We process, review, report, and advise. Every period closes seamlessly, leaving you with the insights you need for your next move."
         />
 
         <div className="how-timeline mt-12">
