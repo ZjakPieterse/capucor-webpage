@@ -17,8 +17,8 @@ import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 //              to talk through at the owner's next review
 // Then it fades to the next owner's story. It keeps running on hover (Zjak,
 // 2026-10-07). Every figure, name and business is invented and the panel
-// says so twice (static "Example" badge and footnote), as decided for the hero
-// panel in website-v2 (Zjak, 2026-10-05). The decision arrives as an email, not a
+// says so in the footnote, as decided for the hero panel in website-v2 (Zjak,
+// 2026-10-05; the duplicate "Example" badge was dropped 2026-10-09). The decision arrives as an email, not a
 // chat, so the panel doesn't promise instant replies.
 
 // The story starts straight into the chaos beat: the old 2-second "intro"
@@ -932,12 +932,12 @@ export function HeroStory() {
         style={{ rotateX, rotateY, y: lift, scale, transformPerspective: 1200 }}
         className="hero-story-card tilt-card premium-card relative overflow-hidden rounded-2xl border-[0.5px] border-white/10 bg-card/80 p-4 shadow-2xl sm:p-5"
         role="figure"
-        aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's Insights Report arrives by email with one recommendation to discuss at your review. Shown on the Pro package, which reports monthly. Figures are for illustration."
+        aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's Insights Report arrives by email with one recommendation to discuss at your review. Figures are for illustration."
       >
         <div aria-hidden className="pointer-events-none absolute -inset-16 z-0 rounded-full bg-primary/10 blur-3xl" />
 
         {/* Header: the three beats */}
-        <div aria-hidden className="relative z-50 mb-3 flex items-center justify-between gap-3">
+        <div aria-hidden className="relative z-50 mb-3 flex items-center justify-center">
           <ol className="flex items-center gap-1 text-[11px] font-semibold">
             {STEPS.map((step, i) => {
               const active = step.phases.includes(phase);
@@ -961,9 +961,6 @@ export function HeroStory() {
               );
             })}
           </ol>
-          <div className="shrink-0 rounded-md border border-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Example
-          </div>
         </div>
 
         {/* Stage. Every beat is a CSS transition keyed off data-phase (globals.css,
@@ -1006,9 +1003,7 @@ export function HeroStory() {
         {/* Footnote */}
         <div className="relative z-50 mt-3 flex items-center gap-1.5 text-[11px] sm:text-[10px] text-muted-foreground">
           <Info className="h-3 w-3 shrink-0" />
-          <span>
-            Example figures. Shown on Pro, which reports monthly.
-          </span>
+          <span>Example figures.</span>
           <span className="ml-auto truncate">{s.business}</span>
         </div>
       </motion.div>
