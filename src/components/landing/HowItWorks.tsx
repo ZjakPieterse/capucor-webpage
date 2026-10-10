@@ -31,13 +31,16 @@ const STEPS = [
 ];
 
 export function HowItWorks() {
-  const { ref: sectionRef } = useSectionScrollProgress<HTMLElement>();
+  // Progress is measured on the timeline, not the whole section, so the
+  // spine's fill tip sits on the viewport centre: the same line that lights
+  // each step below.
+  const { ref: timelineRef } = useSectionScrollProgress<HTMLDivElement>();
 
   // A step lights up once its badge passes the viewport centre, which is where
   // the spine's fill tip sits. Written to the DOM, not state, so scrolling
   // never re-renders the section (home-hydration).
   useEffect(() => {
-    const rows = sectionRef.current?.querySelectorAll<HTMLElement>(".how-step-row");
+    const rows = timelineRef.current?.querySelectorAll<HTMLElement>(".how-step-row");
     if (!rows?.length) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       rows.forEach((row) => (row.dataset.reached = ""));
@@ -61,12 +64,11 @@ export function HowItWorks() {
       if (badge) io.observe(badge);
     });
     return () => io.disconnect();
-  }, [sectionRef]);
+  }, [timelineRef]);
 
   return (
     <section
       id="how-it-works"
-      ref={sectionRef}
       className="how-timeline-section premium-section"
     >
       <SectionDivider />
@@ -76,7 +78,7 @@ export function HowItWorks() {
           subtitle="Great finance work needs a clear rhythm. We process, review, report, and advise. Every period closes on time and reconciled, leaving you with the insights you need for your next move."
         />
 
-        <div className="how-timeline mt-12">
+        <div ref={timelineRef} className="how-timeline mt-12">
           <div className="how-spine" aria-hidden="true" />
           {STEPS.map((step, i) => (
             <div
