@@ -1,24 +1,17 @@
 import type { Metadata } from 'next';
-import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { siteConfig } from '@/config/site';
-import type { Service, Tier } from '@/types';
 
 import { HeroSection } from '@/components/landing/HeroSection';
 import { PartnersAndTech } from '@/components/landing/PartnersAndTech';
 import { ProblemCards } from '@/components/landing/ProblemCards';
 import { ServicePillars } from '@/components/landing/ServicePillars';
 import { HowItWorks } from '@/components/landing/HowItWorks';
-import { PackagesTeaser } from '@/components/landing/PackagesTeaser';
 import { SwitchingSection } from '@/components/landing/SwitchingSection';
 import { ContactSection } from '@/components/landing/ContactSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { ScrollToTopOnMount } from '@/components/landing/ScrollToTopOnMount';
 import { RevealObserver } from '@/components/ui/RevealObserver';
-
-// ISR: cache for an hour via the OpenNext KV incremental cache. Pricing edits
-// in Supabase show up after POST /api/revalidate?secret=... (or within the hour).
-export const revalidate = 3600;
 
 export function generateMetadata(): Metadata {
   return {
@@ -37,40 +30,7 @@ export function generateMetadata(): Metadata {
   };
 }
 
-async function getLandingData(): Promise<{
-  services: Service[];
-  tiers: Tier[];
-}> {
-  try {
-    // Public pricing config — read as `anon` so it works for signed-in visitors too.
-    const supabase = createSupabaseAnonClient();
-
-    const [servicesRes, tiersRes] = await Promise.all([
-      supabase
-        .from('services')
-        .select('*')
-        .eq('active', true)
-        .order('display_order'),
-      supabase
-        .from('tiers')
-        .select('*')
-        .eq('active', true)
-        .order('display_order'),
-    ]);
-
-    return {
-      services: servicesRes.data ?? [],
-      tiers: tiersRes.data ?? [],
-    };
-  } catch (err) {
-    console.error('[landing] supabase fetch failed', err);
-    return { services: [], tiers: [] };
-  }
-}
-
-export default async function HomePage() {
-  const { services, tiers } = await getLandingData();
-
+export default function HomePage() {
   return (
     <>
       <ScrollToTopOnMount />
@@ -112,14 +72,12 @@ export default async function HomePage() {
         <HowItWorks />
         {/* 5. Services */}
         <ServicePillars />
-        {/* 6. Testimonials / social proof — placeholder between Services and Packages. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
-        {/* 7. Packages */}
-        <PackagesTeaser services={services} tiers={tiers} />
-        {/* 8. Switching in any month (onboarding steps; catch-up rule, no amounts) */}
+        {/* 6. Testimonials / social proof — placeholder between Services and Switching. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
+        {/* 7. Switching in any month (onboarding steps; catch-up rule, no amounts) */}
         <SwitchingSection />
-        {/* 9. Contact + lead capture (replaced the homepage FAQ). */}
+        {/* 8. Contact + lead capture (replaced the homepage FAQ). */}
         <ContactSection />
-        {/* 10. Final CTA */}
+        {/* 9. Final CTA */}
         <FinalCTA />
     </>
   );

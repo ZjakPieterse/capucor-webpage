@@ -18,7 +18,7 @@ UI work so the front end stays visually consistent. Canonical examples are cited
 - Standard content sections use `className="premium-section py-14 lg:py-20"`. Hero and the
   final CTA run heavier (`py-20`/`24`/`28`/`36`); match a neighbouring section rather than
   inventing new spacing. Examples: `ProblemCards`, `ServicePillars`,
-  `PackagesTeaser`, `ContactSection`.
+  `SwitchingSection`, `ContactSection`.
 - `.premium-section` (in `globals.css`) is a primitive: it sets `position: relative` and
   paints a faint dual radial-gradient backdrop via `::before`. Use `.premium-section-muted`
   for the alternate muted-gradient surface.

@@ -108,3 +108,17 @@ describe('navigation (decision 2026-10-08)', () => {
     expect(nav).not.toMatch(/Client Portal|appUrl/);
   });
 });
+
+describe('services section (Zjak, 2026-10-10)', () => {
+  it('keeps the heading and tells stories with a Read more button per card', () => {
+    const pillars = src('components/landing/ServicePillars.tsx');
+    expect(pillars).toContain('Three disciplines. One subscription.');
+    expect(pillars).not.toMatch(/View \w+ support|Your own login|Included in your price/);
+    expect(pillars).toMatch(/Read more/);
+    for (const href of ['/bookkeeping', '/payroll', '/accounting']) expect(pillars).toContain(`"${href}"`);
+  });
+
+  it('shows no packages on the homepage; the calculator carries them', () => {
+    expect(src('app/(site)/page.tsx')).not.toMatch(/PackagesTeaser/);
+  });
+});

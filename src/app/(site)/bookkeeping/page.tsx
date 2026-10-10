@@ -45,8 +45,8 @@ const INCLUDED = [
 ];
 
 const OTHER_SERVICES = [
-  { title: 'Accounting', href: '/accounting', icon: BarChart2 },
-  { title: 'Payroll', href: '/payroll', icon: Users },
+  { title: 'Payroll', note: 'Wages that land in your books', href: '/payroll', icon: Users },
+  { title: 'Accounting', note: 'Your books become your returns', href: '/accounting', icon: BarChart2 },
 ];
 
 export default function BookkeepingPage() {
@@ -58,10 +58,10 @@ export default function BookkeepingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Your ledger reconciled every month, with numbers you can act on
+                Know where your business really stands, every month
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Every transaction processed, categorised and reconciled against your bank statements each month. Your P&amp;L and balance sheet arrive on your package&apos;s rhythm, and your accountant talks you through them.
+                Every transaction coded and reconciled in Xero each month, with your payroll in the same books and your VAT and tax returns built from them. Your P&amp;L and balance sheet arrive on your package&apos;s rhythm, and your accountant talks you through them.
               </p>
               <ServiceCtaPair />
             </div>
@@ -95,10 +95,10 @@ export default function BookkeepingPage() {
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-2xl font-semibold mb-4">What this means for you</h2>
           <p className="text-muted-foreground leading-relaxed">
-            You stop running your business on gut feel and bank balance. You have a real P&amp;L, a
-            clean balance sheet, and books your accountant can sign off on. At year-end,
-            there&apos;s nothing to scramble for. When you need to decide whether to hire, invest,
-            or pull back, the numbers are already there.
+            A big client asks for a discount and you hesitate. Is this a good month, or just a busy
+            one? You stop guessing from your bank balance: the answer is in your books, and so are
+            we. When we spot a margin slipping or a debtor drifting, we raise it during the year,
+            while you can still do something about it.
           </p>
         </div>
       </section>
@@ -119,7 +119,7 @@ export default function BookkeepingPage() {
       <section className="premium-section py-14 lg:py-20">
         <SectionDivider />
         <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">Other services</h2>
+          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">How it connects</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {OTHER_SERVICES.map((svc) => (
               <a
@@ -130,7 +130,10 @@ export default function BookkeepingPage() {
                 <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <svc.icon className="h-5 w-5 text-foreground" />
                 </div>
-                <span className="text-sm font-medium">{svc.title}</span>
+                <span className="flex flex-col">
+                  <span className="text-sm font-medium">{svc.title}</span>
+                  <span className="text-xs text-muted-foreground">{svc.note}</span>
+                </span>
                 <span className="ml-auto text-muted-foreground text-sm">→</span>
               </a>
             ))}

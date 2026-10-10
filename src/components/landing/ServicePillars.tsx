@@ -1,131 +1,81 @@
-import { BarChart2, BookMarked, Users, Wallet, KeyRound, Unlock } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, BarChart2, BookMarked, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
+// Each discipline told as a moment the owner lives (website narrative,
+// Zjak 2026-10-10). Each story names its link to the other two; the service
+// pages carry the detail and the jargon.
 const SERVICES = [
-  {
-    icon: BarChart2,
-    title: "Accounting",
-    pitch:
-      "Your financials and filings are ready before SARS, the bank or a funder asks.",
-    bestFor:
-      "Companies that need AFS, income tax, VAT and CIPC responsibilities managed by professionals.",
-    bullets: [
-      "Annual financial statements",
-      "Income tax and provisional tax",
-      "VAT201 reporting and submission",
-      "CIPC annual return filings",
-    ],
-    href: "/accounting",
-    ctaLabel: "View accounting support",
-  },
   {
     icon: BookMarked,
     title: "Bookkeeping",
-    pitch:
-      "Make decisions using current numbers rather than gut feel and bank balance.",
-    bestFor:
-      "Businesses that want their ledger processed, reconciled and ready for decisions every month.",
-    bullets: [
-      "Xero business software included",
-      "Transaction processing and categorisation",
-      "Monthly bank reconciliations",
-      "Insights Report with your management accounts",
-    ],
+    hook: "Know where you really stand.",
+    story:
+      "A big client asks for a discount and you hesitate. Is this a good month, or just a busy one? Your books are reconciled every month, so the answer is in Xero, not in your bank balance. When your report lands, we tell you what it means.",
     href: "/bookkeeping",
-    ctaLabel: "View bookkeeping support",
   },
   {
     icon: Users,
     title: "Payroll",
-    pitch:
-      "Your staff paid correctly, and every payroll submission made on its own cycle.",
-    bestFor:
-      "Owner-run businesses with staff, from the first hires to a team of around 30.",
-    bullets: [
-      "Payroll processing and payslips",
-      "EMP201 every month: PAYE and UIF",
-      "EMP501 reconciliation and IRP5s",
-      "UIF declarations and COIDA returns",
-    ],
+    hook: "Pay day, without the panic.",
+    story:
+      "It's the 25th. Twelve people are waiting to be paid, one worked overtime and one started on Monday. You approve the run and the payslips go out. The EMP201, UIF and COIDA follow on their own cycles, and the wages land in your books without being captured twice.",
     href: "/payroll",
-    ctaLabel: "View payroll support",
-  },
-];
-
-// What the subscription is worth to the buyer — every claim is true elsewhere on the site.
-const TRUST = [
-  {
-    icon: Wallet,
-    title: "Included in your price",
-    body: "Your software costs are built into the subscription. No separate software bills to manage.",
   },
   {
-    icon: KeyRound,
-    title: "Your own login",
-    body: "You keep your own Xero login, and your numbers are as current as your package’s processing rhythm. Outsourcing the admin doesn't cost you visibility.",
-  },
-  {
-    icon: Unlock,
-    title: "No lock-in",
-    body: "A month-to-month agreement. If you leave, your full Xero file and handover pack goes with you.",
+    icon: BarChart2,
+    title: "Accounting",
+    hook: "No surprises from SARS.",
+    story:
+      "Provisional tax is due next month and you already have a good idea of the amount, because we've watched the year with you. VAT, your tax return, CIPC and the annual financials come straight from the books we keep each month, so year-end is just another month.",
+    href: "/accounting",
   },
 ];
 
 export function ServicePillars() {
   return (
-    <section
-      id="services"
-      className="premium-section py-14 lg:py-20"
-    >
+    <section id="services" className="premium-section py-14 lg:py-20">
       <SectionDivider />
       <div className="max-w-7xl mx-auto px-6">
         <ScrollReveal>
           <SectionHeading
             title="Three disciplines. One subscription."
-            subtitle="Accounting, bookkeeping and payroll for employers, on one fixed monthly subscription."
+            subtitle="Your payroll lands in your books, and your books become your VAT and tax returns. When different people handle each one, you end up in the middle, chasing. We run all three together, so one team knows your whole business and you hear from us all year, long before year-end."
           />
         </ScrollReveal>
 
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((svc, i) => (
-            <ScrollReveal key={svc.title} delay={i * 0.1}>
-              <div className="feature-card premium-card group rounded-2xl border border-white/10 bg-card/80 p-8 h-full">
-                <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-muted/70">
-                  <svc.icon className="h-5 w-5 text-foreground" />
-                </div>
-
-                <h3 className="text-xl font-semibold mb-2">{svc.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  {svc.pitch}
-                </p>
-
-                <p className="text-xs leading-relaxed mb-5">
-                  <span className="font-semibold text-foreground">
-                    Best for:{" "}
-                  </span>
-                  <span className="text-muted-foreground">{svc.bestFor}</span>
-                </p>
-
-                <ul className="space-y-2 mb-6">
-                  {svc.bullets.map((b) => (
-                    <li key={b} className="flex items-start gap-2 text-sm">
-                      <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-primary/20 flex items-center justify-center">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                      </span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-
-                <a
-                  href={svc.href}
-                  className="text-link text-sm font-medium text-primary"
+            <ScrollReveal key={svc.title} delay={i * 0.1} className="h-full">
+              <article className="feature-card premium-card flex h-full flex-col rounded-2xl border border-white/10 bg-card/80 p-7">
+                <span
+                  aria-hidden
+                  className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-primary/25 bg-primary/[0.07] text-primary"
                 >
-                  {svc.ctaLabel} →
-                </a>
-              </div>
+                  <svc.icon className="h-5 w-5" />
+                </span>
+
+                <h3 className="text-xl font-semibold">{svc.title}</h3>
+                <p className="mt-1 text-sm font-medium text-primary">{svc.hook}</p>
+                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  {svc.story}
+                </p>
+
+                <Button
+                  nativeButton={false}
+                  render={<Link href={svc.href} />}
+                  variant="outline"
+                  size="lg"
+                  className="mt-6 self-start gap-2"
+                >
+                  Read more
+                  <span className="sr-only"> about {svc.title.toLowerCase()}</span>
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </Button>
+              </article>
             </ScrollReveal>
           ))}
         </div>
@@ -140,30 +90,6 @@ export function ServicePillars() {
             </a>
           </div>
         </ScrollReveal>
-
-        {/* What that means for you — the trust / ROI payload (moved here from the Tech Stack section) */}
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {TRUST.map((t, i) => (
-            <ScrollReveal key={t.title} delay={i * 0.07} className="h-full">
-              <div className="feature-card premium-card flex h-full items-start gap-3.5 rounded-2xl border border-white/10 bg-card/80 p-5">
-                <span
-                  aria-hidden
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/[0.07] text-primary"
-                >
-                  <t.icon className="h-4 w-4" />
-                </span>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {t.title}
-                  </h3>
-                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                    {t.body}
-                  </p>
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
       </div>
     </section>
   );
