@@ -45,8 +45,8 @@ const INCLUDED = [
 ];
 
 const OTHER_SERVICES = [
-  { title: 'Bookkeeping', href: '/bookkeeping', icon: BookMarked },
-  { title: 'Payroll', href: '/payroll', icon: Users },
+  { title: 'Bookkeeping', note: 'The books your returns are built from', href: '/bookkeeping', icon: BookMarked },
+  { title: 'Payroll', note: 'PAYE and wages, already in the numbers', href: '/payroll', icon: Users },
 ];
 
 export default function AccountingPage() {
@@ -58,10 +58,10 @@ export default function AccountingPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Financial statements, tax returns and CIPC, handled before the deadlines move
+                No surprises from SARS, because we&apos;ve watched the year with you
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Annual financials, provisional and income tax, VAT201 and CIPC annual returns, prepared on a calendar and checked before anything reaches SARS. It runs on the same monthly rhythm as your books and payroll.
+                VAT201, provisional and income tax, CIPC annual returns and your annual financial statements, built from the books and payroll we run every month. Each one is prepared on a calendar and checked before anything reaches SARS, so year-end is just another month.
               </p>
               <ServiceCtaPair />
             </div>
@@ -95,10 +95,10 @@ export default function AccountingPage() {
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-2xl font-semibold mb-4">What this means for you</h2>
           <p className="text-muted-foreground leading-relaxed">
-            At year-end, you don&apos;t chase an accountant or scramble to find documents. Your
-            financials are ready when SARS needs them, when your bank asks, and when you want to
-            know where your business stands. Filings go in on time. If SARS ever asks, your
-            records are clean.
+            Provisional tax comes round and you already have a good idea of the amount. The bank
+            asks for financials and they come from books that are already up to date. Because we
+            talk to you during the year, we plan the tax with you while the year is still open,
+            and you hear from us long before the year-end bill.
           </p>
         </div>
       </section>
@@ -119,7 +119,7 @@ export default function AccountingPage() {
       <section className="premium-section py-14 lg:py-20">
         <SectionDivider />
         <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">Other services</h2>
+          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">How it connects</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {OTHER_SERVICES.map((svc) => (
               <a
@@ -130,7 +130,10 @@ export default function AccountingPage() {
                 <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <svc.icon className="h-5 w-5 text-foreground" />
                 </div>
-                <span className="text-sm font-medium">{svc.title}</span>
+                <span className="flex flex-col">
+                  <span className="text-sm font-medium">{svc.title}</span>
+                  <span className="text-xs text-muted-foreground">{svc.note}</span>
+                </span>
                 <span className="ml-auto text-muted-foreground text-sm">→</span>
               </a>
             ))}

@@ -262,5 +262,5 @@ of it is worth resurrecting** — the shop needs PayFast's ITN/MD5 scheme, not P
 ## Pending content
 
 ⛔ **[`docs/pending-content.md`](docs/pending-content.md).** A homepage slot between **What we do**
-and **Packages** is reserved for real client testimonials, blocked on collecting 3–5 quotes. ⚠️ **Do
+and **Switching** is reserved for real client testimonials, blocked on collecting 3–5 quotes. ⚠️ **Do
 not ship the old four-week timeline visual back** — it was scrapped intentionally.

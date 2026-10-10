@@ -45,8 +45,8 @@ const INCLUDED = [
 ];
 
 const OTHER_SERVICES = [
-  { title: 'Accounting', href: '/accounting', icon: BarChart2 },
-  { title: 'Bookkeeping', href: '/bookkeeping', icon: BookMarked },
+  { title: 'Bookkeeping', note: 'Where your wages land', href: '/bookkeeping', icon: BookMarked },
+  { title: 'Accounting', note: 'Where it all reaches SARS', href: '/accounting', icon: BarChart2 },
 ];
 
 export default function PayrollPage() {
@@ -58,10 +58,10 @@ export default function PayrollPage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Payroll for employers: payslips, EMP201, UIF and COIDA on their cycles
+                Pay day without the panic, and every submission on its cycle
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Every payslip calculated and every EMP201 filed by the 7th. UIF declarations, the EMP501 reconciliation with IRP5s, and the COIDA Return of Earnings each done on their own cycle, next to your VAT and provisional tax.
+                It&apos;s the 25th and your team is waiting to be paid. You approve the run and the payslips go out. The EMP201, UIF, the EMP501 with IRP5s and the COIDA Return of Earnings each follow on their own cycle, and the wages land straight in your books, next to your VAT and provisional tax.
               </p>
               <ServiceCtaPair />
             </div>
@@ -95,9 +95,10 @@ export default function PayrollPage() {
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-2xl font-semibold mb-4">What this means for you</h2>
           <p className="text-muted-foreground leading-relaxed">
-            Your staff get paid correctly and on time. SARS filings go in before the seventh,
-            every month. At year-end, your IRP5s are issued before the deadline so your employees
-            can file their personal tax without waiting on you.
+            Your people get paid correctly, and you stop keeping SARS dates in your head. When you
+            hire, give a raise or someone leaves, you tell us once and it flows through payroll,
+            your books and your tax. Because we see payroll next to the rest of your numbers, we
+            can tell you what a new hire really costs before you make the offer.
           </p>
         </div>
       </section>
@@ -118,7 +119,7 @@ export default function PayrollPage() {
       <section className="premium-section py-14 lg:py-20">
         <SectionDivider />
         <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">Other services</h2>
+          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">How it connects</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             {OTHER_SERVICES.map((svc) => (
               <a
@@ -129,7 +130,10 @@ export default function PayrollPage() {
                 <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <svc.icon className="h-5 w-5 text-foreground" />
                 </div>
-                <span className="text-sm font-medium">{svc.title}</span>
+                <span className="flex flex-col">
+                  <span className="text-sm font-medium">{svc.title}</span>
+                  <span className="text-xs text-muted-foreground">{svc.note}</span>
+                </span>
                 <span className="ml-auto text-muted-foreground text-sm">→</span>
               </a>
             ))}
