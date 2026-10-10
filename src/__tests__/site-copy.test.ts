@@ -44,7 +44,6 @@ describe('the package rhythm is true for every package (F04, F20)', () => {
     const how = src('components/landing/HowItWorks.tsx');
     expect(how).not.toMatch(/one structured place/);
     expect(how).toMatch(/bank feeds/);
-    expect(how).toMatch(/Dext on Pro and Premium/);
   });
 });
 

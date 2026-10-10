@@ -1,42 +1,67 @@
 "use client";
 
+import { useEffect } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { useSectionScrollProgress } from "@/hooks/useSectionScrollProgress";
 
+// One ideal client's month, told to the reader. No package frequency here on
+// purpose: the story is the rhythm, the packages page carries the cadence.
 const STEPS = [
   {
     number: "01",
     title: "Collect",
-    body: "You know exactly what to send, where to send it, and by when. We make the monthly admin clear and repeatable, so both sides can deliver properly.",
-    deliverable:
-      "Your bank feeds flow straight into Xero, supplier bills go through Dext on Pro and Premium, and once a month we send one request for anything still missing.",
+    body: "The month ends. Instead of a shoebox and a sinking feeling, one email arrives with a short list of what we still need. Your bank feeds are already in Xero. You snap the last two slips, reply, and get back to work.",
   },
   {
     number: "02",
     title: "Process",
-    body: "We capture, code and reconcile the month’s activity in Xero, including bank feeds, supplier invoices, payroll entries and key control accounts.",
-    deliverable:
-      "Your ledger stays reconciled and decision-ready, with tax and compliance deadlines tracked through the workflow. When someone needs a number, you are not scrambling to catch up.",
+    body: "While you're quoting the next job, we're in your books. Every transaction coded, every account reconciled, payroll and VAT lined up for their deadlines. You never see this part. That's the point.",
   },
   {
     number: "03",
     title: "Review",
-    body: "Your accountant checks the numbers before they reach you. You receive an Insights Report on your package’s rhythm (quarterly on Basic, monthly on Pro, weekly on Premium) showing performance, cash flow, debtors and anything that needs attention.",
-    deliverable:
-      "A concise view of revenue, expenses, cash flow, debtors and anything unusual that deserves attention, for each reporting period.",
+    body: "Before anything reaches you, your accountant checks it. Then your Insights Report lands: what came in, what went out, who still owes you, and the two things worth a closer look.",
   },
   {
     number: "04",
     title: "Advise",
-    body: "At your performance review, on the same rhythm as your report, we turn it into a useful business conversation: tax timing, cash pressure, margin movement, compliance risks and practical next steps.",
-    deliverable:
-      "Risks, opportunities and planning points raised early, while there is still time to act on them.",
+    body: "Now we talk it through. Can you hire before winter? Is provisional tax going to bite? You leave with a plan, and the next month is already under way.",
   },
 ];
 
 export function HowItWorks() {
   const { ref: sectionRef } = useSectionScrollProgress<HTMLElement>();
+
+  // A step lights up once its badge passes the viewport centre, which is where
+  // the spine's fill tip sits. Written to the DOM, not state, so scrolling
+  // never re-renders the section (home-hydration).
+  useEffect(() => {
+    const rows = sectionRef.current?.querySelectorAll<HTMLElement>(".how-step-row");
+    if (!rows?.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      rows.forEach((row) => (row.dataset.reached = ""));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const row = entry.target.closest<HTMLElement>(".how-step-row");
+          if (!row) continue;
+          // Above the centre line (intersecting, or scrolled past the top) = reached.
+          const reached = entry.isIntersecting || entry.boundingClientRect.top < 0;
+          if (reached) row.dataset.reached = "";
+          else delete row.dataset.reached;
+        }
+      },
+      { rootMargin: "0px 0px -50% 0px" },
+    );
+    rows.forEach((row) => {
+      const badge = row.querySelector(".how-badge");
+      if (badge) io.observe(badge);
+    });
+    return () => io.disconnect();
+  }, [sectionRef]);
 
   return (
     <section
@@ -66,17 +91,8 @@ export function HowItWorks() {
                 className="how-card"
                 aria-label={`Step ${step.number}: ${step.title}`}
               >
-                <header className="how-card-header">
-                  <span className="how-card-number" aria-hidden="true">
-                    {step.number}
-                  </span>
-                  <h3 className="how-card-title">{step.title}</h3>
-                </header>
+                <h3 className="how-card-title">{step.title}</h3>
                 <p className="how-card-body">{step.body}</p>
-                <div className="how-card-you-get">
-                  <span className="how-card-you-get-label">You get</span>
-                  <p className="how-card-you-get-text">{step.deliverable}</p>
-                </div>
               </article>
             </div>
           ))}
