@@ -13,6 +13,7 @@ import {
   ArrowRight,
   RotateCcw,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
@@ -125,16 +126,17 @@ function FlipCard({ item }: { item: Problem }) {
               {item.body}
             </p>
           </div>
-          <button
+          {/* Same premium / basic pair as the hero CTAs */}
+          <Button
             ref={frontButton}
-            type="button"
             onClick={flip}
-            data-state="problem"
-            className="flip-cue mt-5 self-start inline-flex h-10 items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 text-sm font-semibold text-primary"
+            size="lg"
+            className="gradient-cta mt-5 self-start gap-2"
           >
-            We can fix this
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </button>
+            <span className="relative z-[2] inline-flex items-center gap-2">
+              We can fix this <ArrowRight className="h-4 w-4" aria-hidden />
+            </span>
+          </Button>
         </div>
       </div>
 
@@ -165,16 +167,15 @@ function FlipCard({ item }: { item: Problem }) {
               {item.solution.body}
             </p>
           </div>
-          <button
+          <Button
             ref={backButton}
-            type="button"
             onClick={flip}
-            data-state="solution"
-            className="flip-cue mt-5 self-start inline-flex h-10 items-center gap-2 rounded-full border border-white/10 px-4 text-sm font-semibold text-muted-foreground"
+            variant="outline"
+            size="lg"
+            className="mt-5 self-start gap-2"
           >
-            <RotateCcw className="h-4 w-4" aria-hidden />
-            Back to the problem
-          </button>
+            <RotateCcw className="h-4 w-4" aria-hidden /> Back to the problem
+          </Button>
         </div>
       </div>
     </motion.div>
