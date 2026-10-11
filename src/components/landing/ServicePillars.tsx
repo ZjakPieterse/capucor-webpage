@@ -5,16 +5,24 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
-// Each discipline told as a moment the owner lives (website narrative,
-// Zjak 2026-10-10). Each story names its link to the other two; the service
-// pages carry the detail and the jargon.
+// Informative first (Zjak, 2026-10-11): each card says plainly what the
+// discipline covers, then why it matters to the owner. The hook keeps the
+// feel; the service pages carry the full detail.
 const SERVICES = [
+  {
+    icon: BarChart2,
+    title: "Accounting",
+    hook: "No surprises from SARS.",
+    story:
+      "Your VAT returns, provisional and income tax, CIPC annual return and annual financial statements, prepared on a calendar and checked before they go in. Built from books we already keep, so you know what's coming before it's due.",
+    href: "/accounting",
+  },
   {
     icon: BookMarked,
     title: "Bookkeeping",
     hook: "Know where you really stand.",
     story:
-      "A big client asks for a discount and you hesitate. Is this a good month, or just a busy one? Your books are reconciled every month, so the answer is in Xero, not in your bank balance. When your report lands, we tell you what it means.",
+      "Every transaction coded and every bank account reconciled in Xero, with management accounts and an Insights Report that explain what the numbers mean. You decide from real figures, not your bank balance.",
     href: "/bookkeeping",
   },
   {
@@ -22,16 +30,8 @@ const SERVICES = [
     title: "Payroll",
     hook: "Pay day, without the panic.",
     story:
-      "It's the 25th. Twelve people are waiting to be paid, one worked overtime and one started on Monday. You approve the run and the payslips go out. The EMP201, UIF and COIDA follow on their own cycles, and the wages land in your books without being captured twice.",
+      "Payslips, PAYE and UIF on your monthly EMP201, the EMP501 with IRP5s, and your COIDA return, each on its own cycle. Wages post straight into your books, so nothing is captured twice.",
     href: "/payroll",
-  },
-  {
-    icon: BarChart2,
-    title: "Accounting",
-    hook: "No surprises from SARS.",
-    story:
-      "Provisional tax is due next month and you already have a good idea of the amount, because we've watched the year with you. VAT, your tax return, CIPC and the annual financials come straight from the books we keep each month, so year-end is just another month.",
-    href: "/accounting",
   },
 ];
 
@@ -43,7 +43,7 @@ export function ServicePillars() {
         <ScrollReveal>
           <SectionHeading
             title="Three disciplines. One subscription."
-            subtitle="Your payroll lands in your books, and your books become your VAT and tax returns. When different people handle each one, you end up in the middle, chasing. We run all three together, so one team knows your whole business and you hear from us all year, long before year-end."
+            subtitle="Payroll feeds your books, and your books feed your SARS returns. We run all three together, so you hear from us all year."
           />
         </ScrollReveal>
 
