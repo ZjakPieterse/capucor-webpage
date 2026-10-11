@@ -88,7 +88,7 @@ export const BOOKKEEPING: ServicePage = {
     {
       title: 'Insights Report and review',
       description:
-        'Regular reports that show how your business is doing and what the numbers mean. Your Capucor accountant reviews the information behind them and is there to guide you on what to do next.',
+        'Regular reports that show how your business is doing and what the numbers mean. Your accountant reviews the information behind them and is there to guide you on what to do next.',
       covered: 'You know what to do next.',
     },
   ],
@@ -116,7 +116,7 @@ export const PAYROLL: ServicePage = {
     {
       title: 'EMP501 recons and certificates',
       description:
-        'The EMP501 reconciliation submitted twice a year, and IRP5 certificates issued for every employee at year-end.',
+        'The EMP501 reconciliation submitted twice a year, matching the PAYE, UIF and SDL you declared each month to what was paid, and IRP5 certificates issued for every employee at year-end.',
       covered: 'Staff file their tax without waiting on you.',
     },
     {

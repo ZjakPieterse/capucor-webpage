@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/config/site';
-import { AccountingDashboard } from '@/components/services/ServiceMiniDashboards';
 import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
+import { ServiceHero } from '@/components/services/ServiceHero';
 import { ServiceIncluded } from '@/components/services/ServiceIncluded';
 import { ServiceConnects } from '@/components/services/ServiceConnects';
 import { ACCOUNTING } from '@/config/servicePages';
@@ -26,23 +26,10 @@ export const metadata: Metadata = {
 export default function AccountingPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="premium-section relative py-24 lg:py-28">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Compliance, covered, from SARS returns to your annual financials
-              </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                Your tax returns, VAT201, CIPC annual return and annual financial statements, built from the books and payroll we run every month. Each one is prepared on a calendar and checked before it goes in, so you know what&apos;s due before it lands.
-              </p>
-              <ServiceCtaPair />
-            </div>
-            <AccountingDashboard />
-          </div>
-        </div>
-      </section>
+      {/* Hero: text only, so the inclusions below carry the page */}
+      <ServiceHero service={ACCOUNTING} title="Compliance, covered, from SARS returns to your annual financials">
+        Your tax returns, VAT201, CIPC annual return and annual financial statements, built from the books and payroll we run every month. Each one is prepared on a calendar and checked before it goes in, so you know what&apos;s due before it lands.
+      </ServiceHero>
 
       {/* What's included: the same four items as the homepage card */}
       <ServiceIncluded items={ACCOUNTING.items} />

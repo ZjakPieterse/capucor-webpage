@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/config/site';
-import { PayrollDashboard } from '@/components/services/ServiceMiniDashboards';
 import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
+import { ServiceHero } from '@/components/services/ServiceHero';
 import { ServiceIncluded } from '@/components/services/ServiceIncluded';
 import { ServiceConnects } from '@/components/services/ServiceConnects';
 import { PAYROLL } from '@/config/servicePages';
@@ -26,23 +26,10 @@ export const metadata: Metadata = {
 export default function PayrollPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="premium-section relative py-24 lg:py-28">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
-                Pay day without the panic, and every submission on its cycle
-              </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-                It&apos;s the 25th and your team is waiting to be paid. You approve the run and the payslips go out. The EMP201, UIF, the EMP501 with IRP5s and the COIDA Return of Earnings each follow on their own cycle, and the wages land straight in your books, next to your VAT and provisional tax.
-              </p>
-              <ServiceCtaPair />
-            </div>
-            <PayrollDashboard />
-          </div>
-        </div>
-      </section>
+      {/* Hero: text only, so the inclusions below carry the page */}
+      <ServiceHero service={PAYROLL} title="Pay day without the panic, and every submission on its cycle">
+        It&apos;s the 25th and your team is waiting to be paid. You approve the run and the payslips go out. The EMP201, UIF, the EMP501 with IRP5s and the COIDA Return of Earnings each follow on their own cycle, and the wages land straight in your books, next to your VAT and provisional tax.
+      </ServiceHero>
 
       {/* What's included: the same four items as the homepage card */}
       <ServiceIncluded items={PAYROLL.items} />

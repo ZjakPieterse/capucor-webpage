@@ -27,11 +27,8 @@ describe('non-CSS renderer colours', () => {
 
   it('routes the accent cyan through the existing CSS token in feature components', () => {
     const hero = source('src/components/landing/HeroSection.tsx');
-    const miniDashboards = source('src/components/services/ServiceMiniDashboards.tsx');
 
     expect(hero).not.toMatch(/#22d3ee/i);
-    expect(miniDashboards).not.toMatch(/#22d3ee/i);
     expect(hero).toContain('var(--brand-cyan)');
-    expect(miniDashboards).toContain('var(--brand-cyan)');
   });
 });
