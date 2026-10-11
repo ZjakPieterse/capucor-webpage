@@ -3,6 +3,8 @@ import { BarChart2, BookMarked } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { PayrollDashboard } from '@/components/services/ServiceMiniDashboards';
 import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
+import { ServiceIncluded } from '@/components/services/ServiceIncluded';
+import { PAYROLL } from '@/config/servicePages';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
@@ -20,29 +22,6 @@ export const metadata: Metadata = {
     images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
-
-const INCLUDED = [
-  {
-    title: 'Payroll processing and payslips',
-    description:
-      'Your payroll calculated correctly each month: gross pay, deductions, net pay, and any variable items like overtime or commissions. Payslips ready for pay day once the month’s changes are in, and your payroll records kept up to date.',
-  },
-  {
-    title: 'PAYE and UIF submissions',
-    description:
-      'Your EMP201 prepared and submitted to SARS every month before the seventh. Employee PAYE deducted correctly, UIF contributions calculated for both employee and employer, and the payment reconciled to your declaration.',
-  },
-  {
-    title: 'COIDA compliance',
-    description:
-      'Your Return of Earnings filed with the Compensation Fund each year before the March deadline. Your COIDA assessment calculated correctly based on your actual payroll figures.',
-  },
-  {
-    title: 'IRP5 certificates',
-    description:
-      'Year-end IRP5 certificates issued for every employee and submitted to SARS via the EMP501 reconciliation. Done before the May deadline so your employees can file their personal tax returns without delays.',
-  },
-];
 
 const OTHER_SERVICES = [
   { title: 'Bookkeeping', note: 'Where your wages land', href: '/bookkeeping', icon: BookMarked },
@@ -70,24 +49,8 @@ export default function PayrollPage() {
         </div>
       </section>
 
-      {/* What's included */}
-      <section className="premium-section py-14 lg:py-20">
-        <SectionDivider />
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-semibold mb-8 text-center">What&apos;s included</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {INCLUDED.map((item) => (
-              <div
-                key={item.title}
-                className="feature-card premium-card rounded-xl border border-white/10 bg-card/80 p-6"
-              >
-                <h3 className="text-base font-semibold mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* What's included: the same four items as the homepage card */}
+      <ServiceIncluded items={PAYROLL.items} />
 
       {/* What this means for you */}
       <section className="premium-section py-14 lg:py-20">
