@@ -42,7 +42,7 @@ export const ACCOUNTING: ServicePage = {
     {
       title: 'Income and provisional tax',
       description:
-        "Your company's income tax return prepared and filed, and provisional tax calculated and submitted for the August and February cycles, when we have your information in time.",
+        "Your company's income tax return and provisional tax calculated correctly and submitted on time as each deadline in your tax year arrives, when we have your information in time.",
       covered: "No tax bill you didn't see coming.",
     },
     {
@@ -54,8 +54,8 @@ export const ACCOUNTING: ServicePage = {
     {
       title: 'CIPC annual compliance',
       description:
-        "Your company's annual return filed with CIPC each year, with your company details kept up to date.",
-      covered: 'Your company stays in good standing.',
+        "Your CIPC annual return and beneficial ownership declaration lodged together each year, with your company details kept up to date. These filings are what keep your company registered.",
+      covered: 'Your company stays registered.',
     },
   ],
 };
@@ -70,7 +70,7 @@ export const BOOKKEEPING: ServicePage = {
     {
       title: 'Xero accounting software',
       description:
-        'Your Xero subscription is part of your fee, set up for your business with your bank feeds connected. You keep your own login.',
+        'Your Xero subscription is part of your fee, set up for your business with your bank feeds connected. Your logins and your information always stay yours.',
       covered: 'No extra software bill.',
     },
     {
@@ -82,13 +82,13 @@ export const BOOKKEEPING: ServicePage = {
     {
       title: 'Bank accounts reconciled',
       description:
-        'Every bank account and credit card reconciled to its statement, with any differences found and cleared.',
+        'Your bank accounts and credit cards, vehicle finance and other loan accounts, and point-of-sale (POS) accounts, reconciled regularly to their statements. Every balance stays current, and any differences are found and cleared.',
       covered: 'Numbers you can trust.',
     },
     {
       title: 'Insights Report and review',
       description:
-        'Your management accounts, a profit and loss and balance sheet with what they mean for the business, followed by a review with your accountant. Quarterly on Basic, monthly on Pro and weekly on Premium.',
+        'Regular reports that show how your business is doing and what the numbers mean. Your accountant reviews the information behind them and is there to guide you on what to do next.',
       covered: 'You know what to do next.',
     },
   ],
@@ -116,13 +116,13 @@ export const PAYROLL: ServicePage = {
     {
       title: 'EMP501 recons and certificates',
       description:
-        'The EMP501 reconciliation submitted twice a year, and IRP5 certificates issued for every employee at year-end.',
+        'The EMP501 reconciliation submitted twice a year, matching the PAYE, UIF and SDL you declared each month to what was paid, and IRP5 certificates issued for every employee at year-end.',
       covered: 'Staff file their tax without waiting on you.',
     },
     {
       title: 'COIDA annual compliance',
       description:
-        'Your Return of Earnings filed with the Compensation Fund each year, based on your real payroll figures.',
+        'Your annual Return of Earnings filed on time from your real payroll figures, so your business stays compliant and your workers stay covered for injuries on the job.',
       covered: 'Your letter of good standing stays valid.',
     },
   ],

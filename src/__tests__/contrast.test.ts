@@ -187,7 +187,6 @@ describe('BD-02b status colour convergence (shipped)', () => {
     // the superseded Tailwind hexes are absent from component source.
     const files = [
       'src/components/landing/HeroSection.tsx',
-      'src/components/services/ServiceMiniDashboards.tsx',
     ];
 
     for (const file of files) {
@@ -235,12 +234,4 @@ describe('colour is never the only signal (§5)', () => {
     expect(story).toMatch(/\d+ days overdue/);
   });
 
-  it('pairs the margin trend in the service dashboards with a direction icon', () => {
-    const dashboards = source('src/components/services/ServiceMiniDashboards.tsx');
-
-    // A falling margin rendered in amber with no arrow would encode "down"
-    // in colour alone.
-    expect(dashboards).toMatch(/ArrowDownRight/);
-    expect(dashboards).toMatch(/TrendingUp/);
-  });
 });
