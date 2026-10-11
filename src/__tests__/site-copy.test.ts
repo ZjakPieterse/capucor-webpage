@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readSource } from './helpers/sourceText';
 import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY, PRICING_TRUST_ITEMS } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
+import { ACCOUNTING, SERVICE_PAGES } from '@/config/servicePages';
 
 // Functionality batch 1 (Zjak, 2026-10-08): no promises Capucor cannot yet keep,
 // no overage rates, and the per-package rhythm stated truthfully. These read
@@ -115,7 +116,22 @@ describe('services section (Zjak, 2026-10-10)', () => {
     expect(pillars).toContain('Three disciplines. One subscription.');
     expect(pillars).not.toMatch(/View \w+ support|Your own login|Included in your price/);
     expect(pillars).toMatch(/Read more/);
-    for (const href of ['/bookkeeping', '/payroll', '/accounting']) expect(pillars).toContain(`"${href}"`);
+    expect(pillars).toContain('SERVICE_PAGES');
+  });
+
+  // Zjak, 2026-10-11: Accounting, Bookkeeping, Payroll; four items per card,
+  // and each item is a card under that page's "What's included".
+  it('orders the cards and ties each service page to its card', () => {
+    expect(SERVICE_PAGES.map((s) => s.slug)).toEqual(['accounting', 'bookkeeping', 'payroll']);
+    expect(ACCOUNTING.hook).toBe('Compliance, covered.');
+    for (const svc of SERVICE_PAGES) {
+      expect(svc.items, svc.slug).toHaveLength(4);
+      expect(svc.href).toBe(`/${svc.slug}`);
+      const page = src(`app/(site)/${svc.slug}/page.tsx`);
+      expect(page, svc.slug).toContain(`<ServiceIncluded items={${svc.slug.toUpperCase()}.items} />`);
+      expect(page, svc.slug).not.toMatch(/const INCLUDED|OTHER_SERVICES/);
+      expect(page, svc.slug).toContain(`<ServiceConnects current="${svc.slug}" />`);
+    }
   });
 
   it('shows no packages on the homepage; the calculator carries them', () => {

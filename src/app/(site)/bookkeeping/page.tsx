@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import { BarChart2, Users } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { BookkeepingDashboard } from '@/components/services/ServiceMiniDashboards';
 import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
+import { ServiceIncluded } from '@/components/services/ServiceIncluded';
+import { ServiceConnects } from '@/components/services/ServiceConnects';
+import { BOOKKEEPING } from '@/config/servicePages';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
 export const metadata: Metadata = {
@@ -20,34 +22,6 @@ export const metadata: Metadata = {
     images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
-
-const INCLUDED = [
-  {
-    title: 'Xero included',
-    description:
-      "Your Xero subscription is part of the service, set up correctly for your business from day one. You get access to proper cloud accounting software, the same platform your bookkeeper works in, without paying for it separately or setting it up yourself.",
-  },
-  {
-    title: 'Transaction processing and categorisation',
-    description:
-      'Every transaction from your bank feeds captured and coded to the right account each month. Your books reflect your actual business activity, not a rough approximation of it.',
-  },
-  {
-    title: 'Monthly bank reconciliations',
-    description:
-      'Every bank account and credit card reconciled against your actual statements each month. Each month, your books match your bank, and any differences have already been investigated.',
-  },
-  {
-    title: 'Insights Report',
-    description:
-      'Your management accounts, a profit and loss statement and balance sheet, with what they mean for the business. It comes quarterly on Basic, monthly on Pro and weekly on Premium, and in between you can pull the same reports from Xero any time.',
-  },
-];
-
-const OTHER_SERVICES = [
-  { title: 'Payroll', note: 'Wages that land in your books', href: '/payroll', icon: Users },
-  { title: 'Accounting', note: 'Your books become your returns', href: '/accounting', icon: BarChart2 },
-];
 
 export default function BookkeepingPage() {
   return (
@@ -70,24 +44,8 @@ export default function BookkeepingPage() {
         </div>
       </section>
 
-      {/* What's included */}
-      <section className="premium-section py-14 lg:py-20">
-        <SectionDivider />
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-semibold mb-8 text-center">What&apos;s included</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            {INCLUDED.map((item) => (
-              <div
-                key={item.title}
-                className="feature-card premium-card rounded-xl border border-white/10 bg-card/80 p-6"
-              >
-                <h3 className="text-base font-semibold mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* What's included: the same four items as the homepage card */}
+      <ServiceIncluded items={BOOKKEEPING.items} />
 
       {/* What this means for you */}
       <section className="premium-section py-14 lg:py-20">
@@ -115,31 +73,8 @@ export default function BookkeepingPage() {
         </div>
       </section>
 
-      {/* Other services */}
-      <section className="premium-section py-14 lg:py-20">
-        <SectionDivider />
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">How it connects</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {OTHER_SERVICES.map((svc) => (
-              <a
-                key={svc.title}
-                href={svc.href}
-                className="feature-card premium-card flex items-center gap-4 rounded-xl border border-white/10 bg-card/80 px-6 py-5"
-              >
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <svc.icon className="h-5 w-5 text-foreground" />
-                </div>
-                <span className="flex flex-col">
-                  <span className="text-sm font-medium">{svc.title}</span>
-                  <span className="text-xs text-muted-foreground">{svc.note}</span>
-                </span>
-                <span className="ml-auto text-muted-foreground text-sm">→</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* How it connects: the other two disciplines, as on the homepage cards */}
+      <ServiceConnects current="bookkeeping" />
     </>
   );
 }
