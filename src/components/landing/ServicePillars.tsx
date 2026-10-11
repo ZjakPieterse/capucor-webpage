@@ -1,36 +1,50 @@
 import Link from "next/link";
-import { ArrowRight, BarChart2, BookMarked, Users } from "lucide-react";
+import { ArrowRight, BarChart2, BookMarked, Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
-// Informative first (Zjak, 2026-10-11): each card says plainly what the
-// discipline covers, then why it matters to the owner. The hook keeps the
-// feel; the service pages carry the full detail.
+// Each card: what it means for the owner, then the four things it covers,
+// named as the packages and service pages name them (Zjak, 2026-10-11).
 const SERVICES = [
   {
     icon: BarChart2,
     title: "Accounting",
     hook: "No surprises from SARS.",
-    story:
-      "Your VAT returns, provisional and income tax, CIPC annual return and annual financial statements, prepared on a calendar and checked before they go in. Built from books we already keep, so you know what's coming before it's due.",
+    body: "Your tax and filings are done before anyone asks, so you know what's due before it lands. When the bank wants financials, they're ready.",
+    covers: [
+      "Annual financial statements",
+      "Income and provisional tax",
+      "VAT201 returns, if you're registered",
+      "CIPC annual returns",
+    ],
     href: "/accounting",
   },
   {
     icon: BookMarked,
     title: "Bookkeeping",
     hook: "Know where you really stand.",
-    story:
-      "Every transaction coded and every bank account reconciled in Xero, with management accounts and an Insights Report that explain what the numbers mean. You decide from real figures, not your bank balance.",
+    body: "You decide from real numbers, not your bank balance. Each report comes with an accountant who tells you what changed and what to do next.",
+    covers: [
+      "Xero accounting software included",
+      "Transactions processed and coded",
+      "Bank accounts reconciled",
+      "Insights Report and performance review",
+    ],
     href: "/bookkeeping",
   },
   {
     icon: Users,
     title: "Payroll",
     hook: "Pay day, without the panic.",
-    story:
-      "Payslips, PAYE and UIF on your monthly EMP201, the EMP501 with IRP5s, and your COIDA return, each on its own cycle. Wages post straight into your books, so nothing is captured twice.",
+    body: "Your people are paid correctly, and you stop carrying SARS dates in your head. Wages flow straight into your books, so nothing is captured twice.",
+    covers: [
+      "Payroll processing and payslips",
+      "EMP201: PAYE and UIF every month",
+      "EMP501 and IRP5 certificates",
+      "COIDA Return of Earnings",
+    ],
     href: "/payroll",
   },
 ];
@@ -60,9 +74,18 @@ export function ServicePillars() {
 
                 <h3 className="text-xl font-semibold">{svc.title}</h3>
                 <p className="mt-1 text-sm font-medium text-primary">{svc.hook}</p>
-                <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
-                  {svc.story}
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  {svc.body}
                 </p>
+
+                <ul className="mt-5 flex-1 space-y-2 border-t border-white/10 pt-5">
+                  {svc.covers.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
 
                 <Button
                   nativeButton={false}
