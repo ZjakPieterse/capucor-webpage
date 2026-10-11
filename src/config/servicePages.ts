@@ -37,25 +37,25 @@ export const ACCOUNTING: ServicePage = {
       title: 'Annual financial statements',
       description:
         'Compiled each year by a professional accountant from the books we keep, and checked before they reach you. Ready for SARS, your bank, a funder or a buyer.',
-      covered: "When someone asks for your financials, they're ready to send.",
+      covered: 'Ready when the bank asks.',
     },
     {
       title: 'Income and provisional tax',
       description:
         "Your company's income tax return prepared and filed, and provisional tax calculated and submitted for the August and February cycles, when we have your information in time.",
-      covered: "You know roughly what's due before it's due, so there's time to plan for it.",
+      covered: "No tax bill you didn't see coming.",
     },
     {
-      title: "VAT201 returns, if you're registered",
+      title: 'VAT reports and submission',
       description:
-        'Your VAT return prepared and submitted every cycle, monthly or every two months depending on your registration, with input and output VAT reconciled before it goes in.',
-      covered: 'VAT stops being a recurring scramble, and the amount to pay is no surprise.',
+        "If you're VAT-registered, your VAT201 prepared and submitted every cycle, monthly or every two months, with input and output VAT reconciled before it goes in.",
+      covered: 'Every VAT cycle, handled.',
     },
     {
-      title: 'CIPC annual returns',
+      title: 'CIPC annual compliance',
       description:
         "Your company's annual return filed with CIPC each year, with your company details kept up to date.",
-      covered: 'Your company stays in good standing, with no deregistration risk from a missed return.',
+      covered: 'Your company stays in good standing.',
     },
   ],
 };
@@ -68,28 +68,28 @@ export const BOOKKEEPING: ServicePage = {
   body: 'You decide from real numbers, not your bank balance. Each report comes with an accountant who tells you what changed and what to do next.',
   items: [
     {
-      title: 'Xero accounting software included',
+      title: 'Xero accounting software',
       description:
         'Your Xero subscription is part of your fee, set up for your business with your bank feeds connected. You keep your own login.',
-      covered: 'No separate software bill, and you can see your numbers any time.',
+      covered: 'No extra software bill.',
     },
     {
-      title: 'Transactions processed and coded',
+      title: 'Transactions processed',
       description:
         'Every transaction from your bank feeds captured and coded to the right account. Anything we need from you arrives as one short list.',
-      covered: 'Your books reflect what really happened, and you only hear from us when we need something.',
+      covered: 'Books that show what really happened.',
     },
     {
       title: 'Bank accounts reconciled',
       description:
         'Every bank account and credit card reconciled to its statement, with any differences found and cleared.',
-      covered: 'Your books match your bank, so the numbers you decide from are numbers you can trust.',
+      covered: 'Numbers you can trust.',
     },
     {
-      title: 'Insights Report and performance review',
+      title: 'Insights Report and review',
       description:
         'Your management accounts, a profit and loss and balance sheet with what they mean for the business, followed by a review with your accountant. Quarterly on Basic, monthly on Pro and weekly on Premium.',
-      covered: 'You leave each review knowing what changed and what to do next.',
+      covered: 'You know what to do next.',
     },
   ],
 };
@@ -105,25 +105,25 @@ export const PAYROLL: ServicePage = {
       title: 'Payroll processing and payslips',
       description:
         "Gross pay, deductions and net pay calculated each month, including overtime, commission, new starters and leavers. Payslips ready for pay day once the month's changes are in.",
-      covered: 'Your people are paid correctly, and you tell us about a change once.',
+      covered: 'Your team, paid correctly.',
     },
     {
-      title: 'EMP201: PAYE and UIF every month',
+      title: 'PAYE and UIF filed every month',
       description:
         'Your EMP201 prepared and submitted to SARS each month, with PAYE, UIF and SDL where it applies, and the payment reconciled to the declaration.',
-      covered: 'The monthly SARS deadline is handled, so it stops living in your head.',
+      covered: 'One less SARS date to remember.',
     },
     {
-      title: 'EMP501 and IRP5 certificates',
+      title: 'EMP501 recons and certificates',
       description:
         'The EMP501 reconciliation submitted twice a year, and IRP5 certificates issued for every employee at year-end.',
-      covered: 'Your employees can file their own tax returns without waiting on you.',
+      covered: 'Staff file their tax without waiting on you.',
     },
     {
-      title: 'COIDA Return of Earnings',
+      title: 'COIDA annual compliance',
       description:
         'Your Return of Earnings filed with the Compensation Fund each year, based on your real payroll figures.',
-      covered: 'Your workers are covered for injuries on the job, and your letter of good standing stays valid for tenders and contracts.',
+      covered: 'Your letter of good standing stays valid.',
     },
   ],
 };

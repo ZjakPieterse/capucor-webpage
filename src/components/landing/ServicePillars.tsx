@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, BarChart2, BookMarked, Check, Users, type LucideIcon } from "lucide-react";
-import { SERVICE_PAGES, type ServicePage } from "@/config/servicePages";
+import { ArrowRight, Check } from "lucide-react";
+import { SERVICE_ICONS } from "@/components/services/ServiceConnects";
+import { SERVICE_PAGES } from "@/config/servicePages";
 import { Button } from "@/components/ui/button";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
@@ -8,12 +9,6 @@ import { SectionDivider } from "@/components/ui/SectionDivider";
 
 // Cards and service pages share one source (config/servicePages.ts), so each
 // card's four items are the four cards under that page's "What's included".
-const ICONS: Record<ServicePage["slug"], LucideIcon> = {
-  accounting: BarChart2,
-  bookkeeping: BookMarked,
-  payroll: Users,
-};
-
 export function ServicePillars() {
   return (
     <section id="services" className="premium-section py-14 lg:py-20">
@@ -28,7 +23,7 @@ export function ServicePillars() {
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICE_PAGES.map((svc, i) => {
-            const Icon = ICONS[svc.slug];
+            const Icon = SERVICE_ICONS[svc.slug];
             return (
               <ScrollReveal key={svc.title} delay={i * 0.1} className="h-full">
                 <article className="feature-card premium-card flex h-full flex-col rounded-2xl border border-white/10 bg-card/80 p-7">

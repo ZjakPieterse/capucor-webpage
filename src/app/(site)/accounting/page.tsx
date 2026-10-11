@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { BookMarked, Users } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { AccountingDashboard } from '@/components/services/ServiceMiniDashboards';
 import { ServiceCtaPair } from '@/components/services/ServiceCtaPair';
 import { ServiceIncluded } from '@/components/services/ServiceIncluded';
+import { ServiceConnects } from '@/components/services/ServiceConnects';
 import { ACCOUNTING } from '@/config/servicePages';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 
@@ -22,11 +22,6 @@ export const metadata: Metadata = {
     images: [{ url: `${siteConfig.marketingUrl}/api/og`, width: 1200, height: 630 }],
   },
 };
-
-const OTHER_SERVICES = [
-  { title: 'Bookkeeping', note: 'The books your returns are built from', href: '/bookkeeping', icon: BookMarked },
-  { title: 'Payroll', note: 'PAYE and wages, already in the numbers', href: '/payroll', icon: Users },
-];
 
 export default function AccountingPage() {
   return (
@@ -78,31 +73,8 @@ export default function AccountingPage() {
         </div>
       </section>
 
-      {/* Other services */}
-      <section className="premium-section py-14 lg:py-20">
-        <SectionDivider />
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">How it connects</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {OTHER_SERVICES.map((svc) => (
-              <a
-                key={svc.title}
-                href={svc.href}
-                className="feature-card premium-card flex items-center gap-4 rounded-xl border border-white/10 bg-card/80 px-6 py-5"
-              >
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <svc.icon className="h-5 w-5 text-foreground" />
-                </div>
-                <span className="flex flex-col">
-                  <span className="text-sm font-medium">{svc.title}</span>
-                  <span className="text-xs text-muted-foreground">{svc.note}</span>
-                </span>
-                <span className="ml-auto text-muted-foreground text-sm">→</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* How it connects: the other two disciplines, as on the homepage cards */}
+      <ServiceConnects current="accounting" />
     </>
   );
 }

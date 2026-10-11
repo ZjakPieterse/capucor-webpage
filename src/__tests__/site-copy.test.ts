@@ -129,7 +129,8 @@ describe('services section (Zjak, 2026-10-10)', () => {
       expect(svc.href).toBe(`/${svc.slug}`);
       const page = src(`app/(site)/${svc.slug}/page.tsx`);
       expect(page, svc.slug).toContain(`<ServiceIncluded items={${svc.slug.toUpperCase()}.items} />`);
-      expect(page, svc.slug).not.toMatch(/const INCLUDED/);
+      expect(page, svc.slug).not.toMatch(/const INCLUDED|OTHER_SERVICES/);
+      expect(page, svc.slug).toContain(`<ServiceConnects current="${svc.slug}" />`);
     }
   });
 
