@@ -942,6 +942,31 @@
   }
 }
 
+/* Your first 90 days (FirstNinetyDays.tsx): the How it works timeline with
+   dated pill badges and one milestone line per stage. */
+.how-badge-pill {
+  width: auto;
+  min-width: 48px;
+  padding: 0 18px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.roadmap-milestone {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in oklch, var(--primary) 14%, transparent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary);
+}
+
+@media (min-width: 1024px) {
+  .roadmap-timeline .how-step-row {
+    grid-template-columns: 1fr 136px 1fr;
+  }
+}
+
 /* ─── Finance Command Centre tiles (hero dashboard) ─────────────────────── */
 .fcc-tile {
   transition:

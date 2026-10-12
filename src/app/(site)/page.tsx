@@ -6,7 +6,7 @@ import { PartnersAndTech } from '@/components/landing/PartnersAndTech';
 import { ProblemCards } from '@/components/landing/ProblemCards';
 import { ServicePillars } from '@/components/landing/ServicePillars';
 import { HowItWorks } from '@/components/landing/HowItWorks';
-import { SwitchingSection } from '@/components/landing/SwitchingSection';
+import { FirstNinetyDays } from '@/components/landing/FirstNinetyDays';
 import { ContactSection } from '@/components/landing/ContactSection';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
@@ -72,9 +72,9 @@ export default function HomePage() {
         <HowItWorks />
         {/* 5. Services */}
         <ServicePillars />
-        {/* 6. Testimonials / social proof — placeholder between Services and Switching. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
-        {/* 7. Switching in any month (onboarding steps; catch-up rule, no amounts) */}
-        <SwitchingSection />
+        {/* 6. Testimonials / social proof — placeholder between Services and Your first 90 days. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
+        {/* 7. Your first 90 days (rhythm from month one, catch-up alongside, 90-day review) */}
+        <FirstNinetyDays />
         {/* 8. Contact + lead capture (replaced the homepage FAQ). */}
         <ContactSection />
         {/* 9. Final CTA */}
