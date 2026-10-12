@@ -46,12 +46,11 @@ import { useCardDeck } from "@/hooks/useCardDeck";
 // Clean stack (Zjak, 2026-10-12): no glow or drop shadow round the cards, so
 // nothing of the cards beneath shows round the one in view. The "Days 1–30"
 // pills and the three-bar progress track are gone: each card opens with an
-// icon beside its title and a one-line hook, the same lockup as the cards in
-// "Three disciplines. One subscription.".
+// icon beside its title, as on the cards in
+// "Three disciplines. One subscription." (Zjak: no hook line under it).
 type Card = {
   icon: LucideIcon;
   title: string;
-  hook: string;
   body: string;
   yours?: string;
   listTitle: string;
@@ -63,7 +62,6 @@ const CARDS: Card[] = [
   {
     icon: Settings2,
     title: "Set up",
-    hook: "We take the running over",
     body: "You sign, and one email lands with a short list. Payday comes and your staff are paid as usual, now through SimplePay. Behind on your books? The 3 months before you signed are included. Anything older is quoted upfront and runs alongside.",
     yours: "This is the month that needs you most. Send the list back, approve our access to SARS and your software, and tell us what else is missing.",
     listTitle: "Done by day 30",
@@ -78,7 +76,6 @@ const CARDS: Card[] = [
   {
     icon: CalendarCheck,
     title: "Settle",
-    hook: "The monthly rhythm takes hold",
     body: "This is the month you stop chasing. The 7th arrives and your EMP201 is already filed. Your books are reconciled, and anything outstanding at SARS has a name and a plan.",
     yours: "Much lighter. Answer the odd question about some transactions, and snap the slips we ask for. Most months, that’s a quick email reply from you.",
     listTitle: "Done by day 60",
@@ -92,7 +89,6 @@ const CARDS: Card[] = [
   {
     icon: MessagesSquare,
     title: "Review",
-    hook: "Ninety days, looked at properly",
     body: "Ninety days in, we sit down properly: what we found, what we fixed, what’s still open. Your first reports set the baseline, and your feedback shapes the next ones.",
     yours: "Commit some time for the review and bring your questions. Tell us honestly what’s working and what isn’t. That’s how the next quarter gets better.",
     listTitle: "Done by day 90",
@@ -107,7 +103,6 @@ const CARDS: Card[] = [
     // Same list as the welcome checklist sent on signing.
     icon: ClipboardList,
     title: "What we’ll need",
-    hook: "Start gathering now",
     body: "Most of this you already have somewhere. Start gathering now and your first month will be a breeze. Can’t find something? With your go-ahead, we’ll ask your previous accountant. You stay month-to-month on 30 days’ notice, and if you leave, we hand over your Xero and eFiling.",
     listTitle: "Your checklist",
     items: ONBOARDING_CHECKLIST.map((c) => c.item),
@@ -142,10 +137,7 @@ export function FirstNinetyDays() {
                   <span aria-hidden className="svc-icon">
                     <Icon className="h-[22px] w-[22px]" />
                   </span>
-                  <div className="min-w-0">
-                    <h3 className="deck-title">{card.title}</h3>
-                    <p className="deck-hook">{card.hook}</p>
-                  </div>
+                  <h3 className="deck-title">{card.title}</h3>
                 </div>
                 <p className="deck-body">{card.body}</p>
                 {card.yours && (

@@ -1089,19 +1089,12 @@
   gap: 10px;
 }
 
-/* Icon beside title and hook: the service-card lockup (.svc-icon). */
+/* Icon beside the title: the service-card icon (.svc-icon). */
 .deck-lockup {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 4px;
-}
-
-.deck-hook {
-  margin: 4px 0 0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--primary);
 }
 
 .deck-title {
@@ -1312,9 +1305,6 @@
   }
   .deck-panel-title {
     margin-bottom: 18px;
-  }
-  .deck-hook {
-    font-size: 0.9375rem;
   }
   .deck-list {
     gap: 10px;
