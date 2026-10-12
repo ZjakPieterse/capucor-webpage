@@ -120,9 +120,11 @@ export const AFTER_YOU_SIGN = [
 
 // The /pricing trust bar. Sentence case, one fact each (funnel review F13,
 // 2026-10-08): "No lock-in contracts" and "Cancel with 30 days' notice" said
-// the same thing twice, so they are one item now.
+// the same thing twice, so they are one item now. 'SARS registered' said
+// registered as what; we act from a tax practitioner eFiling profile (Zjak,
+// 2026-10-12).
 export const PRICING_TRUST_ITEMS = [
-  'SARS registered',
+  'Registered tax practitioner',
   'Fixed monthly pricing',
   'Dedicated finance team',
   'No lock-in: 30 days’ notice to cancel',
