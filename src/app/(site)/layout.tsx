@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { ScrollToTopOnRouteChange } from '@/components/layout/ScrollToTopOnRouteChange';
+import { SmoothScroll } from '@/components/ui/SmoothScroll';
 
 // Marketing chrome for the public site — everything served from capucor.com
 // (home, services, pricing, privacy, terms, resources). The `(site)` folder is
@@ -24,6 +25,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         {children}
       </main>
       <ScrollToTopOnRouteChange />
+      <SmoothScroll />
       <Footer />
     </>
   );

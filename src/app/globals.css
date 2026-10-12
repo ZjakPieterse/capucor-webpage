@@ -2241,3 +2241,48 @@
     transform: translateY(20px);
   }
 }
+
+/* ─── Heading focus-in (preview/scroll-polish) ──────────────────────────────
+   Section headings sharpen from a soft blur as they scroll in, armed by the
+   same RevealObserver as `.reveal`, so anything on screen at load is already
+   revealed and never blurs. Below the fold only. `filter` is not compositor-
+   only (see docs/design-system.md "Motion and first paint"), so phones get a
+   plain fade and lift instead of the blur. */
+@media (prefers-reduced-motion: no-preference) {
+  .heading-focus {
+    transition:
+      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+      filter 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-armed .heading-focus:not([data-revealed]) {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (min-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .reveal-armed .heading-focus:not([data-revealed]) {
+    opacity: 0.15;
+    filter: blur(14px);
+  }
+}
+
+/* Words light up as they scroll (ScrollLitText). Short ease so a fast wheel
+   still feels smooth between frames. */
+.scroll-lit [data-word] {
+  transition: opacity 0.15s linear;
+}
+
+/* Lenis owns wheel smoothing; native smooth scroll would fight it. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+html.lenis {
+  scroll-behavior: auto;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
