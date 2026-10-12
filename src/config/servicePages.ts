@@ -70,7 +70,7 @@ export const BOOKKEEPING: ServicePage = {
     {
       title: 'Xero accounting software',
       description:
-        'Your Xero subscription is part of your fee, set up for your business with your bank feeds connected. Your logins and your information always stay yours.',
+        'Your Xero subscription is part of your fee, set up for your business with your bank feeds connected. Your records stay yours: if you ever leave, we hand over your Xero file.',
       covered: 'No extra software bill.',
     },
     {

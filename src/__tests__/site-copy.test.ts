@@ -37,7 +37,7 @@ describe('overage rates are not quoted (Zjak, 2026-10-08)', () => {
 describe('the package rhythm is true for every package (F04, F20)', () => {
   it('promises no monthly report or real-time numbers to everyone', () => {
     expect(src('components/landing/HowItWorks.tsx')).not.toMatch(/clear monthly report|concise monthly view/);
-    expect(src('components/landing/SwitchingSection.tsx')).not.toMatch(/with a report and a conversation/);
+    expect(src('components/landing/FirstNinetyDays.tsx')).not.toMatch(/with a report and a conversation/);
     expect(src('components/landing/ServicePillars.tsx')).not.toMatch(/real-time/);
   });
 
@@ -70,7 +70,7 @@ describe('funnel copy (F13, F14, F25)', () => {
       'components/layout/Navbar.tsx',
       'components/landing/HeroSection.tsx',
       'components/landing/FinalCTA.tsx',
-      'components/landing/SwitchingSection.tsx',
+      'components/landing/FirstNinetyDays.tsx',
       'components/services/ServiceCtaPair.tsx',
       'components/pricing/PricingCalculator.tsx',
       'components/pricing/PricingErrorBoundary.tsx',
@@ -136,5 +136,26 @@ describe('services section (Zjak, 2026-10-10)', () => {
 
   it('shows no packages on the homepage; the calculator carries them', () => {
     expect(src('app/(site)/page.tsx')).not.toMatch(/PackagesTeaser/);
+  });
+});
+
+describe('your first 90 days (interview 2026-10-12)', () => {
+  const roadmap = () =>
+    src('components/landing/FirstNinetyDays.tsx').replace(/^\s*\/\/.*$/gm, '');
+
+  it('names no package, rhythm, amount, response time or bank feeds', () => {
+    expect(roadmap()).not.toMatch(/Basic|Premium|\bPro\b|weekly|daily|same.day|R ?\d|bank feed/);
+  });
+
+  it('runs catch-up alongside the rhythm, with the 3 included months', () => {
+    expect(roadmap()).toMatch(/The 3 months before you signed are included/);
+    expect(roadmap()).toMatch(/alongside/);
+  });
+
+  // The software is billed to Capucor and eFiling sits on the practice profile,
+  // so the honest claim is a handover of records, not the client's own logins.
+  it('never claims the logins are the client\'s', () => {
+    expect(roadmap()).not.toMatch(/logins/i);
+    expect(SERVICE_PAGES.flatMap((p) => p.items.map((i) => i.description)).join(' ')).not.toMatch(/logins/i);
   });
 });
