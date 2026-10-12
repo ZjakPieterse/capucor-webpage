@@ -193,7 +193,6 @@ export function ProblemCards() {
         <ScrollReveal>
           <SectionHeading
             title="Your business has outgrown year-end accounting"
-            litSubtitle
             subtitle="You hear from your accountant once a year, with a huge bill. Meanwhile EMP201, VAT201 and provisional tax keep coming, and you're the one chasing."
           />
         </ScrollReveal>

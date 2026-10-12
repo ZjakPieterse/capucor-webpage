@@ -75,7 +75,6 @@ export function HowItWorks() {
       <div className="mx-auto w-full max-w-6xl px-6">
         <SectionHeading
           title="A rhythm that keeps you in control"
-          litSubtitle
           subtitle="Great finance work needs a clear rhythm. We process, review, report, and advise. Every period closes on time and reconciled, leaving you with the insights you need for your next move."
         />
 

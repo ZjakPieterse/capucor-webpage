@@ -2242,7 +2242,7 @@
   }
 }
 
-/* ─── Heading focus-in (preview/scroll-polish) ──────────────────────────────
+/* ─── Heading focus-in ──────────────────────────────
    Section headings sharpen from a soft blur as they scroll in, armed by the
    same RevealObserver as `.reveal`, so anything on screen at load is already
    revealed and never blurs. Below the fold only. `filter` is not compositor-
@@ -2267,12 +2267,6 @@
     opacity: 0.15;
     filter: blur(14px);
   }
-}
-
-/* Words light up as they scroll (ScrollLitText). Short ease so a fast wheel
-   still feels smooth between frames. */
-.scroll-lit [data-word] {
-  transition: opacity 0.15s linear;
 }
 
 /* Lenis owns wheel smoothing; native smooth scroll would fight it. */
