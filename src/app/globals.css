@@ -1099,12 +1099,6 @@
   }
 }
 
-/* Too short to stack (set in JS): a plain list of cards. */
-.deck[data-flat] .deck-card {
-  position: relative;
-  transform: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .deck-card {
     transform: none;

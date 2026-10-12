@@ -79,10 +79,15 @@ const CARDS = [
 
 /**
  * Deals the cards. Every card gets the tallest card's height and the same
- * sticky top, centred between the header and the bottom of the screen (above
- * the phone CTA bar), so each card covers the one beneath completely. While the next card slides over, `--deck-p` (0..1) eases the card
- * back and dims it: written to the DOM, not state, so scrolling never
- * re-renders, and only transform and opacity animate (no filter).
+ * sticky top, so each card covers the one beneath completely. The top centres
+ * the card between the header and the bottom of the screen (the phone CTA bar
+ * steps aside while the deck is in view). A card too tall for that (most phones) sticks by its bottom edge
+ * instead: read as it scrolls in, then held while the next one covers it.
+ * Heights come from the small viewport (100svh), so phone toolbars showing
+ * and hiding never move the stack. While the next card slides over,
+ * `--deck-p` (0..1) eases the card back and dims it: written to the DOM, not
+ * state, so scrolling never re-renders, and only transform and opacity
+ * animate (no filter).
  */
 function useCardDeck() {
   const ref = useRef<HTMLDivElement>(null);
@@ -94,34 +99,37 @@ function useCardDeck() {
     if (!cards.length) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // The stack lives between the sticky header and, on phones, the floating
-    // CTA bar. A screen too short for the tallest card gets a plain list.
+    const probe = document.createElement("div");
+    probe.style.cssText =
+      "position:fixed;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none";
+    document.body.appendChild(probe);
+
+    let lastKey = "";
     const layout = () => {
-      delete deck.dataset.flat;
+      const viewHeight = probe.offsetHeight || window.innerHeight;
       cards.forEach((card) => {
         card.style.minHeight = "";
-        card.style.top = "";
       });
       const tallest = Math.max(...cards.map((card) => card.offsetHeight));
-      const header = document.querySelector("header")?.offsetHeight ?? 64;
-      const bar = document.querySelector<HTMLElement>(".mobile-cta-bar");
-      const barHeight = bar && getComputedStyle(bar).display !== "none" ? bar.offsetHeight : 0;
-      const bottom = window.innerHeight - barHeight - 12;
-      const top = Math.max(header + 12, Math.round((header + bottom - tallest) / 2));
+      const key = `${window.innerWidth}:${viewHeight}:${tallest}`;
+      if (key !== lastKey) {
+        lastKey = key;
+        // The phone CTA bar steps aside while the deck is in view.
+        const header = document.querySelector("header")?.offsetHeight ?? 64;
+        const bottom = viewHeight - 12;
+        const centred = Math.round((header + bottom - tallest) / 2);
+        const top = centred >= header + 12 ? centred : bottom - tallest;
+        cards.forEach((card) => (card.style.top = `${top}px`));
+      }
       cards.forEach((card) => {
         card.style.minHeight = `${tallest}px`;
-        card.style.top = `${top}px`;
       });
-      if (top + tallest > bottom) {
-        deck.dataset.flat = "";
-        cards.forEach((card) => card.style.setProperty("--deck-p", "0"));
-      }
       update();
     };
 
     let rafId = 0;
     const update = () => {
-      if (reduced || "flat" in deck.dataset) return;
+      if (reduced) return;
       const tops = cards.map((card) => card.getBoundingClientRect().top);
       cards.forEach((card, i) => {
         const next = tops[i + 1];
@@ -158,6 +166,7 @@ function useCardDeck() {
     return () => {
       io.disconnect();
       ro.disconnect();
+      probe.remove();
       listen(false);
       window.removeEventListener("resize", layout);
       cancelAnimationFrame(rafId);
@@ -179,7 +188,7 @@ export function FirstNinetyDays() {
           subtitle="You sign, and we take it from there. Your monthly rhythm starts in the first month, and any backlog is cleared alongside it."
         />
 
-        <div ref={deckRef} className="deck mt-12">
+        <div ref={deckRef} className="deck mt-12" data-hides-cta-bar="">
           {CARDS.map((card, i) => (
             <article
               key={card.label}

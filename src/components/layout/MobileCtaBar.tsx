@@ -26,16 +26,35 @@ const subscribeNothing = () => () => {};
 
 export function MobileCtaBar() {
   const pathname = usePathname();
-  const [shown, setShown] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [yielding, setYielding] = useState(false);
+  const shown = scrolled && !yielding;
   // True only in the browser, so the portal never renders on the server.
   const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
 
   useEffect(() => {
-    const onScroll = () => setShown(window.scrollY > window.innerHeight * 0.6);
+    const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.6);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Steps aside while a section that needs the full screen is in view
+  // (`data-hides-cta-bar`, e.g. the first-90-days card stack).
+  useEffect(() => {
+    const targets = document.querySelectorAll("[data-hides-cta-bar]");
+    if (!targets.length) return;
+    const inView = new Set<Element>();
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) inView.add(entry.target);
+        else inView.delete(entry.target);
+      }
+      setYielding(inView.size > 0);
+    });
+    targets.forEach((target) => io.observe(target));
+    return () => io.disconnect();
+  }, [pathname]);
 
   if (HIDDEN_ON.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
 
