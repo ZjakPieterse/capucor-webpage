@@ -9,10 +9,9 @@ import { useEffect, useRef } from 'react';
  * Every card gets the tallest card's height and the same sticky top, so each
  * card covers the one beneath completely. The card locks with its middle on
  * the middle of the screen (Zjak, 2026-10-12: not just below the header). A
- * card too tall for that locks as low as it can with its top still clear of
- * the header, and one taller than the space below the header sticks by its
- * bottom edge: read as it scrolls in, then held while the next one covers it.
- * Heights come from the small viewport (100svh), so phone toolbars showing
+ * card too tall for that locks 16px under the header. A card taller than the
+ * space below the header does not stack at all (`data-flat` on the deck):
+ * tucking its top under the header looked cheap (Zjak, 2026-10-12). Heights come from the small viewport (100svh), so phone toolbars showing
  * and hiding never move the stack. While the next card slides over,
  * `--deck-p` (0..1) eases the card back and dims it: written to the DOM, not
  * state, so scrolling never re-renders, and only transform and opacity
@@ -43,10 +42,12 @@ export function useCardDeck<T extends HTMLElement>() {
       const key = `${window.innerWidth}:${viewHeight}:${tallest}`;
       if (key !== lastKey) {
         lastKey = key;
-        const clear = (document.querySelector('header')?.offsetHeight ?? 64) + 12;
+        const clear = (document.querySelector('header')?.offsetHeight ?? 64) + 16;
         const bottom = viewHeight - 12;
         const centred = Math.round((viewHeight - tallest) / 2);
-        const top = tallest <= bottom - clear ? Math.max(centred, clear) : bottom - tallest;
+        const fits = tallest <= bottom - clear;
+        deck.toggleAttribute('data-flat', !fits);
+        const top = fits ? Math.max(centred, clear) : 0;
         cards.forEach((card) => (card.style.top = `${top}px`));
       }
       cards.forEach((card) => {

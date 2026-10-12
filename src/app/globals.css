@@ -995,6 +995,22 @@
   }
 }
 
+/* A screen too short for a card below the header (useCardDeck sets
+   data-flat): the cards sit in a plain list instead of stacking. */
+.stack-deck[data-flat] {
+  gap: 24px;
+}
+
+.stack-deck[data-flat] .stack-card {
+  position: relative;
+  transform: none;
+  will-change: auto;
+}
+
+.stack-deck[data-flat] .stack-card::after {
+  opacity: 0;
+}
+
 /* Phone-only deck (ProblemCards): from sm up the cards sit in a plain grid,
    two then four across, with no stacking, scale or dim. */
 @media (min-width: 640px) {
@@ -1195,7 +1211,19 @@
     padding: 14px 16px;
   }
   .deck-panel-title {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+  }
+  .deck-body,
+  .deck-list li {
+    font-size: 0.84375rem;
+    line-height: 1.45;
+  }
+  .deck-list li {
+    gap: 8px;
+  }
+  .deck-check {
+    width: 18px;
+    height: 18px;
   }
 }
 
