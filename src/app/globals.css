@@ -937,12 +937,13 @@
    would stall behind hydration. Stacking only: each section styles its own
    cards. */
 /* The gap is about half a screen, so each card holds alone in the centre
-   for a moment before the next one comes up (Zjak, 2026-10-12). */
+   for a moment before the next one comes up (Zjak, 2026-10-12; 55 → 40svh
+   the same day, holds felt too long). */
 .stack-deck {
   display: flex;
   flex-direction: column;
-  gap: 55vh;
-  gap: 55svh;
+  gap: 40vh;
+  gap: 40svh;
 }
 
 .stack-card {
