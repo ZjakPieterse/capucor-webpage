@@ -189,7 +189,6 @@ describe('POST /api/leads', () => {
     teamSize: '6 to 20',
     services: ['Bookkeeping and Xero', 'Payroll'],
     booksNow: 'Another accounting firm',
-    mainReason: 'My books are behind',
   };
 
   it('11. contact answers — stored in leads.config, not as a column', async () => {
