@@ -14,7 +14,8 @@ import { useEffect, useRef } from 'react';
  * phone toolbars showing and hiding never move the stack. While the next card
  * slides over, `--deck-p` (0..1) eases the card back and dims it: written to
  * the DOM, not state, so scrolling never re-renders, and only transform and
- * opacity animate (no filter).
+ * opacity animate (no filter). A `--deck-overhang` (px) on the deck reserves
+ * room above each card for a badge that sits on its top edge.
  */
 export function useCardDeck<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -41,7 +42,10 @@ export function useCardDeck<T extends HTMLElement>() {
       const key = `${window.innerWidth}:${viewHeight}:${tallest}`;
       if (key !== lastKey) {
         lastKey = key;
-        const header = document.querySelector('header')?.offsetHeight ?? 64;
+        // A deck whose cards carry a badge above their top edge sets
+        // --deck-overhang, so the badge clears the header too.
+        const overhang = parseFloat(getComputedStyle(deck).getPropertyValue('--deck-overhang')) || 0;
+        const header = (document.querySelector('header')?.offsetHeight ?? 64) + overhang;
         const bottom = viewHeight - 12;
         const centred = Math.round((header + bottom - tallest) / 2);
         const top = centred >= header + 12 ? centred : bottom - tallest;

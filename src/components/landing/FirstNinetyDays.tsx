@@ -105,7 +105,7 @@ export function FirstNinetyDays() {
           subtitle="The first month asks the most of you. After that, it settles into the monthly rhythm. Here’s what happens from the day you sign, and what we’ll need."
         />
 
-        <div ref={deckRef} className="stack-deck mt-12">
+        <div ref={deckRef} className="stack-deck deck-overhang mt-12">
           {CARDS.map((card, i) => (
             <article
               key={card.label}
