@@ -11,8 +11,9 @@ import { SectionDivider } from "@/components/ui/SectionDivider";
 // card's four items are the four cards under that page's "What's included".
 //
 // Premium polish (Zjak, 2026-10-12): the live glass card stays; the icon sits
-// beside the title and hook as one lockup, the top edge is lit, and the whole
-// card is the "Read more" link, closed by a footer row.
+// beside the title and hook as one lockup and the top edge is lit. "Read more"
+// is a plain button in a footer row; only the button links (Zjak: no
+// watermark, no whole-card link).
 export function ServicePillars() {
   return (
     <section id="services" className="premium-section py-14 lg:py-20">
@@ -31,10 +32,6 @@ export function ServicePillars() {
             return (
               <ScrollReveal key={svc.title} delay={i * 0.1} className="h-full">
                 <article className="svc-card feature-card premium-card flex h-full flex-col rounded-2xl border border-white/10 bg-card/80 p-7">
-                  {/* The icon again, large and faint, bleeding off the corner. */}
-                  <span aria-hidden className="svc-watermark">
-                    <Icon strokeWidth={1.25} />
-                  </span>
                   <div className="flex items-center gap-4">
                     <span aria-hidden className="svc-icon">
                       <Icon className="h-[22px] w-[22px]" />
@@ -63,15 +60,17 @@ export function ServicePillars() {
                   </ul>
 
                   <div className="mt-6 border-t border-white/10 pt-5">
-                    <Link href={svc.href} className="svc-link">
-                      <span>
-                        Read more
-                        <span className="sr-only"> about {svc.title.toLowerCase()}</span>
-                      </span>
-                      <span className="svc-link-arrow" aria-hidden>
-                        <ArrowRight className="h-4 w-4" />
-                      </span>
-                    </Link>
+                    <Button
+                      nativeButton={false}
+                      render={<Link href={svc.href} />}
+                      variant="outline"
+                      size="lg"
+                      className="gap-2"
+                    >
+                      Read more
+                      <span className="sr-only"> about {svc.title.toLowerCase()}</span>
+                      <ArrowRight className="h-4 w-4" aria-hidden />
+                    </Button>
                   </div>
                 </article>
               </ScrollReveal>
