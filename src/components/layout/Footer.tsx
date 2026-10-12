@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { siteConfig } from "@/config/site";
 import { Separator } from "@/components/ui/separator";
-import { MobileCtaBar } from "@/components/layout/MobileCtaBar";
 
 function IconFacebook({ className }: { className?: string }) {
   return (
@@ -200,7 +199,6 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <MobileCtaBar />
     </footer>
   );
 }

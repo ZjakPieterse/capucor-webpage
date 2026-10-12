@@ -89,7 +89,7 @@ export function FirstNinetyDays() {
           subtitle="You sign, and we take it from there. Your monthly rhythm starts in the first month, and any backlog is cleared alongside it."
         />
 
-        <div ref={deckRef} className="stack-deck mt-12" data-hides-cta-bar="">
+        <div ref={deckRef} className="stack-deck mt-12">
           {CARDS.map((card, i) => (
             <article
               key={card.label}

@@ -205,7 +205,6 @@ export function ProblemCards() {
         <div
           ref={deckRef}
           className="stack-deck stack-deck-phone mt-12"
-          data-hides-cta-bar=""
         >
           {PROBLEMS.map((item) => (
             <div key={item.title} className="stack-card grid rounded-2xl bg-background">

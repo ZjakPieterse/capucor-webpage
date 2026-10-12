@@ -72,7 +72,7 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   renders the desktop branch, so a JS switch makes phones jump after hydration.
 - Loops pause off-screen, and phones get a calmer cut rather than a smaller one.
 - **Cards that stack as you scroll:** reuse `useCardDeck` (`hooks/useCardDeck.ts`) with `.stack-deck` /
-  `.stack-card` in `globals.css`, and mark the deck `data-hides-cta-bar` so the phone CTA bar steps aside.
+  `.stack-card` in `globals.css`.
   It handles centring, equal heights, phones shorter than a card and the dim. Add `.stack-deck-phone` to
   stack on phones only (a grid from `sm` up). Used by `ProblemCards` (phone only) and
   `FirstNinetyDays`. Test phone fits at real browser heights (~660px), not the 812px preset.
