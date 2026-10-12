@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { ONBOARDING_CHECKLIST } from "@/config/onboardingChecklist";
 import { siteConfig } from "@/config/site";
@@ -100,10 +101,12 @@ export function FirstNinetyDays() {
     <section id="first-90-days" className="premium-section py-14 lg:py-20">
       <SectionDivider />
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-6">
-        <SectionHeading
-          title="Your first 90 days"
-          subtitle="The first month asks the most of you. After that, it settles into the monthly rhythm. Here’s what happens from the day you sign, and what we’ll need."
-        />
+        <ScrollReveal>
+          <SectionHeading
+            title="Your first 90 days"
+            subtitle="The first month asks the most of you. After that, it settles into the monthly rhythm. Here’s what happens from the day you sign, and what we’ll need."
+          />
+        </ScrollReveal>
 
         <div ref={deckRef} className="stack-deck deck-overhang mt-12">
           {CARDS.map((card, i) => (

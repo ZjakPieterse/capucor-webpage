@@ -24,7 +24,7 @@ export function FinalCTA() {
 
       <div className="max-w-3xl mx-auto px-5 sm:px-6 text-center">
         <ScrollReveal>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
+          <h2 className="heading-focus text-3xl md:text-4xl font-semibold tracking-tight mb-4">
             Ready to make finance work better?
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
