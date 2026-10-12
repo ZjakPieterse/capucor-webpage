@@ -706,7 +706,6 @@
   .feature-card,
   .outcome-card,
   .problem-card,
-  .how-card,
   .fcc-tile {
     transition:
       transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -718,7 +717,6 @@
   .feature-card:active,
   .outcome-card:active,
   .problem-card:active,
-  .how-card:active,
   .fcc-tile:active {
     transform: scale(0.985);
     transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -864,24 +862,13 @@
   transition: opacity 400ms ease-out;
 }
 
-.how-step-row[data-reached] .how-card > *,
-.how-step-row .how-card:hover > * {
+.how-step-row[data-reached] .how-card > * {
   opacity: 1;
 }
 
 .how-step-row[data-reached] .how-card {
   transform: none;
   border-color: color-mix(in oklch, var(--primary) 28%, var(--border));
-}
-
-@media all {
-  .how-step-row .how-card:hover {
-    transform: translateY(-6px) scale(1.012);
-    border-color: color-mix(in oklch, var(--primary) 38%, var(--border));
-    box-shadow:
-      0 28px 70px -36px color-mix(in oklch, var(--primary) 52%, transparent),
-      0 4px 20px rgba(0, 0, 0, 0.04);
-  }
 }
 
 .how-card-title {
@@ -949,10 +936,13 @@
    eases a card back and dims it. Transform and opacity only: a filter dim
    would stall behind hydration. Stacking only: each section styles its own
    cards. */
+/* The gap is about half a screen, so each card holds alone in the centre
+   for a moment before the next one comes up (Zjak, 2026-10-12). */
 .stack-deck {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 55vh;
+  gap: 55svh;
 }
 
 .stack-card {
@@ -977,9 +967,6 @@
 }
 
 @media (min-width: 1024px) {
-  .stack-deck {
-    gap: 48px;
-  }
   .stack-card {
     top: max(96px, calc(50vh - 280px));
   }
@@ -1647,7 +1634,6 @@
   .premium-card:hover,
   .feature-card:hover,
   .outcome-card:hover,
-  .how-card:hover,
   .problem-card:hover {
     transform: translateY(-10px) scale(1.025) !important;
   }
@@ -1895,23 +1881,6 @@
 .skip-link:focus,
 .skip-link:focus-visible {
   transform: translateY(0);
-}
-
-/* ─── Phone sticky CTA (MobileCtaBar, funnel review F03) ──────────────────
-   Slides up once the visitor is past the first screen. `inert` keeps the
-   hidden bar out of the tab order. */
-.mobile-cta-bar {
-  transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mobile-cta-bar[data-shown="false"] {
-  transform: translateY(110%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mobile-cta-bar {
-    transition: none;
-  }
 }
 
 /* ─── Hero first paint (HeroSection, hero-smooth-load 2026-10-08) ──────────

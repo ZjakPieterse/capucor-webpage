@@ -8,8 +8,7 @@ import { useEffect, useRef } from 'react';
  *
  * Every card gets the tallest card's height and the same sticky top, so each
  * card covers the one beneath completely. The top centres the card between
- * the header and the bottom of the screen (mark the deck `data-hides-cta-bar`
- * so the phone CTA bar steps aside). A card too tall for that (most phones)
+ * the header and the bottom of the screen. A card too tall for that (most phones)
  * sticks by its bottom edge instead: read as it scrolls in, then held while
  * the next one covers it. Heights come from the small viewport (100svh), so
  * phone toolbars showing and hiding never move the stack. While the next card
