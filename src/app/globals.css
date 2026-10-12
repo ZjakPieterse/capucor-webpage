@@ -1104,6 +1104,58 @@
   color: var(--primary);
 }
 
+/* "Your part": the owner's part in the stage, told under the scene. */
+.deck-yours {
+  align-self: stretch;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in oklch, var(--primary) 14%, transparent);
+}
+
+.deck-yours-head {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.deck-yours-text {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.deck-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--primary) 35%, transparent);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 200ms ease;
+}
+
+.deck-panel-link:hover {
+  text-decoration-color: var(--primary);
+}
+
+@media (min-width: 1024px) {
+  .deck-yours {
+    margin-top: 8px;
+    padding-top: 16px;
+  }
+  .deck-yours-text {
+    font-size: 0.9375rem;
+  }
+}
+
 @media (min-width: 1024px) {
   .deck-card {
     grid-template-columns: 1.1fr 1fr;

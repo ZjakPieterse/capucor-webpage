@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calendar, Check } from "lucide-react";
+import { ArrowRight, Calendar, Check, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
+import { ONBOARDING_CHECKLIST } from "@/config/onboardingChecklist";
 import { siteConfig } from "@/config/site";
 import { useCardDeck } from "@/hooks/useCardDeck";
 
@@ -20,60 +21,75 @@ import { useCardDeck } from "@/hooks/useCardDeck";
 //
 // Wide cards that stack as you scroll (Zjak, 2026-10-12): each card sticks
 // in the middle of the screen and the next one is dealt fully over it, while
-// the one beneath eases back and dims, so only one card holds the eye. The second half of each card is a milestone checklist;
-// photos or other visuals may replace it later.
-const CARDS = [
+// the one beneath eases back and dims, so only one card holds the eye. The
+// second half of each card is a milestone checklist; photos or other visuals
+// may replace it later.
+//
+// Copy pass (Zjak, 2026-10-12): one lived moment per stage in a short, punchy
+// body, and the owner's part told as it happens, not saved for the end. Each
+// stage has a "Your part" line (two or three lines) that says plainly where
+// the effort is high; an effort meter was tried and dropped. The leaving
+// terms sit beside the ask, on the last card, which links to the printable
+// checklist.
+type Card = {
+  label: string;
+  title: string;
+  body: string;
+  yours?: string;
+  listTitle: string;
+  items: string[];
+  checklistLink?: boolean;
+};
+
+const CARDS: Card[] = [
   {
     label: "Days 1–30",
     title: "Set up",
-    body: "You sign, and one email arrives with a short list of what we need. We set you up on Xero, and on SimplePay if you have staff, all included in your fee, and your monthly rhythm starts. Behind on your books? The 3 months before you signed are included. Anything older we quote upfront and run alongside, so it never holds up your month.",
+    body: "You sign, and one email lands with a short list. Payday comes and your staff are paid as usual, now through SimplePay. Behind on your books? The 3 months before you signed are included. Anything older is quoted upfront and runs alongside.",
+    yours: "This is the month that needs you most. Send the list back, approve our access to SARS and your software, and tell us what else is missing.",
     listTitle: "Done by day 30",
     items: [
-      "Your details and access in hand",
-      "Xero set up, and SimplePay if you have staff",
-      "Payroll taken over on its next cycle",
-      "Your monthly rhythm running",
-      "Older catch-up quoted, if there is any",
+      "Your details captured and verified",
+      "Software setup done with access",
+      "Payroll taken over and running",
+      "Your first month closed",
+      "Catch-up work quoted, if there is any",
     ],
   },
   {
     label: "Days 31–60",
     title: "Settle",
-    body: "This is the month you stop chasing. Your books are processed, payroll and VAT go out on their cycles, and the months before you joined are brought up to date. We check your SARS profile, so you know what’s outstanding and the plan to clear it.",
+    body: "This is the month you stop chasing. The 7th arrives and your EMP201 is already filed. Your books are reconciled, and anything outstanding at SARS has a name and a plan.",
+    yours: "Much lighter. Answer the odd question about some transactions, and snap the slips we ask for. Most months, that’s a quick email reply from you.",
     listTitle: "Done by day 60",
     items: [
       "Each month processed and reconciled",
       "Payroll and VAT submitted on their cycles",
-      "The 3 included catch-up months up to date",
-      "Your SARS position checked",
+      "All your workflows created and scheduled",
+      "Your SARS position known, with an action plan",
     ],
   },
   {
     label: "Days 61–90",
     title: "Review",
-    body: "We sit down for your 90-day review: what we found, what we’ve fixed and what comes next. Tell us what’s working and what isn’t. You leave with a plan for the next quarter, and you stay because it works: month to month on 30 days’ notice. If you ever leave, we hand over your Xero file and SARS eFiling.",
+    body: "Ninety days in, we sit down properly: what we found, what we fixed, what’s still open. Your first reports set the baseline, and your feedback shapes the next ones.",
+    yours: "Commit some time for the review and bring your questions. Tell us honestly what’s working and what isn’t. That’s how the next quarter gets better.",
     listTitle: "Done by day 90",
     items: [
-      "Each month since you signed closed and reported",
-      "Your 90-day review held",
-      "Your feedback heard",
-      "A plan for the next quarter",
+      "Each month closed correctly since you signed",
+      "Your 90-day review is in the calendar",
+      "Your feedback is heard and valued",
+      "Now we start planning your next moves",
     ],
   },
   {
     // Same list as the welcome checklist sent on signing.
     label: "From you",
     title: "What we’ll need",
-    body: "One list, sent when you sign. The sooner it’s back, the sooner your rhythm starts.",
+    body: "Most of this you already have somewhere. Start gathering now and your first month will be a breeze. Can’t find something? With your go-ahead, we’ll ask your previous accountant. You stay month-to-month on 30 days’ notice, and if you leave, we hand over your Xero and eFiling.",
     listTitle: "Your checklist",
-    items: [
-      "CIPC registration details and SARS tax numbers",
-      "UIF and COIDA references, if registered",
-      "Xero access if you already use it, and SARS eFiling",
-      "Opening balances: financial statements, trial balance, ledger, debtors, creditors and fixed asset register",
-      "Your latest payroll run and employee details",
-      "Your go-ahead to contact your previous accountant",
-    ],
+    items: ONBOARDING_CHECKLIST.map((c) => c.item),
+    checklistLink: true,
   },
 ];
 
@@ -86,7 +102,7 @@ export function FirstNinetyDays() {
       <div className="mx-auto w-full max-w-6xl px-5 sm:px-6">
         <SectionHeading
           title="Your first 90 days"
-          subtitle="You sign, and we take it from there. Your monthly rhythm starts in the first month, and any backlog is cleared alongside it."
+          subtitle="The first month asks the most of you. After that, it settles into the monthly rhythm. Here’s what happens from the day you sign, and what we’ll need."
         />
 
         <div ref={deckRef} className="stack-deck mt-12">
@@ -101,6 +117,12 @@ export function FirstNinetyDays() {
                 <span className="deck-pill">{card.label}</span>
                 <h3 className="deck-title">{card.title}</h3>
                 <p className="deck-body">{card.body}</p>
+                {card.yours && (
+                  <div className="deck-yours">
+                    <p className="deck-yours-head">Your part</p>
+                    <p className="deck-yours-text">{card.yours}</p>
+                  </div>
+                )}
               </div>
               <div className="deck-panel">
                 <p className="deck-panel-title">{card.listTitle}</p>
@@ -114,6 +136,12 @@ export function FirstNinetyDays() {
                     </li>
                   ))}
                 </ul>
+                {card.checklistLink && (
+                  <Link href="/resources/onboarding-checklist" className="deck-panel-link">
+                    <Printer className="h-4 w-4" aria-hidden />
+                    Print or save the checklist
+                  </Link>
+                )}
               </div>
             </article>
           ))}

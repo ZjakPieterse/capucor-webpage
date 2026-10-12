@@ -147,6 +147,15 @@ describe('your first 90 days (interview 2026-10-12)', () => {
     expect(roadmap()).not.toMatch(/Basic|Premium|\bPro\b|weekly|daily|same.day|R ?\d|bank feed/);
   });
 
+  // The owner's part is told at every stage, not saved for the end, and the
+  // card, the printable page and the welcome checklist share one list.
+  it('tells the owner their part at each stage, from one checklist', () => {
+    expect(roadmap().match(/yours: "/g)).toHaveLength(3);
+    expect(roadmap()).toMatch(/ONBOARDING_CHECKLIST\.map/);
+    expect(src('app/(site)/resources/onboarding-checklist/page.tsx')).toMatch(/ONBOARDING_CHECKLIST/);
+    expect(src('config/onboardingChecklist.ts').replace(/^\s*\/\/.*$/gm, '')).not.toMatch(/bank feed|logins/i);
+  });
+
   it('runs catch-up alongside the rhythm, with the 3 included months', () => {
     expect(roadmap()).toMatch(/The 3 months before you signed are included/);
     expect(roadmap()).toMatch(/alongside/);
