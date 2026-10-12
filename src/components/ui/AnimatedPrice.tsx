@@ -62,10 +62,10 @@ export function AnimatedPrice({
   if (size === 'lg') {
     return (
       <span className={cn('inline-flex items-baseline font-sans text-foreground tracking-tight', className)}>
-        <span className="text-2xl font-bold text-muted-foreground mr-1 select-none">R</span>
+        <span className="text-xl font-semibold text-muted-foreground mr-1 select-none">R</span>
         <span
           ref={ref}
-          className="text-4xl font-extrabold font-mono tabular-nums leading-none"
+          className="text-[2.5rem] font-bold tracking-[-0.03em] tabular-nums leading-none"
         >
           {formatZARNumber(amount)}
         </span>
@@ -78,7 +78,7 @@ export function AnimatedPrice({
       <span className="text-xs font-semibold text-muted-foreground mr-0.5 select-none">R</span>
       <span
         ref={ref}
-        className="text-base font-semibold font-mono tabular-nums"
+        className="text-base font-semibold tabular-nums"
       >
         {formatZARNumber(amount)}
       </span>

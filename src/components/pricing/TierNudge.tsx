@@ -12,7 +12,7 @@ const NUDGE_ICONS: Record<string, LucideIcon> = {
 // preferred it, tweaks round 2): quiet styling, only the icon and wording
 // differ, except the featured package, whose pill is filled so it reads as
 // the recommendation (tweaks round 3).
-const FEATURED_TIER = 'pro';
+export const FEATURED_TIER = 'pro';
 export function TierNudge({ tierSlug }: { tierSlug: string }) {
   const nudge = TIER_NUDGES[tierSlug];
   if (!nudge) return null;

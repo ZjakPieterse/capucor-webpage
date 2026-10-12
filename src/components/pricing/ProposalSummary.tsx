@@ -85,7 +85,7 @@ export function ProposalSummary({
               {item.name}
               {item.label ? <span className="text-muted-foreground"> · {item.label}</span> : null}
             </span>
-            <span className="font-mono text-sm whitespace-nowrap">{formatZAR(item.price)}</span>
+            <span className="text-sm font-medium tabular-nums whitespace-nowrap">{formatZAR(item.price)}</span>
           </li>
         ))}
       </ul>
@@ -93,7 +93,7 @@ export function ProposalSummary({
       <div className="space-y-1.5 border-t border-primary/20 pt-3 text-sm">
         <div className="flex items-baseline justify-between">
           <span className="font-semibold">{totalLabel}</span>
-          <span className="font-mono text-lg font-bold">{formatZAR(monthly)}</span>
+          <span className="text-xl font-bold tracking-tight tabular-nums">{formatZAR(monthly)}</span>
         </div>
         <p className="pt-1 text-[11px] text-muted-foreground">
           Billed monthly in advance · cancel any time with 30 days&apos; notice

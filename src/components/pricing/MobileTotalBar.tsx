@@ -69,7 +69,7 @@ export function MobileTotalBar({
           <motion.div
             initial={{ scale: 0.95, opacity: 0.5 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="font-mono font-bold text-lg leading-tight"
+            className="font-bold text-lg leading-tight tabular-nums"
           >
             <AnimatedPrice amount={total} className="text-lg font-bold" />
             <span className="text-xs font-normal text-muted-foreground ml-1">/month</span>
