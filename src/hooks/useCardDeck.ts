@@ -7,15 +7,16 @@ import { useEffect, useRef } from 'react';
  * in globals.css). Used by the problem cards and Your first 90 days.
  *
  * Every card gets the tallest card's height and the same sticky top, so each
- * card covers the one beneath completely. The top centres the card between
- * the header and the bottom of the screen. A card too tall for that (most phones)
- * sticks by its bottom edge instead: read as it scrolls in, then held while
- * the next one covers it. Heights come from the small viewport (100svh), so
- * phone toolbars showing and hiding never move the stack. While the next card
- * slides over, `--deck-p` (0..1) eases the card back and dims it: written to
- * the DOM, not state, so scrolling never re-renders, and only transform and
- * opacity animate (no filter). A `--deck-overhang` (px) on the deck reserves
- * room above each card for a badge that sits on its top edge.
+ * card covers the one beneath completely. The card locks with its middle on
+ * the middle of the screen (Zjak, 2026-10-12: not just below the header). A
+ * card too tall for that locks as low as it can with its top still clear of
+ * the header, and one taller than the space below the header sticks by its
+ * bottom edge: read as it scrolls in, then held while the next one covers it.
+ * Heights come from the small viewport (100svh), so phone toolbars showing
+ * and hiding never move the stack. While the next card slides over,
+ * `--deck-p` (0..1) eases the card back and dims it: written to the DOM, not
+ * state, so scrolling never re-renders, and only transform and opacity
+ * animate (no filter).
  */
 export function useCardDeck<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -42,13 +43,10 @@ export function useCardDeck<T extends HTMLElement>() {
       const key = `${window.innerWidth}:${viewHeight}:${tallest}`;
       if (key !== lastKey) {
         lastKey = key;
-        // A deck whose cards carry a badge above their top edge sets
-        // --deck-overhang, so the badge clears the header too.
-        const overhang = parseFloat(getComputedStyle(deck).getPropertyValue('--deck-overhang')) || 0;
-        const header = (document.querySelector('header')?.offsetHeight ?? 64) + overhang;
+        const clear = (document.querySelector('header')?.offsetHeight ?? 64) + 12;
         const bottom = viewHeight - 12;
-        const centred = Math.round((header + bottom - tallest) / 2);
-        const top = centred >= header + 12 ? centred : bottom - tallest;
+        const centred = Math.round((viewHeight - tallest) / 2);
+        const top = tallest <= bottom - clear ? Math.max(centred, clear) : bottom - tallest;
         cards.forEach((card) => (card.style.top = `${top}px`));
       }
       cards.forEach((card) => {

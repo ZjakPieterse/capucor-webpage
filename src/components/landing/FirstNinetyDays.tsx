@@ -1,7 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calendar, Check, Printer } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CalendarCheck,
+  Check,
+  ClipboardList,
+  MessagesSquare,
+  Printer,
+  Settings2,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -32,26 +42,29 @@ import { useCardDeck } from "@/hooks/useCardDeck";
 // the effort is high; an effort meter was tried and dropped. The leaving
 // terms sit beside the ask, on the last card, which links to the printable
 // checklist.
+//
+// Clean stack (Zjak, 2026-10-12): no glow or drop shadow round the cards, so
+// nothing of the cards beneath shows round the one in view. The "Days 1–30"
+// pills and the three-bar progress track are gone: each card opens with an
+// icon beside its title, as on the cards in
+// "Three disciplines. One subscription." (Zjak: no hook line under it).
 type Card = {
-  label: string;
+  icon: LucideIcon;
   title: string;
   body: string;
   yours?: string;
   listTitle: string;
-  /** 1 to 3: how much of the 90 days is behind you. Omitted on "From you". */
-  stage?: number;
   items: string[];
   checklistLink?: boolean;
 };
 
 const CARDS: Card[] = [
   {
-    label: "Days 1–30",
+    icon: Settings2,
     title: "Set up",
     body: "You sign, and one email lands with a short list. Payday comes and your staff are paid as usual, now through SimplePay. Behind on your books? The 3 months before you signed are included. Anything older is quoted upfront and runs alongside.",
     yours: "This is the month that needs you most. Send the list back, approve our access to SARS and your software, and tell us what else is missing.",
     listTitle: "Done by day 30",
-    stage: 1,
     items: [
       "Your details captured and verified",
       "Software setup done with access",
@@ -61,12 +74,11 @@ const CARDS: Card[] = [
     ],
   },
   {
-    label: "Days 31–60",
+    icon: CalendarCheck,
     title: "Settle",
     body: "This is the month you stop chasing. The 7th arrives and your EMP201 is already filed. Your books are reconciled, and anything outstanding at SARS has a name and a plan.",
     yours: "Much lighter. Answer the odd question about some transactions, and snap the slips we ask for. Most months, that’s a quick email reply from you.",
     listTitle: "Done by day 60",
-    stage: 2,
     items: [
       "Each month processed and reconciled",
       "Payroll and VAT submitted on their cycles",
@@ -75,12 +87,11 @@ const CARDS: Card[] = [
     ],
   },
   {
-    label: "Days 61–90",
+    icon: MessagesSquare,
     title: "Review",
     body: "Ninety days in, we sit down properly: what we found, what we fixed, what’s still open. Your first reports set the baseline, and your feedback shapes the next ones.",
     yours: "Commit some time for the review and bring your questions. Tell us honestly what’s working and what isn’t. That’s how the next quarter gets better.",
     listTitle: "Done by day 90",
-    stage: 3,
     items: [
       "Each month closed correctly since you signed",
       "Your 90-day review is in the calendar",
@@ -90,7 +101,7 @@ const CARDS: Card[] = [
   },
   {
     // Same list as the welcome checklist sent on signing.
-    label: "From you",
+    icon: ClipboardList,
     title: "What we’ll need",
     body: "Most of this you already have somewhere. Start gathering now and your first month will be a breeze. Can’t find something? With your go-ahead, we’ll ask your previous accountant. You stay month-to-month on 30 days’ notice, and if you leave, we hand over your Xero and eFiling.",
     listTitle: "Your checklist",
@@ -113,17 +124,21 @@ export function FirstNinetyDays() {
           />
         </ScrollReveal>
 
-        <div ref={deckRef} className="stack-deck deck-overhang mt-12">
-          {CARDS.map((card, i) => (
+        <div ref={deckRef} className="stack-deck mt-12">
+          {CARDS.map(({ icon: Icon, ...card }, i) => (
             <article
-              key={card.label}
+              key={card.title}
               className="stack-card deck-card"
               data-flip={i % 2 === 1 ? "" : undefined}
-              aria-label={`${card.label}: ${card.title}`}
+              aria-label={card.title}
             >
               <div className="deck-card-copy">
-                <span className="deck-pill">{card.label}</span>
-                <h3 className="deck-title">{card.title}</h3>
+                <div className="deck-lockup">
+                  <span aria-hidden className="svc-icon">
+                    <Icon className="h-[22px] w-[22px]" />
+                  </span>
+                  <h3 className="deck-title">{card.title}</h3>
+                </div>
                 <p className="deck-body">{card.body}</p>
                 {card.yours && (
                   <div className="deck-yours">
@@ -133,19 +148,8 @@ export function FirstNinetyDays() {
                 )}
               </div>
               <div className="deck-panel">
-                {/* A plain label beside a track of how much of the 90 days is
-                    behind you (Zjak, 2026-10-12: no display numeral). The
-                    panel can move below the copy once photos arrive. */}
-                <div className="deck-panel-head">
-                  <p className="deck-panel-title">{card.listTitle}</p>
-                  {card.stage && (
-                    <span className="deck-progress" aria-hidden>
-                      {[1, 2, 3].map((s) => (
-                        <span key={s} data-on={s <= card.stage! ? "" : undefined} />
-                      ))}
-                    </span>
-                  )}
-                </div>
+                {/* The panel can move below the copy once photos arrive. */}
+                <p className="deck-panel-title">{card.listTitle}</p>
                 <ul className="deck-list">
                   {card.items.map((item) => (
                     <li key={item}>
