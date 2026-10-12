@@ -37,9 +37,7 @@ type Card = {
   title: string;
   body: string;
   yours?: string;
-  /** The panel's heading, read as one line: "Done by day" + "30". */
-  listLead: string;
-  listFigure: string;
+  listTitle: string;
   /** 1 to 3: how much of the 90 days is behind you. Omitted on "From you". */
   stage?: number;
   items: string[];
@@ -52,8 +50,7 @@ const CARDS: Card[] = [
     title: "Set up",
     body: "You sign, and one email lands with a short list. Payday comes and your staff are paid as usual, now through SimplePay. Behind on your books? The 3 months before you signed are included. Anything older is quoted upfront and runs alongside.",
     yours: "This is the month that needs you most. Send the list back, approve our access to SARS and your software, and tell us what else is missing.",
-    listLead: "Done by day",
-    listFigure: "30",
+    listTitle: "Done by day 30",
     stage: 1,
     items: [
       "Your details captured and verified",
@@ -68,8 +65,7 @@ const CARDS: Card[] = [
     title: "Settle",
     body: "This is the month you stop chasing. The 7th arrives and your EMP201 is already filed. Your books are reconciled, and anything outstanding at SARS has a name and a plan.",
     yours: "Much lighter. Answer the odd question about some transactions, and snap the slips we ask for. Most months, that’s a quick email reply from you.",
-    listLead: "Done by day",
-    listFigure: "60",
+    listTitle: "Done by day 60",
     stage: 2,
     items: [
       "Each month processed and reconciled",
@@ -83,8 +79,7 @@ const CARDS: Card[] = [
     title: "Review",
     body: "Ninety days in, we sit down properly: what we found, what we fixed, what’s still open. Your first reports set the baseline, and your feedback shapes the next ones.",
     yours: "Commit some time for the review and bring your questions. Tell us honestly what’s working and what isn’t. That’s how the next quarter gets better.",
-    listLead: "Done by day",
-    listFigure: "90",
+    listTitle: "Done by day 90",
     stage: 3,
     items: [
       "Each month closed correctly since you signed",
@@ -98,8 +93,7 @@ const CARDS: Card[] = [
     label: "From you",
     title: "What we’ll need",
     body: "Most of this you already have somewhere. Start gathering now and your first month will be a breeze. Can’t find something? With your go-ahead, we’ll ask your previous accountant. You stay month-to-month on 30 days’ notice, and if you leave, we hand over your Xero and eFiling.",
-    listLead: "Things to gather",
-    listFigure: String(ONBOARDING_CHECKLIST.length),
+    listTitle: "Your checklist",
     items: ONBOARDING_CHECKLIST.map((c) => c.item),
     checklistLink: true,
   },
@@ -139,14 +133,11 @@ export function FirstNinetyDays() {
                 )}
               </div>
               <div className="deck-panel">
-                {/* One line to a screen reader ("Done by day 30"); on screen
-                    the figure is the panel's display numeral, beside a track
-                    of how much of the 90 days is behind you. */}
+                {/* A plain label beside a track of how much of the 90 days is
+                    behind you (Zjak, 2026-10-12: no display numeral). The
+                    panel can move below the copy once photos arrive. */}
                 <div className="deck-panel-head">
-                  <p className="deck-panel-title">
-                    <span className="deck-panel-lead">{card.listLead}</span>{" "}
-                    <span className="deck-panel-figure">{card.listFigure}</span>
-                  </p>
+                  <p className="deck-panel-title">{card.listTitle}</p>
                   {card.stage && (
                     <span className="deck-progress" aria-hidden>
                       {[1, 2, 3].map((s) => (
@@ -155,10 +146,9 @@ export function FirstNinetyDays() {
                     </span>
                   )}
                 </div>
-                {/* The ticks fill in turn as the card arrives (RevealObserver). */}
                 <ul className="deck-list">
-                  {card.items.map((item, n) => (
-                    <li key={item} style={{ "--i": n } as React.CSSProperties}>
+                  {card.items.map((item) => (
+                    <li key={item}>
                       <span className="deck-check" aria-hidden>
                         <Check className="h-3.5 w-3.5" />
                       </span>
