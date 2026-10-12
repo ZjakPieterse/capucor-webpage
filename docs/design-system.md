@@ -68,10 +68,11 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   "Hero story beats" block in `globals.css`.
 - **Above-the-fold copy is final in the server HTML**: no `opacity: 0` or `filter` starting
   frame on a headline or primary button.
-- **The one `filter` exception: section headings blur into focus below the fold**
-  (`.heading-focus` on `SectionHeading`'s `<h2>` and `FinalCTA`, armed by `RevealObserver`; Zjak,
-  2026-10-12). Headings on screen at load are marked revealed first, so they never blur, and
-  phones (<640px) get a fade and lift with no blur. Don't extend the blur to body copy or above the fold.
+- **The one `filter` exception: section headings type in letter by letter below the fold**
+  (`TypedHeading` / `.heading-type`, used by `SectionHeading` and `FinalCTA`, armed by
+  `RevealObserver`; replaced a whole-heading blur-in, Zjak, 2026-10-12). Each letter fades, lifts
+  and, from `sm` up, sharpens from a 6px blur; phones (<640px) get no blur. Headings on screen at
+  load are marked revealed first, so they never re-type. Don't extend it to body copy or above the fold.
 - **Smooth wheel scrolling is Lenis** (`SmoothScroll` in `app/(site)/layout.tsx`). Touch stays
   native, it is off under reduced motion, and `html.lenis` turns off the CSS `scroll-behavior: smooth`
   so the two don't fight. Anchor jumps are offset 80px for the sticky navbar.
