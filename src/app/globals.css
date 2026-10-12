@@ -942,12 +942,11 @@
   }
 }
 
-/* Your first 90 days (FirstNinetyDays.tsx): wide cards that stick under the
-   header and stack as you scroll. --i staggers each card's top so the edges
-   of the cards beneath peek out; --deck-p (0..1, set in JS while the next card
-   slides over) eases a card back and dims it. Transform and opacity only:
-   a filter dim would stall behind hydration. JS may override top for a card
-   taller than the screen and sets a shared min-height. */
+/* Your first 90 days (FirstNinetyDays.tsx): wide cards that stick in the
+   middle of the screen and stack fully over each other as you scroll. JS sets
+   the shared, centred top and min-height; --deck-p (0..1, set in JS while the
+   next card slides over) eases a card back and dims it. Transform and opacity
+   only: a filter dim would stall behind hydration. */
 .deck {
   display: flex;
   flex-direction: column;
@@ -956,7 +955,7 @@
 
 .deck-card {
   position: sticky;
-  top: calc(76px + var(--i, 0) * 10px);
+  top: 76px;
   display: grid;
   gap: 16px;
   padding: 20px 18px;
@@ -1068,13 +1067,13 @@
     gap: 48px;
   }
   .deck-card {
-    top: calc(96px + var(--i, 0) * 16px);
+    top: max(96px, calc(50vh - 280px));
     grid-template-columns: 1.1fr 1fr;
     align-items: center;
     gap: 48px;
     padding: 48px 52px;
     border-radius: 28px;
-    min-height: min(500px, calc(100vh - 200px));
+    min-height: min(620px, calc(100vh - 160px));
   }
   /* Alternate sides, as the cards are dealt. */
   .deck-card[data-flip] .deck-card-copy {

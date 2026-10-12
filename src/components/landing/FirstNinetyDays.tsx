@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,8 @@ import { siteConfig } from "@/config/site";
 // leave.
 //
 // Wide cards that stack as you scroll (Zjak, 2026-10-12): each card sticks
-// under the header and the next one is dealt over it, while the one beneath
-// eases back and dims. The second half of each card is a milestone checklist;
+// in the middle of the screen and the next one is dealt fully over it, while
+// the one beneath eases back and dims, so only one card holds the eye. The second half of each card is a milestone checklist;
 // photos or other visuals may replace it later.
 const CARDS = [
   {
@@ -78,10 +78,9 @@ const CARDS = [
 ];
 
 /**
- * Deals the cards. Every card gets the tallest card's height, so a shorter card
- * never shows the one beneath. A card taller than the screen sticks by its
- * bottom edge instead (negative top), so it is read in full before the next one
- * covers it. While the next card slides over, `--deck-p` (0..1) eases the card
+ * Deals the cards. Every card gets the tallest card's height and the same
+ * sticky top, centred between the header and the bottom of the screen (above
+ * the phone CTA bar), so each card covers the one beneath completely. While the next card slides over, `--deck-p` (0..1) eases the card
  * back and dims it: written to the DOM, not state, so scrolling never
  * re-renders, and only transform and opacity animate (no filter).
  */
@@ -108,12 +107,12 @@ function useCardDeck() {
       const bar = document.querySelector<HTMLElement>(".mobile-cta-bar");
       const barHeight = bar && getComputedStyle(bar).display !== "none" ? bar.offsetHeight : 0;
       const bottom = window.innerHeight - barHeight - 12;
+      const top = Math.max(header + 12, Math.round((header + bottom - tallest) / 2));
       cards.forEach((card) => {
         card.style.minHeight = `${tallest}px`;
-        const cssTop = parseFloat(getComputedStyle(card).top) || 0;
-        if (cssTop + tallest > bottom) card.style.top = `${bottom - tallest}px`;
+        card.style.top = `${top}px`;
       });
-      if (bottom - tallest < header + 4) {
+      if (top + tallest > bottom) {
         deck.dataset.flat = "";
         cards.forEach((card) => card.style.setProperty("--deck-p", "0"));
       }
@@ -129,7 +128,7 @@ function useCardDeck() {
         let p = 0;
         if (next !== undefined) {
           const h = card.offsetHeight;
-          p = Math.min(1, Math.max(0, (h - (next - tops[i])) / (h * 0.9)));
+          p = Math.min(1, Math.max(0, (h - (next - tops[i])) / h));
         }
         card.style.setProperty("--deck-p", p.toFixed(3));
       });
@@ -186,7 +185,6 @@ export function FirstNinetyDays() {
               key={card.label}
               className="deck-card"
               data-flip={i % 2 === 1 ? "" : undefined}
-              style={{ "--i": i } as CSSProperties}
               aria-label={`${card.label}: ${card.title}`}
             >
               <div className="deck-card-copy">
