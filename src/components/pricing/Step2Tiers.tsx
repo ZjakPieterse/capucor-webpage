@@ -1,13 +1,13 @@
 'use client';
 
-import { CalendarClock, Check, Plus } from 'lucide-react';
+import { CalendarClock, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
 import { CoreServicesPanel } from './CoreServicesPanel';
 import { AnswerRecap } from './AnswerRecap';
-import { TierNudge } from './TierNudge';
+import { FEATURED_TIER, TierNudge } from './TierNudge';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
@@ -187,6 +187,25 @@ export function Step2Tiers({
                   </ul>
                 )}
               </div>
+
+              {/* Row 5: what a click does, said on the card (premium polish,
+                  2026-10-12; replaced the small corner + / tick). Reserved,
+                  invisible, when nothing is selectable. */}
+              <div className="pricing-card-cta mt-6">
+                {byCall ? (
+                  <div className="h-0 w-0 pointer-events-none opacity-0" aria-hidden="true" />
+                ) : (
+                  <span aria-hidden className={cn('tier-select', isSelected && 'is-selected')}>
+                    {isSelected ? (
+                      <>
+                        <Check className="h-4 w-4" strokeWidth={3} /> Selected
+                      </>
+                    ) : (
+                      <>Choose {tier.name}</>
+                    )}
+                  </span>
+                )}
+              </div>
             </>
           );
 
@@ -211,23 +230,16 @@ export function Step2Tiers({
               aria-label={`${tier.name} package`}
               aria-describedby={`tier-price-${tier.slug}`}
               className={cn(
-                'service-card pricing-card-item relative min-w-0 rounded-2xl border-2 p-6 pr-12 text-left outline-none w-full h-full flex flex-col',
+                'service-card pricing-card-item relative min-w-0 rounded-2xl border-2 p-6 text-left outline-none w-full h-full flex flex-col',
+                // The recommended package carries the lit border and glow
+                // before anything is chosen, like its filled nudge pill.
+                tier.slug === FEATURED_TIER && 'popular-card',
                 'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
                   : 'border-border bg-card/40 backdrop-blur-md'
               )}
             >
-              <span
-                aria-hidden
-                className={cn('service-card-toggle', isSelected && 'is-selected')}
-              >
-                {isSelected ? (
-                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                ) : (
-                  <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                )}
-              </span>
               {rows}
             </button>
           );

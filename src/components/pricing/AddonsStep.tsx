@@ -127,7 +127,7 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
     <span className="text-xs font-semibold text-primary">Included in {tierDisplayName(tierSlug)}</span>
   ) : (
     <>
-      <span className="font-mono text-sm font-bold whitespace-nowrap">{formatZAR(addon.priceZAR)}</span>
+      <span className="text-sm font-bold tabular-nums whitespace-nowrap">{formatZAR(addon.priceZAR)}</span>
       <span className="text-[10px] text-muted-foreground whitespace-nowrap">
         /month{addon.unit ? ` per ${addon.unit.singular}` : ''}
       </span>
@@ -200,7 +200,7 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
             >
               <Minus className="h-3.5 w-3.5" />
             </Button>
-            <span className="w-6 text-center font-mono text-sm font-semibold" aria-live="polite">
+            <span className="w-6 text-center text-sm font-semibold tabular-nums" aria-live="polite">
               {quantity}
             </span>
             <Button
