@@ -18,6 +18,7 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { motion, useReducedMotion } from "motion/react";
+import { useCardDeck } from "@/hooks/useCardDeck";
 
 const PROBLEMS = [
   {
@@ -183,6 +184,8 @@ function FlipCard({ item }: { item: Problem }) {
 }
 
 export function ProblemCards() {
+  const deckRef = useCardDeck<HTMLDivElement>();
+
   return (
     <section className="premium-section py-14 lg:py-20">
       <SectionDivider />
@@ -194,12 +197,20 @@ export function ProblemCards() {
           />
         </ScrollReveal>
 
-        {/* Each card flips on its own, so the reader turns problems into answers one at a time. */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[280px] mt-12">
-          {PROBLEMS.map((item, i) => (
-            <ScrollReveal key={item.title} delay={i * 0.08} className="h-full">
+        {/* Each card flips on its own, so the reader turns problems into answers
+            one at a time. On phones the cards stack as you scroll (Zjak,
+            2026-10-12; same deck as Your first 90 days); from sm up they sit in
+            the grid (.stack-deck-phone). The solid backing stops the card
+            beneath showing through the tinted problem face. */}
+        <div
+          ref={deckRef}
+          className="stack-deck stack-deck-phone mt-12"
+          data-hides-cta-bar=""
+        >
+          {PROBLEMS.map((item) => (
+            <div key={item.title} className="stack-card grid rounded-2xl bg-background">
               <FlipCard item={item} />
-            </ScrollReveal>
+            </div>
           ))}
         </div>
       </div>
