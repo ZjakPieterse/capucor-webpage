@@ -682,13 +682,19 @@
 
 /* Both faces wear the How it works card: the near-black page colour and a
    quiet blue-slate border (Zjak, 2026-10-12). Solid rather than 88% like
-   How it works, so the card stays opaque as it turns. Red and cyan return
-   only on hover. */
+   How it works, so the card stays opaque as it turns. */
 .problem-card[data-state="problem"],
 .problem-card[data-state="solution"] {
   background: var(--background);
   border-color: color-mix(in oklch, var(--primary) 28%, var(--border));
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* The problem side keeps a red border at rest so it never reads as the
+   answer (Zjak, 2026-10-12). Plain rgba, never mixed into the navy, which
+   turned it purple. */
+.problem-card[data-state="problem"] {
+  border-color: rgba(255, 101, 104, 0.35);
 }
 
 @media all {
