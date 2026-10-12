@@ -66,9 +66,7 @@ function BottomCTA() {
           Book a fit call and we&rsquo;ll walk you through which services fit your business.
         </p>
         <a
-          href={siteConfig.links.booking}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={siteConfig.links.fitCall}
           className="premium-button btn-quiet btn-outline-hover inline-flex items-center gap-2 rounded-lg border border-input bg-input/30 backdrop-blur-md px-5 py-2.5 text-sm font-medium transition-all"
         >
           Book a fit call →

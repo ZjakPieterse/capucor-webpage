@@ -15,6 +15,8 @@ export const SITEMAP_PATHS: ReadonlyArray<{
   { path: '/accounting', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/bookkeeping', changeFrequency: 'monthly', priority: 0.8 },
   { path: '/payroll', changeFrequency: 'monthly', priority: 0.8 },
+  { path: '/contact', changeFrequency: 'monthly', priority: 0.7 },
+  { path: '/resources', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/resources/compliance-calendar', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/resources/onboarding-checklist', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/terms/engagement', changeFrequency: 'yearly', priority: 0.3 },

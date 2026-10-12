@@ -35,6 +35,11 @@ export const siteConfig = {
     facebook: 'https://www.facebook.com/capucorbusinesssolutions',
     instagram: 'https://www.instagram.com/capucorbusinesssolutions/',
     linkedin: 'https://www.linkedin.com/company/capucor/',
+    // Every "Book a fit call" button goes here, not to the calendar: the
+    // visitor answers the /contact questions first and the booking link
+    // appears once they are sent (decision 2026-10-12). `booking` is used
+    // directly only there and in the signing document.
+    fitCall: '/contact',
     booking: process.env.NEXT_PUBLIC_BOOKING_URL ?? 'https://calendar.app.google/ixopmxLuGgNH5Lkk8',
   },
   // The service pages sit in the nav so they are reachable from every page,
@@ -42,6 +47,6 @@ export const siteConfig = {
   nav: [
     { label: 'Home', href: '/' },
     { label: 'Pricing', href: '/pricing' },
-    { label: 'Contact', href: '/#contact' },
+    { label: 'Contact', href: '/contact' },
   ],
 };

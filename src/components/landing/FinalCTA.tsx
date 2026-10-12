@@ -48,9 +48,7 @@ export function FinalCTA() {
             </Button>
 
             <a
-              href={siteConfig.links.booking}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={siteConfig.links.fitCall}
               className="premium-button btn-quiet btn-outline-hover inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-input bg-input/30 backdrop-blur-md px-6 text-sm font-semibold transition-all"
             >
               <Calendar className="h-4 w-4" />

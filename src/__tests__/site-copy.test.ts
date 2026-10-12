@@ -11,7 +11,7 @@ const src = (path: string) => readSource('src', path);
 
 describe('no unkept promises (F10, N13, F19, F22)', () => {
   it('quotes no reply time on the contact form or the Premium request', () => {
-    expect(src('components/landing/ContactForm.tsx')).not.toMatch(/working\s+day/);
+    expect(src('components/contact/ContactForm.tsx')).not.toMatch(/working\s+day/);
     expect(Object.values(PREMIUM_REQUEST_COPY).join(' ')).not.toMatch(/business day/);
   });
 
@@ -104,7 +104,7 @@ describe('navigation (decision 2026-10-08)', () => {
 
   it('the header button books a fit call, and there is no Client Portal link', () => {
     const nav = src('components/layout/Navbar.tsx');
-    expect(nav).toMatch(/siteConfig.links.booking/);
+    expect(nav).toMatch(/siteConfig.links.fitCall/);
     expect(nav).toMatch(/Book a fit call/);
     expect(nav).not.toMatch(/Client Portal|appUrl/);
   });
@@ -166,5 +166,35 @@ describe('your first 90 days (interview 2026-10-12)', () => {
   it('never claims the logins are the client\'s', () => {
     expect(roadmap()).not.toMatch(/logins/i);
     expect(SERVICE_PAGES.flatMap((p) => p.items.map((i) => i.description)).join(' ')).not.toMatch(/logins/i);
+  });
+});
+
+describe('fit call goes through /contact first (Zjak, 2026-10-12)', () => {
+  it('the calendar link appears only on /contact, after sending, and in the signing document', () => {
+    const files = [
+      'components/layout/Navbar.tsx',
+      'components/landing/HeroSection.tsx',
+      'components/landing/FinalCTA.tsx',
+      'components/landing/FirstNinetyDays.tsx',
+      'components/services/ServiceCtaPair.tsx',
+      'components/pricing/PricingCalculator.tsx',
+      'components/pricing/PricingErrorBoundary.tsx',
+      'components/pricing/Step2Tiers.tsx',
+      'app/not-found.tsx',
+      'app/error.tsx',
+    ];
+    for (const file of files) {
+      expect(src(file), file).not.toMatch(/links\.booking/);
+      expect(src(file), file).toMatch(/links\.fitCall/);
+    }
+    expect(siteConfig.links.fitCall).toBe('/contact');
+    const form = src('components/contact/ContactForm.tsx');
+    // The booking link sits after the `if (done)` guard, never in the form itself.
+    expect(form.indexOf('links.booking')).toBeGreaterThan(form.indexOf('if (done)'));
+    expect(form.indexOf('links.booking')).toBeLessThan(form.indexOf('<form'));
+  });
+
+  it('the homepage no longer carries the contact section', () => {
+    expect(src('app/(site)/page.tsx')).not.toMatch(/ContactSection/);
   });
 });

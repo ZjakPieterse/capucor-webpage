@@ -59,7 +59,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { website: _honeypot, consent_given, ...fields } = parsed.data;
+  // The /contact answers have no column of their own: they go in leads.config
+  // (a contact lead carries no calculator config), so the owner email and the
+  // retry runner render them with the rest of the row.
+  const { website: _honeypot, consent_given, answers, ...rest } = parsed.data;
+  const fields = { ...rest, config: rest.config ?? answers };
   const leadId = crypto.randomUUID();
   const consentTimestamp = new Date().toISOString();
 

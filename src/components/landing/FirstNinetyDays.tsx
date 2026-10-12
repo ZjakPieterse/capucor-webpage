@@ -186,9 +186,7 @@ export function FirstNinetyDays() {
             nativeButton={false}
             render={
               <a
-                href={siteConfig.links.booking}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={siteConfig.links.fitCall}
               />
             }
             variant="outline"

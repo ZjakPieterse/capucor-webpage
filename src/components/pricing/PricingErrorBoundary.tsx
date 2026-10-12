@@ -48,9 +48,7 @@ export function PricingUnavailable() {
         nativeButton={false}
         render={
           <a
-            href={siteConfig.links.booking}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={siteConfig.links.fitCall}
           />
         }
         className="gap-2"

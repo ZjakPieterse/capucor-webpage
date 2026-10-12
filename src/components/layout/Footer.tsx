@@ -54,8 +54,8 @@ const services = [
 
 const company = [
   { label: "How It Works", href: "/#how-it-works" },
-  { label: "Compliance calendar", href: "/resources/compliance-calendar" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Free resources", href: "/resources" },
+  { label: "Contact", href: "/contact" },
   { label: "Privacy Policy", href: "/privacy" },
 ];
 

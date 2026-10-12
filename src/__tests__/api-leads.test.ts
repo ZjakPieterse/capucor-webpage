@@ -55,7 +55,7 @@ beforeEach(() => {
 });
 
 describe('POST /api/leads', () => {
-  it('1. happy path — inserts lead and returns 200', async () => {
+  it('1. happy path â inserts lead and returns 200', async () => {
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
@@ -70,7 +70,7 @@ describe('POST /api/leads', () => {
     expect(inserted.consent_language).toBe('en-ZA');
   });
 
-  it('2. honeypot — silently 200s without inserting', async () => {
+  it('2. honeypot â silently 200s without inserting', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/leads', {
         ...validBody,
@@ -82,7 +82,7 @@ describe('POST /api/leads', () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
-  it('3. rate limited — 429 with Retry-After header, no insert', async () => {
+  it('3. rate limited â 429 with Retry-After header, no insert', async () => {
     vi.mocked(checkRateLimit).mockResolvedValueOnce({
       allowed: false,
       retryAfter: 42,
@@ -94,14 +94,14 @@ describe('POST /api/leads', () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
-  it('4. malformed JSON — 400', async () => {
+  it('4. malformed JSON â 400', async () => {
     const res = await POST(makeJsonRequest('http://test/api/leads', null, { raw: '{not json' }));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: 'Invalid request body.' });
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
-  it('5. zod invalid — missing name returns 422 with field', async () => {
+  it('5. zod invalid â missing name returns 422 with field', async () => {
     const withoutName = {
       source: validBody.source,
       email: validBody.email,
@@ -115,7 +115,7 @@ describe('POST /api/leads', () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
-  it('6. zod invalid — consent_given:false returns 422 with field', async () => {
+  it('6. zod invalid â consent_given:false returns 422 with field', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/leads', {
         ...validBody,
@@ -126,7 +126,7 @@ describe('POST /api/leads', () => {
     expect((await res.json()).field).toBe('consent_given');
   });
 
-  it('7. zod invalid — config.brackets with negative number rejected (C4)', async () => {
+  it('7. zod invalid â config.brackets with negative number rejected (C4)', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/leads', {
         ...validBody,
@@ -140,7 +140,7 @@ describe('POST /api/leads', () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
-  it('8. supabase insert error — 500', async () => {
+  it('8. supabase insert error â 500', async () => {
     mountSupabase(async () => ({ error: new Error('db boom') }));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
@@ -150,7 +150,7 @@ describe('POST /api/leads', () => {
     errorSpy.mockRestore();
   });
 
-  it('9. no RESEND_API_KEY — falls through to console.log path', async () => {
+  it('9. no RESEND_API_KEY â falls through to console.log path', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
     expect(res.status).toBe(200);
@@ -160,7 +160,7 @@ describe('POST /api/leads', () => {
     logSpy.mockRestore();
   });
 
-  it('10. resend throws — lead still saved, 200 returned', async () => {
+  it('10. resend throws â lead still saved, 200 returned', async () => {
     process.env.RESEND_API_KEY = 'test_key';
     process.env.OWNER_NOTIFICATION_EMAIL = 'owner@example.com';
     sendEmailMock.mockResolvedValueOnce({
@@ -182,5 +182,35 @@ describe('POST /api/leads', () => {
         eventType: 'lead.owner_notification',
       }),
     );
+  });
+
+  const contactAnswers = {
+    turnover: 'R1m to R5m',
+    teamSize: '6 to 20',
+    services: ['Bookkeeping and Xero', 'Payroll'],
+    booksNow: 'Another accounting firm',
+    mainReason: 'My books are behind',
+  };
+
+  it('11. contact answers — stored in leads.config, not as a column', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/leads', { ...validBody, source: 'contact', answers: contactAnswers }),
+    );
+    expect(res.status).toBe(200);
+    const inserted = insertSpy.mock.calls[0]![0] as Record<string, unknown>;
+    expect(inserted.config).toEqual(contactAnswers);
+    expect(inserted).not.toHaveProperty('answers');
+  });
+
+  it('12. contact answers — an option not on the list is rejected', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/leads', {
+        ...validBody,
+        source: 'contact',
+        answers: { ...contactAnswers, turnover: 'A billion' },
+      }),
+    );
+    expect(res.status).toBe(422);
+    expect(insertSpy).not.toHaveBeenCalled();
   });
 });

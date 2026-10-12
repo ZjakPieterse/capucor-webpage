@@ -1,4 +1,11 @@
 import { z } from 'zod';
+import {
+  BOOKS_NOW_OPTIONS,
+  MAIN_REASON_OPTIONS,
+  SERVICE_OPTIONS,
+  TEAM_SIZE_OPTIONS,
+  TURNOVER_OPTIONS,
+} from '@/config/contactQuestions';
 
 // Calculator state snapshot persisted with a lead. The shape mirrors what the
 // pricing calculator writes when a visitor submits a quote/signup/enterprise
@@ -14,6 +21,19 @@ export const CalculatorConfigSchema = z.object({
 });
 
 export type CalculatorConfig = z.infer<typeof CalculatorConfigSchema>;
+
+// The /contact qualifying answers. The route stores them in leads.config.
+export const ContactAnswersSchema = z
+  .object({
+    turnover: z.enum(TURNOVER_OPTIONS),
+    teamSize: z.enum(TEAM_SIZE_OPTIONS),
+    services: z.array(z.enum(SERVICE_OPTIONS)).min(1, 'Pick at least one service').max(SERVICE_OPTIONS.length),
+    booksNow: z.enum(BOOKS_NOW_OPTIONS),
+    mainReason: z.enum(MAIN_REASON_OPTIONS),
+  })
+  .strict();
+
+export type ContactAnswers = z.infer<typeof ContactAnswersSchema>;
 
 export const LeadSchema = z.object({
   // Keep in sync with the leads.source CHECK constraint (leads_source_check in
@@ -35,6 +55,7 @@ export const LeadSchema = z.object({
   phone: z.string().max(20).optional(),
   message: z.string().max(2000).optional(),
   config: CalculatorConfigSchema.optional(),
+  answers: ContactAnswersSchema.optional(),
   consent_given: z.literal(true, {
     message: 'You must consent before submitting.',
   }),

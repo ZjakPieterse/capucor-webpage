@@ -44,9 +44,7 @@ export default function NotFound() {
           className="gap-2"
           render={
             <a
-              href={siteConfig.links.booking}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={siteConfig.links.fitCall}
             />
           }
         >
