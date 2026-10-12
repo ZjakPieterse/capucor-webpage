@@ -109,11 +109,13 @@ export const PREMIUM_REQUEST_COPY = {
 // The review step's "what happens next" note (funnel review F14, 2026-10-08).
 // Facts only, no timelines: the proposal is emailed on both paths, signing is
 // online, and we set up the Paysoft debit order and onboarding by hand
-// after the owner email (docs/payments.md).
+// after the owner email (docs/payments.md). Worded for both buttons: Accept
+// opens the proposal at once, so "We email you your proposal" read wrong
+// there (premium polish review, 2026-10-12).
 export const AFTER_YOU_SIGN = [
-  'We email you your proposal.',
-  'You review it and sign online.',
-  'We set up your debit order and your onboarding.',
+  'You sign your proposal online, now or from the copy we email you.',
+  'We set up your debit order.',
+  'Your onboarding starts with one email and a short list.',
 ] as const;
 
 // The /pricing trust bar. Sentence case, one fact each (funnel review F13,

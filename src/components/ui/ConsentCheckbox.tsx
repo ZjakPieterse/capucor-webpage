@@ -28,7 +28,7 @@ export function ConsentCheckbox({
           aria-required="true"
           aria-describedby={error ? `${id}-error` : undefined}
         />
-        <Label htmlFor={id} className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+        <Label htmlFor={id} className="block text-sm text-muted-foreground leading-relaxed cursor-pointer">
           I consent to Capucor Business Solutions contacting me about this
           enquiry in accordance with{' '}
           <Link href="/privacy" className="text-primary underline underline-offset-2 hover:no-underline">

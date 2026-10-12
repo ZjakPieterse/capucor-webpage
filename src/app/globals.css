@@ -667,19 +667,63 @@
    made the card bounce as it turned over (Zjak, 2026-10-08). Only the red /
    blue [data-state] border + glow remain. The !important beats the
    reduced-motion hover lift and the touch :active press further down. */
+/* Each face is solid, with no backdrop blur and nothing painted behind the
+   card: a blurred face in a 3D turn renders black, and the old backing showed
+   as a dark slab while the card was edge-on. Mid-flip, only the page shows
+   (Zjak, 2026-10-12). The tint is mixed into an opaque colour so the faces
+   stay as deep as before. */
 .problem-card {
+  position: relative;
+  border: 1px solid;
   transition:
     box-shadow 360ms cubic-bezier(0.16, 1, 0.3, 1),
     border-color 360ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.problem-card[data-state="problem"] {
+  border-color: color-mix(in oklch, var(--destructive) 28%, var(--border));
+  background:
+    radial-gradient(
+      420px circle at 0% 0%,
+      color-mix(in oklch, var(--destructive) 10%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in oklch, var(--destructive) 6%, #0b1324) 0%,
+      #080f1f 100%
+    );
+  box-shadow:
+    0 1px 0 color-mix(in oklch, white 7%, transparent) inset,
+    0 18px 44px -30px rgba(0, 0, 0, 0.9);
+}
+
+.problem-card[data-state="solution"] {
+  border-color: color-mix(in oklch, var(--primary) 32%, var(--border));
+  background:
+    radial-gradient(
+      420px circle at 0% 0%,
+      color-mix(in oklch, var(--primary) 12%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in oklch, var(--primary) 5%, #0c162b) 0%,
+      #08101f 100%
+    );
+  box-shadow:
+    0 1px 0 color-mix(in oklch, white 8%, transparent) inset,
+    0 18px 44px -30px rgba(0, 0, 0, 0.9),
+    0 0 32px -12px color-mix(in oklch, var(--primary) 22%, transparent);
+}
+
 @media all {
-  .problem-card.premium-card:hover,
-  .problem-card.premium-card:active {
+  .problem-card:hover,
+  .problem-card:active {
     transform: none !important;
   }
 
-  .problem-card.premium-card:hover svg {
+  .problem-card:hover svg {
     transform: none;
     filter: none;
   }
@@ -973,6 +1017,12 @@
   }
 }
 
+/* Problem cards turn over, so their slot paints nothing of its own: the faces
+   carry the shadow, and mid-flip only the page shows. */
+.stack-deck-phone .stack-card {
+  box-shadow: none;
+}
+
 /* Phone-only deck (ProblemCards): from sm up the cards sit in a plain grid,
    two then four across, with no stacking, scale or dim. */
 @media (min-width: 640px) {
@@ -985,7 +1035,6 @@
     position: relative;
     /* Beats the inline sticky top useCardDeck writes. */
     top: 0 !important;
-    box-shadow: none;
     transform: none;
     will-change: auto;
   }
@@ -1323,7 +1372,10 @@
 }
 
 @media all {
-  .service-card:not(.is-selected):hover {
+  /* [data-hover-wait]: a Yes / No step that has just appeared under a resting
+     pointer shows no hover until the pointer moves, so the choice under it
+     never looks pre-selected (QuestionStep.tsx). */
+  :not([data-hover-wait]) > .service-card:not(.is-selected):hover {
     transform: translateY(-3px);
     border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
     background-color: color-mix(in oklch, var(--muted) 25%, transparent);
@@ -1717,7 +1769,7 @@
   .fcc-tile:hover {
     transform: translateY(-4px) scale(1.03) !important;
   }
-  .service-card:not(.is-selected):hover {
+  :not([data-hover-wait]) > .service-card:not(.is-selected):hover {
     transform: translateY(-6px) !important;
   }
 
