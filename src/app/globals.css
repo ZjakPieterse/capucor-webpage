@@ -680,21 +680,16 @@
     border-color 360ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Both faces wear the How it works card: the near-black page colour and a
-   quiet blue-slate border (Zjak, 2026-10-12). Solid rather than 88% like
-   How it works, so the card stays opaque as it turns. */
+/* Both faces: the near-black page colour of the How it works cards (solid,
+   so the card stays opaque as it turns) and a clear, neutral border at rest.
+   Red or cyan shows only on hover, tap or once the card has been clicked
+   (focus-within), never at rest (Zjak, 2026-10-12). Plain colours, never red
+   mixed into the navy, which read purple. */
 .problem-card[data-state="problem"],
 .problem-card[data-state="solution"] {
   background: var(--background);
-  border-color: color-mix(in oklch, var(--primary) 28%, var(--border));
+  border-color: rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-}
-
-/* The problem side keeps a red border at rest so it never reads as the
-   answer (Zjak, 2026-10-12). Plain rgba, never mixed into the navy, which
-   turned it purple. */
-.problem-card[data-state="problem"] {
-  border-color: rgba(255, 101, 104, 0.35);
 }
 
 @media all {
@@ -708,13 +703,17 @@
     filter: none;
   }
 
-  .problem-card[data-state="problem"]:hover {
-    border-color: color-mix(in oklch, var(--destructive) 46%, transparent);
+  .problem-card[data-state="problem"]:hover,
+  .problem-card[data-state="problem"]:active,
+  .problem-card[data-state="problem"]:focus-within {
+    border-color: rgba(255, 101, 104, 0.46);
     box-shadow: 0 12px 40px -8px
       color-mix(in oklch, var(--destructive) 20%, transparent);
   }
 
-  .problem-card[data-state="solution"]:hover {
+  .problem-card[data-state="solution"]:hover,
+  .problem-card[data-state="solution"]:active,
+  .problem-card[data-state="solution"]:focus-within {
     border-color: color-mix(in oklch, var(--primary) 40%, transparent);
     box-shadow: 0 12px 40px -8px
       color-mix(in oklch, var(--primary) 18%, transparent);
