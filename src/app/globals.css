@@ -1104,6 +1104,30 @@
   color: var(--primary);
 }
 
+/* Below desktop the date pill sits on the card's top edge, like the step
+   badges in How it works, so the card itself is shorter (Zjak, 2026-10-12).
+   It fades with the card beneath as the next one is dealt.  */
+@media (max-width: 1023px) {
+  .deck-overhang {
+    --deck-overhang: 18px;
+  }
+  .deck-card {
+    padding-top: 30px;
+  }
+  .deck-pill {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: 6;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 24px color-mix(in oklch, var(--primary) 35%, transparent);
+    opacity: calc(1 - var(--deck-p, 0) * 0.55);
+  }
+  .deck-title {
+    margin-top: 0;
+  }
+}
+
 /* "Your part": the owner's part in the stage, told under the scene. */
 .deck-yours {
   align-self: stretch;
