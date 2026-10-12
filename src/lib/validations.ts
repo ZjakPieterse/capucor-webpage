@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
   BOOKS_NOW_OPTIONS,
-  MAIN_REASON_OPTIONS,
   SERVICE_OPTIONS,
   TEAM_SIZE_OPTIONS,
   TURNOVER_OPTIONS,
@@ -29,7 +28,9 @@ export const ContactAnswersSchema = z
     teamSize: z.enum(TEAM_SIZE_OPTIONS),
     services: z.array(z.enum(SERVICE_OPTIONS)).min(1, 'Pick at least one service').max(SERVICE_OPTIONS.length),
     booksNow: z.enum(BOOKS_NOW_OPTIONS),
-    mainReason: z.enum(MAIN_REASON_OPTIONS),
+    // Dropped from the form 2026-10-12. Still accepted so a page loaded before
+    // that deploy can submit.
+    mainReason: z.string().max(100).optional(),
   })
   .strict();
 

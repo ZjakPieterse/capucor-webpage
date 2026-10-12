@@ -5,13 +5,15 @@ import { CalendarClock, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
 import { siteConfig } from '@/config/site';
 import { CONTACT_QUESTIONS } from '@/config/contactQuestions';
 import { cn } from '@/lib/utils';
 
-type SingleKey = 'turnover' | 'teamSize' | 'booksNow' | 'mainReason';
+type SingleKey = 'turnover' | 'teamSize' | 'booksNow';
 
 // The booking link is rendered only in the sent state: every "Book a fit call"
 // on the site lands here, and the answers come first (decision 2026-10-12).
@@ -44,9 +46,8 @@ export function ContactForm() {
     if (!business.trim()) return 'Please enter your business name.';
     if (!single.turnover) return 'Please pick your annual turnover.';
     if (!single.teamSize) return 'Please pick how many people are in the business.';
-    if (services.length === 0) return 'Please pick at least one thing you need help with.';
     if (!single.booksNow) return 'Please tell us who does your books now.';
-    if (!single.mainReason) return 'Please tell us what made you look now.';
+    if (services.length === 0) return 'Please pick at least one thing you need help with.';
     if (!consent) return 'Please tick the consent box so we can reply.';
     return null;
   }
@@ -176,37 +177,16 @@ export function ContactForm() {
         <legend className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">
           About your business
         </legend>
-        <ChoiceGroup
-          name="turnover"
-          {...CONTACT_QUESTIONS.turnover}
-          selected={single.turnover ? [single.turnover] : []}
-          onPick={(v) => setSingle((s) => ({ ...s, turnover: v }))}
-        />
-        <ChoiceGroup
-          name="teamSize"
-          {...CONTACT_QUESTIONS.teamSize}
-          selected={single.teamSize ? [single.teamSize] : []}
-          onPick={(v) => setSingle((s) => ({ ...s, teamSize: v }))}
-        />
-        <ChoiceGroup
-          name="services"
-          multiple
-          {...CONTACT_QUESTIONS.services}
-          selected={services}
-          onPick={toggleService}
-        />
-        <ChoiceGroup
-          name="booksNow"
-          {...CONTACT_QUESTIONS.booksNow}
-          selected={single.booksNow ? [single.booksNow] : []}
-          onPick={(v) => setSingle((s) => ({ ...s, booksNow: v }))}
-        />
-        <ChoiceGroup
-          name="mainReason"
-          {...CONTACT_QUESTIONS.mainReason}
-          selected={single.mainReason ? [single.mainReason] : []}
-          onPick={(v) => setSingle((s) => ({ ...s, mainReason: v }))}
-        />
+        {(['turnover', 'teamSize', 'booksNow'] as const).map((key) => (
+          <SelectField
+            key={key}
+            id={`ct-${key}`}
+            {...CONTACT_QUESTIONS[key]}
+            value={single[key]}
+            onChange={(v) => setSingle((s) => ({ ...s, [key]: v }))}
+          />
+        ))}
+        <ServiceChecklist {...CONTACT_QUESTIONS.services} selected={services} onToggle={toggleService} />
         <Field id="ct-message" label="Anything else we should know?" optional>
           <Textarea
             id="ct-message"
@@ -274,49 +254,73 @@ function Field({
   );
 }
 
-function ChoiceGroup({
-  name,
+function SelectField({
+  id,
+  label,
+  placeholder,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  placeholder: string;
+  options: readonly string[];
+  value: string | undefined;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Select
+        value={value ?? ''}
+        onValueChange={(v) => onChange(String(v))}
+        items={Object.fromEntries(options.map((o) => [o, o]))}
+      >
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent align="start" className="rounded-xl p-1.5">
+          {options.map((option) => (
+            <SelectItem key={option} value={option} className="rounded-lg py-2 pl-3 pr-9">
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+// A checkbox card per service, two to a row from sm up (modelled on the
+// multi-select on uppitai.com/contact, Zjak 2026-10-12).
+function ServiceChecklist({
   label,
   hint,
   options,
   selected,
-  multiple,
-  onPick,
+  onToggle,
 }: {
-  name: string;
   label: string;
-  hint?: string;
+  hint: string;
   options: readonly string[];
   selected: string[];
-  multiple?: boolean;
-  onPick: (value: string) => void;
+  onToggle: (value: string) => void;
 }) {
-  const labelId = `ct-${name}-label`;
   return (
-    <div className="space-y-2.5">
-      <p id={labelId} className="text-sm font-medium">
-        {label}
-        {hint && <span className="text-muted-foreground font-normal"> {hint}</span>}
+    <div className="space-y-2.5" role="group" aria-labelledby="ct-services-label">
+      <p id="ct-services-label" className="text-sm font-medium">
+        {label} <span className="text-muted-foreground font-normal">{hint}</span>
       </p>
-      <div
-        role={multiple ? 'group' : 'radiogroup'}
-        aria-labelledby={labelId}
-        className="flex flex-wrap gap-2"
-      >
-        {options.map((option) => {
+      <div className="grid gap-3 sm:grid-cols-2">
+        {options.map((option, i) => {
+          const id = `ct-service-${i}`;
           const on = selected.includes(option);
           return (
-            <button
-              key={option}
-              type="button"
-              role={multiple ? 'checkbox' : 'radio'}
-              aria-checked={on}
-              onClick={() => onPick(option)}
-              className={cn('choice-chip', on && 'choice-chip-on')}
-            >
-              {multiple && on && <Check className="size-3.5" aria-hidden />}
-              {option}
-            </button>
+            <label key={option} htmlFor={id} className={cn('check-card', on && 'check-card-on')}>
+              <Checkbox id={id} checked={on} onCheckedChange={() => onToggle(option)} />
+              <span>{option}</span>
+            </label>
           );
         })}
       </div>

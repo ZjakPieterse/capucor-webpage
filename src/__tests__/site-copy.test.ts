@@ -198,3 +198,16 @@ describe('fit call goes through /contact first (Zjak, 2026-10-12)', () => {
     expect(src('app/(site)/page.tsx')).not.toMatch(/ContactSection/);
   });
 });
+
+describe('contact form layout (Zjak, 2026-10-12)', () => {
+  it('asks turnover, team size and books as dropdowns, then the services checklist', async () => {
+    const { CONTACT_QUESTIONS } = await import('@/config/contactQuestions');
+    expect(Object.keys(CONTACT_QUESTIONS)).toEqual(['turnover', 'teamSize', 'booksNow', 'services']);
+    const form = src('components/contact/ContactForm.tsx');
+    expect(form).toMatch(/\['turnover', 'teamSize', 'booksNow'\] as const\)\.map/);
+    expect(form).toMatch(/<SelectField/);
+    expect(form).toMatch(/<ServiceChecklist/);
+    expect(form).not.toMatch(/mainReason|choice-chip/);
+    expect(src('app/(site)/contact/page.tsx')).toMatch(/Let&apos;s get in touch/);
+  });
+});

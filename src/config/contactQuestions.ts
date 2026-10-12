@@ -15,6 +15,13 @@ export const TURNOVER_OPTIONS = [
 
 export const TEAM_SIZE_OPTIONS = ['Just me', '2 to 5', '6 to 20', '21 to 50', 'More than 50'] as const;
 
+export const BOOKS_NOW_OPTIONS = [
+  'I do them myself',
+  'Someone on my team',
+  'Another accounting firm',
+  'Nobody at the moment',
+] as const;
+
 export const SERVICE_OPTIONS = [
   'Bookkeeping and Xero',
   'Annual financial statements',
@@ -23,26 +30,15 @@ export const SERVICE_OPTIONS = [
   'Not sure yet',
 ] as const;
 
-export const BOOKS_NOW_OPTIONS = [
-  'I do them myself',
-  'Someone on my team',
-  'Another accounting firm',
-  'Nobody at the moment',
-] as const;
-
-export const MAIN_REASON_OPTIONS = [
-  'My books are behind',
-  'I worry about SARS or CIPC deadlines',
-  'I don’t get numbers I can run the business on',
-  'I’m unhappy with my current accountant',
-  'I’m starting a new business',
-  'Something else',
-] as const;
-
+// Form order (Zjak, 2026-10-12): three dropdowns, then the services checklist.
+// "What made you look for an accountant now?" was dropped the same day.
 export const CONTACT_QUESTIONS = {
-  turnover: { label: 'Annual turnover', options: TURNOVER_OPTIONS },
-  teamSize: { label: 'People in the business, including you', options: TEAM_SIZE_OPTIONS },
+  turnover: { label: 'Annual turnover', placeholder: 'Select turnover', options: TURNOVER_OPTIONS },
+  teamSize: {
+    label: 'People in the business, including you',
+    placeholder: 'Select team size',
+    options: TEAM_SIZE_OPTIONS,
+  },
+  booksNow: { label: 'Who does your books now?', placeholder: 'Select one', options: BOOKS_NOW_OPTIONS },
   services: { label: 'What do you need help with?', hint: 'Pick all that apply.', options: SERVICE_OPTIONS },
-  booksNow: { label: 'Who does your books now?', options: BOOKS_NOW_OPTIONS },
-  mainReason: { label: 'What made you look for an accountant now?', options: MAIN_REASON_OPTIONS },
 } as const;
