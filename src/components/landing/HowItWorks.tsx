@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { useSectionScrollProgress } from "@/hooks/useSectionScrollProgress";
 
@@ -73,10 +74,12 @@ export function HowItWorks() {
     >
       <SectionDivider />
       <div className="mx-auto w-full max-w-6xl px-6">
-        <SectionHeading
-          title="A rhythm that keeps you in control"
-          subtitle="Great finance work needs a clear rhythm. We process, review, report, and advise. Every period closes on time and reconciled, leaving you with the insights you need for your next move."
-        />
+        <ScrollReveal>
+          <SectionHeading
+            title="A rhythm that keeps you in control"
+            subtitle="Great finance work needs a clear rhythm. We process, review, report, and advise. Every period closes on time and reconciled, leaving you with the insights you need for your next move."
+          />
+        </ScrollReveal>
 
         <div ref={timelineRef} className="how-timeline mt-12">
           <div className="how-spine" aria-hidden="true" />
