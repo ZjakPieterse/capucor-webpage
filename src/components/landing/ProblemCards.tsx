@@ -111,12 +111,12 @@ function FlipCard({ item }: { item: Problem }) {
       >
         <div
           data-state="problem"
-          className="problem-card premium-card h-full rounded-2xl border border-destructive/30 bg-destructive/5 p-6 flex flex-col"
+          className="problem-card h-full rounded-2xl p-6 flex flex-col"
         >
           <div className="flex-1">
             <div className="mb-4 flex items-center gap-3">
               <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10">
-                <item.icon className="h-5 w-5 text-destructive animate-pulse" />
+                <item.icon className="h-5 w-5 text-destructive" />
               </div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-destructive/80">
                 The Problem
@@ -150,7 +150,7 @@ function FlipCard({ item }: { item: Problem }) {
       >
         <div
           data-state="solution"
-          className="problem-card premium-card h-full rounded-2xl border border-primary/30 bg-card shadow-[0_0_20px_rgba(45,212,255,0.05)] p-6 flex flex-col"
+          className="problem-card h-full rounded-2xl p-6 flex flex-col"
         >
           <div className="flex-1">
             <div className="mb-4 flex items-center gap-3">
@@ -200,14 +200,14 @@ export function ProblemCards() {
         {/* Each card flips on its own, so the reader turns problems into answers
             one at a time. On phones the cards stack as you scroll (Zjak,
             2026-10-12; same deck as Your first 90 days); from sm up they sit in
-            the grid (.stack-deck-phone). The solid backing stops the card
-            beneath showing through the tinted problem face. */}
+            the grid (.stack-deck-phone). Both faces are opaque (.problem-card),
+            so nothing sits behind a card and only the page shows mid-flip. */}
         <div
           ref={deckRef}
           className="stack-deck stack-deck-phone mt-12"
         >
           {PROBLEMS.map((item) => (
-            <div key={item.title} className="stack-card grid rounded-2xl bg-background">
+            <div key={item.title} className="stack-card grid rounded-2xl">
               <FlipCard item={item} />
             </div>
           ))}

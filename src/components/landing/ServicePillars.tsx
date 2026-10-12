@@ -68,12 +68,17 @@ export function ServicePillars() {
 
         <ScrollReveal delay={0.3}>
           <div className="mt-12 text-center">
-            <a
-              href="/pricing"
-              className="premium-button inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
+            {/* The same flagship button as the hero and Your first 90 days. */}
+            <Button
+              nativeButton={false}
+              render={<Link href="/pricing" />}
+              size="lg"
+              className="gradient-cta gap-2"
             >
-              Build your subscription →
-            </a>
+              <span className="relative z-[2] inline-flex items-center gap-2">
+                Build your subscription <ArrowRight className="h-4 w-4" aria-hidden />
+              </span>
+            </Button>
           </div>
         </ScrollReveal>
       </div>

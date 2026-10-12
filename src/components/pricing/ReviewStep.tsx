@@ -131,7 +131,7 @@ export function ReviewStep({
       )}
 
       <p className="text-[11px] text-muted-foreground text-center">
-        No payment needed yet · cancel any time with 30 days&apos; notice
+        No payment needed yet
       </p>
 
       <div className="flex justify-start pt-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Check, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -146,6 +146,10 @@ export function YesNoQuestion({ value, onAnswer, ...shell }: YesNoQuestionProps)
   // the arrow keys move focus between Yes and No. Focus only; Space or Enter
   // answers, so arrowing past an answer does not move the wizard on.
   const tabStop = value === false ? 1 : 0;
+  // Yes moves straight on to the next Yes / No question, under the same
+  // resting pointer: hold the hover glow until the pointer moves there.
+  const [movedOn, setMovedOn] = useState<string | null>(null);
+  const hoverWait = movedOn !== shell.copy.title;
   function onKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, index: number) {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     e.preventDefault();
@@ -154,7 +158,13 @@ export function YesNoQuestion({ value, onAnswer, ...shell }: YesNoQuestionProps)
 
   return (
     <QuestionShell {...shell} canProceed={value !== null}>
-      <div role="radiogroup" aria-label={shell.copy.title} className="grid grid-cols-2 gap-3 sm:gap-4">
+      <div
+        role="radiogroup"
+        aria-label={shell.copy.title}
+        className="grid grid-cols-2 gap-3 sm:gap-4"
+        data-hover-wait={hoverWait ? '' : undefined}
+        onPointerMove={hoverWait ? () => setMovedOn(shell.copy.title) : undefined}
+      >
         {choices.map(({ label, value: choice, Icon }, index) => {
           const isSelected = value === choice;
           return (
