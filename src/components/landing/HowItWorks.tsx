@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { useSectionScrollProgress } from "@/hooks/useSectionScrollProgress";
-import { useTimelineReach } from "@/hooks/useTimelineReach";
 
 // One ideal client's month, told to the reader. No package frequency here on
 // purpose: the story is the rhythm, the packages page carries the cadence.
@@ -37,8 +37,34 @@ export function HowItWorks() {
   const { ref: timelineRef } = useSectionScrollProgress<HTMLDivElement>();
 
   // A step lights up once its badge passes the viewport centre, which is where
-  // the spine's fill tip sits.
-  useTimelineReach(timelineRef);
+  // the spine's fill tip sits. Written to the DOM, not state, so scrolling
+  // never re-renders the section (home-hydration).
+  useEffect(() => {
+    const rows = timelineRef.current?.querySelectorAll<HTMLElement>(".how-step-row");
+    if (!rows?.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      rows.forEach((row) => (row.dataset.reached = ""));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const row = entry.target.closest<HTMLElement>(".how-step-row");
+          if (!row) continue;
+          // Above the centre line (intersecting, or scrolled past the top) = reached.
+          const reached = entry.isIntersecting || entry.boundingClientRect.top < 0;
+          if (reached) row.dataset.reached = "";
+          else delete row.dataset.reached;
+        }
+      },
+      { rootMargin: "0px 0px -50% 0px" },
+    );
+    rows.forEach((row) => {
+      const badge = row.querySelector(".how-badge");
+      if (badge) io.observe(badge);
+    });
+    return () => io.disconnect();
+  }, [timelineRef]);
 
   return (
     <section

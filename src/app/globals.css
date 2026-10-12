@@ -942,28 +942,177 @@
   }
 }
 
-/* Your first 90 days (FirstNinetyDays.tsx): the How it works timeline with
-   dated pill badges and one milestone line per stage. */
-.how-badge-pill {
-  width: auto;
-  min-width: 48px;
-  padding: 0 18px;
+/* Your first 90 days (FirstNinetyDays.tsx): wide cards that stick under the
+   header and stack as you scroll. --i staggers each card's top so the edges
+   of the cards beneath peek out; --deck-p (0..1, set in JS while the next card
+   slides over) eases a card back and dims it. Transform and opacity only:
+   a filter dim would stall behind hydration. JS may override top for a card
+   taller than the screen and sets a shared min-height. */
+.deck {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.deck-card {
+  position: sticky;
+  top: calc(76px + var(--i, 0) * 10px);
+  display: grid;
+  gap: 16px;
+  padding: 20px 18px;
+  border-radius: 24px;
+  background: var(--card);
+  border: 1px solid color-mix(in oklch, var(--primary) 16%, var(--border));
+  box-shadow:
+    0 -18px 40px -24px rgba(0, 0, 0, 0.6),
+    0 30px 60px -40px color-mix(in oklch, var(--primary) 30%, transparent);
+  transform-origin: top center;
+  transform: scale(calc(1 - 0.05 * var(--deck-p, 0)));
+  will-change: transform;
+}
+
+/* The dim: a background-coloured veil, faded with opacity. */
+.deck-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--background);
+  opacity: calc(var(--deck-p, 0) * 0.55);
+  pointer-events: none;
+}
+
+.deck-card-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.deck-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
-.roadmap-milestone {
+.deck-title {
+  margin: 2px 0 0;
+  font-size: 1.625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.deck-body {
   margin: 0;
-  padding-top: 12px;
-  border-top: 1px solid color-mix(in oklch, var(--primary) 14%, transparent);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+.deck-panel {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: color-mix(in oklch, var(--background) 70%, transparent);
+  border: 1px solid color-mix(in oklch, var(--primary) 12%, transparent);
+}
+
+.deck-panel-title {
+  margin: 0 0 12px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.deck-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.deck-check {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklch, var(--primary) 14%, transparent);
   color: var(--primary);
 }
 
 @media (min-width: 1024px) {
-  .roadmap-timeline .how-step-row {
-    grid-template-columns: 1fr 136px 1fr;
+  .deck {
+    gap: 48px;
+  }
+  .deck-card {
+    top: calc(96px + var(--i, 0) * 16px);
+    grid-template-columns: 1.1fr 1fr;
+    align-items: center;
+    gap: 48px;
+    padding: 48px 52px;
+    border-radius: 28px;
+    min-height: min(500px, calc(100vh - 200px));
+  }
+  /* Alternate sides, as the cards are dealt. */
+  .deck-card[data-flip] .deck-card-copy {
+    order: 2;
+  }
+  .deck-title {
+    font-size: 2.5rem;
+  }
+  .deck-body {
+    font-size: 1.0625rem;
+  }
+  .deck-panel {
+    padding: 28px;
+  }
+  .deck-list {
+    gap: 10px;
+  }
+  .deck-list li {
+    font-size: 0.9375rem;
+  }
+  .deck-card-copy {
+    gap: 12px;
+  }
+}
+
+/* Too short to stack (set in JS): a plain list of cards. */
+.deck[data-flat] .deck-card {
+  position: relative;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-card {
+    transform: none;
+    will-change: auto;
+  }
+  .deck-card::after {
+    opacity: 0;
   }
 }
 
