@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { TypedHeading } from '@/components/ui/TypedHeading';
 
 interface SectionHeadingProps {
   title: string;
@@ -21,7 +22,7 @@ export function SectionHeading({
         className
       )}
     >
-      <h2 className="heading-focus text-3xl font-semibold tracking-tight md:text-4xl">{title}</h2>
+      <TypedHeading text={title} className="text-3xl font-semibold tracking-tight md:text-4xl" />
       {subtitle && (
         <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto">
           {subtitle}

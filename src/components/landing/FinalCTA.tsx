@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar } from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { TypedHeading } from "@/components/ui/TypedHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { Button } from "@/components/ui/button";
 
@@ -24,9 +25,10 @@ export function FinalCTA() {
 
       <div className="max-w-3xl mx-auto px-5 sm:px-6 text-center">
         <ScrollReveal>
-          <h2 className="heading-focus text-3xl md:text-4xl font-semibold tracking-tight mb-4">
-            Ready to make finance work better?
-          </h2>
+          <TypedHeading
+            text="Ready to make finance work better?"
+            className="text-3xl md:text-4xl font-semibold tracking-tight mb-4"
+          />
           <p className="text-base sm:text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
             Build your subscription in a few minutes, or book a fit call
             and we&apos;ll help you choose the right level of monthly support.

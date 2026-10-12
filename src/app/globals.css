@@ -2490,30 +2490,40 @@
   }
 }
 
-/* ─── Heading focus-in ──────────────────────────────
-   Section headings sharpen from a soft blur as they scroll in, armed by the
-   same RevealObserver as `.reveal`, so anything on screen at load is already
-   revealed and never blurs. Below the fold only. `filter` is not compositor-
-   only (see docs/design-system.md "Motion and first paint"), so phones get a
-   plain fade and lift instead of the blur. */
+/* ─── Heading type-in ──────────────────────────────
+   Section headings type themselves in, letter by letter, as they scroll in
+   (`TypedHeading`, which staggers each letter by `--ht-delay`). Armed by the
+   same RevealObserver as `.reveal`, so a heading on screen at load is already
+   revealed and never re-types. Below the fold only. Each letter fades and
+   lifts; from `sm` up it also sharpens from a slight blur. `filter` is not
+   compositor-only (see docs/design-system.md "Motion and first paint"), so
+   phones get no blur. */
+.ht-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.ht-ch {
+  display: inline-block;
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  .heading-focus {
+  .heading-type .ht-ch {
     transition:
-      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-      filter 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1) var(--ht-delay, 0ms),
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--ht-delay, 0ms),
+      filter 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--ht-delay, 0ms);
   }
 
-  .reveal-armed .heading-focus:not([data-revealed]) {
+  .reveal-armed .heading-type:not([data-revealed]) .ht-ch {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(4px);
   }
 }
 
 @media (min-width: 640px) and (prefers-reduced-motion: no-preference) {
-  .reveal-armed .heading-focus:not([data-revealed]) {
-    opacity: 0.15;
-    filter: blur(14px);
+  .reveal-armed .heading-type:not([data-revealed]) .ht-ch {
+    filter: blur(6px);
   }
 }
 

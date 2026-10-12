@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 export function RevealObserver() {
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal, .heading-focus'));
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal, .heading-type'));
     const vh = window.innerHeight;
     for (const el of els) {
       if (el.getBoundingClientRect().top < vh) el.setAttribute('data-revealed', '');
