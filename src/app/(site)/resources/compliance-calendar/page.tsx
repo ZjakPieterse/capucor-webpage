@@ -102,7 +102,7 @@ export default function ComplianceCalendarPage() {
               Build your subscription <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/#contact"
+              href="/contact"
               className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-5 py-2 text-sm font-medium hover:border-primary/30"
             >
               Talk to us

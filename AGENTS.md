@@ -198,7 +198,7 @@ The root `app/layout.tsx` is a **bare shell** — `<html>` + fonts + `globals.cs
 metadata only, no chrome. Chrome is applied per area by nested layouts:
 
 - **`app/(site)/layout.tsx`** — marketing chrome (Navbar + Footer). **All public pages live in the
-  `(site)` route group** (home, services, pricing, privacy, terms, resources).
+  `(site)` route group** (home, services, pricing, contact, privacy, terms, resources).
   Route groups don't change the URL, so **a new public/marketing page goes in `app/(site)/`, not
   `app/`.**
 - **`app/proposal/layout.tsx`** — bare, no chrome (the standalone signing document).

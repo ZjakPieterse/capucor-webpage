@@ -46,9 +46,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
           className="gap-2"
           render={
             <a
-              href={siteConfig.links.booking}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={siteConfig.links.fitCall}
             />
           }
         >

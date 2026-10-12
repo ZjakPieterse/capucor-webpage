@@ -102,7 +102,7 @@ export function Step2Tiers({
             nativeButton={false}
             variant="outline"
             className="shrink-0 gap-2"
-            render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
+            render={<a href={siteConfig.links.fitCall} />}
           >
             <CalendarClock className="h-4 w-4" />
             {REVENUE_CALL_COPY.action}
@@ -254,7 +254,7 @@ export function Step2Tiers({
           <Button
             nativeButton={false}
             className="gap-2 cta-armed"
-            render={<a href={siteConfig.links.booking} target="_blank" rel="noopener noreferrer" />}
+            render={<a href={siteConfig.links.fitCall} />}
           >
             <CalendarClock className="h-4 w-4" />
             {REVENUE_CALL_COPY.action}
