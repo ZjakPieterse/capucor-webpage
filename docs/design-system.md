@@ -80,7 +80,9 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   intros stay plain.
 - **Layout that differs by screen size is CSS, not a `matchMedia` switch in React.** The server
   renders the desktop branch, so a JS switch makes phones jump after hydration.
-- Loops pause off-screen, and phones get a calmer cut rather than a smaller one.
+- Loops pause off-screen, and phones get a calmer cut rather than a smaller one. The hero story
+  on a phone (<640px) has its own three-piece pile and every line at 13px or more, on the desktop
+  timeline (F07, 2026-10-13); `hero-phone.test.ts` checks it and that desktop is unchanged.
 - **Cards that stack as you scroll:** reuse `useCardDeck` (`hooks/useCardDeck.ts`) with `.stack-deck` /
   `.stack-card` in `globals.css`.
   It handles centring, equal heights, phones shorter than a card and the dim. Add `.stack-deck-phone` to

@@ -38,7 +38,7 @@ export function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="premium-section relative overflow-hidden py-20 pb-28 sm:py-28 sm:pb-36 lg:py-32 lg:pb-40"
+      className="premium-section relative overflow-hidden pt-12 pb-28 sm:py-28 sm:pb-36 lg:py-32 lg:pb-40"
     >
       <div
         aria-hidden
