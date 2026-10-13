@@ -517,6 +517,11 @@
   background-color: color-mix(in oklch, var(--primary) 10%, transparent);
 }
 
+/* Set when the required services question is left empty on a send attempt. */
+.check-card.check-card-invalid {
+  border-color: color-mix(in oklch, var(--destructive) 60%, transparent);
+}
+
 @media all {
   .check-card:hover {
     border-color: color-mix(in oklch, var(--primary) 40%, transparent);

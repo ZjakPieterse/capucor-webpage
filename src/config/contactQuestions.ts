@@ -32,13 +32,17 @@ export const SERVICE_OPTIONS = [
 
 // Form order (Zjak, 2026-10-12): three dropdowns, then the services checklist.
 // "What made you look for an accountant now?" was dropped the same day.
+// Labels "Business Size" / "Team Size" and one shared placeholder: Zjak, 2026-10-13.
+const PICK = 'Choose an option';
+
 export const CONTACT_QUESTIONS = {
-  turnover: { label: 'Annual turnover', placeholder: 'Select turnover', options: TURNOVER_OPTIONS },
-  teamSize: {
-    label: 'People in the business, including you',
-    placeholder: 'Select team size',
-    options: TEAM_SIZE_OPTIONS,
-  },
-  booksNow: { label: 'Who does your books now?', placeholder: 'Select one', options: BOOKS_NOW_OPTIONS },
-  services: { label: 'What do you need help with?', hint: 'Pick all that apply.', options: SERVICE_OPTIONS },
+  turnover: { label: 'Business Size', placeholder: PICK, options: TURNOVER_OPTIONS },
+  teamSize: { label: 'Team Size', placeholder: PICK, options: TEAM_SIZE_OPTIONS },
+  booksNow: { label: 'Who does your books now?', placeholder: PICK, options: BOOKS_NOW_OPTIONS },
+  services: { label: 'What do you need help with?', options: SERVICE_OPTIONS },
 } as const;
+
+// Which of the two buttons sent the form (Zjak, 2026-10-13). Stored with the
+// answers, so the owner email says whether a booking is on its way.
+export const NEXT_STEP_OPTIONS = ['message', 'meeting'] as const;
+export type NextStep = (typeof NEXT_STEP_OPTIONS)[number];

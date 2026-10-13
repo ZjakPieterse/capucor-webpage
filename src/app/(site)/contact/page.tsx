@@ -34,8 +34,8 @@ export default function ContactPage() {
             Let&apos;s get in touch
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Tell us about your business. Once you send your answers, you can book a fit call
-            straight away. A real accountant reads every one.
+            Tell us about your business. Simply complete the form, then you can book a fit call
+            straight away or send a message and we&apos;ll get back to you.
           </p>
         </header>
 

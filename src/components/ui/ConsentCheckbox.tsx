@@ -26,6 +26,7 @@ export function ConsentCheckbox({
           onCheckedChange={(val) => onCheckedChange?.(val === true)}
           className="mt-0.5"
           aria-required="true"
+          aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
         />
         <Label htmlFor={id} className="block text-sm text-muted-foreground leading-relaxed cursor-pointer">

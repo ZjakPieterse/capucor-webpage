@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   BOOKS_NOW_OPTIONS,
+  NEXT_STEP_OPTIONS,
   SERVICE_OPTIONS,
   TEAM_SIZE_OPTIONS,
   TURNOVER_OPTIONS,
@@ -28,6 +29,8 @@ export const ContactAnswersSchema = z
     teamSize: z.enum(TEAM_SIZE_OPTIONS),
     services: z.array(z.enum(SERVICE_OPTIONS)).min(1, 'Pick at least one service').max(SERVICE_OPTIONS.length),
     booksNow: z.enum(BOOKS_NOW_OPTIONS),
+    // Optional so a page loaded before the two-button form (2026-10-13) can submit.
+    nextStep: z.enum(NEXT_STEP_OPTIONS).optional(),
     // Dropped from the form 2026-10-12. Still accepted so a page loaded before
     // that deploy can submit.
     mainReason: z.string().max(100).optional(),
