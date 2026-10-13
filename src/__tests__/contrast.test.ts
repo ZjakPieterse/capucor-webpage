@@ -238,8 +238,8 @@ describe('colour is never the only signal (§5)', () => {
     // Green "done" states (reconciled rows, filed chips) carry a Check icon and
     // say what is done in words.
     expect(story).toMatch(/<Check /);
-    // "{reconciled} of {total} reconciled"; the total is per breakpoint.
-    expect(story).toMatch(/\{reconciled\}<\/span> of[\s\S]{0,200}<\/span> reconciled/);
+    // "{reconciled} of {total} reconciled".
+    expect(story).toMatch(/\{reconciled\}<\/span> of \{txCount\} reconciled/);
     expect(story).toMatch(/EMP201 filed/);
 
     // Bank amounts are signed, and the amber flag on a bank line says "Unmatched".
