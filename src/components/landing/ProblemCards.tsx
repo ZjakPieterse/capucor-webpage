@@ -127,16 +127,17 @@ function FlipCard({ item }: { item: Problem }) {
               {item.body}
             </p>
           </div>
-          {/* Same premium / basic pair as the hero CTAs */}
+          {/* Outline, the hero's secondary shape (audit A07 / D9 preview,
+              2026-10-13): four filled buttons in a row outweighed "Build
+              your subscription". The back face's button is outline too. */}
           <Button
             ref={frontButton}
             onClick={flip}
+            variant="outline"
             size="lg"
-            className="gradient-cta mt-5 self-start gap-2"
+            className="mt-5 self-start gap-2"
           >
-            <span className="relative z-[2] inline-flex items-center gap-2">
-              We can fix this <ArrowRight className="h-4 w-4" aria-hidden />
-            </span>
+            We can fix this <ArrowRight className="h-4 w-4" aria-hidden />
           </Button>
         </div>
       </div>

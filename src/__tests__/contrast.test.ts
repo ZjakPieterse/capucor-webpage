@@ -129,6 +129,23 @@ describe('canonical dark theme contrast', () => {
       expect(contrast(fg, bg)).toBeGreaterThanOrEqual(AA_NON_TEXT);
     }
   });
+
+  // Form-field edges (audit A24, 2026-10-13): `--input` (12 % white) gave a
+  // 1.3:1 edge. Fields use `--input-edge` at 35 % white; 30 % was 2.5:1.
+  it('holds 3:1 for form-field edges on the page and on cards', () => {
+    const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+    const m = css.match(/--input-edge:\s*#ffffff([0-9a-f]{2});/i);
+    expect(m).not.toBeNull();
+    const alpha = parseInt(m![1]!, 16) / 255;
+    for (const bg of [BACKGROUND, SURFACE]) {
+      const edge = over(hexToRgb('#ffffff'), alpha, hexToRgb(bg));
+      expect(contrast(edge, bg)).toBeGreaterThanOrEqual(AA_NON_TEXT);
+    }
+    for (const f of ['input', 'textarea', 'select', 'checkbox']) {
+      const src = readFileSync(join(process.cwd(), `src/components/ui/${f}.tsx`), 'utf8');
+      expect(src, f).toContain('border-input-edge');
+    }
+  });
 });
 
 describe('BD-02b status colour convergence (shipped)', () => {

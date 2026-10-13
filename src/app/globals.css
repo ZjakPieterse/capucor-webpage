@@ -127,6 +127,7 @@
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-input-edge: var(--input-edge);
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -159,6 +160,10 @@
   --muted-foreground: #90a1b9;
   --border: #1e283d;
   --input: #ffffff1f;
+  /* Form-field edge only (audit A24 / D6 preview, 2026-10-13): 35 % white,
+     the lowest step that clears 3:1 on the page and on cards. Outline
+     buttons keep --input. */
+  --input-edge: #ffffff59;
   --ring: #2dd4ff;
 
   /* Brand primary — electric cyan-blue, anchored to logo */
@@ -2578,4 +2583,31 @@ html.lenis {
 }
 .lenis.lenis-stopped {
   overflow: hidden;
+}
+
+/* A single 90-day card outside the deck (SignedMoment, audit D11 preview,
+   2026-10-13): no sticky stack, so it positions its own border, and it stays
+   one column in the narrow signed-page layout. */
+.deck-card.deck-card-solo {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .deck-card.deck-card-solo {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    min-height: 0;
+    padding: 32px 36px;
+  }
+}
+
+/* The solo card sits under a confirmation, not as a section's centrepiece:
+   phone-size type at every width. */
+@media (min-width: 1024px) {
+  .deck-card.deck-card-solo .deck-title {
+    font-size: 1.625rem;
+  }
+  .deck-card.deck-card-solo .deck-body {
+    font-size: 0.9375rem;
+  }
 }
