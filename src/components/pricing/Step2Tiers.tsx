@@ -222,8 +222,9 @@ export function Step2Tiers({
               className={cn(
                 'service-card pricing-card-item tier-card relative min-w-0 rounded-2xl border-2 p-6 text-left outline-none w-full h-full flex flex-col',
                 // The recommended package carries the lit border and glow
-                // before anything is chosen, like its filled nudge pill.
-                featured && 'popular-card',
+                // until another package is chosen (Zjak, 2026-10-13); its
+                // badge stays.
+                featured && (!selectedTier || isSelected) && 'popular-card',
                 'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
