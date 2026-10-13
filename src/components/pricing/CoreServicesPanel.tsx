@@ -11,7 +11,7 @@ interface CoreServicesPanelProps {
 
 // The foundation every package card builds on: one slim strip above the
 // cards, so the prices stay in view (calculator design review, 2026-10-13;
-// replaced a panel of boxed tiles). Desktop: the heading, then the five items
+// replaced a panel of boxed tiles). Desktop: the heading, then the four items
 // spread across one line. Phones: the heading, then the items as one dotted line of text, so
 // the Basic price lands on the first screen. Each card's first line, "Core
 // Services Included", points back here.

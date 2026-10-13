@@ -220,13 +220,12 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
 // ─── common items ───────────────────────────────────────────────────────────
 
 describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
-  it('shows the five approved core services, none of them repeated as a tier highlight', () => {
+  it('shows the four approved core services, none of them repeated as a tier highlight', () => {
     expect(packageCommonItemsFor(true).map((i) => i.text)).toEqual([
-      'Dedicated Finance Team',
+      'Year-round Finance Team',
       'Annual Financials',
-      'SARS & CIPC Submission',
+      'SARS & CIPC Returns',
       'Xero Accounting Software',
-      'Year-round Support',
     ]);
     const allTierTexts = new Set(
       (['basic', 'pro', 'premium'] as const).flatMap((t) => TIER_HIGHLIGHTS[t].map((i) => i.text))
@@ -234,7 +233,13 @@ describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
     for (const item of PACKAGE_COMMON_ITEMS) expect(allTierTexts.has(item.text)).toBe(false);
   });
 
-  it('shows the same five whether or not the business is VAT-registered', () => {
+  it('names the SARS and CIPC returns, never an open-ended SARS promise', () => {
+    const sars = PACKAGE_COMMON_ITEMS.find((i) => i.text === 'SARS & CIPC Returns');
+    expect(sars?.tooltip).toMatch(/quoted separately/);
+    expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).not.toContain('SARS & CIPC Submission');
+  });
+
+  it('shows the same four whether or not the business is VAT-registered', () => {
     expect(packageCommonItemsFor(false)).toEqual(packageCommonItemsFor(true));
   });
 
@@ -317,8 +322,8 @@ describe('TierComparison accumulation', () => {
     );
   });
 
-  it('places SARS & CIPC Submission on a single common-tier row', () => {
-    const sarsRows = rows.filter((r) => r.text === 'SARS & CIPC Submission');
+  it('places SARS & CIPC Returns on a single common-tier row', () => {
+    const sarsRows = rows.filter((r) => r.text === 'SARS & CIPC Returns');
     expect(sarsRows).toHaveLength(1);
     expect(sarsRows[0].lowestTier).toBe('common');
   });

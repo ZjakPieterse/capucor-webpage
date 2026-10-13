@@ -1871,15 +1871,15 @@
   }
 }
 
-/* Answer chips above the packages (AnswerRecap.tsx): tap one to change it. */
+/* Answers above the packages (AnswerRecap.tsx): tap one to change it. No
+   border, so hover lifts the text colour instead. */
 .answer-chip {
-  transition: border-color 200ms ease, background-color 200ms ease, transform 200ms ease;
+  transition: color 200ms ease, transform 200ms ease;
 }
 
 @media all {
   .answer-chip:hover {
-    border-color: color-mix(in oklch, var(--primary) 45%, transparent);
-    background-color: color-mix(in oklch, var(--primary) 8%, transparent);
+    color: var(--primary);
   }
 
   .answer-chip:hover .answer-chip-edit {

@@ -26,7 +26,7 @@ export interface TierHighlightItem {
 const CORE_SERVICES_INCLUDED: TierHighlightItem = {
   text: 'Core Services Included',
   services: ['accounting', 'bookkeeping'],
-  tooltip: 'Everything in the core services: a dedicated finance team, annual financials, SARS and CIPC submissions, your accounting software and year-round support.',
+  tooltip: 'Everything in the core services: your year-round finance team, annual financials, your SARS and CIPC returns and your accounting software.',
   summary: true,
 };
 
@@ -168,18 +168,24 @@ export interface PackageCommonItem {
 }
 
 export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
-  { text: 'Dedicated Finance Team', tooltip: 'A team that knows your business and runs your month, led by your own accountant.' },
+  // One item for the team (package-page feedback, 2026-10-13): "Dedicated
+  // Finance Team" and "Year-round Support" said the same thing twice.
+  {
+    text: 'Year-round Finance Team',
+    tooltip: 'Your own accountant and a team that knows your business. They run your month and are on hand all year, not only at year-end.',
+  },
   {
     text: 'Annual Financials',
     tooltip: 'Year-end financial statements prepared for compliance, SARS, banks and other stakeholders.',
   },
+  // Names the returns, so it never reads as "anything SARS or CIPC"; audits,
+  // objections and change requests stay out of scope (serviceScope.ts).
   {
-    text: 'SARS & CIPC Submission',
-    tooltip: 'Tax returns and annual CIPC filings submitted on time, including VAT returns if you are VAT-registered.',
+    text: 'SARS & CIPC Returns',
+    tooltip: 'Your income tax and provisional tax returns, CIPC annual return and beneficial ownership filing, plus VAT returns if you are VAT-registered, each submitted on its cycle. SARS audits, objections and CIPC changes are quoted separately.',
   },
   { text: 'Xero Accounting Software', tooltip: 'Xero accounting software included in your monthly fee.' },
-  { text: 'Year-round Support', tooltip: 'Ongoing guidance from your team all year, not only at year-end.' },
-  // Part of "SARS & CIPC Submission" on the site; named on the schedule so the
+  // Part of "SARS & CIPC Returns" on the site; named on the schedule so the
   // signed scope stays explicit (package simplification, 2026-10-06).
   {
     text: 'VAT returns (VAT201)',

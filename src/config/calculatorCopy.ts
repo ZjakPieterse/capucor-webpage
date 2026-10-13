@@ -23,8 +23,9 @@ export const ANSWER_LABELS = {
 
 // Says what the strip means (calculator design review, 2026-10-13).
 export const CORE_SERVICES_HEADING = 'Included in every package';
-// Above the packages: the visitor's answers as tap-to-change chips.
-export const ANSWER_RECAP_HEADING = 'Priced for:';
+// Above the packages: the visitor's answers, each tap-to-change, read as a
+// brief rather than filter tags (package-page feedback, 2026-10-13).
+export const ANSWER_RECAP_HEADING = 'Tailored to your business';
 
 // The pill under each package's price names the business it suits, and the
 // line under the name (TIER_BUYER_FIT in tiers.ts) says what it gets. One word
