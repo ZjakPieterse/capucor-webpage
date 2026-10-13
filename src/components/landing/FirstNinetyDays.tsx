@@ -48,6 +48,9 @@ import { useCardDeck } from "@/hooks/useCardDeck";
 // pills and the three-bar progress track are gone: each card opens with an
 // icon beside its title, as on the cards in
 // "Three disciplines. One subscription." (Zjak: no hook line under it).
+//
+// Titles (Zjak, 2026-10-13): how each stage feels, not a step name. Month one
+// is the handover we do together; after that the titles speak to the owner.
 type Card = {
   icon: LucideIcon;
   title: string;
@@ -61,7 +64,7 @@ type Card = {
 const CARDS: Card[] = [
   {
     icon: Settings2,
-    title: "Set up",
+    title: "Handing over",
     body: "You sign, and one email lands with a short list. Payday comes and your staff are paid as usual, now through SimplePay. Behind on your books? The 3 months before you signed are included. Anything older is quoted upfront and runs alongside.",
     yours: "This is the month that needs you most. Send the list back, approve our access to SARS and your software, and tell us what else is missing.",
     listTitle: "Done by day 30",
@@ -75,7 +78,7 @@ const CARDS: Card[] = [
   },
   {
     icon: CalendarCheck,
-    title: "Settle",
+    title: "Find your rhythm",
     body: "This is the month you stop chasing. The 7th arrives and your EMP201 is already filed. Your books are reconciled, and anything outstanding at SARS has a name and a plan.",
     yours: "Much lighter. Answer the odd question about some transactions, and snap the slips we ask for. Most months, that’s a quick email reply from you.",
     listTitle: "Done by day 60",
@@ -88,7 +91,7 @@ const CARDS: Card[] = [
   },
   {
     icon: MessagesSquare,
-    title: "Review",
+    title: "Look ahead",
     body: "Ninety days in, we sit down properly: what we found, what we fixed, what’s still open. Your first reports set the baseline, and your feedback shapes the next ones.",
     yours: "Commit some time for the review and bring your questions. Tell us honestly what’s working and what isn’t. That’s how the next quarter gets better.",
     listTitle: "Done by day 90",
