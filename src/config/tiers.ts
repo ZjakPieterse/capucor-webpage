@@ -157,46 +157,22 @@ export function tierDisplayName(slug: string): string {
   );
 }
 
-// The core services, included in every package, as named on the signed
-// schedule. `vatOnly` items apply only to a VAT-registered business.
+// The core services, included in every package. One list drives both the
+// "Core services" rows in the /pricing comparison and the signed Schedule of
+// Services (2026-10-13), so the site and the contract name the same things.
+// `scheduleText` is the schedule's wording where the contract must say more
+// than the row (the schedule shows names, not tooltips). `scheduleOnly` items
+// are not comparison rows. `vatOnly` items apply only to a VAT-registered
+// business.
 export interface PackageCommonItem {
   text: string;
   tooltip: string;
+  scheduleText?: string;
+  scheduleOnly?: boolean;
   vatOnly?: boolean;
 }
 
-export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
-  // One item for the team (package-page feedback, 2026-10-13): "Dedicated
-  // Finance Team" and "Year-round Support" said the same thing twice.
-  {
-    text: 'Year-round Finance Team',
-    tooltip: 'Your own accountant and a team that knows your business. They run your month and are on hand all year, not only at year-end.',
-  },
-  {
-    text: 'Annual Financials',
-    tooltip: 'Year-end financial statements prepared for compliance, SARS, banks and other stakeholders.',
-  },
-  // Names the returns, so it never reads as "anything SARS or CIPC"; audits,
-  // objections and change requests stay out of scope (serviceScope.ts).
-  {
-    text: 'SARS & CIPC Returns',
-    tooltip: 'Your income tax and provisional tax returns, CIPC annual return and beneficial ownership filing, plus VAT returns if you are VAT-registered, each submitted on its cycle. SARS audits, objections and CIPC changes are quoted separately.',
-  },
-  { text: 'Xero Accounting Software', tooltip: 'Xero accounting software included in your monthly fee.' },
-  // Named on the schedule so the signed scope stays explicit (package
-  // simplification, 2026-10-06).
-  {
-    text: 'VAT returns (VAT201)',
-    tooltip: 'VAT returns prepared and submitted for each applicable cycle.',
-    vatOnly: true,
-  },
-];
-
-// The core services as rows under "Core services" in the comparison table,
-// worded as Zjak set them (2026-10-13). "SARS & CIPC submission" was his
-// choice over "returns"; its tooltip names the returns and what is quoted
-// separately, so the row never promises "anything SARS or CIPC".
-export const CORE_SERVICE_LINES: PackageCommonItem[] = [
+export const CORE_SERVICES: PackageCommonItem[] = [
   {
     text: 'Dedicated finance team',
     tooltip: 'A team that knows your business and runs your month, led by your own accountant.',
@@ -206,16 +182,36 @@ export const CORE_SERVICE_LINES: PackageCommonItem[] = [
     text: 'Annual financial statements',
     tooltip: 'Year-end financial statements prepared for compliance, SARS, banks and other stakeholders.',
   },
+  // "SARS & CIPC submission" was Zjak's choice over "returns" (2026-10-13). On
+  // the signed schedule it names the returns, so it never reads as "anything
+  // SARS or CIPC"; audits, objections and change requests stay out of scope
+  // (ALWAYS_OUT_OF_SCOPE in serviceScope.ts). VAT201 is its own item below.
   {
     text: 'SARS & CIPC submission',
+    scheduleText:
+      'SARS & CIPC submission (income tax and provisional tax returns, CIPC annual return and beneficial ownership filing)',
     tooltip: 'Your income tax and provisional tax returns, CIPC annual return and beneficial ownership filing, plus VAT returns if you are VAT-registered, each submitted on its cycle. SARS audits, objections and CIPC changes are quoted separately.',
   },
   { text: 'Xero accounting software', tooltip: 'Xero accounting software included in your monthly fee.' },
+  // Named on the schedule so the signed scope stays explicit (package
+  // simplification, 2026-10-06).
+  {
+    text: 'VAT returns (VAT201)',
+    tooltip: 'VAT returns prepared and submitted for each applicable cycle.',
+    scheduleOnly: true,
+    vatOnly: true,
+  },
 ];
 
-/** The core items on the signed schedule, hiding VAT201 when not VAT-registered. */
+/** The core services as rows under "Core services" in the comparison table. */
+export const CORE_SERVICE_LINES: PackageCommonItem[] = CORE_SERVICES.filter((item) => !item.scheduleOnly);
+
+/** The core items on the signed schedule, in schedule wording, hiding VAT201 when not VAT-registered. */
 export function scheduleCommonItemsFor(vatRegistered: boolean): PackageCommonItem[] {
-  return PACKAGE_COMMON_ITEMS.filter((item) => vatRegistered || !item.vatOnly);
+  return CORE_SERVICES.filter((item) => vatRegistered || !item.vatOnly).map((item) => ({
+    ...item,
+    text: item.scheduleText ?? item.text,
+  }));
 }
 
 // Package slugs from lowest to highest. An add-on included "from" a tier is

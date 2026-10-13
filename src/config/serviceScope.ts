@@ -2,7 +2,7 @@
  * Schedule-of-Services scope config for the proposal document.
  *
  * "What's included" is NOT re-listed here — it's derived from the same
- * TIER_HIGHLIGHTS / PACKAGE_COMMON_ITEMS the calculator already uses (see
+ * TIER_HIGHLIGHTS / CORE_SERVICES the calculator already uses (see
  * cumulativeInclusions in src/lib/schedule.ts), so there's one source of truth.
  *
  * This file adds the two things a proposal needs on top of that:

@@ -41,13 +41,14 @@ describe('cumulativeInclusions', () => {
     expect(pro).not.toContain('Monthly Processing');
   });
 
-  it('lists the four core services, plus VAT201 for a VAT-registered business', () => {
+  it('lists the five core services as the site names them, plus VAT201 for a VAT-registered business', () => {
     const basic = cumulativeInclusions(CORE, 'basic');
-    expect(basic.slice(0, 5)).toEqual([
-      'Year-round Finance Team',
-      'Annual Financials',
-      'SARS & CIPC Returns',
-      'Xero Accounting Software',
+    expect(basic.slice(0, 6)).toEqual([
+      'Dedicated finance team',
+      'Year-round support',
+      'Annual financial statements',
+      'SARS & CIPC submission (income tax and provisional tax returns, CIPC annual return and beneficial ownership filing)',
+      'Xero accounting software',
       'VAT returns (VAT201)',
     ]);
     expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll Services');
