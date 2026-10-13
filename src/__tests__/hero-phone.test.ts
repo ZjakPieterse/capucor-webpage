@@ -3,8 +3,9 @@ import { readSource } from './helpers/sourceText';
 
 // The hero story on a phone (funnel review F07; full audit 2026-10-13, wow
 // moment 1). Below 640 px the panel tells the same three beats with its own
-// three-piece pile, and every line reads at 13 px or more; desktop must not
-// change. These read source as text, in the style of site-copy.test.ts.
+// pile: every desktop piece for the chaos, with the three meant to be read on
+// top at 13 px or more. Every other line a phone is meant to read is 13 px or
+// more too, and desktop must not change. These read source as text, in the style of site-copy.test.ts.
 const story = readSource('src', 'components/landing/HeroStory.tsx');
 const css = readSource('src', 'app/globals.css');
 
@@ -32,10 +33,24 @@ const PHONE_PIECES = ['PhoneReceipt', 'PhoneNotice', 'PhoneInvoice'];
 const SHARED = ['Ledger', 'EmailHeader', 'EmailSubject', 'ReportEmail', 'HeroStory'];
 
 describe('the phone variant exists (F07)', () => {
-  it('renders its own three-piece pile below sm and the full pile from sm up', () => {
+  it('renders its own pile below sm and the desktop pile from sm up', () => {
     expect(story).toMatch(/<div className="hidden sm:block">\s*\{PILE\.map/);
-    expect(story).toMatch(/className="hero-phone-pile sm:hidden"[\s\S]{0,80}\{PHONE_PILE\.map/);
-    expect(story).toMatch(/const PHONE_PILE: Place\[\] = \[(\s*\[[^\]]+\],){3}\s*\];/);
+    expect(story).toMatch(
+      /className="hero-phone-pile sm:hidden"[\s\S]{0,120}\{PHONE_BACK\.map[\s\S]{0,400}\{PHONE_FRONT\.map/,
+    );
+  });
+
+  it('shows every desktop piece on a phone, so the chaos beat feels like chaos (Zjak, 2026-10-13)', () => {
+    const back = [...story.matchAll(/\{ piece: (\d+), place: \[/g)].map((m) => Number(m[1]));
+    const front = story.match(/const PHONE_FRONT: Place\[\] = \[([\s\S]*?)\n\];/)?.[1] ?? '';
+    // The receipt (0), the SARS reminder (1) and the invoice (3) are the three on top.
+    expect([...back, 0, 1, 3].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(front.match(/\[[^\]]+\]/g)).toHaveLength(3);
+  });
+
+  it('lands the three readable pieces last, on top of the rest', () => {
+    expect(story).toMatch(/phoneSlotVars\(place, 10 \+ i, 0\.1 \+ i \*/);
+    expect(story).toMatch(/place,\s*30 \+ i,\s*0\.1 \+ PHONE_BACK\.length \* TIMING\.arriveStep/);
   });
 
   it('reuses the receipt, the SARS reminder and the overdue invoice, not new copy', () => {

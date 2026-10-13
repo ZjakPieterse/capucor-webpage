@@ -38,9 +38,10 @@ import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 //   - Every beat animates transform and opacity only, as CSS transitions keyed
 //     off `data-phase`; React re-renders on a phase change and, in the order
 //     beat, only the ledger re-renders, once per line.
-//   - Phones (below 640 px) get their own three-piece pile instead of eleven
-//     pieces, with no drifting and no backdrop blur. Every beat on a phone reads
-//     at 13 px or more, on the same timeline, pacing and easing as desktop
+//   - Phones (below 640 px) get their own pile: all eleven pieces, with the
+//     receipt, the SARS reminder and the overdue invoice landing on top at
+//     13 px and up; no drifting and no backdrop blur. Every line meant to be
+//     read on a phone is 13 px or more, on the same timeline, pacing and easing as desktop
 //     (funnel review F07; full audit 2026-10-13, wow moment 1). Which pile
 //     shows is CSS (`hidden sm:block` / `sm:hidden`), and type and row height
 //     step down at `sm`, so the server render is right on every screen and
@@ -729,26 +730,57 @@ function slotVars(slot: PileSlot, i: number): React.CSSProperties {
   } as React.CSSProperties;
 }
 
-// The phone pile: receipt, then the SARS reminder, then the overdue invoice,
-// each a beat apart, so the eye can read one before the next lands.
-const PHONE_PILE: Place[] = [
-  [0, 0, "80%", -2.5],
-  [27, 47, "73%", 0],
-  [3, 71, "76%", 2],
+// The phone pile is the whole desktop pile, so a phone feels the chaos too
+// (Zjak, 2026-10-13: three tidy pieces read as a to-do list). First the other
+// eight pieces land fast, dimmed, at desktop size and running off the edges:
+// texture, not text. Then the receipt, the SARS reminder and the overdue
+// invoice land on top at 13 px and up, a beat apart, so there is still
+// something to read.
+interface PhoneBackSlot {
+  /** Index into the panel's desktop `pile` array. */
+  piece: number;
+  place: Place;
+}
+
+const PHONE_BACK: PhoneBackSlot[] = [
+  { piece: 2, place: [-8, 27, "80%", -4] }, // bank statement
+  { piece: 8, place: [40, -2, "64%", 3] }, // supplier mail
+  { piece: 5, place: [56, 20, "50%", 7] }, // payslip
+  { piece: 4, place: [-10, 55, "64%", -3] }, // message from home
+  { piece: 6, place: [72, 46, "32%", -9] }, // parking slip
+  { piece: 7, place: [66, 76, "38%", 8] }, // sticky note
+  { piece: 9, place: [-6, 80, "36%", 12] }, // card slip
+  { piece: 10, place: [26, 83, "70%", 2] }, // EMP201 calendar
 ];
 
-function phoneSlotVars([l, t, w, r]: Place, i: number): React.CSSProperties {
+const PHONE_FRONT: Place[] = [
+  [-2, 1, "78%", -4], // receipt
+  [24, 44, "75%", 2.5], // SARS reminder
+  [5, 69, "76%", -2.5], // overdue invoice
+];
+
+function phoneSlotVars([l, t, w, r]: Place, z: number, delay: number, out: number): React.CSSProperties {
   return {
-    zIndex: 10 + i,
+    zIndex: z,
     "--l": `${l}%`,
     "--t": `${t}%`,
     "--w": w,
     "--r": `${r}deg`,
     "--s": 1,
-    "--d": `${(0.1 + i * 2 * TIMING.arriveStep).toFixed(3)}s`,
-    "--o": `${((PHONE_PILE.length - 1 - i) * 0.04).toFixed(3)}s`,
+    "--d": `${delay.toFixed(3)}s`,
+    "--o": `${out.toFixed(3)}s`,
   } as React.CSSProperties;
 }
+
+const phoneBackVars = (place: Place, i: number) =>
+  phoneSlotVars(place, 10 + i, 0.1 + i * TIMING.arriveStep * 0.5, (PHONE_BACK.length - 1 - i) * 0.02);
+const phoneFrontVars = (place: Place, i: number) =>
+  phoneSlotVars(
+    place,
+    30 + i,
+    0.1 + PHONE_BACK.length * TIMING.arriveStep * 0.5 + i * TIMING.arriveStep * 1.5,
+    (PHONE_FRONT.length - 1 - i) * 0.04,
+  );
 
 // ── The order beat: the month's statement, reconciled line by line ───────────────
 // Its own component, so the per-line counter re-renders the ledger and nothing
@@ -1030,10 +1062,15 @@ export function HeroStory() {
                     </div>
                   ))}
                 </div>
-                {/* Phones: three pieces, set to be read. */}
+                {/* Phones: the whole pile, with three pieces on top set to be read. */}
                 <div className="hero-phone-pile sm:hidden">
-                  {PHONE_PILE.map((place, i) => (
-                    <div key={i} className="hero-pile-slot" style={phoneSlotVars(place, i)}>
+                  {PHONE_BACK.map((slot, i) => (
+                    <div key={slot.piece} className="hero-pile-slot hero-pile-back" style={phoneBackVars(slot.place, i)}>
+                      <div className="hero-pile-card">{pile[slot.piece]}</div>
+                    </div>
+                  ))}
+                  {PHONE_FRONT.map((place, i) => (
+                    <div key={i} className="hero-pile-slot" style={phoneFrontVars(place, i)}>
                       <div className="hero-pile-card">{phonePile[i]}</div>
                     </div>
                   ))}
