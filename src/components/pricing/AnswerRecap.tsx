@@ -20,8 +20,10 @@ function bandLabel(brackets: Bracket[], slug: string, value: BracketValue | unde
   return plain ? plain.charAt(0).toUpperCase() + plain.slice(1) : null;
 }
 
-// The visitor's answers as chips above the packages (package simplification,
+// The visitor's answers above the packages (package simplification,
 // 2026-10-06), so the price reads as theirs and any answer is one tap to change.
+// A quiet brief between hairlines, not bordered pills (package-page feedback,
+// 2026-10-13): the values name themselves, so there are no per-item labels.
 export function AnswerRecap({ brackets, selectedBrackets, answers, onEdit }: AnswerRecapProps) {
   const revenue = bandLabel(brackets, 'accounting', selectedBrackets.accounting);
   const transactions = bandLabel(brackets, 'bookkeeping', selectedBrackets.bookkeeping);
@@ -46,20 +48,30 @@ export function AnswerRecap({ brackets, selectedBrackets, answers, onEdit }: Ans
   if (chips.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-muted-foreground mr-0.5">{ANSWER_RECAP_HEADING}</span>
-      {chips.map((chip) => (
-        <button
-          key={chip.step}
-          type="button"
-          onClick={() => onEdit(chip.step)}
-          aria-label={`Change ${chip.question}: ${chip.text}`}
-          className="answer-chip inline-flex items-center gap-1.5 rounded-full border border-border bg-card/40 px-3 py-1.5 text-xs font-medium text-foreground/90 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          {chip.text}
-          <Pencil aria-hidden className="answer-chip-edit h-3 w-3 text-primary opacity-60 transition-opacity" />
-        </button>
-      ))}
-    </div>
+    <section aria-labelledby="answer-recap-heading" className="border-y border-border/60 py-2.5">
+      <h3 id="answer-recap-heading" className="mb-1 text-xs text-muted-foreground">
+        {ANSWER_RECAP_HEADING}
+      </h3>
+      <ul className="flex flex-wrap items-center gap-y-1">
+        {chips.map((chip, i) => (
+          <li key={chip.step} className="inline-flex items-center">
+            <button
+              type="button"
+              onClick={() => onEdit(chip.step)}
+              aria-label={`Change ${chip.question}: ${chip.text}`}
+              className="answer-chip -mx-1 inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-foreground/90 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {chip.text}
+              <Pencil aria-hidden className="answer-chip-edit h-3 w-3 text-primary opacity-50 transition-opacity" />
+            </button>
+            {i < chips.length - 1 && (
+              <span aria-hidden className="px-2.5 text-border">
+                |
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
