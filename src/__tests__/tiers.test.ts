@@ -4,7 +4,7 @@ import {
   TIER_DISPLAY_NAMES,
   PACKAGE_COMMON_ITEMS,
   TIERS_BY_APPLICATION,
-  coreServiceLinesFor,
+  CORE_SERVICE_LINES,
   scheduleCommonItemsFor,
   tierDisplayName,
   type TierHighlightItem,
@@ -28,7 +28,7 @@ interface MatrixRow {
 function buildMatrix(selected: Set<string>): MatrixRow[] {
   const result: MatrixRow[] = [];
   const seen = new Set<string>();
-  for (const item of coreServiceLinesFor(true)) {
+  for (const item of CORE_SERVICE_LINES) {
     if (seen.has(item.text)) continue;
     seen.add(item.text);
     result.push({ text: item.text, lowestTier: 'common' });
@@ -240,16 +240,20 @@ describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
     expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).not.toContain('SARS & CIPC Submission');
   });
 
-  it('spells out the core services line by line in the comparison, VAT201 only when registered', () => {
-    expect(coreServiceLinesFor(true).map((i) => i.text)).toEqual([
-      'Your own accountant and finance team, all year',
+  it('lists the core services as rows in the comparison, worded as Zjak set them', () => {
+    expect(CORE_SERVICE_LINES.map((i) => i.text)).toEqual([
+      'Dedicated finance team',
+      'Year-round support',
       'Annual financial statements',
-      'Income tax and provisional tax returns',
-      'CIPC annual return and beneficial ownership filing',
-      'VAT returns (VAT201)',
+      'SARS & CIPC submission',
       'Xero accounting software',
     ]);
-    expect(coreServiceLinesFor(false).map((i) => i.text)).not.toContain('VAT returns (VAT201)');
+  });
+
+  it('says what the SARS & CIPC submission row covers and what is quoted separately', () => {
+    const sars = CORE_SERVICE_LINES.find((i) => i.text === 'SARS & CIPC submission');
+    expect(sars?.tooltip).toMatch(/provisional tax/);
+    expect(sars?.tooltip).toMatch(/quoted separately/);
   });
 
   it('names VAT201 on the schedule only, and only for a VAT-registered business', () => {
@@ -331,8 +335,8 @@ describe('TierComparison accumulation', () => {
     );
   });
 
-  it('places the tax returns line on a single common-tier row', () => {
-    const sarsRows = rows.filter((r) => r.text === 'Income tax and provisional tax returns');
+  it('places SARS & CIPC submission on a single common-tier row', () => {
+    const sarsRows = rows.filter((r) => r.text === 'SARS & CIPC submission');
     expect(sarsRows).toHaveLength(1);
     expect(sarsRows[0].lowestTier).toBe('common');
   });

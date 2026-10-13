@@ -56,7 +56,7 @@ describe('every calculator screen has a focusable, marked heading', () => {
       copy: QUESTION_COPY.vat, value: null, onAnswer: noop, onNext: noop, onBack: noop,
     }))],
     ['package', renderToStaticMarkup(createElement(Step2Tiers, {
-      ...selection, services, tiers, pricedAddons: [], vatRegistered: true, answers: answers(),
+      ...selection, services, tiers, pricedAddons: [], answers: answers(),
       onEditAnswer: noop, onTierSelect: noop, onBack: noop, onNext: noop,
     }))],
     ['add-ons', renderToStaticMarkup(createElement(AddonsStep, {
