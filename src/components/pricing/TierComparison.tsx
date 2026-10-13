@@ -8,7 +8,6 @@ import { addonTotal, bracketPrice } from '@/lib/pricing';
 import {
   TIER_HIGHLIGHTS,
   TIERS_BY_APPLICATION,
-  packageCommonItemsFor,
   type TierHighlightItem,
 } from '@/config/tiers';
 import { RHYTHM_ROWS } from '@/config/calculatorCopy';
@@ -22,8 +21,6 @@ interface TierComparisonProps {
   selectedBrackets: Record<string, BracketValue>;
   /** Selected optional add-on slugs — included in the footer totals so they match the package cards. */
   selectedAddons?: string[];
-  /** False only on a VAT "No": hides VAT201 from the core rows. */
-  vatRegistered?: boolean;
   /** Start expanded (the package step opens it by default, tweaks round 1). */
   defaultOpen?: boolean;
 }
@@ -44,7 +41,6 @@ export function TierComparison({
   selectedServices,
   selectedBrackets,
   selectedAddons = [],
-  vatRegistered = true,
   defaultOpen = false,
 }: TierComparisonProps) {
   const [open, setOpen] = useState(defaultOpen);
@@ -60,12 +56,11 @@ export function TierComparison({
     const result: MatrixRow[] = [];
     const seen = new Set<string>();
 
-    // Core services first: in every package.
-    for (const item of packageCommonItemsFor(vatRegistered)) {
-      if (seen.has(item.text)) continue;
-      seen.add(item.text);
-      result.push({ kind: 'tick', text: item.text, tooltip: item.tooltip, lowestTier: 'common' });
-    }
+    // Core services first: one row, ticked for every package. The strip above
+    // the cards names the five, so the table shows only what differs (design
+    // review, 2026-10-13). The tooltip is the cards' "Core Services Included" line.
+    const core = (TIER_HIGHLIGHTS.basic ?? []).find((h) => h.summary);
+    if (core) result.push({ kind: 'tick', text: 'Core services', tooltip: core.tooltip, lowestTier: 'common' });
 
     // Then the rhythm, one value per package.
     for (const r of RHYTHM_ROWS) {
@@ -85,7 +80,7 @@ export function TierComparison({
       }
     }
     return result;
-  }, [selectedServices, vatRegistered]);
+  }, [selectedServices]);
 
   // Per-package total for the footer row. Includes the answer-driven add-ons
   // so the figures match the package cards above.
@@ -156,7 +151,7 @@ export function TierComparison({
             {sortedTiers.map((t) => (
               <div key={t.slug} className="px-5 py-4">
                 <div className="flex items-baseline justify-between mb-3">
-                  <p className="text-sm font-semibold uppercase tracking-wider">{t.name}</p>
+                  <p className="text-sm font-semibold">{t.name}</p>
                   {price(t.slug)}
                 </div>
                 <ul className="space-y-1.5">
@@ -203,13 +198,13 @@ export function TierComparison({
             <table className="w-full text-sm">
               <thead className="bg-muted/30">
                 <tr>
-                  <th className="text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground px-5 py-3">
+                  <th className="text-left text-xs font-semibold text-muted-foreground px-5 py-3">
                     What&apos;s included
                   </th>
                   {sortedTiers.map((t) => (
                     <th
                       key={t.slug}
-                      className="text-center text-xs font-semibold uppercase tracking-wider px-3 py-3 text-muted-foreground"
+                      className="text-center text-xs font-semibold px-3 py-3 text-muted-foreground"
                     >
                       {t.name}
                     </th>
@@ -243,7 +238,7 @@ export function TierComparison({
                   </tr>
                 ))}
                 <tr className="border-t-2 border-border bg-muted/30">
-                  <td className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <td className="px-5 py-3 text-xs font-semibold text-muted-foreground">
                     Monthly price
                   </td>
                   {sortedTiers.map((t) => (

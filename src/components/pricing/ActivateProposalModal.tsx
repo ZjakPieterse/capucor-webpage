@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, ArrowRight, Check, MailCheck, FileSignature } from 'lucide-react';
+import { Loader2, ArrowRight, Check, ChevronDown, MailCheck, FileSignature } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,9 @@ import type { ProposalAction } from './ReviewStep';
 import { z } from 'zod';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
+import { tierDisplayName } from '@/config/tiers';
+import { addonTotal, addonsForTier, monthlyTotal } from '@/lib/pricing';
+import { formatZAR } from '@/lib/utils';
 import type { Bracket, BracketValue, CalculatorAnswers, Service, Tier } from '@/types';
 
 const FormSchema = z.object({
@@ -102,6 +105,25 @@ export function ActivateProposalModal({
     defaultValues: defaultContact,
   });
 
+  // A clean form on every open: the autofocused field can blur after the
+  // close-time reset and mark itself touched, so the next modal opened with
+  // "First name is required" before any typing (design review, 2026-10-13).
+  useEffect(() => {
+    if (open) reset();
+  }, [open, reset]);
+
+  // On a touch screen focus the dialog, not the first field, so the keyboard
+  // does not cover the form before the visitor has read it.
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // The summary is one line; the breakdown opens on a tap, so the form and
+  // its button stay in view (design review, 2026-10-13).
+  const summaryTier = selectedTier ?? '';
+  const summaryName = tiers.find((t) => t.slug === summaryTier)?.name ?? tierDisplayName(summaryTier);
+  const summaryTotal =
+    monthlyTotal(activeServiceSlugs, selectedBrackets, summaryTier, brackets) +
+    addonTotal(addonsForTier(selectedAddons, summaryTier), summaryTier);
+
   // Reset to a clean form whenever the modal closes, so a second visit after a
   // successful send starts fresh rather than showing the old success panel.
   function handleOpenChange(next: boolean) {
@@ -186,7 +208,11 @@ export function ActivateProposalModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        ref={popupRef}
+        initialFocus={(type) => (type === 'touch' ? popupRef.current : true)}
+        className="max-h-[88vh] overflow-y-auto sm:max-w-lg"
+      >
         {requested ? (
           <div className="py-2 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -255,16 +281,31 @@ export function ActivateProposalModal({
               </DialogDescription>
             </DialogHeader>
 
-            <ProposalSummary
-              services={services}
-              brackets={brackets}
-              tiers={tiers}
-              selectedServices={activeServiceSlugs}
-              selectedBrackets={selectedBrackets}
-              tierSlug={selectedTier ?? ''}
-              selectedAddons={selectedAddons}
-              totalLabel={isRequest ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
-            />
+            <details className="group rounded-xl border border-primary/25 bg-primary/[0.04]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 font-semibold">{summaryName} package</span>
+                <span className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+                  {isRequest && <span className="text-xs text-muted-foreground">From</span>}
+                  <span className="font-semibold tabular-nums">{formatZAR(summaryTotal)}</span>
+                  <span className="text-xs text-muted-foreground">/month</span>
+                  <ChevronDown
+                    aria-hidden
+                    className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180"
+                  />
+                </span>
+              </summary>
+              <ProposalSummary
+                services={services}
+                brackets={brackets}
+                tiers={tiers}
+                selectedServices={activeServiceSlugs}
+                selectedBrackets={selectedBrackets}
+                tierSlug={summaryTier}
+                selectedAddons={selectedAddons}
+                totalLabel={isRequest ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
+                className="rounded-none rounded-b-xl border-0 border-t bg-transparent"
+              />
+            </details>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>

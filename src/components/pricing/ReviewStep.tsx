@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, CalendarClock, Mail } from 'lucide-react';
+import { ArrowRight, CalendarClock, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProposalSummary } from './ProposalSummary';
 import { AFTER_YOU_SIGN, ANSWER_LABELS, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
@@ -70,9 +70,7 @@ export function ReviewStep({
       </p>
 
       <dl className="rounded-2xl border border-border bg-card/40 p-5 space-y-2 text-sm">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
-          About your business
-        </p>
+        <p className="text-xs font-semibold text-muted-foreground mb-1">About your business</p>
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-muted-foreground">{ANSWER_LABELS.vatRegistered}</dt>
           <dd className="font-medium">{yesNo(answers.vatRegistered)}</dd>
@@ -119,6 +117,12 @@ export function ReviewStep({
         </div>
       )}
 
+      {/* Right under the actions, where the reassurance is needed (design review, 2026-10-13). */}
+      <p className="-mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+        <Check className="h-3.5 w-3.5 text-primary" />
+        No payment needed yet
+      </p>
+
       {!byApplication && (
         <div className="rounded-2xl border border-border bg-card/40 p-4">
           <p className="font-semibold text-sm">What happens next</p>
@@ -129,10 +133,6 @@ export function ReviewStep({
           </ol>
         </div>
       )}
-
-      <p className="text-[11px] text-muted-foreground text-center">
-        No payment needed yet
-      </p>
 
       <div className="flex justify-start pt-2">
         <Button variant="outline" onClick={onBack}>

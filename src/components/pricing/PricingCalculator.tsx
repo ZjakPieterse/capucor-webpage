@@ -272,8 +272,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
         >
           <div className="max-w-[1090px] mx-auto px-6">
             <div className="mb-6 text-center">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{PRICING_PAGE_HEADING}</h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">{PRICING_PAGE_INTRO}</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-balance">{PRICING_PAGE_HEADING}</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground text-balance">{PRICING_PAGE_INTRO}</p>
             </div>
             <CalculatorProgress value={progressFraction(step, state, completed)} />
             {/* No minimum height: the next section follows the screen's own

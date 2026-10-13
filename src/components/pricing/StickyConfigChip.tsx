@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, monthlyTotal } from '@/lib/pricing';
+import { TIERS_BY_APPLICATION } from '@/config/tiers';
 import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface StickyConfigChipProps {
@@ -77,8 +78,8 @@ export function StickyConfigChip({
           )}
         >
           <div className="flex flex-col leading-tight">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-              {tier.name} package
+            <span className="text-[11px] text-muted-foreground font-medium">
+              {tier.name} package{TIERS_BY_APPLICATION.includes(tier.slug) ? ', from' : ''}
             </span>
             <AnimatePresence mode="wait">
               <motion.span
