@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
-import { ArrowRight, Check } from 'lucide-react';
+import { SignedMoment } from '@/components/proposal/SignedMoment';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -326,40 +326,17 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
       })
     : null;
 
+  // The signed moment (audit D11 preview): the same view as right after
+  // confirming, with the checklist link (A03) and the "Handing over" card.
   return (
-    <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-6">
-      <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Check className="h-4 w-4" />
-        </span>
-        <div>
-          <p className="text-sm font-semibold">Proposal accepted</p>
-          {signedOn && (
-            <p className="text-xs text-muted-foreground">
-              Signed{row.signature_name ? ` by ${row.signature_name}` : ''} on {signedOn}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Signing stops at signed + PDF (web-standalone, 2026-10-07): no
-          capucor.app portal link. */}
-      <p className="mt-4 text-sm text-muted-foreground">
-        Thanks, that&rsquo;s accepted. We&rsquo;ll be in touch shortly to set up your onboarding.
-      </p>
-      {/* Full-site audit A03 (2026-10-13): the next real step, in the homepage's
-          "What we'll need" words. The signed PDF goes by email (decision 3). */}
-      <p className="mt-3 text-sm text-muted-foreground">
-        Most of this you already have somewhere. Start gathering now and your first month goes
-        faster.
-      </p>
-      <Link
-        href="/resources/onboarding-checklist"
-        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary"
-      >
-        Start gathering what we&rsquo;ll need <ArrowRight className="size-4" aria-hidden />
-      </Link>
-    </div>
+    <SignedMoment
+      title="Proposal accepted"
+      detail={
+        signedOn
+          ? `Signed${row.signature_name ? ` by ${row.signature_name}` : ''} on ${signedOn}`
+          : null
+      }
+    />
   );
 }
 

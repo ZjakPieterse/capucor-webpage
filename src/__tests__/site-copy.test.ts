@@ -272,9 +272,20 @@ describe('one name per thing (full-site audit, 2026-10-13)', () => {
 
 describe('after signing (full-site audit A02/A03, 2026-10-13)', () => {
   it('points the signed page at the onboarding checklist in the homepage words', () => {
-    const page = src('app/proposal/[token]/page.tsx');
-    expect(page).toMatch(/href="\/resources\/onboarding-checklist"/);
-    expect(page).toMatch(/Start gathering what we&rsquo;ll need/);
-    expect(page).toMatch(/Start gathering now and your first month goes\s+faster\./);
+    const moment = src('components/proposal/SignedMoment.tsx');
+    expect(moment).toMatch(/href="\/resources\/onboarding-checklist"/);
+    expect(moment).toMatch(/Start gathering what we&rsquo;ll need/);
+    expect(moment).toMatch(/Start gathering now and your first month goes\s+faster\./);
+  });
+
+  // The signed moment (D11 preview): both signed views end on the same
+  // confirmation and the homepage's "Handing over" card.
+  it('right after confirming and on the signed link, the signed moment shows the Handing over card', () => {
+    expect(src('components/proposal/ConfirmSignButton.tsx')).toContain('<SignedMoment');
+    expect(src('app/proposal/[token]/page.tsx')).toContain('<SignedMoment');
+    const moment = src('components/proposal/SignedMoment.tsx');
+    expect(moment).toContain('<DeckCard card={HANDING_OVER_CARD}');
+    expect(src('components/landing/FirstNinetyDays.tsx')).toMatch(/HANDING_OVER_CARD = CARDS\[0\]/);
+    expect(src('components/landing/FirstNinetyDays.tsx')).toMatch(/title: "Handing over"/);
   });
 });

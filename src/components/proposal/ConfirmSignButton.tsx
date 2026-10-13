@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Check, PenLine } from 'lucide-react';
+import { Loader2, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SignedMoment } from './SignedMoment';
 
 // The confirm page renders read-only; the actual signature commit happens on
 // this button's POST so an email link-scanner that prefetches the GET can't
@@ -39,22 +40,10 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
 
   if (completion) {
     return (
-      <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Check className="h-6 w-6" />
-        </div>
-        <p className="text-base font-semibold">That&rsquo;s signed</p>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {/* Signing stops at signed + PDF (web-standalone, 2026-10-07): no
-              capucor.app portal link. */}
-          Your acceptance is recorded. We&rsquo;ll be in touch shortly to set up your onboarding.
-        </p>
-        {completion.deliveryStatus === 'pending' && (
-          <p className="mt-2 text-sm text-muted-foreground">
-            We could not confirm delivery of the follow-up email, but your signed acceptance is safely recorded.
-          </p>
-        )}
-      </div>
+      <SignedMoment
+        title="That’s signed"
+        deliveryPending={completion.deliveryStatus === 'pending'}
+      />
     );
   }
 

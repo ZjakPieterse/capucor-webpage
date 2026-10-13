@@ -51,7 +51,7 @@ import { useCardDeck } from "@/hooks/useCardDeck";
 //
 // Titles (Zjak, 2026-10-13): how each stage feels, not a step name. Month one
 // is the handover we do together; after that the titles speak to the owner.
-type Card = {
+export type NinetyDayCard = {
   icon: LucideIcon;
   title: string;
   body: string;
@@ -61,7 +61,7 @@ type Card = {
   checklistLink?: boolean;
 };
 
-const CARDS: Card[] = [
+const CARDS: NinetyDayCard[] = [
   {
     icon: Settings2,
     title: "Handing over",
@@ -113,6 +113,65 @@ const CARDS: Card[] = [
   },
 ];
 
+// The first card closes the funnel too: the signed moment shows it under the
+// confirmation (audit D11 preview, 2026-10-13), so the story ends on the card
+// it opened with.
+export const HANDING_OVER_CARD = CARDS[0]!;
+
+export function DeckCard({
+  card: { icon: Icon, ...card },
+  flip = false,
+  className = "stack-card deck-card",
+}: {
+  card: NinetyDayCard;
+  flip?: boolean;
+  className?: string;
+}) {
+  return (
+    <article
+      className={className}
+      data-flip={flip ? "" : undefined}
+      aria-label={card.title}
+    >
+      <div className="deck-card-copy">
+        <div className="deck-lockup">
+          <span aria-hidden className="svc-icon">
+            <Icon className="h-[22px] w-[22px]" />
+          </span>
+          <h3 className="deck-title">{card.title}</h3>
+        </div>
+        <p className="deck-body">{card.body}</p>
+        {card.yours && (
+          <div className="deck-yours">
+            <p className="deck-yours-head">Your part</p>
+            <p className="deck-yours-text">{card.yours}</p>
+          </div>
+        )}
+      </div>
+      <div className="deck-panel">
+        {/* The panel can move below the copy once photos arrive. */}
+        <p className="deck-panel-title">{card.listTitle}</p>
+        <ul className="deck-list">
+          {card.items.map((item) => (
+            <li key={item}>
+              <span className="deck-check" aria-hidden>
+                <Check className="h-3.5 w-3.5" />
+              </span>
+              {item}
+            </li>
+          ))}
+        </ul>
+        {card.checklistLink && (
+          <Link href="/resources/onboarding-checklist" className="deck-panel-link">
+            <Printer className="h-4 w-4" aria-hidden />
+            Print or save the checklist
+          </Link>
+        )}
+      </div>
+    </article>
+  );
+}
+
 export function FirstNinetyDays() {
   const deckRef = useCardDeck<HTMLDivElement>();
 
@@ -128,49 +187,8 @@ export function FirstNinetyDays() {
         </ScrollReveal>
 
         <div ref={deckRef} className="stack-deck mt-12">
-          {CARDS.map(({ icon: Icon, ...card }, i) => (
-            <article
-              key={card.title}
-              className="stack-card deck-card"
-              data-flip={i % 2 === 1 ? "" : undefined}
-              aria-label={card.title}
-            >
-              <div className="deck-card-copy">
-                <div className="deck-lockup">
-                  <span aria-hidden className="svc-icon">
-                    <Icon className="h-[22px] w-[22px]" />
-                  </span>
-                  <h3 className="deck-title">{card.title}</h3>
-                </div>
-                <p className="deck-body">{card.body}</p>
-                {card.yours && (
-                  <div className="deck-yours">
-                    <p className="deck-yours-head">Your part</p>
-                    <p className="deck-yours-text">{card.yours}</p>
-                  </div>
-                )}
-              </div>
-              <div className="deck-panel">
-                {/* The panel can move below the copy once photos arrive. */}
-                <p className="deck-panel-title">{card.listTitle}</p>
-                <ul className="deck-list">
-                  {card.items.map((item) => (
-                    <li key={item}>
-                      <span className="deck-check" aria-hidden>
-                        <Check className="h-3.5 w-3.5" />
-                      </span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                {card.checklistLink && (
-                  <Link href="/resources/onboarding-checklist" className="deck-panel-link">
-                    <Printer className="h-4 w-4" aria-hidden />
-                    Print or save the checklist
-                  </Link>
-                )}
-              </div>
-            </article>
+          {CARDS.map((card, i) => (
+            <DeckCard key={card.title} card={card} flip={i % 2 === 1} />
           ))}
         </div>
 

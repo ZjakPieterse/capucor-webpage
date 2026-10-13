@@ -2584,3 +2584,30 @@ html.lenis {
 .lenis.lenis-stopped {
   overflow: hidden;
 }
+
+/* A single 90-day card outside the deck (SignedMoment, audit D11 preview,
+   2026-10-13): no sticky stack, so it positions its own border, and it stays
+   one column in the narrow signed-page layout. */
+.deck-card.deck-card-solo {
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  .deck-card.deck-card-solo {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    min-height: 0;
+    padding: 32px 36px;
+  }
+}
+
+/* The solo card sits under a confirmation, not as a section's centrepiece:
+   phone-size type at every width. */
+@media (min-width: 1024px) {
+  .deck-card.deck-card-solo .deck-title {
+    font-size: 1.625rem;
+  }
+  .deck-card.deck-card-solo .deck-body {
+    font-size: 0.9375rem;
+  }
+}
