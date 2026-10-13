@@ -28,7 +28,11 @@ vi.mock('@/lib/proposalPricing', () => ({
   })),
 }));
 
-import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
+import {
+  archiveSignedProposal,
+  fetchSignedProposalPdf,
+  MAX_PDF_ATTACHMENT_BYTES,
+} from '@/lib/portal/proposalPdf';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { formatZAR } from '@/lib/utils';
 import { signedProposalFilename } from '@/lib/portal/proposalPdfPayload';
@@ -272,5 +276,45 @@ describe('signedProposalFilename', () => {
     expect(
       signedProposalFilename({ signed_at: '2026-10-07T08:00:00+00:00', business_name: 'Pat Trading Co', ref_number: null }),
     ).toBe('2026-10-07 - Pat Trading Co - signed proposal.pdf');
+  });
+});
+
+describe('fetchSignedProposalPdf (the client attachment, decision 2026-10-13)', () => {
+  const reply = (body: unknown, status = 200) =>
+    fetchMock.mockResolvedValueOnce({ ok: status < 400, status, json: async () => body });
+
+  it('asks the Apps Script for the archived file and returns its base64', async () => {
+    reply({ ok: true, fileId: 'file_1', contentBase64: 'JVBERi0xLjQK' });
+    await expect(fetchSignedProposalPdf('file_1')).resolves.toEqual({
+      ok: true,
+      contentBase64: 'JVBERi0xLjQK',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      secret: 'shh',
+      action: 'fetch',
+      fileId: 'file_1',
+    });
+  });
+
+  it('reports a script without the fetch action (missing html) as a code, not a throw', async () => {
+    reply({ ok: false, error: 'missing html' });
+    await expect(fetchSignedProposalPdf('file_1')).resolves.toEqual({
+      ok: false,
+      code: 'pdf_fetch_rejected',
+    });
+  });
+
+  it('refuses an oversized or non-base64 body', async () => {
+    reply({ ok: true, contentBase64: 'A'.repeat(Math.ceil(MAX_PDF_ATTACHMENT_BYTES / 3) * 4 + 4) });
+    await expect(fetchSignedProposalPdf('file_1')).resolves.toMatchObject({ code: 'pdf_too_large' });
+    reply({ ok: true, contentBase64: '<html>' });
+    await expect(fetchSignedProposalPdf('file_1')).resolves.toMatchObject({ code: 'pdf_fetch_invalid' });
+  });
+
+  it('turns a transport failure or missing config into a code', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('network down'));
+    await expect(fetchSignedProposalPdf('file_1')).resolves.toEqual({ ok: false, code: 'pdf_fetch_failed' });
+    delete process.env.APPS_SCRIPT_PDF_URL;
+    await expect(fetchSignedProposalPdf('file_1')).resolves.toEqual({ ok: false, code: 'pdf_not_configured' });
   });
 });

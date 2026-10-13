@@ -299,8 +299,10 @@ function signedAlertBlock(businessName, signedAt) {
 export function renderSignedClientEmail(d) {
   return clientShell(`${brand()}
       <h1 style="margin:0 0 12px;font-size:20px;line-height:1.3;color:#111827;">That&rsquo;s signed, ${escapeHtml(d.firstName)}</h1>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We&rsquo;ve recorded your acceptance of the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>. There&rsquo;s nothing more you need to do right now.</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We&rsquo;ve recorded your acceptance of the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>.</p>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We’ll be in touch shortly to set up your onboarding and get your first month underway. Questions in the meantime? Just reply to this email.</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Most of this you already have somewhere. Start gathering now and your first month goes faster.</p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;"><a href="${ONBOARDING_CHECKLIST_URL}" style="color:#0f766e;font-weight:600;">Start gathering what we&rsquo;ll need</a></p>
       ${signedAlertBlock(d.businessName, d.signedAt)}`);
 }
 
@@ -364,8 +366,24 @@ export function driveFileUrl(fileId) {
   return `https://drive.google.com/file/d/${fileId}/view`;
 }
 
-export function buildSignedClientMessage(p) {
-  return {
+// Absolute and fixed rather than from NEXT_PUBLIC_MARKETING_URL: the Worker and
+// the runner must build the same body, and their environments can differ.
+export const ONBOARDING_CHECKLIST_URL = 'https://capucor.com/resources/onboarding-checklist';
+
+export function signedProposalPdfFilename(refNumber) {
+  return refNumber ? `Capucor proposal ${refNumber}.pdf` : 'Capucor proposal.pdf';
+}
+
+/**
+ * The client's "That's signed" email. `pdfBase64` is the signed PDF archived in
+ * Drive, read back through the Apps Script bridge by both senders, or null when
+ * it could not be read: the email then goes without it rather than waiting.
+ * The attachment carries only the fields Resend SDK 6.x sends (content,
+ * filename), and `content` stays a base64 string: a Buffer would serialise as
+ * a byte array.
+ */
+export function buildSignedClientMessage(p, pdfBase64 = null) {
+  const message = {
     from: EMAIL_SENDER,
     replyTo: EMAIL_REPLY_TO,
     to: p.email,
@@ -376,6 +394,12 @@ export function buildSignedClientMessage(p) {
       signedAt: p.signed_at,
     }),
   };
+  if (pdfBase64) {
+    message.attachments = [
+      { content: pdfBase64, filename: signedProposalPdfFilename(p.ref_number) },
+    ];
+  }
+  return message;
 }
 
 export function buildSignedOwnerMessage(p, ownerEmail) {

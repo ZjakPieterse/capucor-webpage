@@ -267,3 +267,12 @@ describe('one name per thing (full-site audit, 2026-10-13)', () => {
     expect(src('components/landing/ProblemCards.tsx')).not.toMatch(/owner dependence/);
   });
 });
+
+describe('after signing (full-site audit A02/A03, 2026-10-13)', () => {
+  it('points the signed page at the onboarding checklist in the homepage words', () => {
+    const page = src('app/proposal/[token]/page.tsx');
+    expect(page).toMatch(/href="\/resources\/onboarding-checklist"/);
+    expect(page).toMatch(/Start gathering what we&rsquo;ll need/);
+    expect(page).toMatch(/Start gathering now and your first month goes\s+faster\./);
+  });
+});

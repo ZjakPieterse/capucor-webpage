@@ -120,7 +120,8 @@ contracts filed under it.** Read it before touching the redirect table, a cron, 
 that reads a body, or anything that sends email.
 
 - **Signing stops at `signed` + the signed PDF in Drive** (web-standalone phase 3, migration
-  `001`): fulfilment is pdf → client email → owner email (with the Drive link). Nothing here
+  `001`): fulfilment is pdf → client email (with the signed PDF attached, since 2026-10-13) →
+  owner email (with the Drive link). Nothing here
   writes a portal table; `proposals.client_org_id` is left unused until os-sunset.
 - **Web contract** — exact version pins and the redirect table live in
   `contracts/web-contract.json`, checked by `npm test`. It is web-owned: pricing, tiers, emails

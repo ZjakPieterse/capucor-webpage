@@ -160,6 +160,16 @@ route, because Workers Free allows 10 ms CPU and 50 subrequests per request.
   idempotency key. The two "signed" emails are built whole there
   (`buildSignedClientMessage` / `buildSignedOwnerMessage`), so the Worker's first attempt and a
   retry send the same request; `reconcile-deliveries.test.ts` checks it.
+- **The client's "That's signed" email attaches the signed PDF** (audit decision, 2026-10-13).
+  Both senders read the archived file back from Drive through the Apps Script `fetch` action —
+  the Worker directly (`fetchSignedProposalPdf`), the runner through
+  `/api/internal/proposal-fulfilment/pdf-file`, signed over `timestamp.pdf-file.proposalId` so an
+  archive signature cannot read a file. Nothing new is stored. A PDF that cannot be read never holds
+  the email back: it goes without, logged as `proposal_fulfilment.client_pdf_missing` (Worker) or
+  `pdf_attachment=missing` (runner). Because Resend refuses a key reused with a different body
+  (409 `invalid_idempotent_request`), the runner retries a with-PDF send once without it, and waits
+  a run when it has no PDF to offer. The email and the signed page also link
+  `/resources/onboarding-checklist`.
 - Six attempts, then `permanently_failed`; an ambiguous attempt older than 23 hours (outside
   Resend's 24-hour idempotency window) also fails permanently rather than risk a duplicate.
 - A run fails only for what **that run** failed permanently (GitHub then emails); older permanent

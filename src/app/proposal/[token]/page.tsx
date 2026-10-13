@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Link from 'next/link';
-import { Check } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSupabaseAnonClient } from '@/lib/supabase/anon';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -345,9 +345,20 @@ function SignedConfirmation({ row }: { row: ProposalRow }) {
       {/* Signing stops at signed + PDF (web-standalone, 2026-10-07): no
           capucor.app portal link. */}
       <p className="mt-4 text-sm text-muted-foreground">
-        Thanks, that&rsquo;s accepted and there&rsquo;s nothing more you need to do right now.
-        We&rsquo;ll be in touch shortly to set up your onboarding.
+        Thanks, that&rsquo;s accepted. We&rsquo;ll be in touch shortly to set up your onboarding.
       </p>
+      {/* Full-site audit A03 (2026-10-13): the next real step, in the homepage's
+          "What we'll need" words. The signed PDF goes by email (decision 3). */}
+      <p className="mt-3 text-sm text-muted-foreground">
+        Most of this you already have somewhere. Start gathering now and your first month goes
+        faster.
+      </p>
+      <Link
+        href="/resources/onboarding-checklist"
+        className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary"
+      >
+        Start gathering what we&rsquo;ll need <ArrowRight className="size-4" aria-hidden />
+      </Link>
     </div>
   );
 }

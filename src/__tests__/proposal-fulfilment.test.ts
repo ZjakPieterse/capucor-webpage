@@ -3,15 +3,22 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/portal/proposalPdf', () => ({ archiveSignedProposal: vi.fn() }));
+vi.mock('@/lib/portal/proposalPdf', () => ({
+  archiveSignedProposal: vi.fn(),
+  fetchSignedProposalPdf: vi.fn(),
+}));
 vi.mock('@/lib/email/sendEmail', () => ({ sendEmail: vi.fn() }));
 
 import { sendEmail } from '@/lib/email/sendEmail';
 import { processProposalFulfilment } from '@/lib/portal/fulfilment';
-import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
+import {
+  archiveSignedProposal,
+  fetchSignedProposalPdf,
+} from '@/lib/portal/proposalPdf';
 
 const PROPOSAL_ID = '11111111-1111-4111-8111-111111111111';
 const SIGNED_AT = '2026-08-04T08:00:00.000Z';
+const PDF_BASE64 = 'JVBERi0xLjQK';
 
 function proposal() {
   return {
@@ -120,6 +127,10 @@ beforeEach(() => {
     ok: true,
     fileId: 'file_1',
   });
+  vi.mocked(fetchSignedProposalPdf).mockResolvedValue({
+    ok: true,
+    contentBase64: PDF_BASE64,
+  });
   vi.mocked(sendEmail).mockResolvedValue({
     deliveryStatus: 'accepted',
     deliveryId: '22222222-2222-4222-8222-222222222222',
@@ -182,6 +193,48 @@ describe('processProposalFulfilment', () => {
       expect(message.html).not.toMatch(/portal|provision|log ?in/i);
       expect(message.subject).not.toMatch(/portal|provision/i);
     }
+  });
+
+  it('attaches the archived PDF to the client email and links the checklist', async () => {
+    const admin = makeAdmin([{ stage: 'pdf' }, { stage: 'client_email' }]);
+    await processProposalFulfilment(admin.client, proposal(), SIGNED_AT);
+
+    expect(fetchSignedProposalPdf).toHaveBeenCalledWith('file_1');
+    const client = vi.mocked(sendEmail).mock.calls[0]![0];
+    expect(client.message.attachments).toEqual([
+      { content: PDF_BASE64, filename: 'Capucor proposal FT-2026-08-0001.pdf' },
+    ]);
+    expect(client.message.html).toContain(
+      'href="https://capucor.com/resources/onboarding-checklist"',
+    );
+    expect(client.message.html).toContain('Start gathering what we&rsquo;ll need');
+    expect(client.message.html).not.toContain('—');
+  });
+
+  it('attaches the PDF archived by an earlier attempt', async () => {
+    const admin = makeAdmin([{ stage: 'client_email' }], 'file_earlier');
+    await processProposalFulfilment(admin.client, proposal(), SIGNED_AT);
+    expect(fetchSignedProposalPdf).toHaveBeenCalledWith('file_earlier');
+    const client = vi.mocked(sendEmail).mock.calls[0]![0];
+    expect(client.message.attachments).toHaveLength(1);
+  });
+
+  it('still sends the client email, without the attachment, when the PDF cannot be read', async () => {
+    vi.mocked(fetchSignedProposalPdf).mockResolvedValueOnce({
+      ok: false,
+      code: 'pdf_fetch_timeout',
+    });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const admin = makeAdmin([{ stage: 'pdf' }, { stage: 'client_email' }]);
+    const result = await processProposalFulfilment(admin.client, proposal(), SIGNED_AT);
+
+    expect(result.deliveryStatus).toBe('accepted');
+    const client = vi.mocked(sendEmail).mock.calls[0]![0];
+    expect(client.message).not.toHaveProperty('attachments');
+    expect(client.message.html).toContain('/resources/onboarding-checklist');
+    expect(admin.finishes[1]).toMatchObject({ p_stage: 'client_email', p_outcome: 'success' });
+    expect(JSON.stringify(warn.mock.calls)).toContain('client_pdf_missing');
+    warn.mockRestore();
   });
 
   it('links the Drive file archived by an earlier attempt', async () => {

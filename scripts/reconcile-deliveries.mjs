@@ -16,7 +16,9 @@
  * compare-and-swap and reuses the ORIGINAL Resend idempotency key, so a send the
  * provider already accepted is not delivered twice. The PDF is rendered by the
  * Worker: this runner calls /api/internal/proposal-fulfilment/pdf with a
- * body-bound HMAC, so the Apps Script credential never leaves the Worker.
+ * body-bound HMAC, so the Apps Script credential never leaves the Worker. A
+ * resent "That's signed" client email reads the archived PDF back the same way
+ * (/api/internal/proposal-fulfilment/pdf-file) and attaches it.
  *
  * ⚠️ THIS REPOSITORY IS PUBLIC, SO ITS ACTION LOGS ARE PUBLIC. Log ids, event
  * types, counts and error codes only — never a recipient, a link token, a
@@ -51,6 +53,8 @@ export const LEASE_MS = 60_000;
 export const PROVIDER_TIMEOUT_MS = 8_000;
 export const AMBIGUOUS_WINDOW_MS = 23 * 60 * 60 * 1000;
 export const MAX_FULFILMENT_STAGE_ATTEMPTS = 6;
+// The Worker's own Apps Script call is bounded at 8 s; leave it room.
+const PDF_FILE_TIMEOUT_MS = 15_000;
 const FIRST_RETRY_MS = 10 * 60_000;
 const MAX_RETRY_MS = 6 * 60 * 60_000;
 const MAX_BATCH = 50;
@@ -686,7 +690,54 @@ async function buildDataRequestMessage(row, db, marketingUrl) {
   );
 }
 
-async function buildProposalMessage(row, db, marketingUrl) {
+/**
+ * Read the archived signed PDF back through the Worker (Apps Script `fetch`),
+ * as base64, for a resent "That's signed" email. Signed over
+ * `timestamp.pdf-file.proposalId`, so an archive signature cannot read a file.
+ */
+export async function fetchSignedPdf(proposalId, config) {
+  if (!config.serviceKey) return { ok: false, code: 'pdf_bridge_not_configured' };
+  let response;
+  try {
+    const timestamp = String(Date.now());
+    const signature = createHmac('sha256', config.serviceKey)
+      .update(`${timestamp}.pdf-file.${proposalId}`)
+      .digest('hex');
+    response = await fetch(
+      `${config.marketingUrl.replace(/\/$/, '')}/api/internal/proposal-fulfilment/pdf-file`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-capucor-timestamp': timestamp,
+          'x-capucor-signature': signature,
+        },
+        body: JSON.stringify({ proposalId }),
+        signal: AbortSignal.timeout(PDF_FILE_TIMEOUT_MS),
+      },
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      code: error?.name === 'TimeoutError' ? 'pdf_file_timeout' : 'pdf_file_transport_error',
+    };
+  }
+  let output = {};
+  try {
+    output = await response.json();
+  } catch {
+    output = {};
+  }
+  if (!response.ok || !output.ok || typeof output.contentBase64 !== 'string' || !output.contentBase64) {
+    return {
+      ok: false,
+      code: typeof output.code === 'string' ? output.code : `pdf_file_http_${response.status}`,
+    };
+  }
+  return { ok: true, contentBase64: output.contentBase64 };
+}
+
+async function buildProposalMessage(row, db, marketingUrl, options = {}) {
   const proposal = await db.one(
     'proposals',
     row.source_id,
@@ -782,9 +833,20 @@ async function buildProposalMessage(row, db, marketingUrl) {
       );
     }
     // The same builders as the Worker's first attempt (lib/portal/fulfilment.ts).
-    return row.event_type.endsWith('_client')
-      ? buildSignedClientMessage(proposal)
-      : buildSignedOwnerMessage(proposal, row.recipient);
+    if (row.event_type.endsWith('_client')) {
+      // The same archived PDF the Worker attaches; a miss sends without it.
+      const pdf = await fetchSignedPdf(proposal.id, {
+        serviceKey: options.serviceKey,
+        marketingUrl,
+      });
+      if (!pdf.ok) {
+        (options.log ?? console.log)(
+          `proposal=${proposal.id} pdf_attachment=missing code=${pdf.code}`,
+        );
+      }
+      return buildSignedClientMessage(proposal, pdf.ok ? pdf.contentBase64 : null);
+    }
+    return buildSignedOwnerMessage(proposal, row.recipient);
   }
 
   throw new PermanentDeliveryError(
@@ -802,7 +864,7 @@ export async function buildDeliveryMessage(row, db, options = {}) {
   if (row.source_type === 'data_request')
     return buildDataRequestMessage(row, db, marketingUrl);
   if (row.source_type === 'proposal')
-    return buildProposalMessage(row, db, marketingUrl);
+    return buildProposalMessage(row, db, marketingUrl, options);
   throw new PermanentDeliveryError(
     'unsupported_source',
     'Unknown delivery source type.',
@@ -817,7 +879,14 @@ export function toResendPayload(message) {
   // even if the provider hashes the serialised body rather than a normalised
   // JSON object.
   return {
-    attachments: undefined,
+    // parseAttachments: content, filename, path, content_type, content_id.
+    attachments: message.attachments?.map((attachment) => ({
+      content: attachment.content,
+      filename: attachment.filename,
+      path: undefined,
+      content_type: undefined,
+      content_id: undefined,
+    })),
     bcc: undefined,
     cc: undefined,
     from: message.from,
@@ -964,11 +1033,31 @@ export async function reconcileOne(db, row, config, dueAt) {
     return rows.length === 1 ? 'permanently_failed' : 'lost_claim';
   }
 
-  const provider = await sendToResend(
+  let provider = await sendToResend(
     config.resendApiKey,
     message,
     claimed.row.idempotency_key,
   );
+  // The signed client email has two shapes, with and without the PDF. An
+  // earlier attempt may have reached Resend in the other shape (the PDF was
+  // readable then and not now, or the reverse), and Resend refuses a key reused
+  // with a different body (409 invalid_idempotent_request). Sent with the PDF,
+  // try once without it: if that was the original, Resend answers with the
+  // original id and sends nothing. Sent without it, the original carried the
+  // PDF, so retry on a later run, when the PDF may be readable again.
+  if (
+    !provider.ok &&
+    provider.code === 'invalid_idempotent_request' &&
+    claimed.row.event_type === SIGNED_CLIENT_EVENT
+  ) {
+    provider = message.attachments
+      ? await sendToResend(
+          config.resendApiKey,
+          { ...message, attachments: undefined },
+          claimed.row.idempotency_key,
+        )
+      : { ...provider, retryable: true };
+  }
   if (provider.ok) {
     const acceptedAt = new Date().toISOString();
     const rows = await db.finishDelivery(claimed.row, claimed.leaseToken, {

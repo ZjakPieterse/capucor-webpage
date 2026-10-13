@@ -62,6 +62,26 @@ un-archived; the retry runner (`.github/workflows/cron-reconcile-deliveries.yml`
 with bounded backoff and fails its run on a permanent failure. The two "signed" emails wait on
 this stage, so the owner email always carries the Drive link.
 
+### Reading a PDF back (`action: "fetch"`, since 2026-10-13)
+
+The client's "That's signed" email attaches the archived PDF (audit decision 2026-10-13). Both
+the Worker's first attempt and the retry runner (through `/api/internal/proposal-fulfilment/pdf-file`)
+read the bytes back from Drive, so the client gets exactly the file the firm holds:
+
+```json
+{ "secret": "…", "action": "fetch", "fileId": "1AbC…" }
+```
+
+```json
+{ "ok": true, "fileId": "1AbC…", "size": 132508, "contentBase64": "JVBERi0…" }
+```
+
+Only a PDF filed directly in `FOLDER_ID`, not trashed and at most 5 MB, is returned. Any failure
+sends the email **without** the attachment (logged as `proposal_fulfilment.client_pdf_missing`, or
+`pdf_attachment=missing` in the runner's log); it never holds the email back. A script deployed
+before this action answers `missing html`, which degrades the same way. The read uses `DriveApp`,
+so redeploying may ask you to authorise the script again.
+
 ## Re-deploying after editing the script
 
 Apps Script Web Apps are versioned. After changing `archive-proposal.gs`, use **Deploy → Manage
