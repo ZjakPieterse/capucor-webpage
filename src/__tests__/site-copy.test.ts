@@ -189,9 +189,14 @@ describe('fit call goes through /contact first (Zjak, 2026-10-12)', () => {
     }
     expect(siteConfig.links.fitCall).toBe('/contact');
     const form = src('components/contact/ContactForm.tsx');
-    // The booking link sits after the `if (done)` guard, never in the form itself.
-    expect(form.indexOf('links.booking')).toBeGreaterThan(form.indexOf('if (done)'));
-    expect(form.indexOf('links.booking')).toBeLessThan(form.indexOf('<form'));
+    // The booking link is used only once the lead is saved (after the `!res.ok`
+    // throw), never in the form itself.
+    const uses = [...form.matchAll(/links\.booking/g)].map((m) => m.index!);
+    expect(uses.length).toBeGreaterThan(0);
+    for (const at of uses) {
+      expect(at).toBeGreaterThan(form.indexOf('if (!res.ok)'));
+      expect(at).toBeLessThan(form.indexOf('<form'));
+    }
   });
 
   it('the homepage no longer carries the contact section', () => {
@@ -209,5 +214,23 @@ describe('contact form layout (Zjak, 2026-10-12)', () => {
     expect(form).toMatch(/<ServiceChecklist/);
     expect(form).not.toMatch(/mainReason|choice-chip/);
     expect(src('app/(site)/contact/page.tsx')).toMatch(/Let&apos;s get in touch/);
+  });
+});
+
+describe('contact form tweaks (Zjak, 2026-10-13)', () => {
+  it('no section titles or phone field, renamed dropdowns, two send buttons', async () => {
+    const { CONTACT_QUESTIONS } = await import('@/config/contactQuestions');
+    expect(CONTACT_QUESTIONS.turnover.label).toBe('Business Size');
+    expect(CONTACT_QUESTIONS.teamSize.label).toBe('Team Size');
+    for (const key of ['turnover', 'teamSize', 'booksNow'] as const) {
+      expect(CONTACT_QUESTIONS[key].placeholder).toBe('Choose an option');
+    }
+    expect(CONTACT_QUESTIONS.services).not.toHaveProperty('hint');
+    const form = src('components/contact/ContactForm.tsx');
+    expect(form).not.toMatch(/<legend|About you|setPhone/);
+    expect(form).toMatch(/send\('message'\)/);
+    expect(form).toMatch(/send\('meeting'\)/);
+    // Only the free-text box is optional.
+    expect(form.match(/\boptional\b>/g)).toHaveLength(1);
   });
 });
