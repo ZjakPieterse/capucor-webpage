@@ -45,15 +45,13 @@ export const FEATURED_BADGE = 'Recommended';
 // The merged core line ("Monthly accounting") and its slugs live in
 // lib/pricing.ts, so every surface uses one name.
 
-// Revenue above R50m goes to a call (decision 2026-10-06): from the
-// "50 Mil – 75 Mil" band (accounting ordinal 13 in migration 002) upward.
-export const REVENUE_CALL_FROM_ORDINAL = 13;
-export const REVENUE_CALL_COPY = {
-  note: 'Above R50m in revenue, we start with a conversation so the package fits how your business runs.',
-  action: 'Book a call',
-  apiError: 'Businesses above R50m in revenue start with a call. Please book a call and we will prepare your proposal.',
-} as const;
+// Every revenue, transaction and employee band is self-serve; only Premium goes
+// to a call (full-site audit decision 1, 2026-10-13, which retired the R50m
+// call gate of 2026-10-06).
 
+// The polite live region that names the new screen after each move (audit
+// A14). Focus goes to the screen's heading; this adds where the visitor is.
+export const stepAnnouncement = (index: number, total: number) => `Step ${index} of ${total}`;
 
 // Page heading and the one promise above the progress bar on /pricing
 // (tweaks round 2, 2026-10-07).

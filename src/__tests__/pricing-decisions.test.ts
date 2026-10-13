@@ -23,8 +23,9 @@ import {
   resolveAddons,
 } from '@/lib/pricing';
 import { priceProposalSelection, type ProposalSelectionInput } from '@/lib/proposalPricing';
-import { deriveServices, effectiveAddons, revenueNeedsCall } from '@/lib/calculatorFlow';
-import { REVENUE_CALL_FROM_ORDINAL } from '@/config/calculatorCopy';
+import * as calculatorFlow from '@/lib/calculatorFlow';
+import { deriveServices, effectiveAddons } from '@/lib/calculatorFlow';
+import * as calculatorCopy from '@/config/calculatorCopy';
 import { PRICING_ADDONS, TIERS_BY_APPLICATION, TIER_ORDER, addonIncludedInTier } from '@/config/tiers';
 import { CATCHUP_FREE_MONTHS } from '@/config/serviceScope';
 import { FEES_NOTES, PROPOSAL_TERMS } from '@/config/proposalTerms';
@@ -51,6 +52,7 @@ const ROWS: Row[] = [
   row('accounting', 1, '0 – 1 Mil', 725, 950, 1525),
   row('accounting', 12, '35 Mil – 50 Mil', 4000, 5200, 8400),
   row('accounting', 13, '50 Mil – 75 Mil', 5000, 6500, 10500),
+  row('accounting', 25, '350 Mil+', 6125, 7975, 12875),
   row('bookkeeping', 0, 'Dormant', 0, 0, 0),
   row('bookkeeping', 12, 'Up to 300', 2850, 3700, 6000),
   row('bookkeeping', 13, 'Up to 325', 3050, 3975, 6400),
@@ -191,19 +193,29 @@ describe('retired bracket rows (pricing figures, "How it is implemented")', () =
 
 // ── Band boundaries ─────────────────────────────────────────────────────────
 
-describe('revenue band boundary (review answers 4: above R50m goes to a call)', () => {
-  it('the call threshold is the "50 Mil – 75 Mil" band and nothing below it', () => {
-    expect(REVENUE_CALL_FROM_ORDINAL).toBe(13);
-    const band = ROWS.find((r) => r.service_slug === 'accounting' && r.ordinal === REVENUE_CALL_FROM_ORDINAL)!;
-    expect(formatBandLabel('accounting', band.label)).toBe('R50m to R75m');
-    expect(revenueNeedsCall({ accounting: REVENUE_CALL_FROM_ORDINAL - 1 })).toBe(false);
-    expect(revenueNeedsCall({ accounting: REVENUE_CALL_FROM_ORDINAL })).toBe(true);
+// Full-site audit decision 1 (2026-10-13, domains/capucor/wiki/decisions/
+// 2026-10-13-full-audit-decisions.md): every revenue, transaction and employee
+// band is self-serve; only Premium goes to a call. Supersedes review answers 4
+// (revenue above R50m to a call), which this block used to lock.
+describe('every band is self-serve (audit decision 1; supersedes review answers 4)', () => {
+  it.each([
+    [13, 'R50m to R75m'],
+    [25, 'R350m+'],
+  ])('revenue ordinal %i (%s) prices on Basic and Pro like any other band', async (ordinal, label) => {
+    const band = ROWS.find((r) => r.service_slug === 'accounting' && r.ordinal === ordinal)!;
+    expect(formatBandLabel('accounting', band.label)).toBe(label);
+    for (const tierSlug of ['basic', 'pro'] as const) {
+      const d = await price({ tierSlug, brackets: { accounting: ordinal, bookkeeping: 12 } });
+      const bk = ROWS.find((r) => r.service_slug === 'bookkeeping' && r.ordinal === 12)!;
+      expect(d.monthlyTotalZAR).toBe(band[`${tierSlug}_price`] + bk[`${tierSlug}_price`]);
+    }
   });
 
-  it('an enterprise, opted-out or missing revenue answer is not a call by itself', () => {
-    expect(revenueNeedsCall({ accounting: 'enterprise' })).toBe(false);
-    expect(revenueNeedsCall({ accounting: 'not_required' })).toBe(false);
-    expect(revenueNeedsCall({ bookkeeping: 99 })).toBe(false);
+  it('no revenue gate is left in the calculator flow or its copy', () => {
+    expect('revenueNeedsCall' in calculatorFlow).toBe(false);
+    expect('REVENUE_CALL_FROM_ORDINAL' in calculatorCopy).toBe(false);
+    expect('REVENUE_CALL_COPY' in calculatorCopy).toBe(false);
+    expect(TIERS_BY_APPLICATION).toEqual(['premium']);
   });
 
   it('adjacent transaction bands price independently (up to 300 vs up to 325)', () => {
@@ -348,10 +360,11 @@ describe('all-in prices and display (pricing model: not VAT-registered; review a
     expect(d.totalChargeZAR).toBe(d.monthlyTotalZAR);
   });
 
-  it('whole rands show without cents; a half-rand figure keeps two decimals', () => {
-    expect(formatZAR(6200)).toBe('R 6,200');
-    expect(formatZAR(762.5)).toBe('R 762.50');
-    expect(formatZAR(0.1 + 0.2)).toBe('R 0.30');
+  // Audit decision 2 (2026-10-13): "R 5 750", no cents; supersedes review
+  // answers 6 ("R 6,200"). Spaces are no-break spaces (U+00A0).
+  it('prices read "R 6 200": a space between thousands and no cents', () => {
+    expect(formatZAR(6200)).toBe('R\u00a06\u00a0200');
+    expect(formatZAR(0.1 + 0.2)).toBe('R\u00a00.30');
   });
 });
 

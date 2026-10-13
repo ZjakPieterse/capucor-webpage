@@ -22,9 +22,12 @@ const zarDecimal = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
+// "R 5 750" with no-break spaces, no cents (audit decision 2, 2026-10-13). A
+// copy of formatZAR in src/lib/utils.ts, which a test keeps identical.
 export function formatZAR(amount) {
   const clean = Math.round(Number(amount) * 100) / 100;
-  return `R ${clean % 1 === 0 ? zarWhole.format(clean) : zarDecimal.format(clean)}`;
+  const grouped = clean % 1 === 0 ? zarWhole.format(clean) : zarDecimal.format(clean);
+  return `R\u00a0${grouped.replace(/,/g, '\u00a0')}`;
 }
 
 export function stableStringify(value) {

@@ -5,11 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// PLAN §12: comma-thousands separator, period-decimal (SA accounting convention).
-// en-ZA locale uses space/comma which differs from SA business practice, so we
-// use en-US number formatting. Keeping the "R" glyph from wrapping away from the
-// number is a layout concern handled in the price components (e.g. AnimatedPrice),
-// not here.
+// Prices read "R 5 750" on every surface: a space between thousands, no cents
+// (full-site audit decision 2, 2026-10-13; superseded "R 6,200"). Both spaces
+// are no-break spaces (U+00A0), so a price never wraps, even where its element
+// has no `whitespace-nowrap`. Every price is whole rands today; an amount with
+// cents would still show them ("R 5 750.50") rather than be rounded, because
+// the signed PDF is the debit-order mandate. The email formatter in
+// lib/email/messages.mjs is a copy of this one (the retry runner cannot import
+// TypeScript); a test keeps the two identical.
+export const PRICE_SPACE = '\u00a0';
 const zarFmt    = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const zarFmtDec = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
@@ -18,11 +22,12 @@ const zarFmtDec = new Intl.NumberFormat('en-US', {
 
 export function formatZARNumber(amount: number): string {
   const clean = Math.round(amount * 100) / 100;
-  return clean % 1 === 0 ? zarFmt.format(clean) : zarFmtDec.format(clean);
+  const grouped = clean % 1 === 0 ? zarFmt.format(clean) : zarFmtDec.format(clean);
+  return grouped.replace(/,/g, PRICE_SPACE);
 }
 
 export function formatZAR(amount: number): string {
-  return 'R ' + formatZARNumber(amount);
+  return 'R' + PRICE_SPACE + formatZARNumber(amount);
 }
 
 // The 1st of the next calendar month at 00:00:00 UTC. New subscriptions always

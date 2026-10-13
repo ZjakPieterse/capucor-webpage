@@ -118,6 +118,33 @@ describe('POST /api/proposals/sign/confirm', () => {
     );
   });
 
+  // Every band is self-serve (full-site audit decision 1, 2026-10-13): a
+  // proposal on the open-ended "350 Mil+" band signs like any other.
+  it('1b. a proposal above R50m in revenue (R350m+) signs and is fulfilled', async () => {
+    lookupResult = {
+      data: pendingRow({
+        services: ['accounting', 'bookkeeping'],
+        brackets: { accounting: 25, bookkeeping: 0 },
+        monthly_total_zar: 7975,
+        total_charge_zar: 7975,
+      }),
+      error: null,
+    };
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals/sign/confirm', { ctoken: CTOKEN }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ ok: true, deliveryStatus: 'accepted' });
+    expect(rpc).toHaveBeenCalledWith('commit_proposal_signature', expect.anything());
+    // Fulfilment (PDF, then emails) reads the stored row itself; the R350m+
+    // PDF is covered in monthly-accounting-surfaces.test.ts.
+    expect(processProposalFulfilment).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: '11111111-1111-4111-8111-111111111111' }),
+      expect.any(String),
+    );
+  });
+
   it('2. incomplete external work remains a successful legal signature with pending delivery', async () => {
     vi.mocked(processProposalFulfilment).mockResolvedValueOnce({
       deliveryStatus: 'pending',

@@ -38,7 +38,7 @@ function QuestionShell({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* The question alone: no eyebrow, no hint (tweaks round 1). */}
-      <h2 className="text-xl sm:text-2xl font-semibold text-balance">{copy.title}</h2>
+      <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold text-balance outline-none">{copy.title}</h2>
 
       {children}
 

@@ -15,7 +15,8 @@ import {
   parseAddonToken,
   resolveAddons,
 } from '@/lib/pricing';
-import { formatZAR } from '@/lib/utils';
+import { formatZAR, formatZARNumber } from '@/lib/utils';
+import { formatZAR as emailFormatZAR } from '@/lib/email/messages.mjs';
 
 // Minimal bracket fixtures matching PDF price list
 const accDormant  = { service_slug: 'accounting', ordinal: 0, basic_price: 500,  pro_price: 650,  premium_price: 1050  };
@@ -223,25 +224,36 @@ describe('hasEnterpriseService', () => {
 
 // ─── formatZAR ────────────────────────────────────────────────────────────────
 
+// "R 5 750" on every surface, no cents (full-site audit decision 2,
+// 2026-10-13; superseded "R 6,200"). Both gaps are no-break spaces, so a
+// price never wraps; `plain` turns them into ordinary spaces for reading.
 describe('formatZAR', () => {
-  it('formats whole numbers without decimals', () => {
-    expect(formatZAR(1550)).toBe('R 1,550');
+  const NBSP = '\u00a0';
+  const plain = (s: string) => s.replace(/\u00a0/g, ' ');
+
+  it('reads "R 5 750", "R 12 000" and "R 350", with no cents', () => {
+    expect(plain(formatZAR(5750))).toBe('R 5 750');
+    expect(plain(formatZAR(12000))).toBe('R 12 000');
+    expect(plain(formatZAR(350))).toBe('R 350');
+    expect(plain(formatZAR(0))).toBe('R 0');
+    expect(plain(formatZAR(1234567))).toBe('R 1 234 567');
+    for (const n of [0, 350, 5750, 12000, 1234567]) expect(formatZAR(n)).not.toMatch(/[.,]/);
   });
 
-  it('formats decimals to 2dp', () => {
-    expect(formatZAR(1527.5)).toBe('R 1,527.50');
+  it('uses no-break spaces only, so a price cannot wrap', () => {
+    expect(formatZAR(12000)).toBe(`R${NBSP}12${NBSP}000`);
+    expect(formatZARNumber(5750)).toBe(`5${NBSP}750`);
+    expect(formatZAR(1234567)).not.toMatch(/ /); // an ordinary space
   });
 
-  it('handles zero', () => {
-    expect(formatZAR(0)).toBe('R 0');
+  it('never rounds an amount: a figure with cents (none today) keeps them', () => {
+    expect(plain(formatZAR(1527.5))).toBe('R 1 527.50');
   });
 
-  it('handles sub-1000 values', () => {
-    expect(formatZAR(725)).toBe('R 725');
-  });
-
-  it('uses comma-thousands and period-decimal (SA accounting convention)', () => {
-    expect(formatZAR(1234567.89)).toBe('R 1,234,567.89');
+  it('the email copy (messages.mjs) formats every amount identically', () => {
+    for (const n of [0, 75, 350, 999, 1000, 5750, 12000, 12875, 99999.99, 1234567]) {
+      expect(emailFormatZAR(n)).toBe(formatZAR(n));
+    }
   });
 });
 

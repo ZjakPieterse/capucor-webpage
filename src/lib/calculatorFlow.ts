@@ -1,7 +1,6 @@
 // Pure navigation and derivation rules for the calculator-v2 wizard. No React,
 // so the rules are unit-tested directly (src/__tests__/calculator-flow.test.ts).
 
-import { REVENUE_CALL_FROM_ORDINAL } from '@/config/calculatorCopy';
 import { CORE_SERVICE_SLUGS, parseAddonToken } from '@/lib/pricing';
 import type { BracketValue, CalculatorAnswers, CalculatorStep } from '@/types';
 
@@ -108,10 +107,28 @@ export function progressFraction(
   completed = false,
 ): number {
   if (completed) return 1;
-  const path: CalculatorStep[] = [FIRST_STEP];
-  while (path[path.length - 1] !== 'review') path.push(nextStep(path[path.length - 1]!, s));
+  const path = visitorPath(s);
   const at = path.indexOf(step);
   return at < 0 ? 0 : (at + 1) / (path.length + 1);
+}
+
+function visitorPath(s: Pick<FlowState, 'answers'>): CalculatorStep[] {
+  const path: CalculatorStep[] = [FIRST_STEP];
+  while (path[path.length - 1] !== 'review') path.push(nextStep(path[path.length - 1]!, s));
+  return path;
+}
+
+/**
+ * Where `step` sits on the visitor's own path, for the "Step 3 of 7" live
+ * region (audit A14). Counted like the progress bar, so a payroll Yes adds the
+ * headcount screen to the total.
+ */
+export function stepPosition(
+  step: CalculatorStep,
+  s: Pick<FlowState, 'answers'>,
+): { index: number; total: number } {
+  const path = visitorPath(s);
+  return { index: path.indexOf(step) + 1, total: path.length };
 }
 
 interface SelectionState extends FlowState {
@@ -172,13 +189,3 @@ export function effectiveAddons(
 }
 
 export const ANSWER_ADDON_SLUGS: ReadonlySet<string> = new Set(['xero-invoicing', 'not-vat-registered']);
-
-/**
- * True when the revenue band goes to a call rather than self-serve acceptance
- * (above R50m, decision 2026-10-06). The calculator shows "Book a call" on
- * every package and /api/proposals refuses the selection.
- */
-export function revenueNeedsCall(brackets: Record<string, BracketValue | number>): boolean {
-  const revenue = brackets.accounting;
-  return typeof revenue === 'number' && revenue >= REVENUE_CALL_FROM_ORDINAL;
-}

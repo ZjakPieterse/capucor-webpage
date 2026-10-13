@@ -179,7 +179,6 @@ describe('fit call goes through /contact first (Zjak, 2026-10-12)', () => {
       'components/services/ServiceCtaPair.tsx',
       'components/pricing/PricingCalculator.tsx',
       'components/pricing/PricingErrorBoundary.tsx',
-      'components/pricing/Step2Tiers.tsx',
       'app/not-found.tsx',
       'app/error.tsx',
     ];
@@ -187,6 +186,9 @@ describe('fit call goes through /contact first (Zjak, 2026-10-12)', () => {
       expect(src(file), file).not.toMatch(/links\.booking/);
       expect(src(file), file).toMatch(/links\.fitCall/);
     }
+    // The package step has no call link since every band is self-serve
+    // (audit decision 1, 2026-10-13); it must not grow a calendar link either.
+    expect(src('components/pricing/Step2Tiers.tsx')).not.toMatch(/links\.booking/);
     expect(siteConfig.links.fitCall).toBe('/contact');
     const form = src('components/contact/ContactForm.tsx');
     // The booking link is used only once the lead is saved (after the `!res.ok`

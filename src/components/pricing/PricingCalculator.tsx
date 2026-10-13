@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useCallback, useRef, useState } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
 import { BadgeCheck } from 'lucide-react';
 import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
@@ -8,15 +8,17 @@ import {
   ANSWER_ADDON_SLUGS,
   effectiveAddons,
   progressFraction,
-  revenueNeedsCall,
   scopeComplete,
+  stepPosition,
 } from '@/lib/calculatorFlow';
 import { parseAddonToken } from '@/lib/pricing';
+import { focusStepHeading } from '@/lib/stepFocus';
 import {
   PRICING_PAGE_HEADING,
   PRICING_PAGE_INTRO,
   PRICING_TRUST_ITEMS,
   QUESTION_COPY,
+  stepAnnouncement,
 } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
@@ -111,6 +113,21 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   // instead of walking every later question again.
   const [returnToPackages, setReturnToPackages] = useState(false);
 
+  // Keyboard and screen-reader users follow each move (audit A14): once the
+  // visitor has moved, every new screen's heading takes focus as it mounts
+  // and the live region under the progress bar names the step. The first
+  // screen on page load leaves focus where the browser put it.
+  const moved = useRef(false);
+  const [hasMoved, setHasMoved] = useState(false);
+  const markMoved = () => {
+    moved.current = true;
+    setHasMoved(true);
+  };
+  // Stable, so React calls it only when a new screen (keyed by step) mounts.
+  const focusNewScreen = useCallback((el: HTMLDivElement | null) => {
+    if (moved.current) focusStepHeading(el);
+  }, []);
+
   const scrollToTop = () => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'auto' });
@@ -120,6 +137,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   const isQuestion = (s: CalculatorStep) => !['package', 'addons', 'review'].includes(s);
   const advance = () => {
     goNext(returnToPackages && isQuestion(state.step) ? 'package' : undefined);
+    markMoved();
     scrollToTop();
   };
 
@@ -131,11 +149,13 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   const editAnswer = (target: CalculatorStep) => {
     setReturnToPackages(true);
     setStep(target);
+    markMoved();
     scrollToTop();
   };
 
   const back = () => {
     goBack();
+    markMoved();
     scrollToTop();
   };
 
@@ -164,10 +184,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   // On the package step, once a package is tapped, phones get the bottom bar
   // with that package's price and a Continue button (the step is long at
   // 375 px). Only the answer-driven add-ons belong in that price, as on the card.
-  // Above R50m in revenue every package goes to a call, so there is nothing to
-  // continue with.
-  const byCall = revenueNeedsCall(selectedBrackets);
-  const showPackageBar = step === 'package' && pricedStepsReady && !!selectedTier && !byCall;
+  const showPackageBar = step === 'package' && pricedStepsReady && !!selectedTier;
+  const position = stepPosition(step, state);
   const packageAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
 
   const bracketValue = (slug: string) => {
@@ -222,7 +240,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             vatRegistered={answers.vatRegistered !== false}
             answers={answers}
             onEditAnswer={editAnswer}
-            byCall={byCall}
             onTierSelect={setTier}
             onBack={back}
             onNext={next}
@@ -276,12 +293,16 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
               <p className="mt-1.5 text-sm text-muted-foreground text-balance">{PRICING_PAGE_INTRO}</p>
             </div>
             <CalculatorProgress value={progressFraction(step, state, completed)} />
+            <p role="status" aria-live="polite" className="sr-only">
+              {hasMoved ? stepAnnouncement(position.index, position.total) : ''}
+            </p>
             {/* No minimum height: the next section follows the screen's own
                 content, so short question screens leave no gap (tweaks round 2). */}
             <div className="relative">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
+                  ref={focusNewScreen}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
