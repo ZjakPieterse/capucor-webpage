@@ -55,6 +55,10 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   in `wrangler.jsonc`). After editing pricing in Supabase, refresh them immediately with
   `POST /api/revalidate?secret=<REVALIDATE_SECRET>` (GET also works for browser use). Do not add
   `revalidate` to `/proposal/[token]` — it mutates status on view.
+  If the pricing tables cannot be read at runtime, `/pricing` throws so ISR keeps the last good
+  page (a cold miss shows `(site)/pricing/error.tsx`); only the build prerender renders the
+  fallback. That split reads a Next internal (`lib/pricing/isBuildPrerender.ts`), so recheck it on a
+  Next upgrade; `pricing-isr.test.ts` fails if it moves.
 - Prod smoke-check: `curl -sD- -o /dev/null https://capucor.com/pricing | grep -i content-security-policy`
   should show the Supabase host in `connect-src`. `deploy.yml` runs this same check post-deploy.
   **Don't point it at capucor.app** — that is a different Worker, so it would report that Worker's
