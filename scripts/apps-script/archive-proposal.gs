@@ -39,6 +39,12 @@ function doPost(e) {
         error: 'FOLDER_ID script property is not set',
       });
     }
+    // Read an archived PDF back (base64) for the client's "That's signed"
+    // email. Only a PDF filed in FOLDER_ID: the secret cannot read other files.
+    if (body.action === 'fetch') {
+      return fetchArchivedPdf_(body.fileId, folderId);
+    }
+
     if (!body.html) {
       return json_({ ok: false, error: 'missing html' });
     }
@@ -102,6 +108,37 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, error: String(err) });
   }
+}
+
+// A signed proposal is about 80 to 140 KB; the site refuses anything over 5 MB.
+var MAX_FETCH_BYTES = 5 * 1024 * 1024;
+
+function fetchArchivedPdf_(fileId, folderId) {
+  if (!fileId) {
+    return json_({ ok: false, error: 'missing fileId' });
+  }
+  var meta = Drive.Files.get(String(fileId), {
+    supportsAllDrives: true,
+    fields: 'id,mimeType,parents,size,trashed',
+  });
+  if (
+    meta.trashed ||
+    meta.mimeType !== 'application/pdf' ||
+    !meta.parents ||
+    meta.parents.indexOf(folderId) === -1
+  ) {
+    return json_({ ok: false, error: 'not an archived proposal' });
+  }
+  if (Number(meta.size) > MAX_FETCH_BYTES) {
+    return json_({ ok: false, error: 'file too large' });
+  }
+  var bytes = DriveApp.getFileById(meta.id).getBlob().getBytes();
+  return json_({
+    ok: true,
+    fileId: meta.id,
+    size: bytes.length,
+    contentBase64: Utilities.base64Encode(bytes),
+  });
 }
 
 function escapeDriveQuery_(value) {

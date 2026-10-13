@@ -12,11 +12,17 @@ function hexBytes(value: string): ArrayBuffer {
   return buffer;
 }
 
+/**
+ * The runner signs `timestamp.proposalId` for the archive bridge and
+ * `timestamp.purpose.proposalId` for any other bridge, so a signature made for
+ * one route cannot be replayed against another.
+ */
 export async function verifyReconciliationSignature(
   proposalId: string,
   timestamp: string | null,
   signature: string | null,
   now = Date.now(),
+  purpose?: string,
 ): Promise<boolean> {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const timestampMs = Number(timestamp);
@@ -42,6 +48,10 @@ export async function verifyReconciliationSignature(
     'HMAC',
     key,
     hexBytes(signature),
-    new TextEncoder().encode(`${timestamp}.${proposalId}`),
+    new TextEncoder().encode(
+      purpose
+        ? `${timestamp}.${purpose}.${proposalId}`
+        : `${timestamp}.${proposalId}`,
+    ),
   );
 }

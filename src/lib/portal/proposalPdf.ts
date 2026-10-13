@@ -22,6 +22,9 @@ import type { Bracket, Service } from '@/types';
  * failure never blocks signing, and re-runs are idempotent (skip once proposal_pdf_drive_id is
  * set). With the env vars unset it silently no-ops, so the rest of the sign flow
  * works before the Apps Script is wired up.
+ *
+ * fetchSignedProposalPdf (below) reads the archived file back for the client's
+ * "That's signed" email.
  */
 
 type ProposalArchiveRaw = Omit<ProposalArchiveRow, 'brackets' | 'addons'> & {
@@ -60,6 +63,57 @@ export interface ArchiveResult {
 }
 
 export const PDF_ARCHIVE_TIMEOUT_MS = 8_000;
+
+// A signed proposal measured 79 to 137 KB (2026-10-13); Resend allows 40 MB a
+// message after base64. Anything near this cap is not one of our PDFs.
+export const MAX_PDF_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+
+export type SignedPdfResult =
+  | { ok: true; contentBase64: string }
+  | { ok: false; code: string };
+
+/**
+ * Read the archived signed PDF back from Drive (Apps Script `action: 'fetch'`),
+ * as base64, for the client's "That's signed" email. The same bytes the firm
+ * holds, and the same source for the Worker's first attempt and the retry
+ * runner (through /api/internal/proposal-fulfilment/pdf-file). Never throws: a
+ * caller sends without the attachment on `ok: false`.
+ */
+export async function fetchSignedProposalPdf(
+  fileId: string,
+): Promise<SignedPdfResult> {
+  const url = process.env.APPS_SCRIPT_PDF_URL;
+  const secret = process.env.APPS_SCRIPT_PDF_SECRET;
+  if (!url || !secret) return { ok: false, code: 'pdf_not_configured' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret, action: 'fetch', fileId }),
+      signal: AbortSignal.timeout(PDF_ARCHIVE_TIMEOUT_MS),
+    });
+    if (!res.ok) return { ok: false, code: `pdf_fetch_http_${res.status}` };
+    const out = (await res.json()) as { ok?: boolean; contentBase64?: unknown };
+    const content = out.contentBase64;
+    if (!out.ok || typeof content !== 'string' || !content) {
+      return { ok: false, code: 'pdf_fetch_rejected' };
+    }
+    if (content.length > Math.ceil(MAX_PDF_ATTACHMENT_BYTES / 3) * 4) {
+      return { ok: false, code: 'pdf_too_large' };
+    }
+    if (!BASE64.test(content)) return { ok: false, code: 'pdf_fetch_invalid' };
+    return { ok: true, contentBase64: content };
+  } catch (err) {
+    return {
+      ok: false,
+      code:
+        err instanceof Error && err.name === 'TimeoutError'
+          ? 'pdf_fetch_timeout'
+          : 'pdf_fetch_failed',
+    };
+  }
+}
 
 const PDF_COLUMNS =
   'id, ref_number, version, first_name, last_name, business_name, services, brackets, tier_slug, addons, total_charge_zar, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image, signature_ip, proposal_pdf_drive_id';

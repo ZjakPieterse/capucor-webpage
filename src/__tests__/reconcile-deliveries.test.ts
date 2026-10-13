@@ -8,11 +8,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/lib/portal/proposalPdf', () => ({ archiveSignedProposal: vi.fn() }));
+vi.mock('@/lib/portal/proposalPdf', () => ({
+  archiveSignedProposal: vi.fn(),
+  fetchSignedProposalPdf: vi.fn(),
+}));
 vi.mock('@/lib/email/sendEmail', () => ({ sendEmail: vi.fn() }));
 
 import { sendEmail } from '@/lib/email/sendEmail';
-import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
+import { createHmac } from 'node:crypto';
+import { archiveSignedProposal, fetchSignedProposalPdf } from '@/lib/portal/proposalPdf';
 import { processProposalFulfilment } from '@/lib/portal/fulfilment';
 import {
   FUNNEL_SOURCES,
@@ -27,6 +31,9 @@ import {
 const PROPOSAL_ID = '11111111-1111-4111-8111-111111111111';
 const DELIVERY_ID = '22222222-2222-4222-8222-222222222222';
 const CLIENT_EMAIL = 'Pat@Example.com';
+const PDF_BASE64 = 'JVBERi0xLjQK';
+const PDF_FILE_URL = 'https://capucor.com/api/internal/proposal-fulfilment/pdf-file';
+const RESEND_URL = 'https://api.resend.com/emails';
 
 // As PostgREST returns it: timestamptz with an explicit offset.
 const proposalRow = {
@@ -94,7 +101,12 @@ const config = {
 let fetchMock: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   vi.clearAllMocks();
-  fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 'email_1' }), { status: 200 }));
+  // The PDF bridge answers with the archived file; Resend accepts.
+  fetchMock = vi.fn(async (url: string) =>
+    url === PDF_FILE_URL
+      ? new Response(JSON.stringify({ ok: true, contentBase64: PDF_BASE64 }), { status: 200 })
+      : new Response(JSON.stringify({ id: 'email_1' }), { status: 200 }),
+  );
   vi.stubGlobal('fetch', fetchMock);
 });
 afterEach(() => {
@@ -106,6 +118,7 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     // The Worker's first attempt, captured at sendEmail.
     process.env.OWNER_NOTIFICATION_EMAIL = 'zjak@capucor.com';
     vi.mocked(archiveSignedProposal).mockResolvedValue({ ok: true, fileId: 'drive_1' });
+    vi.mocked(fetchSignedProposalPdf).mockResolvedValue({ ok: true, contentBase64: PDF_BASE64 });
     vi.mocked(sendEmail).mockResolvedValue({
       deliveryStatus: 'accepted',
       deliveryId: DELIVERY_ID,
@@ -145,6 +158,7 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     const runnerClient = await buildDeliveryMessage(
       { source_type: 'proposal', source_id: PROPOSAL_ID, event_type: 'proposal.signed_client', recipient: 'pat@example.com' },
       db,
+      config,
     );
     const runnerOwner = await buildDeliveryMessage(
       { source_type: 'proposal', source_id: PROPOSAL_ID, event_type: 'proposal.signed_owner', recipient: 'zjak@capucor.com' },
@@ -152,6 +166,13 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     );
 
     expect(runnerClient).toEqual(workerClient.message);
+    expect(workerClient.message.attachments).toEqual([
+      { content: PDF_BASE64, filename: 'Capucor proposal FT-2026-10-0001.pdf' },
+    ]);
+    // The wire body matches the Resend SDK's serialisation of the same message.
+    expect(JSON.stringify(toResendPayload(runnerClient))).toContain(
+      `"attachments":[{"content":"${PDF_BASE64}","filename":"Capucor proposal FT-2026-10-0001.pdf"}]`,
+    );
     expect(runnerOwner).toEqual(workerOwner.message);
     expect((runnerOwner as { html: string }).html).toContain('https://drive.google.com/file/d/drive_1/view');
     expect(toResendPayload(runnerClient).reply_to).toBe('info@capucor.com');
@@ -258,11 +279,78 @@ describe('email retries', () => {
     const outcome = await reconcileOne(db, due, config, new Date().toISOString());
 
     expect(outcome).toBe('accepted');
-    const [, init] = fetchMock.mock.calls[0];
+    const [pdfUrl, pdfInit] = fetchMock.mock.calls[0];
+    expect(pdfUrl).toBe(PDF_FILE_URL);
+    const ts = pdfInit.headers['x-capucor-timestamp'];
+    expect(pdfInit.headers['x-capucor-signature']).toBe(
+      createHmac('sha256', config.serviceKey).update(`${ts}.pdf-file.${PROPOSAL_ID}`).digest('hex'),
+    );
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(url).toBe(RESEND_URL);
     expect(init.headers['Idempotency-Key']).toBe(due.idempotency_key);
-    expect(JSON.parse(init.body)).toMatchObject({ to: CLIENT_EMAIL, subject: 'Your Capucor proposal is signed' });
+    const sent = JSON.parse(init.body);
+    expect(sent).toMatchObject({ to: CLIENT_EMAIL, subject: 'Your Capucor proposal is signed' });
+    expect(sent.attachments).toEqual([
+      { content: PDF_BASE64, filename: 'Capucor proposal FT-2026-10-0001.pdf' },
+    ]);
+    expect(sent.html).toContain('https://capucor.com/resources/onboarding-checklist');
     expect(db.calls.some((c) => c.kind === 'request' && c.args[0] === 'proposals')).toBe(true);
     expect(db.rpc).toHaveBeenCalledWith('sync_proposal_fulfilment_email', { p_delivery_id: DELIVERY_ID });
+  });
+
+  it('still resends, without the attachment, when the PDF cannot be read', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url === PDF_FILE_URL
+        ? new Response(JSON.stringify({ ok: false, code: 'pdf_fetch_timeout' }), { status: 503 })
+        : new Response(JSON.stringify({ id: 'email_1' }), { status: 200 }),
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const outcome = await reconcileOne(fakeDb(), due, config, new Date().toISOString());
+
+    expect(outcome).toBe('accepted');
+    const sent = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(sent).not.toHaveProperty('attachments');
+    expect(log.mock.calls.flat().join(' | ')).toBe(
+      `proposal=${PROPOSAL_ID} pdf_attachment=missing code=pdf_fetch_timeout`,
+    );
+    log.mockRestore();
+  });
+
+  it('converges on the original shape when Resend refuses the key for a different body', async () => {
+    // The Worker's first attempt went without the PDF and timed out; Resend
+    // accepted it. This retry has the PDF, so Resend answers 409.
+    let resendCalls = 0;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url === PDF_FILE_URL)
+        return new Response(JSON.stringify({ ok: true, contentBase64: PDF_BASE64 }), { status: 200 });
+      resendCalls += 1;
+      return resendCalls === 1
+        ? new Response(JSON.stringify({ name: 'invalid_idempotent_request' }), { status: 409 })
+        : new Response(JSON.stringify({ id: 'email_original' }), { status: 200 });
+    });
+    const db = fakeDb();
+    const outcome = await reconcileOne(db, due, config, new Date().toISOString());
+
+    expect(outcome).toBe('accepted');
+    const [first, second] = fetchMock.mock.calls.filter(([url]) => url === RESEND_URL);
+    expect(JSON.parse(first[1].body).attachments).toHaveLength(1);
+    expect(JSON.parse(second[1].body)).not.toHaveProperty('attachments');
+    expect(second[1].headers['Idempotency-Key']).toBe(due.idempotency_key);
+  });
+
+  it('waits for a later run when the original carried the PDF and it cannot be read now', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url === PDF_FILE_URL
+        ? new Response(JSON.stringify({ ok: false, code: 'pdf_fetch_failed' }), { status: 503 })
+        : new Response(JSON.stringify({ name: 'invalid_idempotent_request' }), { status: 409 }),
+    );
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    const db = fakeDb();
+    const outcome = await reconcileOne(db, due, config, new Date().toISOString());
+
+    expect(outcome).toBe('retry_scheduled');
+    expect(fetchMock.mock.calls.filter(([url]) => url === RESEND_URL)).toHaveLength(1);
+    vi.mocked(console.log).mockRestore();
   });
 
   it('fails the sixth attempt permanently without calling the provider', async () => {

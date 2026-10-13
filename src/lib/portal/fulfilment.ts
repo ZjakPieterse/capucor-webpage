@@ -11,7 +11,11 @@ import {
   signedClientIdempotencyKey,
   signedOwnerIdempotencyKey,
 } from '@/lib/email/messages.mjs';
-import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
+import {
+  archiveSignedProposal,
+  fetchSignedProposalPdf,
+} from '@/lib/portal/proposalPdf';
+import { logWarn } from '@/lib/log';
 
 const LEASE_MS = 60_000;
 const FIRST_RETRY_MS = 10 * 60_000;
@@ -209,13 +213,29 @@ export async function processProposalFulfilment(
       };
 
       if (claim.stage === 'client_email') {
+        // The client gets the signed PDF (decision 2026-10-13), read back from
+        // Drive so it is the archived file. A missing PDF never holds the
+        // email back: it goes without, and the miss is logged.
+        pdfFileId ??= await loadPdfDriveId(admin, proposal.id);
+        const pdf = pdfFileId
+          ? await fetchSignedProposalPdf(pdfFileId)
+          : { ok: false as const, code: 'pdf_not_archived' };
+        if (!pdf.ok) {
+          logWarn('proposal_fulfilment.client_pdf_missing', {
+            proposalId: proposal.id,
+            code: pdf.code,
+          });
+        }
         const clientDelivery = await sendEmail({
           sourceType: 'proposal',
           sourceId: proposal.id,
           eventType: SIGNED_CLIENT_EVENT,
           idempotencyKey: signedClientIdempotencyKey(proposal.id),
           adminClient: admin,
-          message: buildSignedClientMessage(signed),
+          message: buildSignedClientMessage(
+            signed,
+            pdf.ok ? pdf.contentBase64 : null,
+          ),
         });
         await finishStage(admin, {
           proposalId: proposal.id,

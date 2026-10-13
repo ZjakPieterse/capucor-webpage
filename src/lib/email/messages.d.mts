@@ -40,8 +40,14 @@ export interface BuiltEmail {
   to: string;
   subject: string;
   html: string;
+  attachments?: { content: string; filename: string }[];
 }
-export function buildSignedClientMessage(p: SignedProposalSource): BuiltEmail;
+export const ONBOARDING_CHECKLIST_URL: string;
+export function signedProposalPdfFilename(refNumber: string | null): string;
+export function buildSignedClientMessage(
+  p: SignedProposalSource,
+  pdfBase64?: string | null,
+): BuiltEmail;
 export function buildSignedOwnerMessage(p: SignedProposalSource, ownerEmail: string): BuiltEmail;
 export function renderAmendEmail(data: object): string;
 export function renderResendEmail(data: object): string;
