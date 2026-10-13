@@ -6,7 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.marketingUrl),
   title: {
-    default: 'Capucor Business Solutions | Outsourced Finance for SMEs',
+    default: 'Capucor Business Solutions | Monthly accounting and payroll for employers',
     template: '%s | Capucor Business Solutions',
   },
   description: siteConfig.description,

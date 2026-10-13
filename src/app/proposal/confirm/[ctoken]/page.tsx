@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { formatZAR } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Confirm your signature | Capucor',
+  title: 'Confirm your signature',
   robots: { index: false, follow: false },
 };
 
@@ -137,7 +137,7 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
       {/* A signed proposal needs nothing more from the visitor. */}
       {reason !== 'signed' && (
         <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
-          Build your package
+          Build your subscription
         </Button>
       )}
     </div>

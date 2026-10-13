@@ -116,7 +116,12 @@ export function LeadMagnetSignup() {
           />
         </div>
 
-        <ConsentCheckbox id="magnet-consent" checked={consent} onCheckedChange={setConsent} />
+        <ConsentCheckbox
+          id="magnet-consent"
+          checked={consent}
+          onCheckedChange={setConsent}
+          subject="the compliance calendar and related updates"
+        />
 
         {/* Honeypot */}
         <div className="hidden" aria-hidden="true">

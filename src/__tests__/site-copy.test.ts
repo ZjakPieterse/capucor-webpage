@@ -217,11 +217,11 @@ describe('contact form layout (Zjak, 2026-10-12)', () => {
   });
 });
 
-describe('contact form tweaks (Zjak, 2026-10-13)', () => {
+describe('contact form tweaks (Zjak, 2026-10-13; sentence case and button per the full-site audit)', () => {
   it('no section titles or phone field, renamed dropdowns, two send buttons', async () => {
     const { CONTACT_QUESTIONS } = await import('@/config/contactQuestions');
-    expect(CONTACT_QUESTIONS.turnover.label).toBe('Annual Revenue');
-    expect(CONTACT_QUESTIONS.teamSize.label).toBe('Team Size');
+    expect(CONTACT_QUESTIONS.turnover.label).toBe('Annual revenue');
+    expect(CONTACT_QUESTIONS.teamSize.label).toBe('Team size');
     for (const key of ['turnover', 'teamSize', 'booksNow'] as const) {
       expect(CONTACT_QUESTIONS[key].placeholder).toBe('Choose an option');
     }
@@ -230,7 +230,40 @@ describe('contact form tweaks (Zjak, 2026-10-13)', () => {
     expect(form).not.toMatch(/<legend|About you|setPhone/);
     expect(form).toMatch(/send\('message'\)/);
     expect(form).toMatch(/send\('meeting'\)/);
+    // Both buttons name the action: "Book a fit call", as on every CTA (full-site audit, 2026-10-13).
+    expect(form).toMatch(/Book a fit call/);
+    expect(form).not.toMatch(/Book a meeting/);
     // Only the free-text box is optional.
     expect(form.match(/\boptional\b>/g)).toHaveLength(1);
+  });
+});
+
+// Full-site audit (2026-10-13): one name per thing, sentence-case labels.
+describe('one name per thing (full-site audit, 2026-10-13)', () => {
+  it('calls the fee a "fixed monthly fee" everywhere', () => {
+    expect(PRICING_TRUST_ITEMS).toContain('Fixed monthly fee');
+    for (const page of ['accounting', 'bookkeeping', 'payroll']) {
+      expect(src(`app/(site)/${page}/page.tsx`)).not.toMatch(/Flat monthly pricing/);
+    }
+    expect(src('app/(site)/pricing/page.tsx')).not.toMatch(/Transparent/);
+  });
+
+  it('names the product a subscription from the button to the proposal', () => {
+    expect(src('config/calculatorCopy.ts')).toMatch(/PRICING_PAGE_HEADING = 'Build your subscription'/);
+    expect(src('lib/email/messages.mjs')).not.toMatch(/building a package/);
+    expect(src('app/proposal/[token]/page.tsx')).not.toMatch(/proposed package|Build your package|build your package/);
+    expect(src('app/proposal/confirm/[ctoken]/page.tsx')).not.toMatch(/Build your package/);
+  });
+
+  it('has no uppercase micro-labels on the problem cards or the signing document', () => {
+    expect(src('components/landing/ProblemCards.tsx')).not.toMatch(/uppercase/);
+    expect(src('components/proposal/ProposalSections.tsx')).not.toMatch(/uppercase/);
+    expect(src('app/proposal/[token]/page.tsx')).not.toMatch(/uppercase/);
+    expect(src('lib/proposal/renderProposalDocumentHtml.ts')).not.toMatch(/text-transform:uppercase/);
+  });
+
+  it('tells card 4 as a scene', () => {
+    expect(src('components/landing/ProblemCards.tsx')).toMatch(/Sunday night is admin night/);
+    expect(src('components/landing/ProblemCards.tsx')).not.toMatch(/owner dependence/);
   });
 });

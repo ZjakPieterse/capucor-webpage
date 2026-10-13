@@ -33,7 +33,7 @@ const FIELD_IDS: Record<FieldKey, string> = {
 
 // Every "Book a fit call" on the site lands here, and the answers come first
 // (decision 2026-10-12). Two ways out (Zjak, 2026-10-13): "Send message" stays
-// on the page; "Book a meeting" saves the same lead, then goes to the booking
+// on the page; "Book a fit call" saves the same lead, then goes to the booking
 // page. The buttons are always live; a click with gaps marks the required
 // fields in red instead.
 export function ContactForm() {
@@ -156,7 +156,7 @@ export function ContactForm() {
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-8" noValidate>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="ct-first-name" label="First Name" error={errors.firstName}>
+        <Field id="ct-first-name" label="First name" error={errors.firstName}>
           <Input
             id="ct-first-name"
             type="text"
@@ -169,7 +169,7 @@ export function ContactForm() {
             {...invalid('ct-first-name', errors.firstName)}
           />
         </Field>
-        <Field id="ct-last-name" label="Last Name" error={errors.lastName}>
+        <Field id="ct-last-name" label="Last name" error={errors.lastName}>
           <Input
             id="ct-last-name"
             type="text"
@@ -182,7 +182,7 @@ export function ContactForm() {
             {...invalid('ct-last-name', errors.lastName)}
           />
         </Field>
-        <Field id="ct-business" label="Business Name" error={errors.business}>
+        <Field id="ct-business" label="Business name" error={errors.business}>
           <Input
             id="ct-business"
             type="text"
@@ -259,7 +259,7 @@ export function ContactForm() {
         </p>
       )}
 
-      {/* Premium fill for "Send message", plain outline for "Book a meeting"
+      {/* Premium fill for "Send message", plain outline for "Book a fit call"
           (Zjak, 2026-10-13); the same pair as the hero CTAs. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Button
@@ -291,7 +291,7 @@ export function ContactForm() {
           ) : (
             <CalendarClock className="size-4" aria-hidden />
           )}
-          Book a meeting
+          Book a fit call
         </Button>
       </div>
     </form>

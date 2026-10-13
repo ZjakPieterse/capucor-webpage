@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import {
   AlertCircle,
   Unplug,
-  Clock,
+  Moon,
   CheckCircle2,
   CalendarCheck,
   Link2,
@@ -52,13 +52,13 @@ const PROBLEMS = [
     },
   },
   {
-    icon: Clock,
-    title: "Too much owner dependence",
-    body: "Your evenings and weekends are consumed by paperwork, missing receipts, and basic finance questions. The work never stops. But your growth does.",
+    icon: Moon,
+    title: "Sunday night is admin night",
+    body: "It's 9 pm on Sunday. Slips in the cubbyhole, a supplier asking for a statement, a staff member asking about a payslip. You started this business to run it, not to do its paperwork.",
     solution: {
       icon: Zap,
-      title: "The decisions become priority",
-      body: "Each month, you send us your data, and we handle the finances and monthly close. Then, we review the numbers together to map out your next strategic moves.",
+      title: "Your evenings back",
+      body: "You forward what comes in and answer one short list a month. We do the capturing, the reconciling and the follow-ups, and your time goes to the decisions only you can make.",
     },
   },
 ];
@@ -118,8 +118,8 @@ function FlipCard({ item }: { item: Problem }) {
               <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10">
                 <item.icon className="h-5 w-5 text-destructive" />
               </div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-destructive/80">
-                The Problem
+              <div className="text-xs font-semibold text-destructive/80">
+                The problem
               </div>
             </div>
             <h3 className="text-base font-semibold mb-2">{item.title}</h3>
@@ -157,8 +157,8 @@ function FlipCard({ item }: { item: Problem }) {
               <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                 <item.solution.icon className="h-5 w-5 text-primary" />
               </div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                Capucor Solution
+              <div className="text-xs font-semibold text-primary">
+                Capucor solution
               </div>
             </div>
             <h3 className="text-base font-semibold mb-2">

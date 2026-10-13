@@ -53,10 +53,10 @@ const services = [
 ];
 
 const company = [
-  { label: "How It Works", href: "/#how-it-works" },
+  { label: "How it works", href: "/#how-it-works" },
   { label: "Free resources", href: "/resources" },
   { label: "Contact", href: "/contact" },
-  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Engagement terms", href: "/terms/engagement" },
 ];
 
 export function Footer() {
@@ -194,7 +194,7 @@ export function Footer() {
               href="/privacy"
               className="hover:text-foreground transition-colors"
             >
-              Privacy Policy
+              Privacy policy
             </Link>
           </div>
         </div>
