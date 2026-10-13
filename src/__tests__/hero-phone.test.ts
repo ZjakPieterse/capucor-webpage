@@ -69,6 +69,12 @@ describe('every line on a phone reads at 13 px or more', () => {
     for (const size of phoneSizes(src)) expect(size, `${name}: text-[${size}px]`).toBeGreaterThanOrEqual(13);
   });
 
+  it('starts the hero higher on phones and keeps the desktop padding (Zjak, 2026-10-13)', () => {
+    expect(readSource('src', 'components/landing/HeroSection.tsx')).toMatch(
+      /overflow-hidden pt-12 pb-28 sm:py-28 sm:pb-36 lg:py-32 lg:pb-40/,
+    );
+  });
+
   it('gives a 13 px statement row its own height on phones', () => {
     expect(css).toMatch(/\.hero-story \{[^}]*--hero-row: 30px;/);
     expect(story).not.toMatch(/ROW_PX/);
