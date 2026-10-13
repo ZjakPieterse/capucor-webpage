@@ -6,7 +6,6 @@ import {
   nextStep,
   prevStep,
   progressFraction,
-  revenueNeedsCall,
   revertStepFields,
   scopeComplete,
 } from '@/lib/calculatorFlow';
@@ -166,11 +165,19 @@ describe('effectiveAddons (answers decide the hidden add-ons)', () => {
   });
 });
 
-describe('revenueNeedsCall (above R50m goes to a call)', () => {
-  it('starts at the "50 Mil – 75 Mil" band (ordinal 13) and covers every band above', () => {
-    expect(revenueNeedsCall({ accounting: 12 })).toBe(false);
-    expect(revenueNeedsCall({ accounting: 13 })).toBe(true);
-    expect(revenueNeedsCall({ accounting: 25 })).toBe(true);
-    expect(revenueNeedsCall({})).toBe(false);
+// Every revenue band is self-serve (full-site audit decision 1, 2026-10-13):
+// a band above R50m walks the same screens as any other, to the review step.
+describe('a revenue band above R50m follows the normal path', () => {
+  it.each([13, 25])('ordinal %i reaches the packages and the review step', (accounting) => {
+    const s = {
+      selectedBrackets: { accounting, bookkeeping: 0 },
+      answers: answers({ vatRegistered: true, needsPayroll: false }),
+      selectedTier: 'pro',
+    };
+    expect(canProceed('revenue', s)).toBe(true);
+    expect(scopeComplete(s)).toBe(true);
+    expect(canProceed('package', s)).toBe(true);
+    expect(nextStep('package', s)).toBe('addons');
+    expect(nextStep('addons', s)).toBe('review');
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, Check, Star } from 'lucide-react';
+import { Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
@@ -11,14 +11,13 @@ import { FEATURED_TIER, TierNudge } from './TierNudge';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
-import { siteConfig } from '@/config/site';
 import {
   TIER_HIGHLIGHTS,
   TIER_BUYER_FIT,
   TIERS_BY_APPLICATION,
   packageCommonItemsFor,
 } from '@/config/tiers';
-import { FEATURED_BADGE, REVENUE_CALL_COPY, TIER_NUDGES } from '@/config/calculatorCopy';
+import { FEATURED_BADGE, TIER_NUDGES } from '@/config/calculatorCopy';
 import type {
   Bracket,
   Service,
@@ -43,8 +42,6 @@ interface Step2TiersProps {
   /** The visitor's answers, shown as tap-to-change chips. */
   answers: CalculatorAnswers;
   onEditAnswer: (step: CalculatorStep) => void;
-  /** Revenue above R50m: every package goes to a call, none is selectable. */
-  byCall?: boolean;
   onTierSelect: (slug: string) => void;
   onBack: () => void;
   onNext: () => void;
@@ -62,7 +59,6 @@ export function Step2Tiers({
   vatRegistered,
   answers,
   onEditAnswer,
-  byCall = false,
   onTierSelect,
   onBack,
   onNext,
@@ -78,7 +74,7 @@ export function Step2Tiers({
     // Slightly tighter on phones so the first price lands on the first screen.
     <div className="space-y-5 sm:space-y-6">
       <div>
-        <h2 className="text-xl sm:text-2xl font-semibold mb-1">Choose your package</h2>
+        <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold mb-1 outline-none">Choose your package</h2>
         <p className="text-sm text-muted-foreground">
           Every package includes the core services. They differ in how often we process, report and review.
         </p>
@@ -92,24 +88,6 @@ export function Step2Tiers({
       />
 
       <CoreServicesPanel items={packageCommonItemsFor(vatRegistered)} />
-
-      {byCall && (
-        <div
-          role="note"
-          className="rounded-xl border border-primary/30 bg-primary/[0.06] px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p className="text-sm text-foreground/90">{REVENUE_CALL_COPY.note}</p>
-          <Button
-            nativeButton={false}
-            variant="outline"
-            className="shrink-0 gap-2"
-            render={<a href={siteConfig.links.fitCall} />}
-          >
-            <CalendarClock className="h-4 w-4" />
-            {REVENUE_CALL_COPY.action}
-          </Button>
-        </div>
-      )}
 
       <div
         className="grid grid-cols-1 gap-4 sm:gap-6 sm:pt-5 pricing-grid-container"
@@ -205,37 +183,20 @@ export function Step2Tiers({
               </div>
 
               {/* Row 5: what a click does, said on the card (premium polish,
-                  2026-10-12; replaced the small corner + / tick). Reserved,
-                  invisible, when nothing is selectable. */}
+                  2026-10-12; replaced the small corner + / tick). */}
               <div className="pricing-card-cta mt-6">
-                {byCall ? (
-                  <div className="h-0 w-0 pointer-events-none opacity-0" aria-hidden="true" />
-                ) : (
-                  <span aria-hidden className={cn('tier-select', isSelected && 'is-selected')}>
-                    {isSelected ? (
-                      <>
-                        <Check className="h-4 w-4" strokeWidth={3} /> Selected
-                      </>
-                    ) : (
-                      <>Choose {tier.name}</>
-                    )}
-                  </span>
-                )}
+                <span aria-hidden className={cn('tier-select', isSelected && 'is-selected')}>
+                  {isSelected ? (
+                    <>
+                      <Check className="h-4 w-4" strokeWidth={3} /> Selected
+                    </>
+                  ) : (
+                    <>Choose {tier.name}</>
+                  )}
+                </span>
               </div>
             </>
           );
-
-          // Above R50m in revenue no package is selectable.
-          if (byCall) {
-            return (
-              <div
-                key={tier.slug}
-                className="pricing-card-item relative min-w-0 rounded-2xl border-2 border-border bg-card/40 backdrop-blur-md p-6 text-left w-full h-full flex flex-col"
-              >
-                {rows}
-              </div>
-            );
-          }
 
           return (
             <button
@@ -266,24 +227,13 @@ export function Step2Tiers({
         <Button variant="outline" onClick={onBack}>
           ← Back
         </Button>
-        {byCall ? (
-          <Button
-            nativeButton={false}
-            className="gap-2 cta-armed"
-            render={<a href={siteConfig.links.fitCall} />}
-          >
-            <CalendarClock className="h-4 w-4" />
-            {REVENUE_CALL_COPY.action}
-          </Button>
-        ) : (
-          <Button
-            onClick={onNext}
-            disabled={!selectedTier}
-            className={cn('gap-2', selectedTier && 'cta-armed')}
-          >
-            Continue to add-ons →
-          </Button>
-        )}
+        <Button
+          onClick={onNext}
+          disabled={!selectedTier}
+          className={cn('gap-2', selectedTier && 'cta-armed')}
+        >
+          Continue to add-ons →
+        </Button>
       </div>
 
       {/* Below the buttons and open by default (tweaks round 1). */}

@@ -39,10 +39,9 @@ import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { TIERS_BY_APPLICATION, tierDisplayName } from '@/config/tiers';
-import { effectiveAddons, revenueNeedsCall } from '@/lib/calculatorFlow';
+import { effectiveAddons } from '@/lib/calculatorFlow';
 import { coreServiceError, parseAddonToken } from '@/lib/pricing';
 import { formatZAR } from '@/lib/utils';
-import { REVENUE_CALL_COPY } from '@/config/calculatorCopy';
 import { sendEmail } from '@/lib/email/sendEmail';
 import {
   renderCreatedProposalClientEmail,
@@ -120,13 +119,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: coreError, field: 'services' }, { status: 422 });
   }
 
-  // Revenue above R50m starts with a call (decision 2026-10-06), like Premium.
-  if (revenueNeedsCall(input.brackets)) {
-    return NextResponse.json(
-      { error: REVENUE_CALL_COPY.apiError, field: 'brackets.accounting' },
-      { status: 422 },
-    );
-  }
+  // No revenue gate: every band is self-serve, only Premium starts with a call
+  // (full-site audit decision 1, 2026-10-13).
 
   // The answers, not the client's add-on list, decide the answer-driven tokens:
   // a VAT No adds the flag that hides VAT201. Any such token the client sent is

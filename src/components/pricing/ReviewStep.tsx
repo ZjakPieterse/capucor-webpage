@@ -46,7 +46,7 @@ export function ReviewStep({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h2 className="text-xl sm:text-2xl font-semibold mb-1.5">Review your subscription</h2>
+        <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold mb-1.5 outline-none">Review your subscription</h2>
         <p className="text-sm text-muted-foreground">
           {byApplication
             ? 'Check the details, then send your request.'

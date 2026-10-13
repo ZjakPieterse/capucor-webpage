@@ -78,10 +78,39 @@ describe('a proposal sent with the retired xero-invoicing token', () => {
       priced.data,
     );
     expect(html).toContain('Monthly accounting');
-    expect(html).toContain('R 4,075');
+    expect(html).toContain('R\u00a04\u00a0075');
     expect(html).not.toMatch(/>Accounting<|>Bookkeeping</);
     // First debit dated from the signature (F23): signed 2 November → 1 December.
     expect(html).toMatch(/First debit order:<\/strong> 1 December 2026/);
+  });
+});
+
+// Every band is self-serve (full-site audit decision 1, 2026-10-13), so the
+// open-ended "350 Mil+" band reaches the signed PDF, the debit-order mandate.
+describe('a signed proposal above R50m in revenue (R350m+)', () => {
+  const TOP = [
+    { service_slug: 'accounting', ordinal: 25, label: '350 Mil+', basic_price: 6125, pro_price: 7975, premium_price: 12875 },
+    { service_slug: 'bookkeeping', ordinal: 7, label: 'Up to 200', basic_price: 2250, pro_price: 2925, premium_price: 4725 },
+  ];
+  const sel = { services: ['accounting', 'bookkeeping'], brackets: { accounting: 25, bookkeeping: 7 }, tierSlug: 'pro', addons: [] };
+
+  it('prices and renders the PDF line and total as "R 10 900"', async () => {
+    const priced = await priceProposalSelection(adminWith(TOP as typeof ROWS), sel);
+    if (!priced.ok) throw new Error(priced.error);
+    expect(priced.data.totalChargeZAR).toBe(7975 + 2925);
+    const { html } = buildSignedProposalPdfPayload(
+      {
+        id: 'p2', ref_number: 'FT-2026-10-0002', version: 1, first_name: 'Pat', last_name: 'Patterson',
+        business_name: 'Big Co', services: sel.services, brackets: sel.brackets, tier_slug: 'pro', addons: [],
+        sent_at: '2026-10-28T08:00:00Z', expires_at: '2026-11-04T08:00:00Z', signed_at: '2026-11-02T08:00:00Z',
+        signature_name: 'Pat Patterson', signature_method: 'typed', signature_image: null, signature_ip: null,
+      },
+      { services: [], brackets: TOP as unknown as Bracket[] },
+      priced.data,
+    );
+    expect(html).toContain('R350m+ · up to 200 transactions');
+    expect(html).toContain('R\u00a010\u00a0900');
+    expect(html).not.toMatch(/R ?10,900/);
   });
 });
 
@@ -107,7 +136,7 @@ describe('the signing page and calculator summary (ProposalSummary)', () => {
     );
     expect(html).toContain('Monthly accounting');
     expect(html).toContain('R10m to R15m · up to 200 transactions');
-    expect(html).toContain('R 5,050');
+    expect(html).toContain('R\u00a05\u00a0050');
     expect(html).toContain('3 employees');
     expect(html).not.toMatch(/>Accounting<|>Bookkeeping</);
   });

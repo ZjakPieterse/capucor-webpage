@@ -119,6 +119,12 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   small `whitespace-nowrap` subtext to the right of the price, never stacked below it and
   never allowed to wrap. Use `AnimatedPrice` for ZAR amounts (handles the animated count-up,
   the `R` glyph, tabular nums, and reduced-motion). See the price block in `Step2Tiers.tsx`.
+- Prices read **"R 5 750"**: a space between thousands, no cents (decided 2026-10-13, on
+  every surface). Never format a price by hand: use `formatZAR` / `formatZARNumber`
+  (`src/lib/utils.ts`), or `formatZAR` in `src/lib/email/messages.mjs` for emails. Both
+  spaces are no-break spaces (U+00A0), so a price cannot wrap even without `whitespace-nowrap`.
+  The hero's bank statement and slips keep statement style ("R 42 000.00"): they depict
+  documents, not Capucor prices.
 
 ### Voice & copy (applies to all UI text)
 

@@ -51,6 +51,14 @@ const PRO_BRACKETS = [
   },
   {
     service_slug: 'accounting',
+    ordinal: 25,
+    label: '350 Mil+',
+    basic_price: 6125,
+    pro_price: 7975,
+    premium_price: 12875,
+  },
+  {
+    service_slug: 'accounting',
     ordinal: 12,
     label: '45 Mil – 50 Mil',
     basic_price: 3200,
@@ -473,7 +481,7 @@ describe('POST /api/proposals', () => {
     expect(mail).toMatchObject({ sourceType: 'lead', sourceId: 'lead_1', eventType: 'lead.owner_notification' });
     expect(mail.message.to).toBe('owner@capucor.com');
     expect(mail.message.subject).toBe('Premium request: Pat Trading Co');
-    expect(mail.message.text).toMatch(/R\s?2,475/);
+    expect(mail.message.text).toContain('R\u00a02\u00a0475');
   });
 
   it('21c. a request for a self-serve package is refused with 422, nothing persisted', async () => {
@@ -513,22 +521,27 @@ describe('POST /api/proposals', () => {
     expect(proposalInsert).not.toHaveBeenCalled();
   });
 
-  it('22c. revenue from "50 Mil – 75 Mil" upward goes to a call: 422, nothing persisted', async () => {
-    for (const tierSlug of ['basic', 'pro']) {
-      const res = await POST(
-        makeJsonRequest('http://test/api/proposals', {
-          ...validBody,
-          tierSlug,
-          brackets: { accounting: 13, bookkeeping: 0, payroll: 1 },
-        }),
-      );
-      expect(res.status).toBe(422);
-      const body = await res.json();
-      expect(body.field).toBe('brackets.accounting');
-      expect(body.error).toMatch(/above R50m/);
-    }
-    expect(leadInsert).not.toHaveBeenCalled();
-    expect(proposalInsert).not.toHaveBeenCalled();
+  // Every band is self-serve (full-site audit decision 1, 2026-10-13); this
+  // replaced "above R50m goes to a call: 422".
+  it.each([
+    [13, 'basic', 3425],
+    [13, 'pro', 4475],
+    [25, 'basic', 6125],
+    [25, 'pro', 7975],
+  ])('22c. revenue ordinal %i above R50m creates a %s proposal at its own price', async (accounting, tierSlug, price) => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...validBody,
+        tierSlug,
+        brackets: { accounting, bookkeeping: 0, payroll: 1 },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(proposalInsert).toHaveBeenCalledTimes(1);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    const payroll = tierSlug === 'basic' ? 450 : 600;
+    expect(propPayload.monthly_total_zar).toBe(price + payroll);
+    expect(propPayload.total_charge_zar).toBe(price + payroll);
   });
 
   it('22d. the band just below R50m stays self-serve', async () => {
@@ -553,7 +566,7 @@ describe('POST /api/proposals', () => {
       expect(body).toContain('R0 to R1m');
       expect(body).not.toMatch(/>Accounting<|>Bookkeeping<|· Accounting|· Bookkeeping/);
     }
-    expect(ownerText).toContain('Monthly accounting (R0 to R1m · no transactions): R 950');
+    expect(ownerText).toContain('Monthly accounting (R0 to R1m · no transactions): R\u00a0950');
   });
 
   it('23. a client cannot add the Xero charge or the VAT flag without the answers', async () => {
