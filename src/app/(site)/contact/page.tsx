@@ -43,9 +43,10 @@ export default function ContactPage() {
           <ContactForm />
         </div>
 
-        <p className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Mail className="size-4 text-primary" aria-hidden />
-          Just a quick question?{' '}
+        {/* Inline, not flex: the longer line (2026-10-13) must wrap as text on phones. */}
+        <p className="mt-6 text-center text-sm leading-relaxed text-muted-foreground">
+          <Mail className="mr-2 inline size-4 align-[-3px] text-primary" aria-hidden />
+          Or simply send us an email:{' '}
           <a
             href={`mailto:${siteConfig.email.contact}`}
             className="text-primary underline underline-offset-2"

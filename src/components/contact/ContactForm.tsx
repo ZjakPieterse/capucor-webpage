@@ -165,6 +165,7 @@ export function ContactForm() {
             maxLength={50}
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Your first name"
             {...invalid('ct-first-name', errors.firstName)}
           />
         </Field>
@@ -177,6 +178,7 @@ export function ContactForm() {
             maxLength={49}
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            placeholder="Your last name"
             {...invalid('ct-last-name', errors.lastName)}
           />
         </Field>
@@ -189,6 +191,7 @@ export function ContactForm() {
             maxLength={100}
             value={business}
             onChange={(e) => setBusiness(e.target.value)}
+            placeholder="Your business name"
             {...invalid('ct-business', errors.business)}
           />
         </Field>
