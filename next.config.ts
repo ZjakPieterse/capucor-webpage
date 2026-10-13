@@ -174,6 +174,12 @@ const nextConfig: NextConfig = {
   // it tells a scanner which CVE list to try and buys us nothing.
   poweredByHeader: false,
 
+  // There is no image optimiser on Cloudflare here: /_next/image returned the
+  // same PNG at every width, uncached, through the Worker. Serve images
+  // straight from static assets instead, where public/_headers caches them
+  // (technical review T03, full-site audit 2026-10-13).
+  images: { unoptimized: true },
+
   webpack(config, { isServer, webpack }) {
     if (isServer) {
       config.plugins.push(

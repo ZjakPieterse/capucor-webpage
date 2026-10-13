@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SignProposalSchema } from '@/lib/validations';
-import { signatureFont } from '@/lib/fonts';
+import { signatureFont } from '@/lib/signatureFont';
 import { siteConfig } from '@/config/site';
 import { RENDER_COLORS } from '@/config/renderColors';
 

@@ -35,7 +35,8 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
   },
-  robots: { index: true, follow: true },
+  // No `robots` here: index/follow is the default, and setting it put a second,
+  // contradicting robots tag on the 404 (technical review T17).
 };
 
 // Bare shell: <html> + fonts + globals + metadata only. Marketing chrome (Navbar/
