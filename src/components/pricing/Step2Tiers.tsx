@@ -107,7 +107,7 @@ export function Step2Tiers({
           );
 
           const featured = tier.slug === FEATURED_TIER;
-          const flagship = selectedTier ? isSelected : featured;
+          const flagship = isSelected;
           const Icon = TIER_ICONS[tier.slug] ?? Layers;
 
           // The service cards' language (ServicePillars.tsx, Zjak 2026-10-13):
@@ -184,9 +184,8 @@ export function Step2Tiers({
               </div>
 
               {/* Row 4: what a click does, in the site's own button styles
-                  (Zjak, 2026-10-13). The flagship style goes to the chosen
-                  package, or to the recommended one until a choice is made;
-                  the rest are the plain outline button. A styled span, since
+                  (Zjak, 2026-10-13). Every card starts with the plain outline
+                  button; only the chosen package gets the flagship style. A styled span, since
                   the whole card is already the button. */}
               <div className="pricing-card-cta mt-6">
                 <span
