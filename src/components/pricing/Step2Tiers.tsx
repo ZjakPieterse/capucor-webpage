@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarClock, Check } from 'lucide-react';
+import { CalendarClock, Check, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
@@ -18,7 +18,7 @@ import {
   TIERS_BY_APPLICATION,
   packageCommonItemsFor,
 } from '@/config/tiers';
-import { REVENUE_CALL_COPY, TIER_NUDGES } from '@/config/calculatorCopy';
+import { FEATURED_BADGE, REVENUE_CALL_COPY, TIER_NUDGES } from '@/config/calculatorCopy';
 import type {
   Bracket,
   Service,
@@ -132,8 +132,23 @@ export function Step2Tiers({
             item.services.some((s) => selectedServices.has(s))
           );
 
+          const featured = tier.slug === FEATURED_TIER;
+
           const rows = (
             <>
+              {/* The recommended package's badge sits on its top edge, out of
+                  the grid flow, so the subgrid rows still align (design
+                  review, 2026-10-13). */}
+              {featured && (
+                <span
+                  aria-hidden
+                  className="absolute -top-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-md shadow-primary/30"
+                >
+                  <Star className="h-3 w-3 fill-current" />
+                  {FEATURED_BADGE}
+                </span>
+              )}
+
               {/* Row 1: Header (name and buyer fit) */}
               <div className="pricing-card-header mb-4 flex flex-col justify-start">
                 <div className="font-bold text-lg tracking-tight text-foreground">{tier.name}</div>
@@ -228,13 +243,13 @@ export function Step2Tiers({
               type="button"
               onClick={() => onTierSelect(tier.slug)}
               aria-pressed={isSelected}
-              aria-label={`${tier.name} package`}
+              aria-label={`${tier.name} package${featured ? `, ${FEATURED_BADGE.toLowerCase()}` : ''}`}
               aria-describedby={`tier-price-${tier.slug}`}
               className={cn(
                 'service-card pricing-card-item relative min-w-0 rounded-2xl border-2 p-6 text-left outline-none w-full h-full flex flex-col',
                 // The recommended package carries the lit border and glow
                 // before anything is chosen, like its filled nudge pill.
-                tier.slug === FEATURED_TIER && 'popular-card',
+                featured && 'popular-card',
                 'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
