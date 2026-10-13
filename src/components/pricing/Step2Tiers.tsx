@@ -1,23 +1,23 @@
 'use client';
 
-import { Check, Star } from 'lucide-react';
+import { Anchor, Check, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
-import { CoreServicesPanel } from './CoreServicesPanel';
 import { AnswerRecap } from './AnswerRecap';
-import { FEATURED_TIER, TierNudge } from './TierNudge';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
-import {
-  TIER_HIGHLIGHTS,
-  TIER_BUYER_FIT,
-  TIERS_BY_APPLICATION,
-  packageCommonItemsFor,
-} from '@/config/tiers';
-import { FEATURED_BADGE, TIER_NUDGES } from '@/config/calculatorCopy';
+import { TIER_HIGHLIGHTS, TIER_BUYER_FIT, TIERS_BY_APPLICATION } from '@/config/tiers';
+import { FEATURED_BADGE, FEATURED_TIER } from '@/config/calculatorCopy';
+
+// One icon per package for the card's icon-and-name lockup.
+const TIER_ICONS: Record<string, LucideIcon> = {
+  basic: Anchor,
+  pro: TrendingUp,
+  premium: Zap,
+};
 import type {
   Bracket,
   Service,
@@ -87,8 +87,6 @@ export function Step2Tiers({
         onEdit={onEditAnswer}
       />
 
-      <CoreServicesPanel items={packageCommonItemsFor(vatRegistered)} />
-
       <div
         className="grid grid-cols-1 gap-4 sm:gap-6 sm:pt-5 pricing-grid-container"
       >
@@ -111,27 +109,38 @@ export function Step2Tiers({
           );
 
           const featured = tier.slug === FEATURED_TIER;
+          const Icon = TIER_ICONS[tier.slug] ?? Layers;
 
+          // The service cards' language (ServicePillars.tsx, Zjak 2026-10-13):
+          // an icon-and-name lockup, a lit top edge, round ticks and hairline
+          // sections ending in the action row. The whole card still selects.
           const rows = (
             <>
+              <span aria-hidden className="tier-card-edge" />
               {/* The recommended package's badge sits on its top edge, out of
                   the grid flow, so the subgrid rows still align (design
-                  review, 2026-10-13). */}
+                  review, 2026-10-13). Text only (Zjak, 2026-10-13). */}
               {featured && (
                 <span
                   aria-hidden
-                  className="absolute -top-3 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-md shadow-primary/30"
+                  className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-md shadow-primary/30"
                 >
-                  <Star className="h-3 w-3 fill-current" />
                   {FEATURED_BADGE}
                 </span>
               )}
 
-              {/* Row 1: Header (name and buyer fit) */}
-              <div className="pricing-card-header mb-4 flex flex-col justify-start">
-                <div className="font-bold text-lg tracking-tight text-foreground">{tier.name}</div>
+              {/* Row 1: icon-and-name lockup, then what the package gets */}
+              <div className="pricing-card-header mb-5 flex flex-col justify-start">
+                <div className="flex items-center gap-3.5">
+                  <span aria-hidden className="svc-icon tier-icon">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="text-xl font-semibold leading-tight tracking-tight text-foreground">
+                    {tier.name}
+                  </div>
+                </div>
                 {(TIER_BUYER_FIT[tier.slug] ?? tier.tagline) && (
-                  <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                  <div className="mt-4 text-sm leading-relaxed text-muted-foreground">
                     {TIER_BUYER_FIT[tier.slug] ?? tier.tagline}
                   </div>
                 )}
@@ -158,33 +167,26 @@ export function Step2Tiers({
                 </span>
               </div>
 
-              {/* Row 3: Nudge pill; the row is kept for subgrid alignment */}
-              <div className="pricing-card-cumulative mb-3 flex items-center min-h-[1.75rem]">
-                {TIER_NUDGES[tier.slug] ? (
-                  <TierNudge tierSlug={tier.slug} />
-                ) : (
-                  <div className="h-0 w-0 pointer-events-none opacity-0" aria-hidden="true" />
-                )}
-              </div>
-
-              {/* Row 4: Features list */}
-              <div className="pricing-card-features flex-grow flex flex-col gap-5">
+              {/* Row 3: Features list, below a hairline */}
+              <div className="pricing-card-features flex flex-grow flex-col border-t border-white/10 pt-5">
                 {filteredItems.length > 0 && (
                   <ul className="space-y-2.5">
                     {/* Every line alike, "Core Services Included" too (tweaks round 3). */}
                     {filteredItems.map((item) => (
-                      <li key={item.text} className="flex items-start gap-2.5 text-xs">
-                        <Check className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                        <span className="text-muted-foreground leading-normal">{item.text}</span>
+                      <li key={item.text} className="flex items-start gap-2.5 text-[13px] leading-snug">
+                        <span className="svc-check" aria-hidden>
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        </span>
+                        <span className="text-foreground/85">{item.text}</span>
                       </li>
                     ))}
                   </ul>
                 )}
               </div>
 
-              {/* Row 5: what a click does, said on the card (premium polish,
+              {/* Row 4: what a click does, in a footer row (premium polish,
                   2026-10-12; replaced the small corner + / tick). */}
-              <div className="pricing-card-cta mt-6">
+              <div className="pricing-card-cta mt-6 border-t border-white/10 pt-5">
                 <span aria-hidden className={cn('tier-select', isSelected && 'is-selected')}>
                   {isSelected ? (
                     <>
@@ -207,14 +209,14 @@ export function Step2Tiers({
               aria-label={`${tier.name} package${featured ? `, ${FEATURED_BADGE.toLowerCase()}` : ''}`}
               aria-describedby={`tier-price-${tier.slug}`}
               className={cn(
-                'service-card pricing-card-item relative min-w-0 rounded-2xl border-2 p-6 text-left outline-none w-full h-full flex flex-col',
+                'service-card pricing-card-item tier-card relative min-w-0 rounded-2xl border-2 p-6 text-left outline-none w-full h-full flex flex-col',
                 // The recommended package carries the lit border and glow
                 // before anything is chosen, like its filled nudge pill.
                 featured && 'popular-card',
                 'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
-                  : 'border-border bg-card/40 backdrop-blur-md'
+                  : 'premium-glass border-white/10'
               )}
             >
               {rows}
@@ -239,10 +241,8 @@ export function Step2Tiers({
       {/* Below the buttons and open by default (tweaks round 1). */}
       <TierComparison
         tiers={tiers}
-        brackets={brackets}
         selectedServices={selectedServices}
-        selectedBrackets={selectedBrackets}
-        selectedAddons={answerAddons}
+        vatRegistered={vatRegistered}
         defaultOpen
       />
 
