@@ -299,8 +299,13 @@ export const PRICING_ADDONS: PricingAddon[] = [
   },
 ];
 
+// The line under each package name: what it gets, for the business its pill
+// names (TIER_NUDGES: Steady, Growing, Fast-moving). No monthly, weekly or
+// daily here; the rhythm lives in the item lists (Zjak, calculator design
+// review, 2026-10-13). Basic still reads as complete: every package carries the
+// core services.
 export const TIER_BUYER_FIT: Record<string, string> = {
-  basic: 'For businesses that want the essentials done properly, once a month.',
-  pro: 'For businesses that want their books current every week and a monthly review.',
-  premium: 'For businesses that want daily processing, weekly reporting and a partner on call.',
+  basic: 'Everything done properly, with regular reviews so you know where the business stands.',
+  pro: "Current numbers, suppliers handled and closer reviews, so growth doesn't outrun the books.",
+  premium: 'Up-to-date numbers, tax strategy built in and a partner on call for the big decisions.',
 };

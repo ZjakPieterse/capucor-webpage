@@ -1,10 +1,10 @@
-import { Layers, Star, Zap, type LucideIcon } from 'lucide-react';
+import { Anchor, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
 import { TIER_NUDGES } from '@/config/calculatorCopy';
 import { cn } from '@/lib/utils';
 
 const NUDGE_ICONS: Record<string, LucideIcon> = {
-  basic: Layers,
-  pro: Star,
+  basic: Anchor,
+  pro: TrendingUp,
   premium: Zap,
 };
 
@@ -27,7 +27,7 @@ export function TierNudge({ tierSlug }: { tierSlug: string }) {
           : 'text-foreground bg-primary/5 border-primary/10'
       )}
     >
-      <Icon className={cn('h-3.5 w-3.5 shrink-0', featured ? 'fill-current' : 'text-primary')} />
+      <Icon className={cn('h-3.5 w-3.5 shrink-0', !featured && 'text-primary')} />
       {nudge}
     </div>
   );
