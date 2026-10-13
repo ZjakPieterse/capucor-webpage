@@ -62,7 +62,16 @@ export interface ArchiveResult {
   error?: string;
 }
 
-export const PDF_ARCHIVE_TIMEOUT_MS = 8_000;
+// The Apps Script renders the HTML to PDF and files it in Drive. Successful
+// first attempts took 6.1 s (2026-10-07) and 6.9 s (2026-10-13); one on
+// 2026-10-13 (FT-2026-10-0004) passed the old 8 s bound and held both "signed"
+// emails back until the retry runner. Waiting on fetch is not Worker CPU, so
+// the cost is only the signer's spinner. No in-request retry: the script keeps
+// running after an abort and holds its lock, so a second call would queue
+// behind the first and reuse its file — a longer wait, not a better chance.
+export const PDF_ARCHIVE_TIMEOUT_MS = 25_000;
+// Reading an archived file back (`action: 'fetch'`) does no rendering.
+export const PDF_FETCH_TIMEOUT_MS = 10_000;
 
 // A signed proposal measured 79 to 137 KB (2026-10-13); Resend allows 40 MB a
 // message after base64. Anything near this cap is not one of our PDFs.
@@ -91,7 +100,7 @@ export async function fetchSignedProposalPdf(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ secret, action: 'fetch', fileId }),
-      signal: AbortSignal.timeout(PDF_ARCHIVE_TIMEOUT_MS),
+      signal: AbortSignal.timeout(PDF_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return { ok: false, code: `pdf_fetch_http_${res.status}` };
     const out = (await res.json()) as { ok?: boolean; contentBase64?: unknown };

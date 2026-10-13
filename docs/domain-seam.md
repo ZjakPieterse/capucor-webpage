@@ -90,8 +90,9 @@ only. Copies elsewhere are not kept in step.
 ### Scheduled workflows
 
 This repo runs three scheduled workflows — the POPIA lead prune (daily), the proposal expiry
-(daily) and the fulfilment/email retry runner (`cron-reconcile-deliveries.yml`, hourly; see the
-email section below). GitHub emails the owner when a run fails.
+(daily) and the fulfilment/email retry runner (`cron-reconcile-deliveries.yml`, every ten
+minutes in weekday business hours and hourly otherwise; see the email section below). GitHub
+emails the owner when a run fails.
 
 - ⚠️ **Nothing watches for a cron that stops silently.** The watchdog (`watchdog.yml`, with its
   cron, deploy-drift and CI-silence checks) was removed on 2026-10-08: its push-time checks were
@@ -147,8 +148,17 @@ table.
 funnel emails.
 [`cron-reconcile-deliveries.yml`](../.github/workflows/cron-reconcile-deliveries.yml) runs
 [`scripts/reconcile-deliveries.mjs`](../scripts/reconcile-deliveries.mjs) every ten minutes in
-weekday business hours and hourly otherwise. It is a zero-dependency GitHub Action, not a Worker
-route, because Workers Free allows 10 ms CPU and 50 subrequests per request.
+weekday business hours (08:05–17:55 SAST, restored 2026-10-13) and hourly otherwise. It is a
+zero-dependency GitHub Action, not a Worker route, because Workers Free allows 10 ms CPU and 50
+subrequests per request.
+
+- **PDF timeouts.** The Worker waits up to 25 s for the Apps Script archive
+  (`PDF_ARCHIVE_TIMEOUT_MS`; successful archives take 6–7 s, and 8 s proved too tight on
+  2026-10-13) and 10 s for the read-back (`PDF_FETCH_TIMEOUT_MS`). Waiting on a fetch is not
+  CPU time, so only the signer's spinner pays. There is no in-request retry: the script finishes
+  after an abort and holds its lock, so a second call only queues behind the first. The runner's
+  bridges wait longer than the Worker call behind them (40 s and 15 s) and less than the 60 s
+  stage lease; `reconcile-schedule.test.ts` pins both orderings and the schedule.
 
 - It first advances due signed-proposal fulfilment (pdf → client email → owner email). The PDF is
   rendered by the Worker: the runner calls `/api/internal/proposal-fulfilment/pdf` with an HMAC

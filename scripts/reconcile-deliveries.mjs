@@ -53,8 +53,13 @@ export const LEASE_MS = 60_000;
 export const PROVIDER_TIMEOUT_MS = 8_000;
 export const AMBIGUOUS_WINDOW_MS = 23 * 60 * 60 * 1000;
 export const MAX_FULFILMENT_STAGE_ATTEMPTS = 6;
-// The Worker's own Apps Script call is bounded at 8 s; leave it room.
-const PDF_FILE_TIMEOUT_MS = 15_000;
+// The two PDF bridges wait on the Worker, which waits on the Apps Script, so
+// each sits above the Worker's own bound (PDF_ARCHIVE_TIMEOUT_MS 25 s and
+// PDF_FETCH_TIMEOUT_MS 10 s in src/lib/portal/proposalPdf.ts) and inside the
+// 60 s stage lease. A bridge that gave up first would cancel the Worker
+// mid-archive and turn a slow success into a retry.
+export const PDF_BRIDGE_TIMEOUT_MS = 40_000;
+export const PDF_FILE_TIMEOUT_MS = 15_000;
 const FIRST_RETRY_MS = 10 * 60_000;
 const MAX_RETRY_MS = 6 * 60 * 60_000;
 const MAX_BATCH = 50;
@@ -332,7 +337,7 @@ export async function archiveProposalPdf(db, proposal, config) {
           'x-capucor-signature': signature,
         },
         body: JSON.stringify({ proposalId: proposal.id }),
-        signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+        signal: AbortSignal.timeout(PDF_BRIDGE_TIMEOUT_MS),
       },
     );
   } catch (error) {
