@@ -17,13 +17,14 @@ interface TierComparisonProps {
 
 type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
 
-// A row is ticked from the lowest package that includes it, carries a value
-// per package (the rhythm rows), or is a greyed heading with no ticks ("Core
-// services", with its services as ticked rows below it).
+// A row is ticked from the lowest package that includes it, or carries a
+// value per package (the rhythm rows). "Core services" is a `group` row that
+// expands to its services as greyed, indented `sub` rows (Zjak, 2026-10-13).
 type MatrixRow =
-  | { kind: 'tick'; text: string; tooltip: string; lowestTier: LowestTier }
-  | { kind: 'value'; text: string; tooltip: string; values: Record<string, string> }
-  | { kind: 'heading'; text: string; tooltip: string };
+  | { kind: 'tick'; text: string; tooltip: string; lowestTier: LowestTier; group?: boolean; sub?: boolean }
+  | { kind: 'value'; text: string; tooltip: string; values: Record<string, string> };
+
+const isSub = (row: MatrixRow) => row.kind === 'tick' && row.sub === true;
 
 const RHYTHM_TEXTS = new Set(RHYTHM_ROWS.flatMap((r) => r.replaces));
 
@@ -35,6 +36,8 @@ export function TierComparison({
   defaultOpen = false,
 }: TierComparisonProps) {
   const [open, setOpen] = useState(defaultOpen);
+  // "Core services" starts expanded (Zjak, 2026-10-13).
+  const [coreOpen, setCoreOpen] = useState(true);
 
   const sortedTiers = useMemo(
     () => [...tiers].sort((a, b) => a.display_order - b.display_order),
@@ -47,12 +50,12 @@ export function TierComparison({
     const result: MatrixRow[] = [];
     const seen = new Set<string>();
 
-    // Core services first: a greyed heading, then each service on its own
-    // ticked row (Zjak, 2026-10-13: the strip above the cards went, so the
+    // Core services first: a ticked row like the others, then each service
+    // on its own greyed sub-row (the strip above the cards went, so the
     // detail lives here).
-    result.push({ kind: 'heading', text: 'Core services', tooltip: '' });
+    result.push({ kind: 'tick', text: 'Core services', tooltip: '', lowestTier: 'common', group: true });
     for (const line of CORE_SERVICE_LINES) {
-      result.push({ kind: 'tick', text: line.text, tooltip: line.tooltip, lowestTier: 'common' });
+      result.push({ kind: 'tick', text: line.text, tooltip: line.tooltip, lowestTier: 'common', sub: true });
     }
 
     // Then the rhythm, one value per package.
@@ -81,6 +84,35 @@ export function TierComparison({
     if (lowestTier === 'common') return true;
     const tierRank: Record<string, number> = { basic: 0, pro: 1, premium: 2 };
     return (tierRank[tierSlug] ?? 0) >= (tierRank[lowestTier] ?? 0);
+  }
+
+  const visibleRows = coreOpen ? rows : rows.filter((row) => !isSub(row));
+
+  // The row label: plain text with its tooltip, or for the group row a
+  // toggle with the same chevron as the table's own header.
+  function label(row: MatrixRow) {
+    if (row.kind === 'tick' && row.group) {
+      return (
+        <button
+          type="button"
+          onClick={() => setCoreOpen((v) => !v)}
+          aria-expanded={coreOpen}
+          className="inline-flex items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {row.text}
+          <ChevronDown
+            aria-hidden
+            className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', coreOpen && 'rotate-180')}
+          />
+        </button>
+      );
+    }
+    return (
+      <>
+        {row.text}
+        {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
+      </>
+    );
   }
 
   return (
@@ -114,7 +146,7 @@ export function TierComparison({
               <div key={t.slug} className="px-5 py-4">
                 <p className="mb-3 text-sm font-semibold">{t.name}</p>
                 <ul className="space-y-1.5">
-                  {rows.map((row) => {
+                  {visibleRows.map((row) => {
                     if (row.kind === 'value') {
                       return (
                         <li key={row.text} className="flex items-start gap-2 text-xs text-foreground">
@@ -126,31 +158,27 @@ export function TierComparison({
                         </li>
                       );
                     }
-                    if (row.kind === 'heading') {
-                      return (
-                        <li key={row.text} className="pt-0.5 text-xs text-muted-foreground">
-                          {row.text}
-                        </li>
-                      );
-                    }
                     const covered = isCovered(t.slug, row.lowestTier);
                     return (
                       <li
                         key={row.text}
                         className={cn(
                           'flex items-start gap-2 text-xs',
-                          covered ? 'text-foreground' : 'text-muted-foreground/80'
+                          row.sub && 'pl-5',
+                          covered && !row.sub ? 'text-foreground' : 'text-muted-foreground/80'
                         )}
                       >
                         {covered ? (
-                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/80" />
+                          <Check
+                            className={cn(
+                              'h-3.5 w-3.5 shrink-0 mt-0.5',
+                              row.sub ? 'text-muted-foreground/60' : 'text-primary/80'
+                            )}
+                          />
                         ) : (
                           <Minus className="h-3 w-3 shrink-0 mt-1 text-muted-foreground/60" />
                         )}
-                        <span>
-                          {row.text}
-                          {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
-                        </span>
+                        <span>{label(row)}</span>
                       </li>
                     );
                   })}
@@ -178,8 +206,8 @@ export function TierComparison({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, idx) => {
-                  const heading = row.kind === 'heading';
+                {visibleRows.map((row, idx) => {
+                  const sub = isSub(row);
                   return (
                     <tr
                       key={row.text}
@@ -190,19 +218,21 @@ export function TierComparison({
                     >
                       <td
                         className={cn(
-                          'px-5 py-2.5 text-xs sm:text-sm',
-                          heading && 'text-muted-foreground'
+                          'py-2.5 pr-5 text-xs sm:text-sm',
+                          sub ? 'pl-10 text-muted-foreground' : 'pl-5'
                         )}
                       >
-                        {row.text}
-                        {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
+                        {label(row)}
                       </td>
                       {sortedTiers.map((t) => (
                         <td key={t.slug} className="px-3 py-2.5 text-center">
-                          {row.kind === 'heading' ? null : row.kind === 'value' ? (
+                          {row.kind === 'value' ? (
                             <span className="text-xs font-medium">{row.values[t.slug] ?? '—'}</span>
                           ) : isCovered(t.slug, row.lowestTier) ? (
-                            <Check className="inline h-4 w-4 text-foreground/70" aria-label="Included" />
+                            <Check
+                              className={cn('inline h-4 w-4', sub ? 'text-muted-foreground/60' : 'text-foreground/70')}
+                              aria-label="Included"
+                            />
                           ) : (
                             <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
                           )}
