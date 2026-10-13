@@ -32,6 +32,8 @@ import {
   archiveSignedProposal,
   fetchSignedProposalPdf,
   MAX_PDF_ATTACHMENT_BYTES,
+  PDF_ARCHIVE_TIMEOUT_MS,
+  PDF_FETCH_TIMEOUT_MS,
 } from '@/lib/portal/proposalPdf';
 import { priceProposalSelection } from '@/lib/proposalPricing';
 import { formatZAR } from '@/lib/utils';
@@ -226,6 +228,33 @@ describe('archiveSignedProposal', () => {
     expect(res).toMatchObject({ ok: false, error: 'Timed out' });
     expect(admin.updatePayloads).toHaveLength(0);
     errorSpy.mockRestore();
+  });
+});
+
+describe('Apps Script timeouts (FT-2026-10-0004 timed out at 8 s, 2026-10-13)', () => {
+  it('bounds the archive at 25 s and the read-back at 10 s', async () => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    await archiveSignedProposal(asClient(makeAdmin(signedRow())), 'prop_1');
+    expect(timeout).toHaveBeenLastCalledWith(PDF_ARCHIVE_TIMEOUT_MS);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, contentBase64: 'JVBERi0xLjQK' }),
+    });
+    await fetchSignedProposalPdf('file_1');
+    expect(timeout).toHaveBeenLastCalledWith(PDF_FETCH_TIMEOUT_MS);
+    timeout.mockRestore();
+
+    // Successful archives took 6.1 to 6.9 s; leave real room above that.
+    expect(PDF_ARCHIVE_TIMEOUT_MS).toBe(25_000);
+    expect(PDF_FETCH_TIMEOUT_MS).toBe(10_000);
+  });
+
+  it('makes one Apps Script call per archive attempt (no in-request retry)', async () => {
+    fetchMock.mockRejectedValueOnce(new DOMException('Timed out', 'TimeoutError'));
+    const res = await archiveSignedProposal(asClient(makeAdmin(signedRow())), 'prop_1');
+    expect(res.ok).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
 

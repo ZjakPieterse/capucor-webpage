@@ -15,11 +15,17 @@ name: Cron — signed-proposal fulfilment and email retries
 
 on:
   schedule:
-    # Hourly, every day. The ten-minute weekday tier was dropped on 2026-10-08:
-    # signing volume is low during development, and the Worker sends the
-    # "signed" emails itself on the first attempt; this only catches failures.
-    # Hourly rather than denser because the backoff runs from 10 minutes to a
-    # 6-hour ceiling. Dispatch it by hand if a client is waiting.
+    # 08:05–17:55 SAST (06:05–15:55 UTC), Monday to Friday, every ten minutes:
+    # a client who has just signed is waiting on "That's signed", and the first
+    # retry is due 10 minutes after a failed attempt. Dropped on 2026-10-08 and
+    # restored on 2026-10-13, after a first PDF attempt timed out
+    # (FT-2026-10-0004) and the client email waited on the hourly run. Off the
+    # hour on purpose: it never lands on the hourly run, and GitHub delays
+    # scheduled runs most at :00.
+    - cron: '5,15,25,35,45,55 6-15 * * 1-5'
+    # Hourly, every day: bounds the worst case outside business hours. Hourly
+    # rather than denser because the backoff runs from 10 minutes to a 6-hour
+    # ceiling. Dispatch it by hand if a client is waiting.
     - cron: '0 * * * *'
   workflow_dispatch:
 

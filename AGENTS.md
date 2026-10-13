@@ -130,8 +130,9 @@ that reads a body, or anything that sends email.
   `scripts/reconcile-deliveries.mjs`) finishes fulfilment and resends failed funnel emails,
   rebuilt from `src/lib/email/messages.mjs` under the original idempotency key. It runs from
   `master`, so deploy soon after merging a `messages.mjs` change.
-- **Scheduled workflows** — lead prune and proposal expiry (daily), retries (hourly). No watchdog
-  since 2026-10-08: GitHub emails on a failed run; a cron that stops silently is not detected.
+- **Scheduled workflows** — lead prune and proposal expiry (daily), retries (every ten minutes in
+  weekday business hours, hourly otherwise). No watchdog since 2026-10-08: GitHub emails on a
+  failed run; a cron that stops silently is not detected.
 - ⚠️ **Never call `req.json()` in a route handler** — it is unbounded. Use
   `readJsonBody(req, MAX_BODY_BYTES)`.
 - **Every transactional send in the Worker goes through `src/lib/email/sendEmail.ts`.** Never
