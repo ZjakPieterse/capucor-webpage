@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   TIER_HIGHLIGHTS,
   TIER_DISPLAY_NAMES,
-  PACKAGE_COMMON_ITEMS,
+  CORE_SERVICES,
   TIERS_BY_APPLICATION,
   CORE_SERVICE_LINES,
   scheduleCommonItemsFor,
@@ -72,9 +72,9 @@ describe('package cards (package simplification, 2026-10-06)', () => {
       .map((i) => `${i.text} ${i.tooltip}`)
       .join(' ');
     expect(cardText).not.toMatch(/dext|xero/i);
-    const coreXero = PACKAGE_COMMON_ITEMS.filter((i) => /xero/i.test(i.text)).map((i) => i.text);
-    expect(coreXero).toEqual(['Xero Accounting Software']);
-    expect(PACKAGE_COMMON_ITEMS.map((i) => `${i.text} ${i.tooltip}`).join(' ')).not.toMatch(/dext/i);
+    const coreXero = CORE_SERVICES.filter((i) => /xero/i.test(i.text)).map((i) => i.text);
+    expect(coreXero).toEqual(['Xero accounting software']);
+    expect(CORE_SERVICES.map((i) => `${i.text} ${i.tooltip}`).join(' ')).not.toMatch(/dext/i);
   });
 
   it('sells Premium, and only Premium, by application', () => {
@@ -219,27 +219,7 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
 
 // ─── common items ───────────────────────────────────────────────────────────
 
-describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
-  it('names the four approved core services (plus VAT201), none repeated as a tier highlight', () => {
-    expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).toEqual([
-      'Year-round Finance Team',
-      'Annual Financials',
-      'SARS & CIPC Returns',
-      'Xero Accounting Software',
-      'VAT returns (VAT201)',
-    ]);
-    const allTierTexts = new Set(
-      (['basic', 'pro', 'premium'] as const).flatMap((t) => TIER_HIGHLIGHTS[t].map((i) => i.text))
-    );
-    for (const item of PACKAGE_COMMON_ITEMS) expect(allTierTexts.has(item.text)).toBe(false);
-  });
-
-  it('names the SARS and CIPC returns, never an open-ended SARS promise', () => {
-    const sars = PACKAGE_COMMON_ITEMS.find((i) => i.text === 'SARS & CIPC Returns');
-    expect(sars?.tooltip).toMatch(/quoted separately/);
-    expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).not.toContain('SARS & CIPC Submission');
-  });
-
+describe('CORE_SERVICES (core services included)', () => {
   it('lists the core services as rows in the comparison, worded as Zjak set them', () => {
     expect(CORE_SERVICE_LINES.map((i) => i.text)).toEqual([
       'Dedicated finance team',
@@ -250,10 +230,30 @@ describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
     ]);
   });
 
+  it('puts the same core services on the signed schedule as the site, plus VAT201', () => {
+    const site = CORE_SERVICE_LINES.map((i) => i.scheduleText ?? i.text);
+    expect(scheduleCommonItemsFor(true).map((i) => i.text)).toEqual([...site, 'VAT returns (VAT201)']);
+    expect(CORE_SERVICE_LINES.map((i) => i.text)).not.toContain('VAT returns (VAT201)');
+  });
+
+  it('repeats no core service as a tier highlight, so the schedule never drops one', () => {
+    const allTierTexts = new Set(
+      (['basic', 'pro', 'premium'] as const).flatMap((t) => TIER_HIGHLIGHTS[t].map((i) => i.text))
+    );
+    for (const item of scheduleCommonItemsFor(true)) expect(allTierTexts.has(item.text)).toBe(false);
+  });
+
   it('says what the SARS & CIPC submission row covers and what is quoted separately', () => {
     const sars = CORE_SERVICE_LINES.find((i) => i.text === 'SARS & CIPC submission');
     expect(sars?.tooltip).toMatch(/provisional tax/);
     expect(sars?.tooltip).toMatch(/quoted separately/);
+  });
+
+  it('names the SARS and CIPC returns on the signed schedule, never an open-ended SARS promise', () => {
+    const sars = scheduleCommonItemsFor(true).find((i) => i.text.startsWith('SARS & CIPC submission'));
+    expect(sars?.text).toMatch(/income tax and provisional tax returns/);
+    expect(sars?.text).toMatch(/CIPC annual return and beneficial ownership/);
+    expect(scheduleCommonItemsFor(true).map((i) => i.text).join(' ')).not.toMatch(/—/);
   });
 
   it('names VAT201 on the schedule only, and only for a VAT-registered business', () => {

@@ -1,7 +1,7 @@
 /**
  * Schedule-of-Services derivation for the proposal document.
  *
- * "What's included" comes from the same TIER_HIGHLIGHTS / PACKAGE_COMMON_ITEMS
+ * "What's included" comes from the same TIER_HIGHLIGHTS / CORE_SERVICES
  * the calculator uses, filtered to the client's selected services and tier
  * (cumulative: basic → pro → premium). The out-of-scope and fair-usage views
  * come from config/serviceScope.ts. One source of truth, no re-typed lists.
