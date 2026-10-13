@@ -5,6 +5,12 @@ export const EMAIL_REPLY_TO: string;
 export function formatZAR(amount: number): string;
 export function stableStringify(value: unknown): string;
 export function renderLeadOwnerText(data: object): string;
+export interface LeadOwnerEmail {
+  subject: string;
+  text: string;
+  replyTo?: string;
+}
+export function buildLeadOwnerEmail(data: object): LeadOwnerEmail;
 export function renderDataRequestConfirmationText(data: object): string;
 export function renderDataRequestPendingOwnerText(data: object): string;
 export function renderDataRequestConfirmedOwnerText(data: object): string;

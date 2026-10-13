@@ -7,7 +7,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
-import { renderLeadOwnerText } from '@/lib/email/messages.mjs';
+import { buildLeadOwnerEmail } from '@/lib/email/messages.mjs';
 
 // Its own bucket. Sharing one counter across every public endpoint meant a
 // visitor who resubmitted the contact form could exhaust the allowance that
@@ -97,8 +97,7 @@ export async function POST(req: NextRequest) {
       message: {
         from: siteConfig.email.senderWebsite,
         to: ownerEmail,
-        subject: `New lead: ${fields.name} (${fields.source})`,
-        text: renderLeadOwnerText(fields),
+        ...buildLeadOwnerEmail(fields),
       },
     });
     if (delivery.errorCode === 'missing_api_key') {

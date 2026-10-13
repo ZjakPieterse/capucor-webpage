@@ -111,6 +111,65 @@ export function renderLeadOwnerText(d) {
     .join('\n');
 }
 
+// ── Owner notification for a /contact lead (Zjak, 2026-10-13) ───────────────
+// Same plain-text shape as the calculator's "New proposal" owner email
+// (renderCreatedProposalOwnerText): an opening sentence, Label: value lines,
+// "·" bullets. Reply-To is the lead, so hitting Reply answers them. "meeting"
+// means they were sent to the booking page, not that they booked, hence
+// "check your calendar". Calculator and proposal leads keep the plain dump.
+
+function isContactLead(d) {
+  return d.source === 'contact' && !!d.config && typeof d.config.turnover === 'string';
+}
+
+function contactNextStep(nextStep) {
+  if (nextStep === 'meeting') return { icon: '📅', short: 'Fit call', long: 'Wants a fit call (check your calendar)' };
+  if (nextStep === 'message') return { icon: '✉️', short: 'Message', long: 'Wants a reply' };
+  // Answers sent before the two-button form (2026-10-13) carry no next step.
+  return { icon: '📝', short: 'Enquiry', long: '(not recorded)' };
+}
+
+function contactSubject(d) {
+  const step = contactNextStep(d.config.nextStep);
+  const who = [d.name, d.business].filter(Boolean).join(', ');
+  return `${step.icon} ${step.short}: ${who} (${d.config.turnover})`;
+}
+
+function renderContactOwnerText(d) {
+  const c = d.config;
+  const services = Array.isArray(c.services) ? c.services : [];
+  return [
+    'A new enquiry came in from the contact page.',
+    '',
+    `Next step: ${contactNextStep(c.nextStep).long}`,
+    `Name: ${d.name}`,
+    d.business ? `Business: ${d.business}` : null,
+    `Email: ${d.email}`,
+    `Annual revenue: ${c.turnover}`,
+    `Team size: ${c.teamSize ?? '-'}`,
+    `Books now: ${c.booksNow ?? '-'}`,
+    'Needs:',
+    ...services.map((s) => `  · ${s}`),
+    ...(d.message ? ['', 'Message:', d.message] : []),
+    '',
+    `Reply to this email to answer ${d.name.split(' ')[0]}.`,
+  ]
+    .filter((line) => line !== null)
+    .join('\n');
+}
+
+/**
+ * The owner notification for a lead row: subject, text and, for /contact
+ * leads, Reply-To. Used by the Worker and by the retry runner, so a resend
+ * rebuilds the same email.
+ */
+export function buildLeadOwnerEmail(d) {
+  if (!isContactLead(d)) {
+    return { subject: `New lead: ${d.name} (${d.source})`, text: renderLeadOwnerText(d) };
+  }
+  return { subject: contactSubject(d), text: renderContactOwnerText(d), replyTo: d.email };
+}
+
 export function renderDataRequestConfirmationText(d) {
   return [
     'Hi,',
