@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { motion, useReducedMotion } from "motion/react";
 import { CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip } from "lucide-react";
 import { use3DTilt } from "@/hooks/use3DTilt";
-import { signatureFont } from "@/lib/fonts";
+import { signatureFont } from "@/lib/signatureFont";
 import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 
 // ── The hero story ────────────────────────────────────────────────────────────────

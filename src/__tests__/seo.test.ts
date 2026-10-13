@@ -90,3 +90,30 @@ describe('per-page metadata', () => {
     expect(missing).toEqual([]);
   });
 });
+
+// Full-site audit (2026-10-13): share card, icons and the signature font.
+describe('share card, icons and fonts (full-site audit, 2026-10-13)', () => {
+  const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8');
+
+  it('the share image uses approved copy and the footer credentials', () => {
+    const og = read('src/app/api/og/route.tsx');
+    expect(og).not.toMatch(/No hourly billing|Growing SMEs|Transparent Pricing|SAICA Aligned/);
+    expect(og).toMatch(/From monthly chaos to numbers that work for you/);
+    expect(og).toMatch(/'Xero Gold Partner', 'SAICA Member'/);
+  });
+
+  it('ships a favicon.ico and an apple-touch icon', () => {
+    for (const f of ['src/app/favicon.ico', 'src/app/apple-icon.png']) {
+      expect(statSync(join(process.cwd(), f)).size).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps the signature font out of the root font module, so only its pages preload it', () => {
+    expect(read('src/lib/fonts.ts')).not.toMatch(/Caveat\(/);
+    expect(read('src/lib/signatureFont.ts')).toMatch(/Caveat\(/);
+  });
+
+  it('sets no robots in the root metadata (index/follow is the default)', () => {
+    expect(rootMetadata.robots).toBeUndefined();
+  });
+});

@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
 import { RENDER_COLORS } from '@/config/renderColors';
+import { CAPUCOR_LOGO_ON_DARK } from '@/lib/og/capucorLogoOnDark';
 
 // No `runtime = 'edge'` here: on OpenNext/Cloudflare the Worker already runs at
 // the edge, and declaring the edge runtime makes OpenNext refuse to bundle the
@@ -9,15 +10,22 @@ export function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const page = searchParams.get('page') ?? 'landing';
 
+  // Copy re-uses approved site lines only (full-site audit, 2026-10-13): the
+  // hero headline and subtext, the /pricing heading and intro, and the hero
+  // trust line. The retired tagline claimed no hourly fees, which contradicted
+  // the engagement terms (older catch-up is billed hourly).
   const title =
-    page === 'pricing'
-      ? 'Transparent Pricing | Capucor Business Solutions'
-      : 'Outsourced Finance for Growing SMEs';
+    page === 'pricing' ? 'Build your subscription' : 'From monthly chaos to numbers that work for you';
 
   const subtitle =
     page === 'pricing'
-      ? 'Build your exact subscription with our interactive pricing calculator.'
-      : 'Subscription accounting, bookkeeping, and payroll. No hourly billing.';
+      ? 'A few quick questions, then your fixed monthly fee. No sign-up needed.'
+      : 'We close your books, run payroll and handle SARS submissions every month.';
+
+  const trustLine = 'Fixed monthly fee · No lock-in contracts · Start in any month';
+
+  // The credentials shown in the site footer, worded the same.
+  const credentials = ['Xero Gold Partner', 'SAICA Member'];
 
   return new ImageResponse(
     (
@@ -48,56 +56,26 @@ export function GET(req: NextRequest) {
           }}
         />
 
-        {/* Logo / brand */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '40px',
-          }}
-        >
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: RENDER_COLORS.dark.primary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: '20px',
-                height: '20px',
-                borderRadius: '50%',
-                background: RENDER_COLORS.dark.background,
-              }}
-            />
-          </div>
-          <span
-            style={{
-              color: RENDER_COLORS.dark.foreground,
-              fontSize: '20px',
-              fontWeight: 600,
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Capucor Business Solutions
-          </span>
+        {/* Logo: the real on-dark master, inlined (no network fetch) */}
+        <div style={{ display: 'flex', marginBottom: '48px' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders a plain <img> */}
+          <img
+            src={CAPUCOR_LOGO_ON_DARK.src}
+            width={CAPUCOR_LOGO_ON_DARK.width / 2}
+            height={CAPUCOR_LOGO_ON_DARK.height / 2}
+            alt="Capucor Business Solutions"
+          />
         </div>
 
         {/* Headline */}
         <div
           style={{
             color: RENDER_COLORS.dark.foreground,
-            fontSize: '56px',
+            fontSize: '60px',
             fontWeight: 700,
-            lineHeight: 1.1,
+            lineHeight: 1.08,
             letterSpacing: '-0.03em',
-            maxWidth: '900px',
+            maxWidth: '980px',
             marginBottom: '24px',
           }}
         >
@@ -108,40 +86,47 @@ export function GET(req: NextRequest) {
         <div
           style={{
             color: RENDER_COLORS.og.mutedForeground,
-            fontSize: '24px',
+            fontSize: '26px',
             lineHeight: 1.4,
-            maxWidth: '700px',
+            maxWidth: '900px',
           }}
         >
           {subtitle}
         </div>
 
-        {/* Bottom tag */}
+        {/* Bottom row: the hero trust line, then the footer credentials */}
         <div
           style={{
             position: 'absolute',
             bottom: '60px',
+            left: '80px',
             right: '80px',
             display: 'flex',
-            gap: '12px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          {['SAICA Aligned', 'Xero Partner'].map((tag) => (
-            <div
-              key={tag}
-              style={{
-                background: RENDER_COLORS.og.primarySoft,
-                border: `1px solid ${RENDER_COLORS.og.primaryBorder}`,
-                borderRadius: '8px',
-                padding: '6px 14px',
-                color: RENDER_COLORS.dark.primary,
-                fontSize: '14px',
-                fontWeight: 600,
-              }}
-            >
-              {tag}
-            </div>
-          ))}
+          <div style={{ display: 'flex', color: RENDER_COLORS.og.mutedForeground, fontSize: '18px' }}>
+            {trustLine}
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {credentials.map((tag) => (
+              <div
+                key={tag}
+                style={{
+                  background: RENDER_COLORS.og.primarySoft,
+                  border: `1px solid ${RENDER_COLORS.og.primaryBorder}`,
+                  borderRadius: '8px',
+                  padding: '6px 14px',
+                  color: RENDER_COLORS.dark.primary,
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     ),
