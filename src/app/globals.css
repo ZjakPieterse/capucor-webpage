@@ -2029,46 +2029,6 @@
   gap: 1rem;
 }
 
-/* Row 5 of a package card: says what a click does. Quiet until hovered,
-   filled once chosen (Step2Tiers.tsx). */
-.tier-select {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  height: 40px;
-  border-radius: var(--radius-lg);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--foreground);
-  background: color-mix(in oklch, white 3%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklch, white 12%, transparent) inset;
-  transition:
-    background-color 260ms ease,
-    color 260ms ease,
-    box-shadow 260ms ease;
-}
-
-.popular-card .tier-select:not(.is-selected) {
-  color: var(--primary);
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 45%, transparent) inset;
-}
-
-.tier-select.is-selected {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  box-shadow: 0 8px 24px -10px color-mix(in oklch, var(--primary) 80%, transparent);
-}
-
-@media all {
-  .service-card:hover .tier-select:not(.is-selected) {
-    background: color-mix(in oklch, var(--primary) 12%, transparent);
-    color: var(--foreground);
-    box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 55%, transparent) inset;
-  }
-}
-
 .pricing-card-item {
   display: flex;
   flex-direction: column;

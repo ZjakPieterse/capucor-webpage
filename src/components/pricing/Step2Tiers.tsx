@@ -1,7 +1,7 @@
 'use client';
 
-import { Anchor, Check, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Check, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
 import { TierComparison } from './TierComparison';
@@ -11,13 +11,6 @@ import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
 import { TIER_HIGHLIGHTS, TIER_BUYER_FIT, TIERS_BY_APPLICATION } from '@/config/tiers';
 import { FEATURED_BADGE, FEATURED_TIER } from '@/config/calculatorCopy';
-
-// One icon per package for the card's icon-and-name lockup.
-const TIER_ICONS: Record<string, LucideIcon> = {
-  basic: Anchor,
-  pro: TrendingUp,
-  premium: Zap,
-};
 import type {
   Bracket,
   Service,
@@ -28,6 +21,14 @@ import type {
   Testimonial,
 } from '@/types';
 
+// One icon per package for the card's icon-and-name lockup. Basic keeps the
+// stacked layers its pill used (Zjak, 2026-10-13).
+const TIER_ICONS: Record<string, LucideIcon> = {
+  basic: Layers,
+  pro: TrendingUp,
+  premium: Zap,
+};
+
 interface Step2TiersProps {
   services: Service[];
   brackets: Bracket[];
@@ -37,8 +38,6 @@ interface Step2TiersProps {
   selectedTier: string | null;
   /** Add-on tokens including the answer-driven one (the not-VAT-registered flag). */
   pricedAddons: string[];
-  /** False only on a VAT "No": hides VAT201 from the core services. */
-  vatRegistered: boolean;
   /** The visitor's answers, shown as tap-to-change chips. */
   answers: CalculatorAnswers;
   onEditAnswer: (step: CalculatorStep) => void;
@@ -56,7 +55,6 @@ export function Step2Tiers({
   selectedBrackets,
   selectedTier,
   pricedAddons,
-  vatRegistered,
   answers,
   onEditAnswer,
   onTierSelect,
@@ -109,6 +107,7 @@ export function Step2Tiers({
           );
 
           const featured = tier.slug === FEATURED_TIER;
+          const flagship = selectedTier ? isSelected : featured;
           const Icon = TIER_ICONS[tier.slug] ?? Layers;
 
           // The service cards' language (ServicePillars.tsx, Zjak 2026-10-13):
@@ -184,17 +183,29 @@ export function Step2Tiers({
                 )}
               </div>
 
-              {/* Row 4: what a click does, in a footer row (premium polish,
-                  2026-10-12; replaced the small corner + / tick). */}
-              <div className="pricing-card-cta mt-6 border-t border-white/10 pt-5">
-                <span aria-hidden className={cn('tier-select', isSelected && 'is-selected')}>
-                  {isSelected ? (
-                    <>
-                      <Check className="h-4 w-4" strokeWidth={3} /> Selected
-                    </>
-                  ) : (
-                    <>Choose {tier.name}</>
+              {/* Row 4: what a click does, in the site's own button styles
+                  (Zjak, 2026-10-13). The flagship style goes to the chosen
+                  package, or to the recommended one until a choice is made;
+                  the rest are the plain outline button. A styled span, since
+                  the whole card is already the button. */}
+              <div className="pricing-card-cta mt-6">
+                <span
+                  aria-hidden
+                  className={cn(
+                    buttonVariants({ variant: flagship ? 'default' : 'outline', size: 'lg' }),
+                    'w-full',
+                    flagship && 'gradient-cta'
                   )}
+                >
+                  <span className="relative z-[2] inline-flex items-center gap-2">
+                    {isSelected ? (
+                      <>
+                        <Check className="h-4 w-4" strokeWidth={3} /> Selected
+                      </>
+                    ) : (
+                      <>Choose {tier.name}</>
+                    )}
+                  </span>
                 </span>
               </div>
             </>
@@ -242,7 +253,6 @@ export function Step2Tiers({
       <TierComparison
         tiers={tiers}
         selectedServices={selectedServices}
-        vatRegistered={vatRegistered}
         defaultOpen
       />
 

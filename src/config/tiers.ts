@@ -192,23 +192,26 @@ export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
   },
 ];
 
-// The core services spelled out under "Core services" in the comparison table
-// (Zjak, 2026-10-13: the strip above the cards is gone and the table carries
-// the detail). One concrete deliverable per line, so the core never reads as
-// "anything SARS or CIPC".
+// The core services as rows under "Core services" in the comparison table,
+// worded as Zjak set them (2026-10-13). "SARS & CIPC submission" was his
+// choice over "returns"; its tooltip names the returns and what is quoted
+// separately, so the row never promises "anything SARS or CIPC".
 export const CORE_SERVICE_LINES: PackageCommonItem[] = [
-  { text: 'Your own accountant and finance team, all year', tooltip: '' },
-  { text: 'Annual financial statements', tooltip: '' },
-  { text: 'Income tax and provisional tax returns', tooltip: '' },
-  { text: 'CIPC annual return and beneficial ownership filing', tooltip: '' },
-  { text: 'VAT returns (VAT201)', tooltip: '', vatOnly: true },
-  { text: 'Xero accounting software', tooltip: '' },
+  {
+    text: 'Dedicated finance team',
+    tooltip: 'A team that knows your business and runs your month, led by your own accountant.',
+  },
+  { text: 'Year-round support', tooltip: 'Ongoing guidance from your team all year, not only at year-end.' },
+  {
+    text: 'Annual financial statements',
+    tooltip: 'Year-end financial statements prepared for compliance, SARS, banks and other stakeholders.',
+  },
+  {
+    text: 'SARS & CIPC submission',
+    tooltip: 'Your income tax and provisional tax returns, CIPC annual return and beneficial ownership filing, plus VAT returns if you are VAT-registered, each submitted on its cycle. SARS audits, objections and CIPC changes are quoted separately.',
+  },
+  { text: 'Xero accounting software', tooltip: 'Xero accounting software included in your monthly fee.' },
 ];
-
-/** The core-service lines for the comparison table, hiding VAT201 when not VAT-registered. */
-export function coreServiceLinesFor(vatRegistered: boolean): PackageCommonItem[] {
-  return CORE_SERVICE_LINES.filter((item) => vatRegistered || !item.vatOnly);
-}
 
 /** The core items on the signed schedule, hiding VAT201 when not VAT-registered. */
 export function scheduleCommonItemsFor(vatRegistered: boolean): PackageCommonItem[] {

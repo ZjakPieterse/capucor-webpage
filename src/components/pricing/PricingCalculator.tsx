@@ -237,7 +237,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
             pricedAddons={pricedAddons}
-            vatRegistered={answers.vatRegistered !== false}
             answers={answers}
             onEditAnswer={editAnswer}
             onTierSelect={setTier}
