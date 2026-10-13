@@ -157,14 +157,12 @@ export function tierDisplayName(slug: string): string {
   );
 }
 
-// The core services, included in every package and shown above the cards.
-// `vatOnly` items apply only to a VAT-registered business; `scheduleOnly` items
-// are spelled out on the signed schedule but not shown on the site.
+// The core services, included in every package, as named on the signed
+// schedule. `vatOnly` items apply only to a VAT-registered business.
 export interface PackageCommonItem {
   text: string;
   tooltip: string;
   vatOnly?: boolean;
-  scheduleOnly?: boolean;
 }
 
 export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
@@ -185,19 +183,31 @@ export const PACKAGE_COMMON_ITEMS: PackageCommonItem[] = [
     tooltip: 'Your income tax and provisional tax returns, CIPC annual return and beneficial ownership filing, plus VAT returns if you are VAT-registered, each submitted on its cycle. SARS audits, objections and CIPC changes are quoted separately.',
   },
   { text: 'Xero Accounting Software', tooltip: 'Xero accounting software included in your monthly fee.' },
-  // Part of "SARS & CIPC Returns" on the site; named on the schedule so the
-  // signed scope stays explicit (package simplification, 2026-10-06).
+  // Named on the schedule so the signed scope stays explicit (package
+  // simplification, 2026-10-06).
   {
     text: 'VAT returns (VAT201)',
     tooltip: 'VAT returns prepared and submitted for each applicable cycle.',
     vatOnly: true,
-    scheduleOnly: true,
   },
 ];
 
-/** The core items shown on the site, for every package. */
-export function packageCommonItemsFor(vatRegistered: boolean): PackageCommonItem[] {
-  return PACKAGE_COMMON_ITEMS.filter((item) => !item.scheduleOnly && (vatRegistered || !item.vatOnly));
+// The core services spelled out under "Core services" in the comparison table
+// (Zjak, 2026-10-13: the strip above the cards is gone and the table carries
+// the detail). One concrete deliverable per line, so the core never reads as
+// "anything SARS or CIPC".
+export const CORE_SERVICE_LINES: PackageCommonItem[] = [
+  { text: 'Your own accountant and finance team, all year', tooltip: '' },
+  { text: 'Annual financial statements', tooltip: '' },
+  { text: 'Income tax and provisional tax returns', tooltip: '' },
+  { text: 'CIPC annual return and beneficial ownership filing', tooltip: '' },
+  { text: 'VAT returns (VAT201)', tooltip: '', vatOnly: true },
+  { text: 'Xero accounting software', tooltip: '' },
+];
+
+/** The core-service lines for the comparison table, hiding VAT201 when not VAT-registered. */
+export function coreServiceLinesFor(vatRegistered: boolean): PackageCommonItem[] {
+  return CORE_SERVICE_LINES.filter((item) => vatRegistered || !item.vatOnly);
 }
 
 /** The core items on the signed schedule, hiding VAT201 when not VAT-registered. */
@@ -305,8 +315,8 @@ export const PRICING_ADDONS: PricingAddon[] = [
   },
 ];
 
-// The line under each package name: what it gets, for the business its pill
-// names (TIER_NUDGES: Steady, Growing, Fast-moving). No monthly, weekly or
+// The line under each package name: what it gets (the Steady / Growing /
+// Fast-moving pills went on 2026-10-13, Zjak). No monthly, weekly or
 // daily here; the rhythm lives in the item lists (Zjak, calculator design
 // review, 2026-10-13). Basic still reads as complete: every package carries the
 // core services.

@@ -111,11 +111,13 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
 ### Repeated component treatments
 
 - When a visual element appears on some cards in a set, give it to **all** peers for rhythm;
-  vary only the icon and copy, keep the styling byte-identical. Example: the tier nudge pills
-  (`components/pricing/TierNudge.tsx`) — all three pricing tiers carry the same pill
-  (`bg-primary/5 border border-primary/10 rounded-md px-2.5 py-1`), differing only in icon and
-  label (`TIER_NUDGES` in `config/calculatorCopy.ts`). The one deliberate exception: the
-  featured package (Pro) gets a filled pill so it reads as the recommendation.
+  vary only the icon and copy, keep the styling byte-identical. Example: the package cards
+  (`components/pricing/Step2Tiers.tsx`) each carry the same `.svc-icon` lockup, differing
+  only in icon and name. The one deliberate exception: the featured package (Pro) gets the
+  lit border and the "Recommended" badge.
+- **Package cards borrow the service cards' language** (`ServicePillars.tsx`, Zjak
+  2026-10-13): glass surface, icon-and-title lockup, a lit top edge, `.svc-check` ticks, and
+  hairline-divided sections ending in a footer action row.
 
 ### Price display
 

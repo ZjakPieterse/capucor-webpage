@@ -21,27 +21,15 @@ export const ANSWER_LABELS = {
   vatRegistered: 'Registered for VAT',
 } as const;
 
-// Says what the strip means (calculator design review, 2026-10-13).
-export const CORE_SERVICES_HEADING = 'Included in every package';
 // Above the packages: the visitor's answers, each tap-to-change, read as a
 // brief rather than filter tags (package-page feedback, 2026-10-13).
 export const ANSWER_RECAP_HEADING = 'Tailored to your business';
 
-// The pill under each package's price names the business it suits, and the
-// line under the name (TIER_BUYER_FIT in tiers.ts) says what it gets. One word
-// or two, so it stays on one line on every card. No cadence here: the rhythm
-// lives in the item lists and the comparison table (Zjak, calculator design
-// review, 2026-10-13; replaced "A solid start / Most popular / Our fullest
-// service"). Pro's pill stays filled and Pro carries the "Recommended" badge.
-export const TIER_NUDGES: Record<string, string> = {
-  basic: 'Steady',
-  pro: 'Growing',
-  premium: 'Fast-moving',
-};
-
 // The badge on the featured package's top edge (decision: "Recommended" on
-// Pro, not an unproven "Most popular").
+// Pro, not an unproven "Most popular"). Text only, no icon (Zjak, 2026-10-13,
+// when the package pills were removed).
 export const FEATURED_BADGE = 'Recommended';
+export const FEATURED_TIER = 'pro';
 
 // The merged core line ("Monthly accounting") and its slugs live in
 // lib/pricing.ts, so every surface uses one name.

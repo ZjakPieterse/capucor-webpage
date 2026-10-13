@@ -4,7 +4,7 @@ import {
   TIER_DISPLAY_NAMES,
   PACKAGE_COMMON_ITEMS,
   TIERS_BY_APPLICATION,
-  packageCommonItemsFor,
+  coreServiceLinesFor,
   scheduleCommonItemsFor,
   tierDisplayName,
   type TierHighlightItem,
@@ -28,7 +28,7 @@ interface MatrixRow {
 function buildMatrix(selected: Set<string>): MatrixRow[] {
   const result: MatrixRow[] = [];
   const seen = new Set<string>();
-  for (const item of packageCommonItemsFor(true)) {
+  for (const item of coreServiceLinesFor(true)) {
     if (seen.has(item.text)) continue;
     seen.add(item.text);
     result.push({ text: item.text, lowestTier: 'common' });
@@ -220,12 +220,13 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
 // ─── common items ───────────────────────────────────────────────────────────
 
 describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
-  it('shows the four approved core services, none of them repeated as a tier highlight', () => {
-    expect(packageCommonItemsFor(true).map((i) => i.text)).toEqual([
+  it('names the four approved core services (plus VAT201), none repeated as a tier highlight', () => {
+    expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).toEqual([
       'Year-round Finance Team',
       'Annual Financials',
       'SARS & CIPC Returns',
       'Xero Accounting Software',
+      'VAT returns (VAT201)',
     ]);
     const allTierTexts = new Set(
       (['basic', 'pro', 'premium'] as const).flatMap((t) => TIER_HIGHLIGHTS[t].map((i) => i.text))
@@ -239,8 +240,16 @@ describe('PACKAGE_COMMON_ITEMS (core services included)', () => {
     expect(PACKAGE_COMMON_ITEMS.map((i) => i.text)).not.toContain('SARS & CIPC Submission');
   });
 
-  it('shows the same four whether or not the business is VAT-registered', () => {
-    expect(packageCommonItemsFor(false)).toEqual(packageCommonItemsFor(true));
+  it('spells out the core services line by line in the comparison, VAT201 only when registered', () => {
+    expect(coreServiceLinesFor(true).map((i) => i.text)).toEqual([
+      'Your own accountant and finance team, all year',
+      'Annual financial statements',
+      'Income tax and provisional tax returns',
+      'CIPC annual return and beneficial ownership filing',
+      'VAT returns (VAT201)',
+      'Xero accounting software',
+    ]);
+    expect(coreServiceLinesFor(false).map((i) => i.text)).not.toContain('VAT returns (VAT201)');
   });
 
   it('names VAT201 on the schedule only, and only for a VAT-registered business', () => {
@@ -322,14 +331,14 @@ describe('TierComparison accumulation', () => {
     );
   });
 
-  it('places SARS & CIPC Returns on a single common-tier row', () => {
-    const sarsRows = rows.filter((r) => r.text === 'SARS & CIPC Returns');
+  it('places the tax returns line on a single common-tier row', () => {
+    const sarsRows = rows.filter((r) => r.text === 'Income tax and provisional tax returns');
     expect(sarsRows).toHaveLength(1);
     expect(sarsRows[0].lowestTier).toBe('common');
   });
 
-  it('places Xero Accounting Software on a single common-tier row', () => {
-    const xeroRows = rows.filter((r) => r.text === 'Xero Accounting Software');
+  it('places the Xero line on a single common-tier row', () => {
+    const xeroRows = rows.filter((r) => r.text === 'Xero accounting software');
     expect(xeroRows).toHaveLength(1);
     expect(xeroRows[0].lowestTier).toBe('common');
   });
