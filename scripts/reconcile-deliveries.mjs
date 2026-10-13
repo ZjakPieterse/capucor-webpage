@@ -40,7 +40,7 @@ import {
   renderDataRequestConfirmationText,
   renderDataRequestConfirmedOwnerText,
   renderDataRequestPendingOwnerText,
-  renderLeadOwnerText,
+  buildLeadOwnerEmail,
   renderSignConfirmEmail,
   signedClientIdempotencyKey,
   signedOwnerIdempotencyKey,
@@ -605,8 +605,7 @@ async function buildLeadMessage(row, db) {
   return {
     from: WEBSITE_SENDER,
     to: row.recipient,
-    subject: `New lead: ${lead.name} (${lead.source})`,
-    text: renderLeadOwnerText(lead),
+    ...buildLeadOwnerEmail(lead),
   };
 }
 
