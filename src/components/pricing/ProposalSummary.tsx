@@ -68,9 +68,7 @@ export function ProposalSummary({
   return (
     <div className={cn('rounded-2xl border border-primary/25 bg-primary/[0.04] p-5', className)}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-primary">
-          Your subscription
-        </p>
+        <p className="text-xs font-semibold text-primary">Your subscription</p>
         {tierName && (
           <span className="shrink-0 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
             {tierName} package
@@ -91,9 +89,13 @@ export function ProposalSummary({
       </ul>
 
       <div className="space-y-1.5 border-t border-primary/20 pt-3 text-sm">
-        <div className="flex items-baseline justify-between">
-          <span className="font-semibold">{totalLabel}</span>
-          <span className="text-xl font-bold tracking-tight tabular-nums">{formatZAR(monthly)}</span>
+        {/* The amount never wraps: a long label ("Estimated monthly charge,
+            from") wraps on its own side instead (design review, 2026-10-13). */}
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="min-w-0 font-semibold">{totalLabel}</span>
+          <span className="shrink-0 whitespace-nowrap text-xl font-bold tracking-tight tabular-nums">
+            {formatZAR(monthly)}
+          </span>
         </div>
         <p className="pt-1 text-[11px] text-muted-foreground">
           Billed monthly in advance · cancel any time with 30 days&apos; notice

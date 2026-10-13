@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, monthlyTotal } from '@/lib/pricing';
+import { TIERS_BY_APPLICATION } from '@/config/tiers';
 import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface MobileTotalBarProps {
@@ -63,14 +64,18 @@ export function MobileTotalBar({
           aria-label="Jump to subscription summary"
           className="min-w-0 flex-1 text-left rounded-md -mx-1 px-1 py-0.5 transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-primary/5"
         >
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+          <p className="text-[11px] text-muted-foreground font-medium">
             {tier.name} package · {caption}
           </p>
           <motion.div
             initial={{ scale: 0.95, opacity: 0.5 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="font-bold text-lg leading-tight tabular-nums"
+            className="font-bold text-lg leading-tight tabular-nums whitespace-nowrap"
           >
+            {/* A package sold by application shows "from", as on its card. */}
+            {TIERS_BY_APPLICATION.includes(tier.slug) && (
+              <span className="text-xs font-normal text-muted-foreground mr-1">From</span>
+            )}
             <AnimatedPrice amount={total} className="text-lg font-bold" />
             <span className="text-xs font-normal text-muted-foreground ml-1">/month</span>
           </motion.div>

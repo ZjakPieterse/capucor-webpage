@@ -434,6 +434,13 @@
     opacity 260ms ease;
 }
 
+/* A dialog's close button is a premium-button too, and the rule above beat its
+   `absolute top-2 right-2`, so the X fell to the bottom of every dialog
+   (calculator design review, 2026-10-13). */
+[data-slot="dialog-close"].premium-button {
+  position: absolute;
+}
+
 @media all {
   .premium-button:hover {
     transform: translateY(-2px);

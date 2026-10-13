@@ -75,7 +75,8 @@ export function Step2Tiers({
   const answerAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
 
   return (
-    <div className="space-y-6">
+    // Slightly tighter on phones so the first price lands on the first screen.
+    <div className="space-y-5 sm:space-y-6">
       <div>
         <h2 className="text-xl sm:text-2xl font-semibold mb-1">Choose your package</h2>
         <p className="text-sm text-muted-foreground">
@@ -277,15 +278,12 @@ export function Step2Tiers({
         selectedServices={selectedServices}
         selectedBrackets={selectedBrackets}
         selectedAddons={answerAddons}
-        vatRegistered={vatRegistered}
         defaultOpen
       />
 
       {testimonial && (
         <div className="pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3">
-            From a Capucor client
-          </p>
+          <p className="text-xs font-semibold text-muted-foreground mb-3">From a Capucor client</p>
           <TestimonialSpotlight testimonial={testimonial} />
         </div>
       )}
