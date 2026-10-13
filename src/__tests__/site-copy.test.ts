@@ -220,7 +220,7 @@ describe('contact form layout (Zjak, 2026-10-12)', () => {
 describe('contact form tweaks (Zjak, 2026-10-13)', () => {
   it('no section titles or phone field, renamed dropdowns, two send buttons', async () => {
     const { CONTACT_QUESTIONS } = await import('@/config/contactQuestions');
-    expect(CONTACT_QUESTIONS.turnover.label).toBe('Business Size');
+    expect(CONTACT_QUESTIONS.turnover.label).toBe('Annual Revenue');
     expect(CONTACT_QUESTIONS.teamSize.label).toBe('Team Size');
     for (const key of ['turnover', 'teamSize', 'booksNow'] as const) {
       expect(CONTACT_QUESTIONS[key].placeholder).toBe('Choose an option');
