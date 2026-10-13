@@ -54,7 +54,7 @@ export default function AccountingPage() {
         <div className="max-w-xl mx-auto px-6 text-center">
           <h2 className="text-2xl font-semibold mb-3">See what it costs</h2>
           <p className="text-muted-foreground mb-8">
-            Flat monthly pricing. Build your exact subscription in minutes.
+            Fixed monthly fee. Build your exact subscription in minutes.
           </p>
           <ServiceCtaPair centered />
         </div>

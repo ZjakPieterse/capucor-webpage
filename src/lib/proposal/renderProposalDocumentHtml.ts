@@ -63,7 +63,7 @@ function dateZA(iso: string | null): string {
 }
 
 const LABEL =
-  'margin:24px 0 8px;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6b7280;';
+  'margin:24px 0 8px;font-size:13px;font-weight:700;color:#6b7280;';
 const SUBHEAD =
   'margin:14px 0 6px;font-size:13px;font-weight:600;color:#111827;';
 const PARA = 'margin:0 0 8px;font-size:13px;line-height:1.6;color:#374151;';

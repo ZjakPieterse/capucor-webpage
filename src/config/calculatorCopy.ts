@@ -57,7 +57,7 @@ export const REVENUE_CALL_COPY = {
 
 // Page heading and the one promise above the progress bar on /pricing
 // (tweaks round 2, 2026-10-07).
-export const PRICING_PAGE_HEADING = 'Calculate your monthly price';
+export const PRICING_PAGE_HEADING = 'Build your subscription';
 export const PRICING_PAGE_INTRO = 'A few quick questions, then your price. No sign-up needed.';
 
 // Dropdown placeholder on the bracket questions.
@@ -132,7 +132,7 @@ export const AFTER_YOU_SIGN = [
 // 2026-10-12).
 export const PRICING_TRUST_ITEMS = [
   'Registered tax practitioner',
-  'Fixed monthly pricing',
+  'Fixed monthly fee',
   'Dedicated finance team',
   'No lock-in: 30 days’ notice to cancel',
 ] as const;

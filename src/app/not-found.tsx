@@ -16,7 +16,7 @@ export default function NotFound() {
       </h1>
 
       <p className="text-muted-foreground max-w-md mb-10 leading-relaxed">
-        The page you wanted doesn&rsquo;t exist or has moved. We&rsquo;re accountants &mdash; we appreciate when things are properly categorised. Help us out:
+        The page you wanted doesn&rsquo;t exist or has moved. We&rsquo;re accountants, so we like things properly categorised. Try one of these:
       </p>
 
       {/* Absolute marketing URLs (siteConfig.marketingUrl), so the links stay

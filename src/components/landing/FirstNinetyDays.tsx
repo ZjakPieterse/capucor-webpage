@@ -106,7 +106,7 @@ const CARDS: Card[] = [
     // Same list as the welcome checklist sent on signing.
     icon: ClipboardList,
     title: "What we’ll need",
-    body: "Most of this you already have somewhere. Start gathering now and your first month will be a breeze. Can’t find something? With your go-ahead, we’ll ask your previous accountant. You stay month-to-month on 30 days’ notice, and if you leave, we hand over your Xero and eFiling.",
+    body: "Most of this you already have somewhere. Start gathering now and your first month goes faster. Can’t find something? With your go-ahead, we’ll ask your previous accountant. You stay month-to-month on 30 days’ notice, and if you leave, we hand over your Xero and eFiling.",
     listTitle: "Your checklist",
     items: ONBOARDING_CHECKLIST.map((c) => c.item),
     checklistLink: true,

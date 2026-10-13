@@ -32,12 +32,12 @@ export const SERVICE_OPTIONS = [
 
 // Form order (Zjak, 2026-10-12): three dropdowns, then the services checklist.
 // "What made you look for an accountant now?" was dropped the same day.
-// Labels "Annual Revenue" / "Team Size" and one shared placeholder: Zjak, 2026-10-13.
+// Labels "Annual revenue" / "Team size" (sentence case, full-site audit 2026-10-13) and one shared placeholder: Zjak, 2026-10-13.
 const PICK = 'Choose an option';
 
 export const CONTACT_QUESTIONS = {
-  turnover: { label: 'Annual Revenue', placeholder: PICK, options: TURNOVER_OPTIONS },
-  teamSize: { label: 'Team Size', placeholder: PICK, options: TEAM_SIZE_OPTIONS },
+  turnover: { label: 'Annual revenue', placeholder: PICK, options: TURNOVER_OPTIONS },
+  teamSize: { label: 'Team size', placeholder: PICK, options: TEAM_SIZE_OPTIONS },
   booksNow: { label: 'Who does your books now?', placeholder: PICK, options: BOOKS_NOW_OPTIONS },
   services: { label: 'What do you need help with?', options: SERVICE_OPTIONS },
 } as const;

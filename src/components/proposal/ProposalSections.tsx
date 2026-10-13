@@ -10,7 +10,7 @@ import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <p className="mb-3 text-xs font-semibold text-muted-foreground">
       {children}
     </p>
   );
@@ -52,7 +52,7 @@ export function DocumentHeader({
               style={{ width: 'auto' }}
             />
           </Link>
-          <p className="mt-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <p className="mt-4 text-xs font-semibold text-muted-foreground">
             Proposal &amp; engagement
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">For {businessName}</h1>
@@ -67,7 +67,7 @@ export function DocumentHeader({
         </div>
         {refNumber && (
           <div className="shrink-0 rounded-lg border border-border bg-card px-3 py-2 text-right">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="text-xs font-semibold text-muted-foreground">
               Reference
             </p>
             <p className="font-mono text-xs font-semibold sm:text-sm">{refNumber}</p>

@@ -9,6 +9,8 @@ interface ConsentCheckboxProps {
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
   error?: string;
+  // What the visitor is consenting to be contacted about (default: an enquiry).
+  subject?: string;
 }
 
 export function ConsentCheckbox({
@@ -16,6 +18,7 @@ export function ConsentCheckbox({
   checked,
   onCheckedChange,
   error,
+  subject = 'this enquiry',
 }: ConsentCheckboxProps) {
   return (
     <div className="space-y-1.5">
@@ -30,8 +33,8 @@ export function ConsentCheckbox({
           aria-describedby={error ? `${id}-error` : undefined}
         />
         <Label htmlFor={id} className="block text-sm text-muted-foreground leading-relaxed cursor-pointer">
-          I consent to Capucor Business Solutions contacting me about this
-          enquiry in accordance with{' '}
+          I consent to Capucor Business Solutions contacting me about {subject}{' '}
+          in accordance with{' '}
           <Link href="/privacy" className="text-primary underline underline-offset-2 hover:no-underline">
             POPIA
           </Link>

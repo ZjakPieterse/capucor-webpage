@@ -77,7 +77,7 @@ export function HowItWorks() {
         <ScrollReveal>
           <SectionHeading
             title="A rhythm that keeps you in control"
-            subtitle="Great finance work needs a clear rhythm. We process, review, report, and advise. Every period closes on time and reconciled, leaving you with the insights you need for your next move."
+            subtitle="We process, review, report and advise. Every period closes reconciled, leaving you with the insights you need for your next move."
           />
         </ScrollReveal>
 
