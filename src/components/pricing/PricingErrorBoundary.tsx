@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
+import { RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { siteConfig } from '@/config/site';
 
@@ -68,7 +69,8 @@ export class PricingErrorBoundary extends Component<Props, State> {
   }
 }
 
-export function PricingUnavailable() {
+/** `onRetry`: the route error page's retry (app/(site)/pricing/error.tsx). */
+export function PricingUnavailable({ onRetry }: { onRetry?: () => void } = {}) {
   return (
     <div className="flex flex-col items-center justify-center py-32 px-6 text-center">
       <h1 className="text-2xl font-bold tracking-tight mb-3">
@@ -78,17 +80,24 @@ export function PricingUnavailable() {
         Our pricing calculator is not available right now. Book a call and
         we&rsquo;ll put together a custom quote for you.
       </p>
-      <Button
-        nativeButton={false}
-        render={
-          <a
-            href={siteConfig.links.fitCall}
-          />
-        }
-        className="gap-2"
-      >
-        Book a fit call
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        {onRetry && (
+          <Button variant="outline" onClick={onRetry} className="gap-2">
+            <RotateCw className="h-4 w-4" aria-hidden /> Try again
+          </Button>
+        )}
+        <Button
+          nativeButton={false}
+          render={
+            <a
+              href={siteConfig.links.fitCall}
+            />
+          }
+          className="gap-2"
+        >
+          Book a fit call
+        </Button>
+      </div>
     </div>
   );
 }
