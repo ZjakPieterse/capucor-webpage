@@ -10,7 +10,7 @@ export const ONBOARDING_CHECKLIST = [
   {
     item: "CIPC registration info and docs",
     detail:
-      "Your registration certificate (CoR14.3) and a list of your directors or members.",
+      "Your registration certificate (CoR14.3), a list of your directors or members, and a clear copy of each one’s ID. No need to certify them.",
   },
   {
     item: "SARS tax numbers and access",
