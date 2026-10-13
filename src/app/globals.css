@@ -127,6 +127,7 @@
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-input-edge: var(--input-edge);
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
@@ -159,6 +160,10 @@
   --muted-foreground: #90a1b9;
   --border: #1e283d;
   --input: #ffffff1f;
+  /* Form-field edge only (audit A24 / D6 preview, 2026-10-13): 35 % white,
+     the lowest step that clears 3:1 on the page and on cards. Outline
+     buttons keep --input. */
+  --input-edge: #ffffff59;
   --ring: #2dd4ff;
 
   /* Brand primary — electric cyan-blue, anchored to logo */
