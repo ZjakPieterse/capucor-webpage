@@ -63,7 +63,7 @@ describe('every calculator screen has a focusable, marked heading', () => {
       ...selection, selectedAddons: [], pricedAddons: [], onToggleAddon: noop, onSetQuantity: noop, onBack: noop, onNext: noop,
     }))],
     ['review', renderToStaticMarkup(createElement(ReviewStep, {
-      ...selection, services, tiers, selectedAddons: [], answers: answers(), onBack: noop, onAction: noop,
+      ...selection, services, tiers, selectedAddons: [], onBack: noop, onAction: noop,
     }))],
   ];
 

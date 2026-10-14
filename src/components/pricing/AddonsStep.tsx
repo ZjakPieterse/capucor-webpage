@@ -58,9 +58,9 @@ export function AddonsStep({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold mb-1.5 outline-none">Add what you need</h2>
+        <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold mb-1.5 outline-none">Add-ons available</h2>
         <p className="text-sm text-muted-foreground">
-          Optional extras on a monthly fee. Your total updates as you choose.
+          Complete your package with any extras you need, or continue with your current selection.
         </p>
       </div>
 

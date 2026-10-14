@@ -74,7 +74,7 @@ export function Step2Tiers({
       <div>
         <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold mb-1 outline-none">Choose your package</h2>
         <p className="text-sm text-muted-foreground">
-          Every package includes the core services. Choose how closely we work with you: how often we process, report and review.
+          Every package covers the essentials. Choose the level of support and insight that best fits your business.
         </p>
       </div>
 
