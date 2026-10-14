@@ -3,10 +3,10 @@
 import { ArrowRight, CalendarClock, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProposalSummary } from './ProposalSummary';
-import { AFTER_YOU_SIGN, ANSWER_LABELS, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
+import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
 import { TIERS_BY_APPLICATION } from '@/config/tiers';
 import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
-import type { Bracket, BracketValue, CalculatorAnswers, Service, Tier } from '@/types';
+import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
 // 'request' is for a package sold by application (Premium): Capucor follows
 // up and no signable proposal is created (tweaks round 1, 2026-10-06).
@@ -20,13 +20,8 @@ interface ReviewStepProps {
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string;
   selectedAddons: string[];
-  answers: CalculatorAnswers;
   onBack: () => void;
   onAction: (action: ProposalAction) => void;
-}
-
-function yesNo(value: boolean | null): string {
-  return value === null ? 'Not answered' : value ? 'Yes' : 'No';
 }
 
 export function ReviewStep({
@@ -37,7 +32,6 @@ export function ReviewStep({
   selectedBrackets,
   selectedTier,
   selectedAddons,
-  answers,
   onBack,
   onAction,
 }: ReviewStepProps) {
@@ -50,7 +44,7 @@ export function ReviewStep({
         <p className="text-sm text-muted-foreground">
           {byApplication
             ? 'Check the details, then send your request.'
-            : 'Check the details, then accept now or have the proposal emailed to you.'}
+            : 'Check the details, then accept now or request the proposal to be emailed to you.'}
         </p>
       </div>
 
@@ -64,18 +58,6 @@ export function ReviewStep({
         selectedAddons={selectedAddons}
         totalLabel={byApplication ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
       />
-
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        {ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.
-      </p>
-
-      <dl className="rounded-2xl border border-border bg-card/40 p-5 space-y-2 text-sm">
-        <p className="text-xs font-semibold text-muted-foreground mb-1">About your business</p>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-muted-foreground">{ANSWER_LABELS.vatRegistered}</dt>
-          <dd className="font-medium">{yesNo(answers.vatRegistered)}</dd>
-        </div>
-      </dl>
 
       {byApplication ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 flex flex-col gap-3">
@@ -117,11 +99,15 @@ export function ReviewStep({
         </div>
       )}
 
-      {/* Right under the actions, where the reassurance is needed (design review, 2026-10-13). */}
-      <p className="-mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-        <Check className="h-3.5 w-3.5 text-primary" />
-        No payment needed yet
-      </p>
+      {/* Right under the actions, where the reassurance is needed (design review, 2026-10-13);
+          the band note joined it here (Zjak, 2026-10-14). */}
+      <div className="-mt-3 space-y-1.5 text-center text-xs text-muted-foreground leading-relaxed">
+        <p className="flex items-center justify-center gap-1.5">
+          <Check className="h-3.5 w-3.5 text-primary" />
+          No payment needed yet
+        </p>
+        <p>{ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.</p>
+      </div>
 
       {!byApplication && (
         <div className="rounded-2xl border border-border bg-card/40 p-4">

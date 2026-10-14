@@ -270,7 +270,6 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
             selectedAddons={pricedAddons}
-            answers={answers}
             onBack={back}
             onAction={openModal}
           />

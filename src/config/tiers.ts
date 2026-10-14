@@ -271,9 +271,9 @@ export const PRICING_ADDONS: PricingAddon[] = [
   },
   {
     slug: 'whatsapp-support',
-    name: 'WhatsApp Support Channel',
+    name: 'WhatsApp Support',
     priceZAR: 750,
-    description: 'A dedicated WhatsApp channel to your accountant for quick questions and document requests.',
+    description: 'A dedicated WhatsApp channel to your accountant and team for simpler questions and support.',
   },
   {
     slug: 'category-tracking',
@@ -287,7 +287,7 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'Personal Tax Returns',
     priceZAR: 75,
     description:
-      'An annual personal income tax return (ITR12) prepared and submitted for each person.',
+      'Annual income tax returns (ITR12) prepared and filed for selected individuals.',
     unit: { singular: 'person', plural: 'people', max: 10 },
   },
   // RETIRED 2026-10-06 (calculator review answers): the Xero-invoicing question
@@ -320,7 +320,7 @@ export const PRICING_ADDONS: PricingAddon[] = [
 // review, 2026-10-13). Basic still reads as complete: every package carries the
 // core services.
 export const TIER_BUYER_FIT: Record<string, string> = {
-  basic: 'Everything done properly, with regular reviews so you know where the business stands.',
+  basic: 'Essentials done properly, with regular reviews so you know where the business stands and what to do next.',
   pro: "Current numbers, suppliers handled and closer reviews, so growth doesn't outrun the books.",
-  premium: 'Up-to-date numbers, tax strategy built in and a partner on call for the big decisions.',
+  premium: 'Stay on top of your numbers, plan ahead for tax, and have a trusted partner to call when big decisions arise.',
 };

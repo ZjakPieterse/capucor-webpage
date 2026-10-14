@@ -16,11 +16,6 @@ export const QUESTION_COPY = {
   employees: { title: 'How many active employees?' },
 } satisfies Partial<Record<CalculatorStep, QuestionCopy>>;
 
-// Shown on the review step next to the answers that do not change the price.
-export const ANSWER_LABELS = {
-  vatRegistered: 'Registered for VAT',
-} as const;
-
 // Above the packages: the visitor's answers, each tap-to-change, read as a
 // brief rather than filter tags (package-page feedback, 2026-10-13).
 export const ANSWER_RECAP_HEADING = 'Tailored to your business';
