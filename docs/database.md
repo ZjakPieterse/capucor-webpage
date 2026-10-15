@@ -31,6 +31,9 @@ numbered migrations:
 | `003_drop_legacy_signed_event_types.sql` | `finish_proposal_fulfilment_stage` stops accepting the pre-phase-3 `proposal.portal_ready_client` / `proposal.provisioned_owner` deliveries (web-standalone phase 5). | Applied 2026-10-07 |
 | `004_plan_reviews.sql` | Plan reviews (plan-review-tool): `proposals` gains `kind`, `effective_from`, `change_summary`, `replaces_legacy_ref` and `previous_monthly_zar`; new `plan_reviews` log; one open review per plan. `commit_proposal_signature` supersedes the replaced plan on signing (refused unless it is still `signed` or `active`) and rolls `effective_from` forward. Drops nothing. | Written 2026-10-15, not applied |
 
+⚠️ Since 004, deleting a proposal (nothing here does) needs care: delete its `plan_reviews` rows
+first, and a client's review proposals before the plan they supersede. See 004's header.
+
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
 table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`.
 `testimonials` was adopted into the baseline on 2026-10-07: capucor.com is its only reader, and

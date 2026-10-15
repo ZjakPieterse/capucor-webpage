@@ -10,7 +10,8 @@
 --        replaces_legacy_ref  engagement-letter ref a legacy client's review replaces
 --        previous_monthly_zar the fee being replaced, excl. VAT
 --      plus CHECKs: a 'review' replaces exactly one thing (supersedes_id OR
---      replaces_legacy_ref), effective_from is a 1st, previous_monthly_zar >= 0.
+--      replaces_legacy_ref) and states effective_from; effective_from is a 1st;
+--      previous_monthly_zar >= 0.
 --   2. A partial unique index: at most one OPEN (sent/viewed) proposal
 --      supersedes any one plan ("one open review per plan").
 --   3. New table plan_reviews: the review log (no_change | proposal_sent).
@@ -28,6 +29,17 @@
 --      Proposals without supersedes_id / effective_from (every row today) sign
 --      exactly as before.
 --   Nothing is dropped.
+--
+-- DELETES. Nothing in this repo deletes proposals. If one ever must go (e.g. a
+-- POPIA erasure): delete its plan_reviews rows first (their FKs have no ON
+-- DELETE action), and delete a client's review proposals before the plan they
+-- supersede — the FK's SET NULL would otherwise break the "review replaces
+-- exactly one thing" CHECK and the delete fails.
+--
+-- CONCURRENCY. Two reviews of one plan cannot both be open (the index), and
+-- the function locks new row → old row, so a second signer waits and then sees
+-- the old plan superseded. The lock is verified by reading (READ COMMITTED
+-- re-reads the locked row), not by test: PGlite has a single connection.
 --
 -- WHY. Decision 2026-10-15 (plan-review-tool): a signed review proposal
 -- replaces the client's plan ON SIGNING, never on sending — the old plan stays
@@ -65,12 +77,13 @@
 --  group by 1 having count(*) > 1;
 -- -- Expect 0 rows (2026-10-15: 0 open proposals with supersedes_id).
 --
--- 3. Plans in force today, by status (for comparison with verify 4).
+-- 3. Every proposal by status (for comparison with verify 4). In force =
+--    signed or active, not superseded; anything else (e.g. 'paid') is not.
 --
--- select status, count(*) from public.proposals
---  where status in ('signed', 'active') and superseded_by_id is null
---  group by 1 order by 1;
--- -- 2026-10-15: active 13, signed 15.
+-- select status, superseded_by_id is not null as superseded, count(*)
+--   from public.proposals group by 1, 2 order by 1, 2;
+-- -- 2026-10-15: active 13, signed 15, superseded 1, expired 7, viewed 1;
+-- -- no 'paid'. A 'paid' row would need a decision before reviews start.
 --
 -- 4. The function being replaced has the expected signature.
 --
@@ -106,6 +119,10 @@ alter table public.proposals
   ),
   add constraint proposals_effective_from_first_check check (
     effective_from is null or extract(day from effective_from) = 1
+  ),
+  -- Decision #7: a review always states its start date.
+  add constraint proposals_review_effective_from_check check (
+    kind <> 'review' or effective_from is not null
   ),
   add constraint proposals_previous_monthly_check check (
     previous_monthly_zar is null or previous_monthly_zar >= 0
@@ -206,7 +223,7 @@ begin
   v_signed_date := (p_signed_at at time zone 'Africa/Johannesburg')::date;
   v_effective_from := v_proposal.effective_from;
   if v_effective_from is not null and v_signed_date >= v_effective_from then
-    v_effective_from := (date_trunc('month', v_signed_date) + interval '1 month')::date;
+    v_effective_from := (date_trunc('month', v_signed_date::timestamp) + interval '1 month')::date;
   end if;
 
   update public.proposals
@@ -321,6 +338,7 @@ commit;
 -- alter table public.proposals
 --   drop constraint proposals_kind_check,
 --   drop constraint proposals_review_replaces_one_check,
+--   drop constraint proposals_review_effective_from_check,
 --   drop constraint proposals_effective_from_first_check,
 --   drop constraint proposals_previous_monthly_check,
 --   drop constraint proposals_replaces_legacy_ref_check,

@@ -75,6 +75,8 @@ async function insertProposal(db: PGlite, over: Row = {}): Promise<string> {
     vat_zar: 150,
     total_charge_zar: 1150,
     status: 'sent',
+    // A review must state its start date (decision #7); default one in.
+    ...(over.kind === 'review' && !('effective_from' in over) ? { effective_from: '2026-12-01' } : {}),
     ...over,
   };
   const cols = Object.keys(row);
@@ -215,7 +217,16 @@ describe('migration 004: plan reviews', () => {
       });
     }
 
-    it('refuses the second of two reviews of one plan', async () => {
+    it('refuses the signature when the old plan is active but already has superseded_by_id', async () => {
+      const other = await insertProposal(db, { status: 'signed' });
+      const oldId = await insertProposal(db, { status: 'active', superseded_by_id: other });
+      const newId = await insertProposal(db, readyToSign({ kind: 'review', supersedes_id: oldId }));
+      expect(await sign(db, newId, '2026-11-10T09:00:00Z')).toBe(false);
+      expect(await get(db, oldId)).toMatchObject({ status: 'active', superseded_by_id: other });
+      expect((await get(db, newId)).status).toBe('sent');
+    });
+
+    it('refuses the second of two reviews of one plan (sequential; the row lock is verified by reading)', async () => {
       const oldId = await insertProposal(db, { status: 'signed' });
       const a = await insertProposal(db, readyToSign({ kind: 'review', supersedes_id: oldId }));
       // Only one review can be open at a time (index), so B can exist only once A
@@ -296,6 +307,12 @@ describe('migration 004: plan reviews', () => {
       await expect(
         insertProposal(db, { kind: 'review', supersedes_id: oldId, replaces_legacy_ref: 'EL-1' }),
       ).rejects.toThrow(/proposals_review_replaces_one_check/);
+    });
+
+    it('a review must state effective_from', async () => {
+      await expect(
+        insertProposal(db, { kind: 'review', replaces_legacy_ref: 'EL-1', effective_from: null }),
+      ).rejects.toThrow(/proposals_review_effective_from_check/);
     });
 
     it('rejects an unknown kind', async () => {
