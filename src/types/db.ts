@@ -1979,6 +1979,48 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_reviews: {
+        Row: {
+          id: string
+          new_proposal_id: string | null
+          note: string | null
+          outcome: string
+          proposal_id: string
+          reviewed_at: string
+        }
+        Insert: {
+          id?: string
+          new_proposal_id?: string | null
+          note?: string | null
+          outcome: string
+          proposal_id: string
+          reviewed_at?: string
+        }
+        Update: {
+          id?: string
+          new_proposal_id?: string | null
+          note?: string | null
+          outcome?: string
+          proposal_id?: string
+          reviewed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_reviews_new_proposal_id_fkey"
+            columns: ["new_proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_reviews_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       practice_services: {
         Row: {
           active: boolean
@@ -2120,16 +2162,19 @@ export type Database = {
           addons: Json
           brackets: Json
           business_name: string
+          change_summary: Json | null
           client_org_id: string | null
           consent_language: string
           consent_version: string
           created_at: string
           discount_pct: number | null
+          effective_from: string | null
           email: string
           expires_at: string | null
           first_name: string
           id: string
           ip_address: string | null
+          kind: string
           last_name: string
           lead_id: string | null
           monthly_total_zar: number
@@ -2139,8 +2184,10 @@ export type Database = {
           pending_signature_ip: string | null
           pending_signature_method: string | null
           pending_signature_name: string | null
+          previous_monthly_zar: number | null
           proposal_pdf_drive_id: string | null
           ref_number: string | null
+          replaces_legacy_ref: string | null
           sent_at: string
           services: string[]
           sign_confirm_expires_at: string | null
@@ -2166,16 +2213,19 @@ export type Database = {
           addons?: Json
           brackets: Json
           business_name: string
+          change_summary?: Json | null
           client_org_id?: string | null
           consent_language?: string
           consent_version?: string
           created_at?: string
           discount_pct?: number | null
+          effective_from?: string | null
           email: string
           expires_at?: string | null
           first_name: string
           id?: string
           ip_address?: string | null
+          kind?: string
           last_name: string
           lead_id?: string | null
           monthly_total_zar: number
@@ -2185,8 +2235,10 @@ export type Database = {
           pending_signature_ip?: string | null
           pending_signature_method?: string | null
           pending_signature_name?: string | null
+          previous_monthly_zar?: number | null
           proposal_pdf_drive_id?: string | null
           ref_number?: string | null
+          replaces_legacy_ref?: string | null
           sent_at?: string
           services: string[]
           sign_confirm_expires_at?: string | null
@@ -2212,16 +2264,19 @@ export type Database = {
           addons?: Json
           brackets?: Json
           business_name?: string
+          change_summary?: Json | null
           client_org_id?: string | null
           consent_language?: string
           consent_version?: string
           created_at?: string
           discount_pct?: number | null
+          effective_from?: string | null
           email?: string
           expires_at?: string | null
           first_name?: string
           id?: string
           ip_address?: string | null
+          kind?: string
           last_name?: string
           lead_id?: string | null
           monthly_total_zar?: number
@@ -2231,8 +2286,10 @@ export type Database = {
           pending_signature_ip?: string | null
           pending_signature_method?: string | null
           pending_signature_name?: string | null
+          previous_monthly_zar?: number | null
           proposal_pdf_drive_id?: string | null
           ref_number?: string | null
+          replaces_legacy_ref?: string | null
           sent_at?: string
           services?: string[]
           sign_confirm_expires_at?: string | null

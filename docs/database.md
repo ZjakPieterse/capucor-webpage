@@ -29,7 +29,7 @@ numbered migrations:
 | `001_signing_stops_at_signed_pdf.sql` | Drops the `portal` fulfilment stage and `provision_from_signed_proposal` (web-standalone phase 3). Fulfilment is pdf → client_email → owner_email. | Applied 2026-10-07 |
 | `002_drop_staff_proposal_rpcs.sql` | Drops `create_proposal_amendment` and `start_proposal_resend` (web-standalone phase 4), after capucor.app's staff proposal tools were removed. | Applied 2026-10-07 |
 | `003_drop_legacy_signed_event_types.sql` | `finish_proposal_fulfilment_stage` stops accepting the pre-phase-3 `proposal.portal_ready_client` / `proposal.provisioned_owner` deliveries (web-standalone phase 5). | Applied 2026-10-07 |
-| `004_plan_reviews.sql` | Plan reviews (plan-review-tool): `proposals` gains `kind`, `effective_from`, `change_summary`, `replaces_legacy_ref` and `previous_monthly_zar`; new `plan_reviews` log; one open review per plan. `commit_proposal_signature` supersedes the replaced plan on signing (refused unless it is still `signed` or `active`) and rolls `effective_from` forward. Drops nothing. | Written 2026-10-15, not applied |
+| `004_plan_reviews.sql` | Plan reviews (plan-review-tool): `proposals` gains `kind`, `effective_from`, `change_summary`, `replaces_legacy_ref` and `previous_monthly_zar`; new `plan_reviews` log; one open review per plan. `commit_proposal_signature` supersedes the replaced plan on signing (refused unless it is still `signed` or `active`) and rolls `effective_from` forward. Drops nothing. | Applied 2026-10-15 |
 
 ⚠️ Since 004, deleting a proposal (nothing here does) needs care: delete its `plan_reviews` rows
 first, and a client's review proposals before the plan they supersede. See 004's header.
