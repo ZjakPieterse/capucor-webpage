@@ -15,9 +15,36 @@
 | Domain | Worker | Owns |
 |--------|--------|------|
 | **capucor.com** + www | `capucor-web` (this repo) | Marketing + the whole sales funnel: `/`, service pages, `/pricing`, `/privacy`, `/terms/*`, `/resources/*`, **and `/proposal/*`** (the signing document). Indexable — all canonicals, sitemap, OG |
+| **internal.capucor.com** | `capucor-web` (this repo) | Staff-only proposal tool (plan reviews), behind Cloudflare Access. Rewritten onto `app/(internal)/internal-tools/`. Never indexed |
 | capucor.app + www | not this repo | The legacy client portal (login, portal, internal), being retired (os-sunset). Nothing here reads, writes or calls it |
 
-There is no login, portal, onboarding or staff area in this repo, and none is to be added here.
+There is no login, client portal or onboarding in this repo, and none is to be added here. The one
+staff area is internal.capucor.com (decision 2026-10-15, plan-review-tool), below.
+
+### internal.capucor.com — the staff-only host
+
+- **Edge:** a Cloudflare Access application (email PIN, Zjak only) covers the whole hostname. It
+  must exist **before** the hostname is attached to the Worker.
+- **Routing:** `next.config.ts` rewrites the host onto `/internal-tools/*` (`app/(internal)/`),
+  leaving `/_next/*`, `/api/*` and dotted static paths alone, and adds `X-Robots-Tag: noindex`.
+  ⛔ **No `proxy.ts`/`middleware.ts`**: OpenNext 1.20 marks Node proxy on Cloudflare experimental,
+  and it would sit in front of every public page.
+- **Gate, in every route:** pages and layouts `await requireInternalPage()`; handlers under
+  `app/api/internal-tools/` start with `await guardInternalApi(req)`
+  (`src/lib/internal/guard.ts`). Any other host → **404**; missing or invalid
+  `Cf-Access-Jwt-Assertion` (RS256 against the team JWKS, issuer and AUD from env) → **403**;
+  Access env unset → 403 (fails closed). `internal-routes-guarded.test.ts` fails if a route
+  skips the gate.
+- ⚠️ **The Access JWT is the security boundary, not the host check.** OpenNext copies a
+  client-sent `X-Forwarded-Host` over `host`, so a capucor.com visitor can make the host check
+  pass. They get 403, never the page, because they cannot produce a JWT signed by our Access team
+  for our AUD. The 404 only keeps the routes out of sight. Never relax the JWT check because of it.
+- **Data:** proposals via the admin client only; public pricing tables still via the anon client.
+- **Scope guard:** proposals and plan reviews only. Whether it becomes the operating-model
+  "cockpit" is an open decision in the owner's workspace — don't grow it into PM software.
+
+Local preview: `next dev` on the dev box, requests with `Host: internal.capucor.com`, and a
+local JWKS via `CF_ACCESS_CERTS_URL` (honoured only under `next dev`, i.e. `NODE_ENV=development`).
 
 ### What is left of the seam: legacy redirects (until os-sunset)
 
