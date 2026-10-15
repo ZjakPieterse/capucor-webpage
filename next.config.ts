@@ -150,6 +150,33 @@ const hostRedirects = [
 ];
 
 // ---------------------------------------------------------------------------
+// internal.capucor.com — the staff-only host (plan-review-tool, 2026-10-15)
+// ---------------------------------------------------------------------------
+// Same Worker, second Custom Domain, behind Cloudflare Access. Its paths are
+// rewritten onto app/(internal)/internal-tools/ (`/` → `/internal-tools`,
+// `/x` → `/internal-tools/x`). Left alone: /_next/*, /api/* and anything with
+// a dot (static files). Host routing stays in this file for the same reason as
+// the redirects above: no proxy.ts (OpenNext marks Node proxy on Cloudflare
+// experimental). The gate itself — 404 on other hosts, 403 without a valid
+// Access JWT — is requireInternalPage() / guardInternalApi() in every internal
+// route (src/lib/internal/guard.ts). Must equal INTERNAL_HOST in
+// src/lib/internal/host.ts (internal-host.test.ts checks).
+const INTERNAL_HOST = "internal.capucor.com";
+
+const internalRewrites = [
+  {
+    source: "/",
+    has: [{ type: "host" as const, value: INTERNAL_HOST }],
+    destination: "/internal-tools",
+  },
+  {
+    source: "/:path((?!_next/|api/|internal-tools(?:/|$))[^.]+)",
+    has: [{ type: "host" as const, value: INTERNAL_HOST }],
+    destination: "/internal-tools/:path",
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Release provenance — the commit this bundle was built from
 // ---------------------------------------------------------------------------
 // Baked into the SERVER compilation only, so /api/health can say which revision
@@ -180,6 +207,10 @@ const nextConfig: NextConfig = {
   // (technical review T03, full-site audit 2026-10-13).
   images: { unoptimized: true },
 
+  // forbidden() → a real 403 from the internal pages' Access check
+  // (src/lib/internal/guard.ts). Nothing on the public site calls it.
+  experimental: { authInterrupts: true },
+
   webpack(config, { isServer, webpack }) {
     if (isServer) {
       config.plugins.push(
@@ -197,9 +228,18 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: SECURITY_HEADERS,
       },
+      // The internal host is never indexed, robots.txt and static files included.
+      {
+        source: "/:path*",
+        has: [{ type: "host" as const, value: INTERNAL_HOST }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
       // No capucor.app noindex rule here — this Worker does not answer on
       // that hostname, so a rule here could never fire. capucor.com is the indexable domain by design.
     ];
+  },
+  async rewrites() {
+    return { beforeFiles: internalRewrites, afterFiles: [], fallback: [] };
   },
   async redirects() {
     return [

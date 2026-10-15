@@ -22,8 +22,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Capucor Business Solutions public website and sales funnel — capucor.com. South African outsourced
 accounting firm targeting modern SMEs. **This repo is the site and the sales funnel, end to end**
-(calculator → proposal → email → sign → `signed` + PDF in Drive). It has no login, portal or
-staff area; old portal paths only redirect away (see "Domain seam" below).
+(calculator → proposal → email → sign → `signed` + PDF in Drive). It has no login or client
+portal; old portal paths only redirect away (see "Domain seam" below). Since 2026-10-15 it also
+serves **internal.capucor.com**, a staff-only proposal tool behind Cloudflare Access (plan
+reviews); ⛔ every internal page/API calls the gate in `src/lib/internal/guard.ts` — there is no
+proxy.ts — and it must not grow into practice-management software. See
+[`docs/domain-seam.md`](docs/domain-seam.md#internalcapucorcom--the-staff-only-host).
 
 **Stack:** Next.js 16 (App Router, RSC) · React 19 · Tailwind CSS v4 + shadcn/ui (Base Nova) ·
 Supabase (PostgreSQL, no auth here) · React Hook Form + Zod · Resend · Cloudflare Workers via

@@ -36,6 +36,8 @@ cp .env.example .env.local
 | `OWNER_NOTIFICATION_EMAIL` | e.g. `zjak@capucor.com` |
 | `NEXT_PUBLIC_BOOKING_URL` | Your booking/calendar link (falls back to Google Calendar URL if absent) |
 | `NEXT_PUBLIC_MARKETING_URL` / `NEXT_PUBLIC_APP_URL` | Optional. Defaults are the production values (`https://capucor.com` / `https://capucor.app`) — override only for a staging host. `NEXT_PUBLIC_APP_URL` feeds `siteConfig.appUrl`, unused since the header's Client Portal link was removed (2026-10-08) |
+| `CF_ACCESS_TEAM_DOMAIN` / `CF_ACCESS_AUD` | internal.capucor.com only. the team domain (`<team>.cloudflareaccess.com`) is shown in Zero Trust → Settings; the Access application's Overview shows its Application Audience (AUD) tag. Set as Worker variables (Settings → Variables and Secrets). Unset → every internal page 403s; the public site is unaffected |
+| `CF_ACCESS_CERTS_URL` | Local preview only: a JWKS URL to use instead of the team's. Ignored when `NODE_ENV=production` |
 | `APPS_SCRIPT_PDF_URL` / `APPS_SCRIPT_PDF_SECRET` | Signed-proposal PDF archival (PR10/PH-06). Apps Script web-app `/exec` URL + its shared secret. Archival does not run until both are set. See `scripts/apps-script/README.md` |
 
 ## Dev Scripts
@@ -100,8 +102,13 @@ metadata only, no chrome. Chrome is applied per area by nested layouts:
 Root `not-found.tsx` / `error.tsx` stay at `app/` root and render bare (the global 404 has no
 marketing chrome by design).
 
-There are no `(app)`, `portal/` or `internal/` route groups here (removed 2026-08-02). Two route
-groups remain, `(site)` and the bare `proposal/`.
+- **`app/(internal)/internal-tools/`** — the staff-only internal.capucor.com (2026-10-15), bare
+  chrome, noindex. Every page and layout calls `requireInternalPage()`; see
+  [`domain-seam.md`](domain-seam.md#internalcapucorcom--the-staff-only-host).
+
+There are no `(app)` or `portal/` route groups here (removed 2026-08-02), and `/internal` still
+redirects to capucor.app on capucor.com. Three route groups: `(site)`, the bare `proposal/` and
+`(internal)`.
 
 ## Maintenance & self-review
 
