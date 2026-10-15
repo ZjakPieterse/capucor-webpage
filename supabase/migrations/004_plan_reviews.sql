@@ -82,8 +82,9 @@
 --
 -- select status, superseded_by_id is not null as superseded, count(*)
 --   from public.proposals group by 1, 2 order by 1, 2;
--- -- 2026-10-15: active 13, signed 15, superseded 1, expired 7, viewed 1;
--- -- no 'paid'. A 'paid' row would need a decision before reviews start.
+-- -- 2026-10-15, after the 28 test plans were retired (Zjak): expired 35,
+-- -- superseded 1, viewed 1; none in force. No 'paid'; one would need a
+-- -- decision before reviews start.
 --
 -- 4. The function being replaced has the expected signature.
 --
