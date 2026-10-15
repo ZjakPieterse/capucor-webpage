@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { tierDisplayName } from '@/config/tiers';
 import { requireInternalPage } from '@/lib/internal/guard';
+import { logError } from '@/lib/log';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { formatZAR } from '@/lib/utils';
 import { addMonths, plansInForceQuery, type PlanInForce } from '@/lib/internal/plansInForce';
@@ -23,6 +24,7 @@ export default async function PlansInForcePage() {
   await requireInternalPage();
 
   const { data, error } = await plansInForceQuery(createSupabaseAdminClient());
+  if (error) logError('internal.plans_in_force_failed', error);
   const plans: PlanInForce[] = data ?? [];
   const now = new Date();
 

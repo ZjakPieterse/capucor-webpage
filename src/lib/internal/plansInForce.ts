@@ -25,12 +25,22 @@ export type PlanInForce = {
   status: string;
 };
 
-/** Calendar months, clamped to the month's last day (31 Nov → 30 Nov). UTC fields. */
+// South Africa is UTC+2 all year (no DST), so SA calendar maths is UTC maths
+// on a shifted clock.
+const SAST_OFFSET_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * Calendar months on the South African calendar, clamped to the month's last
+ * day (31 Jan + 3 → 30 Apr). Signed 01:00 SAST on 31 Jan → due 30 Apr, even
+ * though that instant is still 30 Jan in UTC.
+ */
 export function addMonths(d: Date, months: number): Date {
-  const y = d.getUTCFullYear();
-  const m = d.getUTCMonth() + months;
+  const sa = new Date(d.getTime() + SAST_OFFSET_MS);
+  const y = sa.getUTCFullYear();
+  const m = sa.getUTCMonth() + months;
   const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
-  return new Date(
-    Date.UTC(y, m, Math.min(d.getUTCDate(), last), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()),
+  const shifted = Date.UTC(
+    y, m, Math.min(sa.getUTCDate(), last), sa.getUTCHours(), sa.getUTCMinutes(), sa.getUTCSeconds(),
   );
+  return new Date(shifted - SAST_OFFSET_MS);
 }

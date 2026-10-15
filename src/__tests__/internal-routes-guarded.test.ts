@@ -22,6 +22,12 @@ function walk(dir: string): string[] {
 
 const rel = (p: string) => relative(process.cwd(), p).replace(/\\/g, '/');
 
+/** Source with comments removed, so a commented-out gate does not count. */
+const code = (p: string) =>
+  readFileSync(p, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
 describe('internal routes are gated', () => {
   const pages = walk(INTERNAL_PAGES).filter((f) => /[\\/](page|layout)\.tsx?$/.test(f));
   const pageRoutes = walk(INTERNAL_PAGES).filter((f) => /[\\/]route\.tsx?$/.test(f));
@@ -32,18 +38,25 @@ describe('internal routes are gated', () => {
   });
 
   for (const file of pages) {
-    it(`${rel(file)} awaits requireInternalPage()`, () => {
-      expect(readFileSync(file, 'utf8')).toMatch(/await\s+requireInternalPage\(\)/);
+    it(`${rel(file)} awaits requireInternalPage() before any data access`, () => {
+      const src = code(file);
+      const gate = src.search(/await\s+requireInternalPage\(\)/);
+      expect(gate).toBeGreaterThanOrEqual(0);
+      const data = src.search(/createSupabase\w*Client\(|\.from\(|\.rpc\(|fetch\(/);
+      if (data >= 0) expect(gate).toBeLessThan(data);
     });
   }
 
   for (const file of [...pageRoutes, ...apiRoutes]) {
-    it(`${rel(file)} gates every handler with guardInternalApi()`, () => {
-      const src = readFileSync(file, 'utf8');
-      const handlers = src.match(/export\s+(async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)\b/g) ?? [];
-      const guards = src.match(/await\s+guardInternalApi\(/g) ?? [];
+    it(`${rel(file)} starts every handler with guardInternalApi()`, () => {
+      const src = code(file);
+      const handlers = [...src.matchAll(/export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE)\b[^{]*\{/g)];
       expect(handlers.length).toBeGreaterThan(0);
-      expect(guards.length).toBeGreaterThanOrEqual(handlers.length);
+      for (const h of handlers) {
+        // The first statement of the body must be the guard.
+        const body = src.slice(h.index! + h[0].length).trimStart();
+        expect(body, h[1]).toMatch(/^const\s+\w+\s*=\s*await\s+guardInternalApi\(/);
+      }
     });
   }
 

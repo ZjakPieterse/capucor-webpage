@@ -35,12 +35,16 @@ staff area is internal.capucor.com (decision 2026-10-15, plan-review-tool), belo
   `Cf-Access-Jwt-Assertion` (RS256 against the team JWKS, issuer and AUD from env) → **403**;
   Access env unset → 403 (fails closed). `internal-routes-guarded.test.ts` fails if a route
   skips the gate.
+- ⚠️ **The Access JWT is the security boundary, not the host check.** OpenNext copies a
+  client-sent `X-Forwarded-Host` over `host`, so a capucor.com visitor can make the host check
+  pass. They get 403, never the page, because they cannot produce a JWT signed by our Access team
+  for our AUD. The 404 only keeps the routes out of sight. Never relax the JWT check because of it.
 - **Data:** proposals via the admin client only; public pricing tables still via the anon client.
 - **Scope guard:** proposals and plan reviews only. Whether it becomes the operating-model
   "cockpit" is an open decision in the owner's workspace — don't grow it into PM software.
 
 Local preview: `next dev` on the dev box, requests with `Host: internal.capucor.com`, and a
-local JWKS via `CF_ACCESS_CERTS_URL` (honoured only when `NODE_ENV` is not `production`).
+local JWKS via `CF_ACCESS_CERTS_URL` (honoured only under `next dev`, i.e. `NODE_ENV=development`).
 
 ### What is left of the seam: legacy redirects (until os-sunset)
 

@@ -33,6 +33,8 @@ interface Jwk {
 
 const JWKS_TTL_MS = 10 * 60 * 1000;
 const CLOCK_SKEW_S = 60;
+const JWKS_TIMEOUT_MS = 5000;
+const FORCED_REFRESH_MIN_MS = 60 * 1000;
 
 const jwksCache = new Map<string, { keys: Jwk[]; fetchedAt: number }>();
 
@@ -41,15 +43,22 @@ export function resetAccessJwksCache(): void {
   jwksCache.clear();
 }
 
+// The local JWKS override is OPT-IN: honoured only under `next dev`. The
+// literal `process.env.NODE_ENV` is inlined by the build, and on the Worker it
+// is never 'development' (OpenNext does not set NODE_ENV at runtime, so a
+// `!== 'production'` test would have let the override through there).
+const IS_NEXT_DEV = process.env.NODE_ENV === 'development';
+
 /** Reads CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD. Null when either is missing. */
-export function accessConfigFromEnv(env: NodeJS.ProcessEnv = process.env): AccessConfig | null {
+export function accessConfigFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+  allowCertsOverride: boolean = IS_NEXT_DEV,
+): AccessConfig | null {
   const teamDomain = env.CF_ACCESS_TEAM_DOMAIN?.trim().replace(/^https?:\/\//, '').replace(/\/+$/, '');
   const aud = env.CF_ACCESS_AUD?.trim();
   if (!teamDomain || !aud) return null;
   const certsUrl =
-    env.NODE_ENV !== 'production' && env.CF_ACCESS_CERTS_URL?.trim()
-      ? env.CF_ACCESS_CERTS_URL.trim()
-      : undefined;
+    allowCertsOverride && env.CF_ACCESS_CERTS_URL?.trim() ? env.CF_ACCESS_CERTS_URL.trim() : undefined;
   return { teamDomain, aud, certsUrl };
 }
 
@@ -73,7 +82,10 @@ function b64urlJson(s: string): Record<string, unknown> | null {
 async function loadKeys(url: string, fetchImpl: typeof fetch, force: boolean): Promise<Jwk[]> {
   const hit = jwksCache.get(url);
   if (!force && hit && Date.now() - hit.fetchedAt < JWKS_TTL_MS) return hit.keys;
-  const res = await fetchImpl(url, { headers: { accept: 'application/json' } });
+  const res = await fetchImpl(url, {
+    headers: { accept: 'application/json' },
+    signal: AbortSignal.timeout(JWKS_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`jwks http ${res.status}`);
   const body = (await res.json()) as { keys?: Jwk[] };
   const keys = Array.isArray(body.keys) ? body.keys : [];
@@ -104,8 +116,12 @@ export async function verifyAccessJwt(
   let jwk: Jwk | undefined;
   try {
     jwk = (await loadKeys(url, fetchImpl, false)).find((k) => k.kid === header.kid);
-    // Access rotates keys; an unknown kid gets one forced refresh.
-    if (!jwk) jwk = (await loadKeys(url, fetchImpl, true)).find((k) => k.kid === header.kid);
+    // Access rotates keys; an unknown kid forces a refresh, at most once a
+    // minute, so junk kids cannot turn every request into a certs fetch.
+    const fetchedAt = jwksCache.get(url)?.fetchedAt ?? 0;
+    if (!jwk && Date.now() - fetchedAt >= FORCED_REFRESH_MIN_MS) {
+      jwk = (await loadKeys(url, fetchImpl, true)).find((k) => k.kid === header.kid);
+    }
   } catch {
     return { ok: false, reason: 'jwks_unavailable' };
   }

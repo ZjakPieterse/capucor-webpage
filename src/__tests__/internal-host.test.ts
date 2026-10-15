@@ -85,6 +85,17 @@ describe('internal host without a valid Access JWT → 403', () => {
     expect((await guardInternalApi(apiReq(INTERNAL_HOST, bad)))?.status).toBe(403);
   });
 
+  it('a capucor.com visitor who spoofs the host (X-Forwarded-Host) still gets 403 without a valid JWT', async () => {
+    // OpenNext copies X-Forwarded-Host over host, so the gate sees the internal host.
+    headerStore.set('host', INTERNAL_HOST);
+    headerStore.set('x-forwarded-host', INTERNAL_HOST);
+    await expect(requireInternalPage()).rejects.toThrow(/;403/);
+    const forger = await makeAccessSigner('kid-1');
+    const forged = await forger.sign({ iss: `https://${TEAM}`, aud: [AUD], exp: 9999999999 });
+    headerStore.set('cf-access-jwt-assertion', forged);
+    await expect(requireInternalPage()).rejects.toThrow(/;403/);
+  });
+
   it('Access env not set → 403 (fails closed)', async () => {
     vi.stubEnv('CF_ACCESS_AUD', '');
     headerStore.set('host', INTERNAL_HOST);

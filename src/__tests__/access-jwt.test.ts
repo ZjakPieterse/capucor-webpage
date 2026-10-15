@@ -97,14 +97,34 @@ describe('verifyAccessJwt', () => {
     });
   });
 
-  it('refetches once for an unseen kid (key rotation), then caches', async () => {
-    const t1 = await signer.sign(claims());
-    await verifyAccessJwt(t1, CONFIG, { now: NOW, fetchImpl: signer.fetch });
-    await signer.rotate('kid-2');
-    const t2 = await signer.sign(claims());
-    expect((await verifyAccessJwt(t2, CONFIG, { now: NOW, fetchImpl: signer.fetch })).ok).toBe(true);
-    expect((await verifyAccessJwt(t2, CONFIG, { now: NOW, fetchImpl: signer.fetch })).ok).toBe(true);
-    expect(signer.fetch).toHaveBeenCalledTimes(2);
+  it('refetches for an unseen kid (key rotation), then caches', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(NOW);
+      const t1 = await signer.sign(claims());
+      await verifyAccessJwt(t1, CONFIG, { now: NOW, fetchImpl: signer.fetch });
+      await signer.rotate('kid-2');
+      vi.setSystemTime(NOW + 61_000);
+      const t2 = await signer.sign(claims());
+      expect((await verifyAccessJwt(t2, CONFIG, { now: NOW, fetchImpl: signer.fetch })).ok).toBe(true);
+      expect((await verifyAccessJwt(t2, CONFIG, { now: NOW, fetchImpl: signer.fetch })).ok).toBe(true);
+      expect(signer.fetch).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('throttles forced refreshes: junk kids within a minute cause no extra fetches', async () => {
+    const good = await signer.sign(claims());
+    await verifyAccessJwt(good, CONFIG, { now: NOW, fetchImpl: signer.fetch });
+    for (let i = 0; i < 5; i++) {
+      const junk = await signer.sign(claims(), { kid: `junk-${i}` });
+      expect(await verifyAccessJwt(junk, CONFIG, { now: NOW, fetchImpl: signer.fetch })).toEqual({
+        ok: false,
+        reason: 'unknown_key',
+      });
+    }
+    expect(signer.fetch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -124,15 +144,24 @@ describe('accessConfigFromEnv', () => {
     expect(accessConfigFromEnv({ NODE_ENV: 'production', CF_ACCESS_TEAM_DOMAIN: 'x' } as NodeJS.ProcessEnv)).toBeNull();
   });
 
-  it('ignores the local CF_ACCESS_CERTS_URL override in production', () => {
+  it('honours CF_ACCESS_CERTS_URL only when the override is allowed (next dev)', () => {
     const env = {
       CF_ACCESS_TEAM_DOMAIN: 't.cloudflareaccess.com',
       CF_ACCESS_AUD: 'a',
       CF_ACCESS_CERTS_URL: 'http://localhost:9999/certs',
-    };
-    expect(accessConfigFromEnv({ ...env, NODE_ENV: 'production' } as NodeJS.ProcessEnv)?.certsUrl).toBeUndefined();
-    expect(accessConfigFromEnv({ ...env, NODE_ENV: 'development' } as NodeJS.ProcessEnv)?.certsUrl).toBe(
-      'http://localhost:9999/certs',
-    );
+    } as unknown as NodeJS.ProcessEnv;
+    expect(accessConfigFromEnv(env, false)?.certsUrl).toBeUndefined();
+    expect(accessConfigFromEnv(env, true)?.certsUrl).toBe('http://localhost:9999/certs');
   });
+
+  it('defaults to no override outside next dev (the test runner is not development)', () => {
+    const env = {
+      CF_ACCESS_TEAM_DOMAIN: 't.cloudflareaccess.com',
+      CF_ACCESS_AUD: 'a',
+      CF_ACCESS_CERTS_URL: 'http://localhost:9999/certs',
+    } as unknown as NodeJS.ProcessEnv;
+    expect(process.env.NODE_ENV).not.toBe('development');
+    expect(accessConfigFromEnv(env)?.certsUrl).toBeUndefined();
+  });
+
 });

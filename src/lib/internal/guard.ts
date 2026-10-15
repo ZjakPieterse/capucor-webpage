@@ -5,6 +5,14 @@
 //   wrong host (capucor.com, www, anything else) → 404, as if it did not exist
 //   internal host, Access JWT missing or invalid → 403
 //   internal host, valid Access JWT              → allowed
+//
+// ⚠️ THE ACCESS JWT IS THE SECURITY BOUNDARY; the host check only keeps the
+// routes invisible elsewhere. OpenNext copies a client-sent X-Forwarded-Host
+// over `host` before routing (@opennextjs/aws core/requestHandler.js), so
+// `host` alone can be spoofed from capucor.com: such a request reaches this
+// check and gets 403, never the page, because it still needs a JWT signed by
+// our Access team for our AUD. Do not weaken the JWT check on the strength of
+// the host check.
 import 'server-only';
 import { headers } from 'next/headers';
 import { forbidden, notFound } from 'next/navigation';
@@ -36,7 +44,10 @@ export async function checkInternalRequest(
 /** For internal pages and layouts (server components). Throws 404 / 403. */
 export async function requireInternalPage(): Promise<{ email: string | null }> {
   const h = await headers();
-  const check = await checkInternalRequest(h.get('host'), h.get(ACCESS_JWT_HEADER));
+  const check = await checkInternalRequest(
+    h.get('host'),
+    h.get(ACCESS_JWT_HEADER),
+  );
   if (check.outcome === 'not_found') notFound();
   if (check.outcome === 'forbidden') forbidden();
   return { email: check.email };
