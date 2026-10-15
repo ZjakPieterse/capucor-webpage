@@ -13,7 +13,7 @@
 
 | Kind | Objects |
 |---|---|
-| Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters` |
+| Tables | `leads`, `proposals`, `brackets`, `services`, `tiers`, `testimonials`, `data_requests`, `proposal_fulfilment`, `email_deliveries`, `proposal_ref_counters`, `plan_reviews` (004) |
 | Functions | `commit_proposal_signature`, `claim_proposal_fulfilment_stage`, `finish_proposal_fulfilment_stage`, `sync_proposal_fulfilment_email`, `next_proposal_ref`, `proposals_set_ref` |
 | Plus | their triggers, CHECKs, indexes, RLS policies and grants |
 
@@ -28,7 +28,11 @@ numbered migrations:
 |---|---|---|
 | `001_signing_stops_at_signed_pdf.sql` | Drops the `portal` fulfilment stage and `provision_from_signed_proposal` (web-standalone phase 3). Fulfilment is pdf → client_email → owner_email. | Applied 2026-10-07 |
 | `002_drop_staff_proposal_rpcs.sql` | Drops `create_proposal_amendment` and `start_proposal_resend` (web-standalone phase 4), after capucor.app's staff proposal tools were removed. | Applied 2026-10-07 |
-| `003_drop_legacy_signed_event_types.sql` | `finish_proposal_fulfilment_stage` stops accepting the pre-phase-3 `proposal.portal_ready_client` / `proposal.provisioned_owner` deliveries (web-standalone phase 5). | Written 2026-10-07, not applied |
+| `003_drop_legacy_signed_event_types.sql` | `finish_proposal_fulfilment_stage` stops accepting the pre-phase-3 `proposal.portal_ready_client` / `proposal.provisioned_owner` deliveries (web-standalone phase 5). | Applied 2026-10-07 |
+| `004_plan_reviews.sql` | Plan reviews (plan-review-tool): `proposals` gains `kind`, `effective_from`, `change_summary`, `replaces_legacy_ref` and `previous_monthly_zar`; new `plan_reviews` log; one open review per plan. `commit_proposal_signature` supersedes the replaced plan on signing (refused unless it is still `signed` or `active`) and rolls `effective_from` forward. Drops nothing. | Applied 2026-10-15 |
+
+⚠️ Since 004, deleting a proposal (nothing here does) needs care: delete its `plan_reviews` rows
+first, and a client's review proposals before the plan they supersede. See 004's header.
 
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal
 table; the RLS helpers `is_internal()` / `has_client_access()`; `tier_inclusions`.
@@ -59,7 +63,10 @@ the portal's nightly backup still copies it until os-sunset.
 3. ⚠️ **Price changes are new `brackets` rows, never edits.** Proposals store bracket ordinals and
    re-pricing does not filter on `active`, so editing a live row re-prices every unsigned
    proposal. Issue a new ladder and retire the old rows (see the baseline's `brackets` note).
-4. Hand it to Zjak. Code that depends on it ships only after Zjak confirms it is applied.
+4. If it changes a function's behaviour, test it against real Postgres:
+   `src/__tests__/migration-004-plan-reviews.test.ts` cuts its fixture from the baseline and
+   applies the migration file in PGlite (in-process, offline, no credentials). Copy that pattern.
+5. Hand it to Zjak. Code that depends on it ships only after Zjak confirms it is applied.
 
 ⛔ **ZJAK APPLIES EVERY MIGRATION BY HAND IN THE SUPABASE SQL EDITOR. NO AGENT APPLIES ONE, BY
 ANY ROUTE** — not `supabase db push`, not `supabase db query --linked`, not a script. Standing
