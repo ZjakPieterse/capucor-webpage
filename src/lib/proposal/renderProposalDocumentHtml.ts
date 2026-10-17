@@ -198,7 +198,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     <p style="${LABEL}">Signature</p>
     ${signatureBlock}
 
-    <p style="margin:24px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
+    <p style="margin:24px 0 0;font-size:11px;color:#6b7280;text-align:center;">
       Capucor Business Solutions · capucor.com
     </p>
   </div>

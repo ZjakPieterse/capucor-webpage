@@ -76,8 +76,8 @@ function clientShell(content, footer = true) {
     </div>${
       footer
         ? `
-    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
-      Capucor Business Solutions · <a href="https://capucor.com" style="color:#9ca3af;">capucor.com</a>
+    <p style="margin:20px 0 0;font-size:12px;color:#6b7280;text-align:center;">
+      Capucor Business Solutions · <a href="https://capucor.com" style="color:#6b7280;">capucor.com</a>
     </p>`
         : ''
     }
