@@ -32,7 +32,8 @@ on:
     # Hourly, every day: bounds the worst case outside business hours. Hourly
     # rather than denser because the backoff runs from 10 minutes to a 6-hour
     # ceiling. At :17, off the hour, for the same reason. Dispatch it by hand if
-    # a client is waiting.
+    # a client is waiting: in business hours with no loop running, a dispatch
+    # starts the loop; otherwise it is a single pass.
     - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
@@ -71,6 +72,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           LOOP_MINUTES: ${{ inputs.loop_minutes || '' }}
+          SCHEDULE: ${{ github.event.schedule || '' }}
         run: |
           set -uo pipefail
           PASS_SECONDS=600          # one pass every ten minutes
@@ -82,11 +84,13 @@ jobs:
           now=$(date -u +%s)
 
           # Public repo: GitHub disables every scheduled workflow here after 60
-          # days without activity, silently. Fail loudly well before that.
+          # days without activity, silently. Fail loudly well before that, but
+          # only on hourly-cron and dispatched runs: a few emails a day, not one
+          # per ten-minute trigger.
           idle_days=$(( (now - $(git log -1 --format=%ct)) / 86400 ))
           if [ "$idle_days" -ge "$IDLE_WARN_DAYS" ]; then
             echo "::error::No commit for $idle_days days. GitHub disables this repo's scheduled workflows (retries, lead prune, proposal expiry) after 60 days without activity. Push any commit to master to reset the clock."
-            failed=1
+            [ "$SCHEDULE" != '5,15,25,35,45,55 6-15 * * 1-5' ] && failed=1
           fi
 
           # Decide how long to run: a single pass by default.
@@ -96,7 +100,7 @@ jobs:
               echo "::error::loop_minutes must be a whole number of minutes."
               exit 1
             fi
-            end=$(( now + LOOP_MINUTES * 60 ))
+            end=$(( now + 10#$LOOP_MINUTES * 60 ))
           elif [ "$(date -u +%u)" -le 5 ] && [ "$(date -u +%-H)" -ge 6 ] && [ "$(date -u +%-H)" -lt 16 ]; then
             end=$(date -u -d 'today 16:00' +%s)
           fi
@@ -123,9 +127,14 @@ jobs:
             pass=$((pass + 1))
             started=$(date -u +%s)
             echo "::group::Pass $pass ($(date -u +%H:%M) UTC)"
+            # A failed pass ends the run at once, so it goes red and GitHub
+            # emails now, not hours later; the next ten-minute trigger GitHub
+            # honours starts a fresh loop.
             if ! timeout "$PASS_TIMEOUT" node scripts/reconcile-deliveries.mjs; then
-              echo "::error::Pass $pass failed or timed out; the loop carries on and this run will be marked failed."
+              echo "::endgroup::"
+              echo "::error::Pass $pass failed or timed out; ending this run so the failure is reported now."
               failed=1
+              break
             fi
             echo "::endgroup::"
             next=$(( started + PASS_SECONDS ))
