@@ -69,14 +69,12 @@ const SUBHEAD =
 const PARA = 'margin:0 0 8px;font-size:13px;line-height:1.6;color:#374151;';
 const LI = 'margin:0 0 5px;font-size:13px;line-height:1.5;color:#374151;';
 
-// Brand accent colours (mirror the globals.css --brand-* tokens), tuned for the
-// PDF's white background: navy for accent lines + headings — legible on white and
-// the colour of the logo wordmark — with a light navy tint for the signature box.
-// The site's bright cyan primary is built for the dark web theme and washes out on
-// white, so it isn't used here. Neutral greys (text/borders) stay as-is.
-const BRAND_NAVY = '#1e3a8a';
-const SIG_BG = '#eff6ff';
-const SIG_BORDER = '#c7d7f5';
+// Brand v1.1 light palette (Zjak, 2026-10-17): Capucor Navy, the logo's own navy, for
+// accent lines and headings on white, with a light navy tint for the signature box.
+// The cyan washes out on white, so it is never used for text here. Neutral greys stay.
+const BRAND_NAVY = '#00175f';
+const SIG_BG = '#eef3fb';
+const SIG_BORDER = '#c9d6ee';
 
 function list(items: string[]): string {
   if (items.length === 0) return '';
@@ -200,8 +198,8 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     <p style="${LABEL}">Signature</p>
     ${signatureBlock}
 
-    <p style="margin:24px 0 0;font-size:11px;color:#9ca3af;text-align:center;">
-      Capucor Business Solutions · Outsourced finance for growing SMEs
+    <p style="margin:24px 0 0;font-size:11px;color:#6b7280;text-align:center;">
+      Capucor Business Solutions · capucor.com
     </p>
   </div>
 </body>

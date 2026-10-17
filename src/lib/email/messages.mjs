@@ -76,8 +76,8 @@ function clientShell(content, footer = true) {
     </div>${
       footer
         ? `
-    <p style="margin:20px 0 0;font-size:12px;color:#9ca3af;text-align:center;">
-      Capucor Business Solutions · Outsourced finance for growing SMEs
+    <p style="margin:20px 0 0;font-size:12px;color:#6b7280;text-align:center;">
+      Capucor Business Solutions · <a href="https://capucor.com" style="color:#6b7280;">capucor.com</a>
     </p>`
         : ''
     }
@@ -86,8 +86,18 @@ function clientShell(content, footer = true) {
 </html>`;
 }
 
+// Brand v1.1 light palette (Zjak, 2026-10-17): Capucor Navy for the logo, buttons and links on
+// white; the cyan is for thin lines only. The logo is the approved on-light master, served from
+// the site; mail apps that block images show the alt text instead.
+const BRAND_NAVY = '#00175f';
+
 function brand() {
-  return '<p style="margin:0 0 24px;font-weight:700;font-size:18px;letter-spacing:-0.01em;color:#0f766e;">Capucor</p>';
+  return '<img src="https://capucor.com/brand/capucor-logo-on-light.png" width="168" alt="Capucor Business Solutions" style="display:block;border:0;width:168px;max-width:100%;height:auto;margin:0 0 24px;" />';
+}
+
+// Client emails sign off as the team, never one person (team voice, Zjak, 2026-10-17).
+function signOff() {
+  return `<p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#4b5563;">Kind regards,<br /><strong style="color:${BRAND_NAVY};">Capucor Team</strong></p>`;
 }
 
 function reference(refNumber) {
@@ -97,7 +107,7 @@ function reference(refNumber) {
 }
 
 function button(href, label, inline = false) {
-  return `<a href="${href}" style="display:${inline ? 'inline-block' : 'block'};margin:${inline ? '24px 0 0' : '24px 0 8px'};background:#0f766e;color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:${inline ? '14px' : '15px'};padding:${inline ? '12px 22px' : '14px 20px'};border-radius:10px;">${label}</a>`;
+  return `<a href="${href}" style="display:${inline ? 'inline-block' : 'block'};margin:${inline ? '24px 0 0' : '24px 0 8px'};background:${BRAND_NAVY};color:#ffffff;text-decoration:none;text-align:center;font-weight:600;font-size:${inline ? '14px' : '15px'};padding:${inline ? '12px 22px' : '14px 20px'};border-radius:10px;">${label}</a>`;
 }
 
 export function renderLeadOwnerText(d) {
@@ -264,7 +274,8 @@ export function renderCreatedProposalClientEmail(d) {
       <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">Your first debit order is on the 1st of the month after you sign: <strong>${firstDebitDate}</strong> if you sign in ${signingMonth}.</p>
       ${button(d.proposalUrl, 'View &amp; sign your proposal')}
       <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-align:center;">Billed monthly in advance · cancel any time with 30 days&rsquo; notice</p>
-      <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;text-align:center;">This proposal link is valid for 7 days.</p>`);
+      <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;text-align:center;">This proposal link is valid for 7 days.</p>
+      ${signOff()}`);
 }
 
 export function renderCreatedProposalOwnerText(d) {
@@ -292,7 +303,8 @@ export function renderSignConfirmEmail(d) {
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We received a signature for the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>. To finalise it, confirm from this email. That&rsquo;s how we check the signature came from you.</p>
       ${button(d.confirmUrl, 'Confirm &amp; sign')}
       <p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#6b7280;text-align:center;">This link works once and expires in 30 minutes.</p>
-      <p style="margin:0;font-size:13px;line-height:1.6;color:#6b7280;">If you didn&rsquo;t request this, ignore this email. Nothing is signed until you confirm.</p>`);
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#6b7280;">If you didn&rsquo;t request this, ignore this email. Nothing is signed until you confirm.</p>
+      ${signOff()}`);
 }
 
 function signedAlertBlock(businessName, signedAt) {
@@ -305,7 +317,8 @@ export function renderSignedClientEmail(d) {
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We&rsquo;ve recorded your acceptance of the Capucor proposal for <strong>${escapeHtml(d.businessName)}</strong>.</p>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">We’ll be in touch shortly to set up your onboarding and get your first month underway. Questions in the meantime? Just reply to this email.</p>
       <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Most of this you already have somewhere. Start gathering now and your first month goes faster.</p>
-      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;"><a href="${ONBOARDING_CHECKLIST_URL}" style="color:#0f766e;font-weight:600;">Start gathering what we&rsquo;ll need</a></p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;"><a href="${ONBOARDING_CHECKLIST_URL}" style="color:${BRAND_NAVY};font-weight:600;">Start gathering what we&rsquo;ll need</a></p>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">Kind regards,<br /><strong style="color:${BRAND_NAVY};">Capucor Team</strong></p>
       ${signedAlertBlock(d.businessName, d.signedAt)}`);
 }
 

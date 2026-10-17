@@ -123,9 +123,10 @@ emails the owner when a run fails.
 
 - ⚠️ **Nothing watches for a cron that stops silently.** The watchdog (`watchdog.yml`, with its
   cron, deploy-drift and CI-silence checks) was removed on 2026-10-08: its push-time checks were
-  mostly false alarms, and production deploys already verify themselves in `deploy.yml`. A
-  schedule GitHub disables (60 days without activity on a public repo) has to be noticed by eye
-  on the Actions tab.
+  mostly false alarms, and production deploys already verify themselves in `deploy.yml`.
+- **The 60-day auto-disable is caught by the retry runner.** GitHub disables every schedule in a
+  public repo after 60 days without activity. From 45 days without a commit, each retry run fails
+  with an error saying so, and GitHub emails the owner; push any commit to `master` to reset it.
 
 ### Cloudflare
 
@@ -178,6 +179,17 @@ funnel emails.
 weekday business hours (08:05–17:55 SAST, restored 2026-10-13) and hourly otherwise. It is a
 zero-dependency GitHub Action, not a Worker route, because Workers Free allows 10 ms CPU and 50
 subrequests per request.
+
+- **Business-hours loop (2026-10-17).** GitHub drops most scheduled runs (10–17 October: 45 of
+  ~470 started, with gaps of up to four hours), but never stops a job that has started. So a run
+  that starts in weekday business hours stays up and runs the script every ten minutes until
+  18:00 SAST or for 5 h 30 min, whichever is first. The ten-minute crons are only triggers: the
+  first one GitHub honours starts the loop; a run that finds an earlier run still in progress
+  does a single pass. Outside business hours every run is a single pass (hourly at :17). A failed
+  pass does not stop the loop; the run is marked failed (and GitHub emails) when it ends.
+  `workflow_dispatch` takes an optional `loop_minutes` to force a short loop for testing. The
+  workflow has no concurrency group (a queued run would wait behind the loop); overlapping passes
+  are safe because every item is claimed by compare-and-swap with a lease.
 
 - **PDF timeouts.** The Worker waits up to 25 s for the Apps Script archive
   (`PDF_ARCHIVE_TIMEOUT_MS`; successful archives take 6–7 s, and 8 s proved too tight on

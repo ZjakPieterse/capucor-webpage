@@ -29,8 +29,24 @@ const crons = [...workflow.matchAll(/^\s*- cron: '([^']+)'/gm)].map((m) => m[1])
 
 describe('cron-reconcile-deliveries schedule', () => {
   it('runs every ten minutes in weekday business hours (08:00–18:00 SAST) and hourly otherwise', () => {
-    expect(crons).toEqual(['5,15,25,35,45,55 6-15 * * 1-5', '0 * * * *']);
+    expect(crons).toEqual(['5,15,25,35,45,55 6-15 * * 1-5', '17 * * * *']);
     expect(workflow).toMatch(/^\s+workflow_dispatch:/m);
+  });
+
+  it('loops in business hours inside the job timeout, one loop at a time, with no concurrency queue (2026-10-17)', () => {
+    const timeout = Number(workflow.match(/timeout-minutes: (\d+)/)?.[1]);
+    const maxLoop = Number(workflow.match(/MAX_LOOP_SECONDS=(\d+)/)?.[1]);
+    const passTimeout = Number(workflow.match(/PASS_TIMEOUT=(\d+)/)?.[1]);
+    const passEvery = Number(workflow.match(/PASS_SECONDS=(\d+)/)?.[1]);
+    expect(passEvery).toBe(600);
+    expect(passTimeout).toBeLessThan(passEvery);
+    expect(maxLoop + passTimeout).toBeLessThan(timeout * 60);
+    expect(timeout).toBeLessThanOrEqual(360);
+    expect(workflow).toMatch(/date -u -d 'today 16:00'/);
+    expect(workflow).toMatch(/gh run list --workflow cron-reconcile-deliveries\.yml --status in_progress/);
+    expect(workflow).toMatch(/^\s+actions: read/m);
+    expect(workflow).not.toMatch(/^concurrency:/m);
+    expect(workflow).toMatch(/IDLE_WARN_DAYS=45/);
   });
 
   it('the docs state the same schedule', () => {

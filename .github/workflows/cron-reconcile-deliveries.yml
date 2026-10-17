@@ -12,34 +12,48 @@ name: Cron — signed-proposal fulfilment and email retries
 #
 # ⚠️ This repository is public, so this job's logs are public. The script logs
 # ids, event types, counts and error codes only. Keep it that way.
+#
+# Business-hours loop (2026-10-17). GitHub drops most scheduled runs: from 10 to
+# 17 October only 45 of ~470 scheduled runs started, with gaps of up to four
+# hours in business hours. A job that has started is not dropped, so a run that
+# starts in weekday business hours (06:00–16:00 UTC, 08:00–18:00 SAST) stays up
+# and runs the script every ten minutes until 16:00 UTC or for 5 h 30 min,
+# whichever is first. The ten-minute crons are now only triggers: the first one
+# GitHub honours starts a loop, later ones see the loop and do a single pass.
+# Outside business hours every run is a single pass, as before.
 
 on:
   schedule:
-    # 08:05–17:55 SAST (06:05–15:55 UTC), Monday to Friday, every ten minutes:
-    # a client who has just signed is waiting on "That's signed", and the first
-    # retry is due 10 minutes after a failed attempt. Dropped on 2026-10-08 and
-    # restored on 2026-10-13, after a first PDF attempt timed out
-    # (FT-2026-10-0004) and the client email waited on the hourly run. Off the
-    # hour on purpose: it never lands on the hourly run, and GitHub delays
-    # scheduled runs most at :00.
+    # Every ten minutes, 08:05–17:55 SAST (06:05–15:55 UTC), Monday to Friday.
+    # Each is a chance to start the business-hours loop (or restart it after its
+    # 5 h 30 min cap); while a loop runs, a run that lands does one pass and ends.
+    # Off the hour on purpose: GitHub delays and drops scheduled runs most at :00.
     - cron: '5,15,25,35,45,55 6-15 * * 1-5'
     # Hourly, every day: bounds the worst case outside business hours. Hourly
     # rather than denser because the backoff runs from 10 minutes to a 6-hour
-    # ceiling. Dispatch it by hand if a client is waiting.
-    - cron: '0 * * * *'
+    # ceiling. At :17, off the hour, for the same reason. Dispatch it by hand if
+    # a client is waiting.
+    - cron: '17 * * * *'
   workflow_dispatch:
+    inputs:
+      loop_minutes:
+        description: 'Loop for this many minutes regardless of the time (blank = normal behaviour). For testing.'
+        required: false
+        default: ''
 
-concurrency:
-  group: reconcile-deliveries
-  cancel-in-progress: false
+# No concurrency group: a queued run would wait behind a five-hour loop. Runs
+# may overlap briefly; the script claims each item by compare-and-swap with a
+# lease, so two passes never work the same row.
 
 permissions:
   contents: read
+  actions: read # to see whether a loop is already running (gh run list)
 
 jobs:
   reconcile:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # Covers the 5 h 30 min loop cap plus one pass; GitHub's ceiling is 6 h.
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v6
 
@@ -48,9 +62,76 @@ jobs:
           node-version: 24
 
       - name: Reconcile fulfilment and email delivery
+        shell: bash
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           OWNER_NOTIFICATION_EMAIL: zjak@capucor.com
-        run: node scripts/reconcile-deliveries.mjs
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LOOP_MINUTES: ${{ inputs.loop_minutes || '' }}
+        run: |
+          set -uo pipefail
+          PASS_SECONDS=600          # one pass every ten minutes
+          MAX_LOOP_SECONDS=19800    # 5 h 30 min, inside timeout-minutes
+          PASS_TIMEOUT=240          # a hung pass cannot eat the next slot
+          IDLE_WARN_DAYS=45         # GitHub disables crons after 60 idle days
+
+          failed=0
+          now=$(date -u +%s)
+
+          # Public repo: GitHub disables every scheduled workflow here after 60
+          # days without activity, silently. Fail loudly well before that.
+          idle_days=$(( (now - $(git log -1 --format=%ct)) / 86400 ))
+          if [ "$idle_days" -ge "$IDLE_WARN_DAYS" ]; then
+            echo "::error::No commit for $idle_days days. GitHub disables this repo's scheduled workflows (retries, lead prune, proposal expiry) after 60 days without activity. Push any commit to master to reset the clock."
+            failed=1
+          fi
+
+          # Decide how long to run: a single pass by default.
+          end=$now
+          if [ -n "$LOOP_MINUTES" ]; then
+            if ! [[ "$LOOP_MINUTES" =~ ^[0-9]+$ ]]; then
+              echo "::error::loop_minutes must be a whole number of minutes."
+              exit 1
+            fi
+            end=$(( now + LOOP_MINUTES * 60 ))
+          elif [ "$(date -u +%u)" -le 5 ] && [ "$(date -u +%-H)" -ge 6 ] && [ "$(date -u +%-H)" -lt 16 ]; then
+            end=$(date -u -d 'today 16:00' +%s)
+          fi
+          if [ "$end" -gt $(( now + MAX_LOOP_SECONDS )) ]; then
+            end=$(( now + MAX_LOOP_SECONDS ))
+          fi
+
+          # One loop at a time: if an older run of this workflow is still in
+          # progress, it is the loop, so this run does a single pass. If the
+          # lookup fails, loop anyway; overlapping passes are safe.
+          if [ "$end" -gt "$now" ]; then
+            older=$(gh run list --workflow cron-reconcile-deliveries.yml --status in_progress --limit 20 \
+              --json databaseId --jq "[.[] | select(.databaseId < $GITHUB_RUN_ID)] | length" 2>/dev/null || echo 0)
+            if [ "${older:-0}" -gt 0 ]; then
+              echo "An earlier run is still in progress (the loop); this run does a single pass."
+              end=$now
+            else
+              echo "Looping every $((PASS_SECONDS / 60)) minutes until $(date -u -d "@$end" +%H:%M) UTC."
+            fi
+          fi
+
+          pass=0
+          while :; do
+            pass=$((pass + 1))
+            started=$(date -u +%s)
+            echo "::group::Pass $pass ($(date -u +%H:%M) UTC)"
+            if ! timeout "$PASS_TIMEOUT" node scripts/reconcile-deliveries.mjs; then
+              echo "::error::Pass $pass failed or timed out; the loop carries on and this run will be marked failed."
+              failed=1
+            fi
+            echo "::endgroup::"
+            next=$(( started + PASS_SECONDS ))
+            [ "$next" -ge "$end" ] && break
+            sleep $(( next - $(date -u +%s) ))
+          done
+
+          echo "$pass pass(es) done."
+          exit "$failed"
