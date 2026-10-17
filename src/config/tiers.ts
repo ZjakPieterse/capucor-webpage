@@ -177,7 +177,15 @@ export const CORE_SERVICES: PackageCommonItem[] = [
     text: 'Dedicated finance team',
     tooltip: 'A team that knows your business and runs your month, led by your own accountant.',
   },
-  { text: 'Year-round support', tooltip: 'Ongoing guidance from your team all year, not only at year-end.' },
+  // The service level Zjak set on 2026-10-17 (service item register): the same
+  // on every package. Premium's own support line must beat it.
+  {
+    text: 'Year-round support',
+    scheduleText:
+      'Year-round support (email to zjak@capucor.com, Monday to Friday 08:00 to 17:00, reply within 2 business days; calls by appointment)',
+    tooltip:
+      "Email zjak@capucor.com all year round. We work Monday to Friday, 08:00 to 17:00, and reply within 2 business days. If a question needs a conversation, we'll book a call. WhatsApp support is an add-on.",
+  },
   {
     text: 'Annual financial statements',
     tooltip: 'Year-end financial statements prepared for compliance, SARS, banks and other stakeholders.',

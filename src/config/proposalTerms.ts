@@ -21,6 +21,7 @@ export const RESPONSIBILITIES_OURS: string[] = [
   'Do the work in your schedule on its agreed cycle, and submit your SARS and CIPC filings on time.',
   'Keep your books reconciled and give you the reports listed in your package.',
   'Tell you in good time about payments that fall due, and flag anything that needs a decision.',
+  'Reply to your emails to zjak@capucor.com within 2 business days (we work Monday to Friday, 08:00 to 17:00), and set up a call by appointment when a question needs one.',
   'Act with reasonable care and skill, in line with the SAICA code we work under.',
 ];
 
