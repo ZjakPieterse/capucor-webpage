@@ -379,9 +379,7 @@
 
 .premium-card svg,
 .feature-card svg,
-.problem-card svg,
-.outcome-card svg,
-.fcc-tile svg {
+.problem-card svg {
   transition:
     transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
     color 360ms ease,
@@ -391,9 +389,7 @@
 @media all {
   .premium-card:hover svg,
   .feature-card:hover svg,
-  .problem-card:hover svg,
-  .outcome-card:hover svg,
-  .fcc-tile:hover svg {
+  .problem-card:hover svg {
     transform: translateY(-2px) scale(1.06);
     filter: drop-shadow(
       0 0 10px color-mix(in oklch, var(--primary) 35%, transparent)
@@ -401,24 +397,15 @@
   }
 }
 
-/* ─── Text links and quiet toggles ─────────────────────────────────────────
+/* ─── Quiet toggles ─────────────────────────────────────────────────────────
    Named replacements for inline `hover:underline` / `hover:text-foreground`,
    which do not reliably emit here (see docs/design-system.md). */
-.text-link {
-  text-decoration-line: underline;
-  text-decoration-color: transparent;
-  text-underline-offset: 4px;
-  transition: text-decoration-color 260ms ease;
-}
 
 .quiet-hover {
   transition: color 260ms ease;
 }
 
 @media all {
-  .text-link:hover {
-    text-decoration-color: currentColor;
-  }
 
   .quiet-hover:hover {
     color: var(--foreground);
@@ -566,41 +553,6 @@
   color: var(--primary-foreground);
 }
 
-/* Animated brand-clip text — used on a single hero verb and section titles. */
-.gradient-text-brand {
-  background: linear-gradient(
-    100deg,
-    var(--foreground) 0%,
-    color-mix(in oklch, var(--primary) 80%, var(--foreground)) 30%,
-    var(--primary) 50%,
-    var(--brand-cyan) 68%,
-    var(--foreground) 100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: gradient-text-sweep 7s ease-in-out infinite;
-}
-
-@keyframes gradient-text-sweep {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-/* Static clipped gradient for dashboard stat numbers. */
-.gradient-stat {
-  background: linear-gradient(135deg, var(--brand-cyan), var(--primary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 /* ─── Marquee carousel ────────────────────────────────────────────────────── */
 @keyframes marquee {
   from {
@@ -688,8 +640,7 @@
 }
 
 /* ─── Service / outcome card hover ─────────────────────────────────────────── */
-.feature-card,
-.outcome-card {
+.feature-card {
   position: relative;
   transition:
     transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
@@ -698,15 +649,13 @@
 }
 
 @media all {
-  .feature-card:hover,
-  .outcome-card:hover {
+  .feature-card:hover {
     transform: translateY(-6px) scale(1.012);
     border-color: color-mix(in oklch, var(--primary) 38%, var(--border));
     box-shadow: 0 28px 70px -36px
       color-mix(in oklch, var(--primary) 52%, transparent);
   }
 }
-
 
 /* ─── Problem card hover ─────────────────────────────────────────────────── */
 /* Problem cards are the faces of a 3D flip card (ProblemCards.tsx), so they
@@ -774,9 +723,7 @@
 @media (hover: none) and (pointer: coarse) {
   .premium-card,
   .feature-card,
-  .outcome-card,
-  .problem-card,
-  .fcc-tile {
+  .problem-card {
     transition:
       transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
       border-color 260ms ease,
@@ -785,9 +732,7 @@
 
   .premium-card:active,
   .feature-card:active,
-  .outcome-card:active,
-  .problem-card:active,
-  .fcc-tile:active {
+  .problem-card:active {
     transform: scale(0.985);
     transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -1391,105 +1336,6 @@
   }
 }
 
-/* ─── Finance Command Centre tiles (hero dashboard) ─────────────────────── */
-.fcc-tile {
-  transition:
-    transform 260ms ease,
-    opacity 260ms ease,
-    border-color 260ms ease,
-    box-shadow 260ms ease;
-}
-
-@media all {
-  .fcc-grid:has(.fcc-tile:hover) .fcc-tile:not(:hover) {
-    opacity: 0.55;
-  }
-
-  .fcc-tile:hover {
-    transform: translateY(-2px) scale(1.015);
-    border-color: color-mix(in oklch, var(--primary) 45%, transparent);
-    box-shadow: 0 10px 30px -10px
-      color-mix(in oklch, var(--primary) 22%, transparent);
-  }
-}
-
-/* Sequential heartbeat on SARS/CIPC compliance row — fires once every 8s, items offset by 0.2s */
-@keyframes fcc-heartbeat {
-  0%,
-  96%,
-  100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 0 transparent);
-  }
-  97% {
-    transform: scale(1.18);
-    filter: drop-shadow(
-      0 0 6px color-mix(in oklch, var(--primary) 70%, transparent)
-    );
-  }
-  98.5% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 0 transparent);
-  }
-}
-
-.fcc-heartbeat {
-  animation: fcc-heartbeat 8s ease-in-out infinite;
-  transform-origin: center;
-}
-
-.fcc-heartbeat:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.fcc-heartbeat:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-/* ─── Glassmorphic Trust Banner ──────────────────────────────────────────── */
-.trust-banner {
-  background: linear-gradient(
-    135deg,
-    color-mix(in oklch, var(--card) 92%, transparent) 0%,
-    color-mix(in oklch, var(--card) 78%, transparent) 100%
-  );
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid color-mix(in oklch, var(--primary) 20%, var(--border));
-  box-shadow:
-    0 24px 60px -20px color-mix(in oklch, var(--primary) 18%, transparent),
-    0 8px 24px -12px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 color-mix(in oklch, white 8%, transparent);
-}
-
-.trust-banner::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in oklch, var(--primary) 60%, transparent),
-    transparent 40%,
-    color-mix(in oklch, var(--brand-cyan) 30%, transparent) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-.trust-banner-glow {
-  background: radial-gradient(
-    600px circle at 20% 50%,
-    color-mix(in oklch, var(--primary) 10%, transparent),
-    transparent 60%
-  );
-}
-
-
 /* ─── Three disciplines: service cards (ServicePillars.tsx) ──────────────────
    The live glass card (.premium-card + .feature-card) kept, with an icon and
    title lockup at the top, a lit top edge and a plain "Read more" button in a
@@ -1701,150 +1547,14 @@
 
 /* Scope question cards (calculator step 1): one standalone card per service,
    each lighting up as its question is answered. */
-.scope-card {
-  position: relative;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.85rem;
-  padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--card) 40%, transparent);
-  backdrop-filter: blur(12px);
-  transition:
-    background-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (min-width: 768px) {
-  .scope-card {
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
-    align-items: center;
-    gap: 1.25rem;
-    padding: 1.5rem 1.5rem 1.5rem 1.75rem;
-  }
-}
 
 /* Left accent bar slides in once the question is answered. */
-.scope-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(
-    to bottom,
-    color-mix(in oklch, var(--primary) 85%, transparent),
-    color-mix(in oklch, var(--primary) 35%, transparent)
-  );
-  opacity: 0;
-  transform: scaleY(0.35);
-  transition:
-    opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.scope-card.is-set::before {
-  opacity: 1;
-  transform: scaleY(1);
-}
-
-.scope-card.is-set {
-  background: color-mix(in oklch, var(--primary) 5%, transparent);
-  border-color: color-mix(in oklch, var(--primary) 30%, var(--border));
-  box-shadow: 0 12px 32px -20px color-mix(in oklch, var(--primary) 35%, transparent);
-}
 
 /* "Not required" reads as settled but neutral — answered, no primary glow. */
-.scope-card.is-skipped {
-  background: color-mix(in oklch, var(--muted) 16%, transparent);
-}
-
-.scope-card.is-skipped .scope-card__icon {
-  opacity: 0.65;
-}
-
-.scope-card__check.is-muted {
-  background: var(--muted);
-  color: var(--muted-foreground);
-}
-
-@media all {
-  .scope-card:hover {
-    background: color-mix(in oklch, var(--muted) 22%, transparent);
-    border-color: color-mix(in oklch, var(--primary) 20%, var(--border));
-  }
-
-  .scope-card.is-set:hover {
-    background: color-mix(in oklch, var(--primary) 8%, transparent);
-  }
-
-  .scope-card:hover .scope-card__icon {
-    transform: translateY(-1px);
-  }
-}
-
-.scope-card__select {
-  width: 100%;
-}
-
-@media (min-width: 768px) {
-  .scope-card__select {
-    justify-self: end;
-  }
-}
 
 /* Icon tile mirrors the tier-card service tile and brightens when set. */
-.scope-card__icon {
-  position: relative;
-  display: inline-flex;
-  height: 2.5rem;
-  width: 2.5rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-lg);
-  background: var(--muted);
-  color: var(--muted-foreground);
-  transition:
-    background-color 180ms ease,
-    color 180ms ease,
-    box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.scope-card__icon.is-set {
-  background: color-mix(in oklch, var(--primary) 16%, transparent);
-  color: var(--primary);
-  box-shadow: 0 0 0 4px color-mix(in oklch, var(--primary) 12%, transparent);
-}
 
 /* Confirmation check that pops onto the tile corner when the line is set. */
-.scope-card__check {
-  position: absolute;
-  top: -0.3rem;
-  right: -0.3rem;
-  display: inline-flex;
-  height: 1.05rem;
-  width: 1.05rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: var(--primary);
-  color: var(--primary-foreground);
-  box-shadow:
-    0 0 0 2px var(--card),
-    0 4px 10px -4px color-mix(in oklch, var(--primary) 60%, transparent);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .scope-card__check {
-    animation: service-card-toggle-pop 260ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-}
 
 /* Dropdown trigger gains a primary tint once the line is configured. */
 .scope-trigger.is-set {
@@ -1856,10 +1566,6 @@
 @media (hover: none) and (pointer: coarse) {
   .scope-trigger:active {
     transform: scale(0.99);
-  }
-
-  .scope-card:active {
-    transform: scale(0.995);
   }
 
   .tier-compare-toggle:active {
@@ -1964,28 +1670,15 @@
      so the position change is actually perceptible without motion blur. */
   .premium-card:hover,
   .feature-card:hover,
-  .outcome-card:hover,
   .problem-card:hover {
     transform: translateY(-10px) scale(1.025) !important;
-  }
-  .fcc-tile:hover {
-    transform: translateY(-4px) scale(1.03) !important;
   }
   :not([data-hover-wait]) > .service-card:not(.is-selected):hover {
     transform: translateY(-6px) !important;
   }
 
-  .fcc-heartbeat {
-    animation: none !important;
-  }
-
   .cursor-glow::before {
     opacity: 0 !important;
-  }
-
-  .gradient-text-brand {
-    animation: none !important;
-    background-position: 0% 50% !important;
   }
 
   .premium-button:not(.btn-quiet)::after {

@@ -13,6 +13,21 @@
 These are the load-bearing rules for the site's look and feel. Follow them for all new
 UI work so the front end stays visually consistent. Canonical examples are cited inline.
 
+### Brand rules come first
+
+Brand decisions (logo files, colours, type, card types, the rules below) are owned by the
+**Capucor brand guide** in the owner's private workspace (`domains/capucor/wiki/brand/`, named in
+prose because a cross-repository link would not resolve). This file owns how the site
+implements them. When the two disagree, the brand guide wins and this file or the code is fixed
+(Zjak, 2026-10-17). Brand rules adopted 2026-10-17:
+
+- **One accent colour per view.** Cyan (`--primary`) marks "act here" or "look here", never
+  decoration.
+- **At most one gradient button (`gradient-cta`) per screen-height.** Everything else nearby is
+  the outline button or a link.
+- **Section sub-headers stay within two lines on desktop.**
+- **No uppercase eyebrow labels** above headings (decided 2026-10-08).
+
 ### Section rhythm
 
 - Standard content sections use `className="premium-section py-14 lg:py-20"`. Hero and the

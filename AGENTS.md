@@ -102,8 +102,8 @@ an edit). `src/__tests__/pricing-decisions.test.ts` locks each pricing decision 
 ⛔ Several rules in `docs/design-system.md` describe **silent failures**: inline Tailwind `hover:`
 effects **never render**; gating hover on `(hover: hover)` kills it on Windows hybrid laptops;
 `p-4 sm:p-5 pr-12` drops the right padding at `sm+`; a subgrid row must be reserved even when
-empty. A new public page goes in `app/(site)/`, not `app/`. ⚠️ The canonical brand voice is the
-voice-and-content page in the owner's private workspace; it wins on anything shared.
+empty. A new public page goes in `app/(site)/`, not `app/`. ⚠️ The canonical brand guide (voice, logo,
+colours, card types, brand rules) is in the owner's private workspace; it wins on anything shared.
 
 ## Payments status
 
