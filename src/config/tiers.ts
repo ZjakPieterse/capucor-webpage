@@ -184,7 +184,7 @@ export const CORE_SERVICES: PackageCommonItem[] = [
     scheduleText:
       'Year-round support (email to team@capucor.com, Monday to Friday 08:00 to 17:00, reply within 2 business days; calls by appointment)',
     tooltip:
-      "Email team@capucor.com whenever you need us, all year. We work Monday to Friday, 08:00 to 17:00, and reply within 2 business days. If a question needs a conversation, we'll book a call. WhatsApp support is an add-on.",
+      "Email team@capucor.com all year round. We work Monday to Friday, 08:00 to 17:00, and reply within 2 business days. If a question needs a conversation, we'll book a call. WhatsApp support is an add-on.",
   },
   {
     text: 'Annual financial statements',
