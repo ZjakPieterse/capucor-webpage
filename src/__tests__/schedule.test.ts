@@ -45,7 +45,7 @@ describe('cumulativeInclusions', () => {
     const basic = cumulativeInclusions(CORE, 'basic');
     expect(basic.slice(0, 6)).toEqual([
       'Dedicated finance team',
-      'Year-round support',
+      'Year-round support (email to team@capucor.com, Monday to Friday 08:00 to 17:00, reply within 2 business days; calls by appointment)',
       'Annual financial statements',
       'SARS & CIPC submission (income tax and provisional tax returns, CIPC annual return and beneficial ownership filing)',
       'Xero accounting software',
