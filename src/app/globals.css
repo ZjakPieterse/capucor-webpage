@@ -639,7 +639,7 @@
   transform: translate(-50%, -50%);
 }
 
-/* ─── Service / outcome card hover ─────────────────────────────────────────── */
+/* ─── Service card hover ──────────────────────────────────────────────────── */
 .feature-card {
   position: relative;
   transition:
@@ -1545,16 +1545,7 @@
   background: color-mix(in oklch, var(--primary) 8%, transparent);
 }
 
-/* Scope question cards (calculator step 1): one standalone card per service,
-   each lighting up as its question is answered. */
-
-/* Left accent bar slides in once the question is answered. */
-
-/* "Not required" reads as settled but neutral — answered, no primary glow. */
-
-/* Icon tile mirrors the tier-card service tile and brightens when set. */
-
-/* Confirmation check that pops onto the tile corner when the line is set. */
+/* Scope questions (calculator step 1). */
 
 /* Dropdown trigger gains a primary tint once the line is configured. */
 .scope-trigger.is-set {
@@ -1562,7 +1553,7 @@
   background: color-mix(in oklch, var(--primary) 8%, transparent);
 }
 
-/* Touch: give the card + dropdown a press affordance in place of hover. */
+/* Touch: give the dropdown a press affordance in place of hover. */
 @media (hover: none) and (pointer: coarse) {
   .scope-trigger:active {
     transform: scale(0.99);
