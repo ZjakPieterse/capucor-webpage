@@ -73,7 +73,9 @@ The only things still pointing at capucor.app (the legacy portal) are the `APP_P
 - **Scheduled workflows** — lead prune and proposal expiry (daily), retries (every ten minutes in
   weekday business hours, hourly otherwise) via `cron-reconcile-deliveries.yml`, which rebuilds
   emails from `src/lib/email/messages.mjs` and runs from `master`: deploy soon after merging a
-  `messages.mjs` change. No watchdog: a cron that stops silently is not detected.
+  `messages.mjs` change. In business hours one run stays up and loops (GitHub drops most
+  scheduled runs). No watchdog, except that the retry runner fails from 45 days without a commit
+  (GitHub disables schedules at 60); any other silent stop is not detected.
 - ⚠️ **Never call `req.json()` in a route handler** — use `readJsonBody(req, MAX_BODY_BYTES)`.
 - **Every transactional send goes through `src/lib/email/sendEmail.ts`.** Never construct
   `Resend` elsewhere. `accepted` means the provider took it, not that anyone received it.

@@ -47,6 +47,15 @@ describe('cron-reconcile-deliveries schedule', () => {
     expect(workflow).toMatch(/^\s+actions: read/m);
     expect(workflow).not.toMatch(/^concurrency:/m);
     expect(workflow).toMatch(/IDLE_WARN_DAYS=45/);
+    // A failed pass ends the run so the failure email is not held back by the loop.
+    expect(workflow).toMatch(/failed=1\s+break/);
+  });
+
+  it('the docs no longer say every silent stop goes undetected', () => {
+    const seam = readFileSync(join(process.cwd(), 'docs', 'domain-seam.md'), 'utf8');
+    const agents = readFileSync(join(process.cwd(), 'AGENTS.md'), 'utf8');
+    expect(seam).not.toMatch(/Nothing watches for a cron that stops silently/);
+    expect(agents).toMatch(/fails from 45 days without a commit/);
   });
 
   it('the docs state the same schedule', () => {
