@@ -112,7 +112,7 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
       'Monthly Processing',
       'Quarterly Insights Report',
       'Quarterly Performance Review',
-      'Payroll Services',
+      'Payroll Processing',
     ]);
   });
 
@@ -123,7 +123,7 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
       'Monthly Insights Report',
       'Monthly Performance Review',
       'Supplier Processing & Review',
-      'Payroll Services',
+      'Payroll Processing',
     ]);
   });
 
@@ -136,7 +136,7 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
       'Supplier Processing & Review',
       'Monthly Tax Strategy & Planning',
       'Direct Partner Access',
-      'Payroll Services',
+      'Payroll Processing',
     ]);
   });
 
@@ -162,12 +162,12 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
     expect(item.scheduleText).toMatch(/by 12:00 the next business day/);
   });
 
-  it('one Payroll Services line, the same on every card, covering the statutory basics only', () => {
+  it('one Payroll Processing line, the same on every card, covering the statutory basics only', () => {
     const payroll = (['basic', 'pro', 'premium'] as const).map((t) =>
       TIER_HIGHLIGHTS[t].filter((i) => i.services.includes('payroll'))
     );
     for (const items of payroll) {
-      expect(items.map((i) => i.text)).toEqual(['Payroll Services']);
+      expect(items.map((i) => i.text)).toEqual(['Payroll Processing']);
       expect(items[0]).toBe(payroll[0]![0]);
     }
     const tooltip = payroll[0]![0]!.tooltip;
@@ -315,7 +315,7 @@ describe('service-filter behaviour', () => {
     const basic = visibleItems('basic', sel).map((i) => i.text);
     expect(basic).toContain('Quarterly Insights Report');
     expect(basic).not.toContain('Monthly Processing');
-    expect(basic).not.toContain('Payroll Services');
+    expect(basic).not.toContain('Payroll Processing');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
     expect(pro).not.toContain('Supplier Processing & Review');
@@ -329,10 +329,10 @@ describe('service-filter behaviour', () => {
     expect(visibleItems('premium', sel).map((i) => i.text)).toContain('Daily Processing');
   });
 
-  it('Case 4 — payroll only: one Payroll Services line on every package', () => {
+  it('Case 4 — payroll only: one Payroll Processing line on every package', () => {
     const sel = new Set(['payroll']);
     for (const t of ['basic', 'pro', 'premium'] as const) {
-      expect(visibleItems(t, sel).map((i) => i.text)).toEqual(['Payroll Services']);
+      expect(visibleItems(t, sel).map((i) => i.text)).toEqual(['Payroll Processing']);
     }
   });
 });
@@ -391,8 +391,8 @@ describe('TierComparison accumulation', () => {
 describe('payroll in the comparison matrix', () => {
   const rows = buildMatrix(new Set(['payroll']));
 
-  it('places Payroll Services at lowestTier "basic", so every package covers it', () => {
-    const row = rows.find((r) => r.text === 'Payroll Services');
+  it('places Payroll Processing at lowestTier "basic", so every package covers it', () => {
+    const row = rows.find((r) => r.text === 'Payroll Processing');
     expect(row).toBeDefined();
     expect(row!.lowestTier).toBe('basic');
     for (const t of ['basic', 'pro', 'premium']) expect(isCovered(t, row!.lowestTier)).toBe(true);

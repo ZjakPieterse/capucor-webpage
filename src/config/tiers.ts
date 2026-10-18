@@ -35,7 +35,7 @@ const CORE_SERVICES_INCLUDED: TierHighlightItem = {
 // The statutory basics only (decision 2026-10-06): no employee self-service
 // portal or payment files on any package.
 const PAYROLL_SERVICES: TierHighlightItem = {
-  text: 'Payroll Services',
+  text: 'Payroll Processing',
   services: ['payroll'],
   tooltip: 'Monthly payroll and payslips, with EMP201, EMP501, UIF and COIDA submissions handled on their cycles.',
   calculatorOnly: true,

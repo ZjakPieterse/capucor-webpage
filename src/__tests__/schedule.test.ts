@@ -55,7 +55,7 @@ describe('cumulativeInclusions', () => {
       'Xero accounting software',
       'VAT returns (VAT201)',
     ]);
-    expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll Services');
+    expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll Processing');
   });
 
   it('leaves out the card summary line and never mentions Dext', () => {
@@ -140,8 +140,8 @@ describe('reviewInclusions', () => {
 
   it('lists payroll only when payroll is chosen, and never an add-on', () => {
     for (const tier of TIER_ORDER) {
-      expect(reviewInclusions(CORE, tier).items).not.toContain('Payroll Services');
-      expect(reviewInclusions(WITH_PAYROLL, tier).items.at(-1)).toBe('Payroll Services');
+      expect(reviewInclusions(CORE, tier).items).not.toContain('Payroll Processing');
+      expect(reviewInclusions(WITH_PAYROLL, tier).items.at(-1)).toBe('Payroll Processing');
       expect(reviewInclusions(CORE, tier, ['whatsapp-support', 'personal-tax:2']).items).toEqual(
         reviewInclusions(CORE, tier).items,
       );
