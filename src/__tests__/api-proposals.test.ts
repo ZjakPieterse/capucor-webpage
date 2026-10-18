@@ -645,8 +645,12 @@ describe('POST /api/proposals', () => {
         // A stale add-on or VAT answer from the package path is not carried.
         addons: ['whatsapp-support'],
         answers: { vatRegistered: false },
+        brackets: { payroll: 1, accounting: 1, bookkeeping: 0 },
       }),
     );
+    const leadConfig = (leadInsert.mock.calls[0]![0] as { config: Record<string, unknown> }).config;
+    expect(leadConfig.brackets).toEqual({ payroll: 1 });
+    expect(leadConfig).not.toHaveProperty('answers');
     expect(res.status).toBe(200);
     expect((await res.json()).proposalUrl).toMatch(/\/proposal\//);
     const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;

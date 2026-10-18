@@ -91,14 +91,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: issue.message, field: issue.path.join('.') }, { status: 422 });
   }
 
-  const input = parsed.data;
-
   // Only a package the calculator offers. Before the payroll-only package
   // (2026-10-18) any slug priced at Basic; now an unknown one is refused.
-  if (!PROPOSAL_TIER_SLUGS.includes(input.tierSlug)) {
+  if (!PROPOSAL_TIER_SLUGS.includes(parsed.data.tierSlug)) {
     return NextResponse.json({ error: 'Choose a package', field: 'tierSlug' }, { status: 422 });
   }
-  const payrollOnly = input.tierSlug === PAYROLL_ONLY_TIER;
+  const payrollOnly = parsed.data.tierSlug === PAYROLL_ONLY_TIER;
+
+  // A payroll-only proposal and its lead keep only the headcount: a revenue
+  // band or VAT answer left from the package path is not stored.
+  const input = payrollOnly
+    ? {
+        ...parsed.data,
+        brackets:
+          parsed.data.brackets.payroll === undefined ? {} : { payroll: parsed.data.brackets.payroll },
+        answers: undefined,
+      }
+    : parsed.data;
 
   // Premium is sold by application (calculator-v2 Phase 0): the calculator
   // sends a request, never a proposal, and Zjak handles it outside the system
