@@ -65,7 +65,8 @@ export const PAYROLL_ONLY_RESPONSIBILITIES_YOURS: string[] = [
   "Give us the month's payroll inputs (hours, overtime, commission, leave taken and leavers) by the agreed cut-off.",
   "Give us each new starter's details (ID number, tax number, start date and pay terms) by the cut-off before their first pay day.",
   ACCURATE_INFORMATION,
-  "Approve each month's payroll before we finalise payslips, and approve returns before we submit them where we ask you to.",
+  // Zjak, 2026-10-18 (PR #166): no draft approval round; we finalise, then send.
+  "Check each month's payslips and payrun report when we send them, and tell us before pay day if anything is wrong. Approve returns before we submit them where we ask you to.",
   'Keep your own copies of your employment and payroll records. The originals stay yours.',
 ];
 
