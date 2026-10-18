@@ -13,7 +13,6 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://capucor.app';
 
 export const siteConfig = {
   name: 'Capucor Business Solutions',
-  tagline: 'Outsourced finance for owner-run businesses with staff.',
   description:
     'Monthly accounting, bookkeeping, payroll and SARS work for owner-run South African businesses with staff. One fixed monthly subscription, run in Xero.',
   // Public site: canonicals, sitemap, OG tags, proposal + POPIA email links.

@@ -1431,10 +1431,12 @@
   }
 }
 
+/* Centred on the card's 40 px icon row: the card padding plus 6 px
+   (Zjak, 2026-10-18: neat alignment on the add-on cards). */
 .service-card-toggle {
   position: absolute;
-  top: 0.875rem;
-  right: 0.875rem;
+  top: 1.375rem;
+  right: 1rem;
   width: 1.75rem;
   height: 1.75rem;
   display: inline-flex;
@@ -1460,6 +1462,13 @@
    instead of pinning it to the top corner. Uses margin-top rather than a
    translateY transform so the selection pop animation's scale() keyframes
    don't clobber the centering mid-animation. */
+@media (min-width: 640px) {
+  .service-card-toggle {
+    top: 1.625rem;
+    right: 1.25rem;
+  }
+}
+
 .service-card-toggle--center {
   top: 50%;
   margin-top: -0.875rem;

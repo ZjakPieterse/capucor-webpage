@@ -53,7 +53,7 @@ export default function PrivacyPage() {
           <p className="text-muted-foreground leading-relaxed mb-3">
             When you submit a form on this website, we collect:
           </p>
-          <ul className="list-disc list-inside text-muted-foreground space-y-1">
+          <ul className="list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
             <li>Your name and email address</li>
             <li>Your business name (optional)</li>
             <li>Your phone number (optional)</li>
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
           <p className="text-muted-foreground leading-relaxed mb-3">
             Under the Protection of Personal Information Act 4 of 2013 (POPIA), you have the right to:
           </p>
-          <ul className="list-disc list-inside text-muted-foreground space-y-1">
+          <ul className="list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
             <li>Be notified when your personal information is collected</li>
             <li>Access your personal information held by us</li>
             <li>Request correction of inaccurate information</li>
