@@ -258,6 +258,12 @@ describe('CORE_SERVICES (core services included)', () => {
     expect(support.scheduleText).toContain('calls by appointment');
   });
 
+  it('the engagement terms say reply times are service standards, not guarantees (Zjak, 2026-10-18)', () => {
+    expect(RESPONSIBILITIES_OURS).toContain(
+      'Reply times are our service standards, not guarantees. We meet them in the normal course and tell you when something will take longer.',
+    );
+  });
+
   it('puts the same core services on the signed schedule as the site, plus VAT201', () => {
     const site = CORE_SERVICE_LINES.map((i) => i.scheduleText ?? i.text);
     expect(scheduleCommonItemsFor(true).map((i) => i.text)).toEqual([...site, 'VAT returns (VAT201)']);
