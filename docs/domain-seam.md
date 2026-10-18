@@ -213,6 +213,12 @@ subrequests per request.
   idempotency key. The two "signed" emails are built whole there
   (`buildSignedClientMessage` / `buildSignedOwnerMessage`), so the Worker's first attempt and a
   retry send the same request; `reconcile-deliveries.test.ts` checks it.
+- **A retried proposal email lists the first send's lines** (2026-10-18; before, it dropped every
+  add-on but Dext). The runner imports `buildProposalLineItems` and `addonsForTier` straight from
+  `src/lib/pricing.ts` (and `tierDisplayName` from `src/config/tiers.ts`); Node strips the types,
+  so there is still no `npm ci`. Those two files therefore keep to relative `.ts` imports and
+  erasable TypeScript. `reconcile-proposal-lines.test.ts` checks both the match and the plain-Node
+  load.
 - **The client's "That's signed" email attaches the signed PDF** (audit decision, 2026-10-13).
   Both senders read the archived file back from Drive through the Apps Script `fetch` action —
   the Worker directly (`fetchSignedProposalPdf`), the runner through
@@ -231,4 +237,5 @@ subrequests per request.
   counts and error codes only — never a recipient, a link token, a message body or a provider
   error message. Keep it that way.
 - ⚠️ The runner runs from `master`, the Worker from the last deploy. Deploy soon after merging a
-  change to `messages.mjs`, or a retry can send different content under the original key.
+  change to `messages.mjs`, `pricing.ts` or `tiers.ts`, or a retry can send different content
+  under the original key.

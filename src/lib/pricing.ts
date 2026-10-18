@@ -1,7 +1,14 @@
 // Web-owned since 2026-10-07 (web-standalone phase 2). Keep pricing.test.ts
 // passing.
+//
+// ⚠️ The retry runner (scripts/reconcile-deliveries.mjs) imports this file
+// under plain Node, which strips the types but resolves no `@/` alias. So
+// runtime imports here stay relative with a `.ts` extension (only `import type`
+// may use `@/`), and only erasable TypeScript is allowed (no enums or
+// namespaces). src/__tests__/reconcile-proposal-lines.test.ts loads the runner
+// under plain Node to hold this.
 
-import { PRICING_ADDONS, addonIncludedInTier, tierDisplayName, type PricingAddon } from '@/config/tiers';
+import { PRICING_ADDONS, addonIncludedInTier, tierDisplayName, type PricingAddon } from '../config/tiers.ts';
 import type { Bracket, BracketValue, Service } from '@/types';
 
 export function bracketPrice(
@@ -269,6 +276,35 @@ export function foldAddonsIntoLines(
     }
   }
   return out;
+}
+
+function titleCase(slug: string): string {
+  return slug
+    .split(/[-_]/)
+    .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
+
+// Every line a proposal shows, in order: the service lines (a folded add-on
+// priced inside its service, accounting plus bookkeeping as one "Monthly
+// accounting" line), then one line per add-on. `addonSlugs` is the package's
+// token list (addonsForTier). The one source for the first proposal email, the
+// proposal page, signing and the PDF (all via priceProposalSelection) and the
+// retried proposal emails (scripts/reconcile-deliveries.mjs), so every surface
+// lists the same lines and they sum to the total.
+export function buildProposalLineItems(
+  services: string[],
+  bracketSelections: Record<string, BracketValue>,
+  tierSlug: string,
+  addonSlugs: string[],
+  allBrackets: Pick<Bracket, 'service_slug' | 'ordinal' | 'label' | 'basic_price' | 'pro_price' | 'premium_price'>[]
+): ProposalLineItem[] {
+  const serviceCatalogue = services.map((slug) => ({ slug, name: titleCase(slug) }));
+  const serviceLines = buildLineItems(services, bracketSelections, tierSlug, serviceCatalogue, allBrackets);
+  return [
+    ...mergeCoreLines(foldAddonsIntoLines(serviceLines, addonSlugs, tierSlug)),
+    ...buildAddonLineItems(addonSlugs, tierSlug),
+  ];
 }
 
 /** True when the add-on tokens mark the business as not VAT-registered. */

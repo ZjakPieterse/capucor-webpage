@@ -13,12 +13,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/db';
 import {
   monthlyTotal,
-  buildLineItems,
   addonTotal,
   addonsForTier,
-  buildAddonLineItems,
-  foldAddonsIntoLines,
-  mergeCoreLines,
+  buildProposalLineItems,
   type ProposalLineItem,
 } from '@/lib/pricing';
 import { logError } from '@/lib/log';
@@ -47,13 +44,6 @@ export interface PricedSelection {
 export type PriceResult =
   | { ok: true; data: PricedSelection }
   | { ok: false; error: string; status: number };
-
-function titleCase(slug: string): string {
-  return slug
-    .split(/[-_]/)
-    .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
-    .join(' ');
-}
 
 export async function priceProposalSelection(
   admin: SupabaseClient<Database>,
@@ -93,16 +83,11 @@ export async function priceProposalSelection(
   const vatZAR = 0;
   const totalChargeZAR = monthlyTotalZAR;
 
-  const serviceCatalogue = input.services.map((slug) => ({ slug, name: titleCase(slug) }));
   // A folded add-on (the retired Xero invoicing charge, on proposals sent
   // before 2026-10-06) is priced inside its service line, and accounting plus
   // bookkeeping show as one "Monthly accounting" line on every surface. The
-  // lines still sum to the total.
-  const serviceLines = buildLineItems(input.services, input.brackets, input.tierSlug, serviceCatalogue, bracketRows);
-  const lineItems = [
-    ...mergeCoreLines(foldAddonsIntoLines(serviceLines, addonSlugs, input.tierSlug)),
-    ...buildAddonLineItems(addonSlugs, input.tierSlug),
-  ];
+  // lines still sum to the total. The retry runner builds the same lines.
+  const lineItems = buildProposalLineItems(input.services, input.brackets, input.tierSlug, addonSlugs, bracketRows);
 
   return {
     ok: true,
