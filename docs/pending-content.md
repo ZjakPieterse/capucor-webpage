@@ -16,11 +16,9 @@ The slot reserved for **real client testimonials / social proof** sits between t
 - Blocker: testimonials still need to be collected from clients. Once 3–5 quotes (name, role, company, quote, ideally a headshot) are in hand, build a new `Testimonials.tsx` landing component and slot it in.
 - Do not ship the old four-week timeline visual back — it was scrapped intentionally. Build fresh around the real quotes.
 
-## Pending Content: Founder/Team photo and copy
+## Meet the founder: complete (2026-10-18)
 
-`FounderTeam.tsx` (homepage, between **Your first 90 days** and the final CTA; audit decision 4,
-2026-10-13) is the **Meet the founder** draft, the one place the site names the founder (owner
-decision 2026-10-18; see `voice-and-copy.md`). Lines flagged `confirm: true` render with a dashed
-underline until confirmed, and [square-bracket] text is a gap only the owner can fill. The photo
-slot shows "Photo to come" until `PHOTO` points at a portrait in `public/team/` (4:5, at least
-1200 × 1500 px). No stock faces. When the last flag goes, delete the `.draft-copy` rule in `globals.css`.
+`FounderTeam.tsx` (homepage, between **Your first 90 days** and the final CTA) is the one place the
+site names the founder (owner decision 2026-10-18; see `voice-and-copy.md`). Its copy and photo
+(`public/team/founder.jpg`, `founder-avatar.jpg`) were confirmed by the owner line by line;
+change none of it without him. Nothing is pending.
