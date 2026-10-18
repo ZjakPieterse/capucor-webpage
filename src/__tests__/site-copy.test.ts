@@ -71,6 +71,7 @@ describe('funnel copy (F13, F14, F25)', () => {
       'components/landing/HeroSection.tsx',
       'components/landing/FinalCTA.tsx',
       'components/landing/FirstNinetyDays.tsx',
+      'components/landing/FounderTeam.tsx',
       'components/services/ServiceCtaPair.tsx',
       'components/pricing/PricingCalculator.tsx',
       'components/pricing/PricingErrorBoundary.tsx',
