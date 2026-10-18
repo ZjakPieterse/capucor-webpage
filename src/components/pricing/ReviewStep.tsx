@@ -20,6 +20,8 @@ interface ReviewStepProps {
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string;
   selectedAddons: string[];
+  /** What the package includes, listed under the summary (the payroll-only review). */
+  inclusions?: { heading: string; items: string[] };
   onBack: () => void;
   onAction: (action: ProposalAction) => void;
 }
@@ -32,6 +34,7 @@ export function ReviewStep({
   selectedBrackets,
   selectedTier,
   selectedAddons,
+  inclusions,
   onBack,
   onAction,
 }: ReviewStepProps) {
@@ -58,6 +61,20 @@ export function ReviewStep({
         selectedAddons={selectedAddons}
         totalLabel={byApplication ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
       />
+
+      {inclusions && (
+        <div className="rounded-2xl border border-border bg-card/40 p-4">
+          <p className="font-semibold text-sm">{inclusions.heading}</p>
+          <ul className="mt-2 space-y-1.5">
+            {inclusions.items.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {byApplication ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 flex flex-col gap-3">

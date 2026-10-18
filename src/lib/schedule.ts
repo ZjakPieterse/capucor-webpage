@@ -7,7 +7,8 @@
  * come from config/serviceScope.ts. One source of truth, no re-typed lists.
  */
 
-import { TIER_HIGHLIGHTS, scheduleCommonItemsFor } from '@/config/tiers';
+import { PAYROLL_ONLY_TIER, TIER_HIGHLIGHTS, scheduleCommonItemsFor } from '@/config/tiers';
+import { PAYROLL } from '@/config/servicePages';
 import { formatBandLabel, notVatRegistered } from '@/lib/pricing';
 import {
   FAIR_USAGE,
@@ -45,6 +46,10 @@ export function cumulativeInclusions(
   tierSlug: string,
   addons: string[] = [],
 ): string[] {
+  // The payroll-only package (2026-10-18) has no core services: its schedule
+  // is the /payroll page's four items, as the calculator review lists them.
+  if (tierSlug === PAYROLL_ONLY_TIER) return PAYROLL.items.map((i) => i.title);
+
   const sel = new Set(selectedServices);
   const out: string[] = [];
 

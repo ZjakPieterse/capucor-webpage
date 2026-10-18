@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Check, Minus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -127,6 +127,35 @@ export function BracketQuestion({
         </Select>
       </div>
     </QuestionShell>
+  );
+}
+
+interface NothingToPriceProps {
+  copy: { title: string; body: string; action: string };
+  href: string;
+  onBack: () => void;
+}
+
+// No accounting and no payroll: nothing to price, so the calculator offers a
+// conversation instead (Zjak, 2026-10-18). Back returns to the payroll question.
+export function NothingToPrice({ copy, href, onBack }: NothingToPriceProps) {
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="space-y-2">
+        <h2 tabIndex={-1} data-step-heading className="text-xl sm:text-2xl font-semibold text-balance outline-none">
+          {copy.title}
+        </h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">{copy.body}</p>
+      </div>
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <Button variant="outline" onClick={onBack}>
+          ← Back
+        </Button>
+        <a href={href} className={cn(buttonVariants(), 'gap-2 cta-armed')}>
+          {copy.action} →
+        </a>
+      </div>
+    </div>
   );
 }
 

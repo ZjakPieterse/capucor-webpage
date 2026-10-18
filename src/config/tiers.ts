@@ -150,7 +150,17 @@ export const TIER_DISPLAY_NAMES: Record<string, string> = {
   basic: 'Basic',
   pro: 'Pro',
   premium: 'Premium',
+  'payroll-only': 'Payroll',
 };
+
+// Payroll on its own, without monthly accounting (Zjak, 2026-10-18). Stored as
+// the proposal's tier_slug (plain text, no tiers row), so every surface shows
+// it as the "Payroll" package. Priced at the payroll bracket's Basic price,
+// the same flat figure payroll costs inside any package; no add-ons.
+export const PAYROLL_ONLY_TIER = 'payroll-only';
+
+/** The package slugs /api/proposals accepts. */
+export const PROPOSAL_TIER_SLUGS: readonly string[] = ['basic', 'pro', 'premium', PAYROLL_ONLY_TIER];
 
 /**
  * Human display name for a tier slug (e.g. `pro` → `Pro`), with a title-cased

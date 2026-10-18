@@ -5,12 +5,14 @@ import {
   FIRST_STEP,
   canProceed,
   deriveServices,
+  isPayrollOnly,
   nextStep,
   prevStep,
   revertStepFields,
   scopeComplete,
 } from '@/lib/calculatorFlow';
 import { addonToken, parseAddonToken } from '@/lib/pricing';
+import { PAYROLL_ONLY_TIER } from '@/config/tiers';
 import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } from '@/types';
 
 // Drafts were kept in browser storage until tweaks round 1 (2026-10-06): the
@@ -19,6 +21,7 @@ import type { BracketValue, CalculatorAnswers, CalculatorStep, PricingState } fr
 const LEGACY_STORAGE_KEYS = ['capucor.pricing.draft.v4', 'capucor.pricing.draft.v3'];
 
 const EMPTY_ANSWERS: CalculatorAnswers = {
+  needsAccounting: null,
   vatRegistered: null,
   needsPayroll: null,
 };
@@ -47,19 +50,21 @@ export interface PricingSeed {
 }
 
 function seededState(seed: PricingSeed): PricingState {
+  const payrollOnly = seed.tierSlug === PAYROLL_ONLY_TIER;
   const answers: CalculatorAnswers = {
     ...EMPTY_ANSWERS,
+    needsAccounting: !payrollOnly,
     needsPayroll: seed.services.includes('payroll'),
   };
   const selectedBrackets = { ...seed.brackets };
   return {
-    // The selection is complete, so open on the package step. Back still
-    // walks through every question to adjust scope.
-    step: 'package',
+    // The selection is complete, so open on the package step (review on the
+    // payroll-only path). Back still walks through every question.
+    step: payrollOnly ? 'review' : 'package',
     selectedServices: deriveServices(selectedBrackets, answers),
     selectedBrackets,
     answers,
-    selectedTier: seed.tierSlug,
+    selectedTier: payrollOnly ? null : seed.tierSlug,
     selectedAddons: [...seed.addons],
   };
 }
@@ -116,7 +121,9 @@ export function usePricingState(seed?: PricingSeed) {
     setBox((b) => {
       const s = b.current;
       if (!canProceed(s.step, s)) return b;
-      const step = returnTo && scopeComplete(s) ? returnTo : nextStep(s.step, s);
+      // The answer chips live on the package step, which the payroll-only
+      // path never reaches, so a jump back there only applies to a package.
+      const step = returnTo && scopeComplete(s) && !isPayrollOnly(s.answers) ? returnTo : nextStep(s.step, s);
       const next = { ...s, step };
       return { current: next, entry: next };
     });

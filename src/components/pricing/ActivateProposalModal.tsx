@@ -158,7 +158,10 @@ export function ActivateProposalModal({
       tierSlug: selectedTier,
       addons: selectedAddons,
       answers: {
-        ...(answers.vatRegistered !== null && { vatRegistered: answers.vatRegistered }),
+        // Payroll-only asks no VAT question; an answer left from the package
+        // path is not sent.
+        ...(answers.needsAccounting !== false &&
+          answers.vatRegistered !== null && { vatRegistered: answers.vatRegistered }),
       },
       intent: mode,
       firstName: values.firstName,
