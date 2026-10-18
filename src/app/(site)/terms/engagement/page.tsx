@@ -12,7 +12,7 @@ const CONTACT_EMAIL = 'info@capucor.com';
 export const metadata: Metadata = {
   title: 'Terms of use',
   description:
-    'The full terms of engagement that apply to a signed Capucor proposal: fees, fair usage, responsibilities, debit-order authorisation, and more.',
+    'The full terms of use that apply to a signed Capucor proposal: fees, fair usage, responsibilities, debit-order authorisation, and more.',
   robots: { index: true, follow: true },
   alternates: { canonical: `${siteConfig.marketingUrl}/terms/engagement` },
   openGraph: {
