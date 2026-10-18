@@ -72,8 +72,9 @@ The only things still pointing at capucor.app (the legacy portal) are the `APP_P
   `contracts/web-contract.json`, checked by `npm test`.
 - **Scheduled workflows** — lead prune and proposal expiry (daily), retries (every ten minutes in
   weekday business hours, hourly otherwise) via `cron-reconcile-deliveries.yml`, which rebuilds
-  emails from `src/lib/email/messages.mjs` and runs from `master`: deploy soon after merging a
-  `messages.mjs` change. In business hours one run stays up and loops (GitHub drops most
+  emails from `src/lib/email/messages.mjs` (proposal lines from `src/lib/pricing.ts` and
+  `src/config/tiers.ts`) and runs from `master`: deploy soon after merging a change to any of
+  them. In business hours one run stays up and loops (GitHub drops most
   scheduled runs). No watchdog, except that the retry runner fails from 45 days without a commit
   (GitHub disables schedules at 60); any other silent stop is not detected.
 - ⚠️ **Never call `req.json()` in a route handler** — use `readJsonBody(req, MAX_BODY_BYTES)`.

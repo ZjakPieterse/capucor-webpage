@@ -47,6 +47,10 @@ import {
   signedClientIdempotencyKey,
   signedOwnerIdempotencyKey,
 } from '../src/lib/email/messages.mjs';
+// Plain Node strips the types (Node 22.18+ and 24); still no `npm ci`. Both
+// files keep to relative imports and erasable TypeScript (see pricing.ts).
+import { addonsForTier, buildProposalLineItems } from '../src/lib/pricing.ts';
+import { tierDisplayName } from '../src/config/tiers.ts';
 
 export const MAX_ATTEMPTS = 6;
 export const LEASE_MS = 60_000;
@@ -251,60 +255,58 @@ function assertRecipient(row, expected) {
   }
 }
 
-function tierName(slug) {
-  const known = { basic: 'Basic', pro: 'Pro', premium: 'Premium' };
-  return (
-    known[slug] ??
-    String(slug)
-      .split(/[-_]/)
-      .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
-      .join(' ')
-  );
-}
-
-function priceFor(bracket, tierSlug) {
-  if (tierSlug === 'pro') return Number(bracket.pro_price);
-  if (tierSlug === 'premium') return Number(bracket.premium_price);
-  return Number(bracket.basic_price);
-}
-
+// The same lines the first send built (src/lib/proposalPricing.ts): one shared
+// builder, fed the stored selection and the package's add-on tokens, so a
+// retried email lists every add-on (and the "Included in <package>" lines) the
+// way the first send, the proposal page and the PDF do.
 async function proposalLineItems(proposal, db) {
-  const brackets = await db.request('brackets', {
+  const rows = await db.request('brackets', {
     params: {
       select: 'service_slug,ordinal,label,basic_price,pro_price,premium_price',
       order: 'service_slug.asc,ordinal.asc',
     },
   });
-  const selected = proposal.brackets ?? {};
-  const lines = [];
-  for (const slug of proposal.services ?? []) {
-    const ordinal = selected[slug];
-    if (ordinal === undefined || ordinal === 'enterprise') continue;
-    const bracket = brackets.find(
-      (candidate) =>
-        candidate.service_slug === slug &&
-        Number(candidate.ordinal) === Number(ordinal),
-    );
-    if (!bracket) {
+  const brackets = rows.map((row) => ({
+    ...row,
+    ordinal: Number(row.ordinal),
+    basic_price: Number(row.basic_price),
+    pro_price: Number(row.pro_price),
+    premium_price: Number(row.premium_price),
+  }));
+  const services = proposal.services ?? [];
+  const stored = proposal.brackets ?? {};
+  const selected = {};
+  for (const slug of services) {
+    const ordinal = stored[slug];
+    if (ordinal === undefined) continue;
+    if (ordinal === 'enterprise') {
+      selected[slug] = ordinal;
+      continue;
+    }
+    if (
+      !brackets.some(
+        (candidate) =>
+          candidate.service_slug === slug &&
+          candidate.ordinal === Number(ordinal),
+      )
+    ) {
       throw new PermanentDeliveryError(
         'pricing_source_missing',
         'A proposal bracket is no longer available.',
       );
     }
-    lines.push({
-      name: String(slug)
-        .split(/[-_]/)
-        .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
-        .join(' '),
-      label: bracket.label ?? null,
-      price: priceFor(bracket, proposal.tier_slug),
-    });
+    selected[slug] = Number(ordinal);
   }
-  for (const addon of proposal.addons ?? []) {
-    if (addon === 'dext')
-      lines.push({ name: 'Dext Software Access', label: null, price: 375 });
-  }
-  return lines;
+  const tokens = Array.isArray(proposal.addons)
+    ? proposal.addons.filter((token) => typeof token === 'string')
+    : [];
+  return buildProposalLineItems(
+    services,
+    selected,
+    proposal.tier_slug,
+    addonsForTier(tokens, proposal.tier_slug),
+    brackets,
+  );
 }
 
 // ── Signed-proposal fulfilment ──────────────────────────────────────────────
@@ -760,7 +762,7 @@ async function buildProposalMessage(row, db, marketingUrl, options = {}) {
     const common = {
       refNumber: proposal.ref_number,
       businessName: proposal.business_name,
-      tierName: tierName(proposal.tier_slug),
+      tierName: tierDisplayName(proposal.tier_slug),
       lineItems,
       totalChargeZAR: Number(proposal.total_charge_zar),
       proposalUrl,

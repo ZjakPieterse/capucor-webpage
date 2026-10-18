@@ -129,8 +129,10 @@ jobs:
             echo "::group::Pass $pass ($(date -u +%H:%M) UTC)"
             # A failed pass ends the run at once, so it goes red and GitHub
             # emails now, not hours later; the next ten-minute trigger GitHub
-            # honours starts a fresh loop.
-            if ! timeout "$PASS_TIMEOUT" node scripts/reconcile-deliveries.mjs; then
+            # honours starts a fresh loop. The script imports two .ts files
+            # (Node strips the types); the flag only silences the notice that
+            # package.json declares no module type.
+            if ! timeout "$PASS_TIMEOUT" node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/reconcile-deliveries.mjs; then
               echo "::endgroup::"
               echo "::error::Pass $pass failed or timed out; ending this run so the failure is reported now."
               failed=1
