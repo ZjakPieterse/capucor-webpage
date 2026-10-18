@@ -97,12 +97,13 @@ export const PREMIUM_REQUEST_COPY = {
   priceLabel: 'Estimated monthly charge, from',
 } as const;
 
-// Payroll on its own (Zjak, 2026-10-18): the review lists what payroll
-// includes, from the /payroll page's items (config/servicePages.ts), so the
-// two never differ.
-export const PAYROLL_ONLY_REVIEW_COPY = {
-  includedHeading: 'What your payroll subscription includes',
-} as const;
+// Every review lists what the package includes under the price summary, in
+// the comparison table's short wording (Zjak, 2026-10-18); the items come from
+// reviewInclusions in lib/schedule.ts. `packageName` is the display name
+// (Basic, Pro, Premium, Payroll).
+export function reviewInclusionsHeading(packageName: string): string {
+  return `What your ${packageName} subscription includes`;
+}
 
 // No to accounting and No to payroll: nothing the calculator prices, so it
 // offers a conversation instead (Zjak, 2026-10-18).

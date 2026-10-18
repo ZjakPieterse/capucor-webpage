@@ -7,7 +7,14 @@
  * come from config/serviceScope.ts. One source of truth, no re-typed lists.
  */
 
-import { PAYROLL_ONLY_TIER, TIER_HIGHLIGHTS, scheduleCommonItemsFor } from '@/config/tiers';
+import {
+  CORE_SERVICES,
+  PAYROLL_ONLY_TIER,
+  TIER_HIGHLIGHTS,
+  scheduleCommonItemsFor,
+  tierDisplayName,
+} from '@/config/tiers';
+import { reviewInclusionsHeading } from '@/config/calculatorCopy';
 import { PAYROLL } from '@/config/servicePages';
 import { formatBandLabel, notVatRegistered } from '@/lib/pricing';
 import {
@@ -39,21 +46,30 @@ const SERVICE_TIED_TEXTS = new Set(
  * wide items first (only the genuinely universal ones), then the tier highlights
  * that apply to a selected service, accumulating up to the chosen tier.
  * `addons` is the proposal's add-on tokens: a not-VAT-registered scope flag
- * there drops VAT201 from the core items.
+ * there drops VAT201 from the core items. `wording` picks the signed
+ * schedule's text or the comparison table's short text; the card walks only
+ * the chosen package's own list (each lists its package in full), so its order
+ * matches that package's comparison card, with payroll last.
  */
-export function cumulativeInclusions(
+function inclusions(
   selectedServices: string[],
   tierSlug: string,
-  addons: string[] = [],
+  addons: string[],
+  wording: 'schedule' | 'card',
 ): string[] {
   // The payroll-only package (2026-10-18) has no core services: its schedule
   // is the /payroll page's four items, as the calculator review lists them.
   if (tierSlug === PAYROLL_ONLY_TIER) return PAYROLL.items.map((i) => i.title);
 
   const sel = new Set(selectedServices);
+  const vatRegistered = !notVatRegistered(addons);
   const out: string[] = [];
 
-  for (const item of scheduleCommonItemsFor(!notVatRegistered(addons))) {
+  const core =
+    wording === 'schedule'
+      ? scheduleCommonItemsFor(vatRegistered)
+      : CORE_SERVICES.filter((item) => vatRegistered || !item.vatOnly);
+  for (const item of core) {
     if (!SERVICE_TIED_TEXTS.has(item.text)) out.push(item.text);
   }
 
@@ -63,11 +79,11 @@ export function cumulativeInclusions(
   // "Processing Rhythm: Daily" once, not monthly, weekly and daily.
   const maxRank = tierRank(tierSlug);
   const groupAt = new Map<string, number>();
-  for (const tier of TIER_ORDER) {
-    if (tierRank(tier) > maxRank) break;
+  const tiers = wording === 'card' ? [tierSlug] : TIER_ORDER.filter((t) => tierRank(t) <= maxRank);
+  for (const tier of tiers) {
     for (const h of TIER_HIGHLIGHTS[tier] ?? []) {
       if (h.summary || !h.services.some((s) => sel.has(s))) continue;
-      const text = h.scheduleText ?? h.text;
+      const text = wording === 'schedule' ? (h.scheduleText ?? h.text) : h.text;
       if (h.group && groupAt.has(h.group)) {
         out[groupAt.get(h.group)!] = text;
         continue;
@@ -78,6 +94,31 @@ export function cumulativeInclusions(
   }
 
   return [...new Set(out)];
+}
+
+/** The signed Schedule of Services' "what's included" lines, in contract wording. */
+export function cumulativeInclusions(
+  selectedServices: string[],
+  tierSlug: string,
+  addons: string[] = [],
+): string[] {
+  return inclusions(selectedServices, tierSlug, addons, 'schedule');
+}
+
+/**
+ * The calculator review's "What your <package> subscription includes" card on
+ * every package: the signed schedule's items in the comparison table's short
+ * wording (Zjak, 2026-10-18). Add-ons are not listed; they are price lines.
+ */
+export function reviewInclusions(
+  selectedServices: string[],
+  tierSlug: string,
+  addons: string[] = [],
+): { heading: string; items: string[] } {
+  return {
+    heading: reviewInclusionsHeading(tierDisplayName(tierSlug)),
+    items: inclusions(selectedServices, tierSlug, addons, 'card'),
+  };
 }
 
 /**

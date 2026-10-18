@@ -20,7 +20,7 @@ interface ReviewStepProps {
   selectedBrackets: Record<string, BracketValue>;
   selectedTier: string;
   selectedAddons: string[];
-  /** What the package includes, listed under the summary (the payroll-only review). */
+  /** What the package includes, listed under the summary (reviewInclusions). */
   inclusions?: { heading: string; items: string[] };
   onBack: () => void;
   onAction: (action: ProposalAction) => void;
