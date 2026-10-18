@@ -35,7 +35,7 @@ const STORY: Line[] = [
 
 const CREDENTIALS: Line[] = [
   { text: "AGA(SA), a SAICA designation" },
-  { text: "Xero-certified advisor", confirm: true },
+  { text: "Xero Gold Partner", confirm: true },
   { text: "More than ten years in practice", confirm: true },
   { text: "Based in Centurion, Gauteng" },
 ];
@@ -59,7 +59,7 @@ export function FounderTeam() {
         <ScrollReveal>
           <SectionHeading
             title="Who runs your month"
-            subtitle="A small practice in Centurion, led by a SAICA-designated accountant. You deal with the same people every month."
+            subtitle="A small practice in Centurion, led by a SAICA-designated accountant. You hear from the same accountant every month."
           />
         </ScrollReveal>
 
