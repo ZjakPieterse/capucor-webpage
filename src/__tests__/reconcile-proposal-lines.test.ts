@@ -114,8 +114,8 @@ describe('a retried proposal email matches the first send', () => {
     const firstOwner = sendEmailMock.mock.calls.find((c) => c[0].eventType === 'proposal.created_owner')![0].message;
     const stored = { id: PROPOSAL_ID, ref_number: REF, ...proposalInsert.mock.calls[0]![0] };
 
-    const retriedClient = await retry(stored, 'proposal.created_client', 'pat@example.com');
-    const retriedOwner = await retry(stored, 'proposal.created_owner', OWNER);
+    const retriedClient = (await retry(stored, 'proposal.created_client', 'pat@example.com')) as { html: string };
+    const retriedOwner = (await retry(stored, 'proposal.created_owner', OWNER)) as { text: string };
 
     expect(retriedClient).toEqual(firstClient);
     expect(retriedOwner).toEqual(firstOwner);
@@ -154,7 +154,7 @@ describe('a retried proposal email matches the first send', () => {
       sent_at: '2026-10-01T08:00:00+00:00',
     };
 
-    const retried = await retry(stored, 'proposal.created_client', 'pat@example.com');
+    const retried = (await retry(stored, 'proposal.created_client', 'pat@example.com')) as { html: string };
 
     expect(retried.html).toBe(
       renderCreatedProposalClientEmail({
