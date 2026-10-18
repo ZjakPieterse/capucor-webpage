@@ -49,14 +49,17 @@ const services = [
   { label: "Accounting", href: "/accounting" },
   { label: "Bookkeeping", href: "/bookkeeping" },
   { label: "Payroll", href: "/payroll" },
-  { label: "Pricing", href: "/pricing" },
 ];
 
 const company = [
   { label: "How it works", href: "/#how-it-works" },
   { label: "Free resources", href: "/resources" },
   { label: "Contact", href: "/contact" },
-  { label: "Engagement terms", href: "/terms/engagement" },
+];
+
+const credentials = [
+  { label: "Xero Gold Partner", href: "https://www.xero.com/" },
+  { label: "SAICA Member", href: "https://www.saica.org.za/" },
 ];
 
 export function Footer() {
@@ -84,9 +87,6 @@ export function Footer() {
                 style={{ width: "auto" }}
               />
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              {siteConfig.tagline}
-            </p>
             <div className="flex gap-1">
               <a
                 href={siteConfig.links.facebook}
@@ -155,30 +155,28 @@ export function Footer() {
           {/* Credentials */}
           <div className="col-span-2 md:col-span-1 space-y-3">
             <p className="text-sm font-medium">Credentials</p>
-            <div className="flex flex-col items-start gap-2">
-              <a
-                href="https://www.xero.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-primary"
-              >
-                Xero Gold Partner
-              </a>
-              <a
-                href="https://www.saica.org.za/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-primary"
-              >
-                SAICA Member
-              </a>
-              <Link
-                href="/privacy"
-                className="inline-block rounded-lg border border-primary/25 bg-primary/[0.06] px-2.5 py-1 text-xs font-medium text-primary/90 transition-colors hover:border-primary/40 hover:bg-primary/[0.12] hover:text-primary"
-              >
-                POPIA Compliant
-              </Link>
-            </div>
+            <ul className="space-y-2">
+              {credentials.map((item) => (
+                <li key={item.label}>
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  POPIA Compliant
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
 
@@ -195,6 +193,12 @@ export function Footer() {
               className="hover:text-foreground transition-colors"
             >
               Privacy policy
+            </Link>
+            <Link
+              href="/terms/engagement"
+              className="hover:text-foreground transition-colors"
+            >
+              Terms of use
             </Link>
           </div>
         </div>

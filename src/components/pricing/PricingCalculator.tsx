@@ -177,6 +177,13 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     advance();
   };
 
+  // Choosing a package moves straight on to the add-ons too (Zjak,
+  // 2026-10-18); Continue stays for a visitor who comes back to this step.
+  const chooseTierAndNext = (slug: string) => {
+    setTier(slug);
+    advance();
+  };
+
   const { step, selectedBrackets, answers } = state;
   // The package the selection is priced on: the visitor's choice, or the
   // payroll-only package on that path (no package step there).
@@ -254,7 +261,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             pricedAddons={pricedAddons}
             answers={answers}
             onEditAnswer={editAnswer}
-            onTierSelect={setTier}
+            onTierSelect={chooseTierAndNext}
             onBack={back}
             onNext={next}
             testimonial={spotlightTestimonial}
