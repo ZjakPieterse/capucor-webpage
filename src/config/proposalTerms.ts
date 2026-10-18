@@ -22,6 +22,9 @@ export const RESPONSIBILITIES_OURS: string[] = [
   'Keep your books reconciled and give you the reports listed in your package.',
   'Tell you in good time about payments that fall due, and flag anything that needs a decision.',
   'Reply to your emails to zjak@capucor.com within 2 business days (we work Monday to Friday, 08:00 to 17:00), and set up a call by appointment when a question needs one.',
+  // Zjak, 2026-10-18: the 2-business-day and Premium same-day reply times are
+  // aims kept in the normal course, with exceptions both ways.
+  'Reply times are our service standards, not guarantees. We meet them in the normal course and tell you when something will take longer.',
   'Act with reasonable care and skill, in line with the SAICA code we work under.',
 ];
 
