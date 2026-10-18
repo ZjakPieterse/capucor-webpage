@@ -22,7 +22,10 @@ describe('cumulativeInclusions', () => {
   it('accumulates up the packages: Premium carries Pro and Basic items', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
     expect(premium.filter((t) => t === 'Supplier Processing & Review')).toHaveLength(1);
-    expect(premium).toContain('On-call Partner Support');
+    expect(premium.filter((t) => t.startsWith('Direct Partner Access'))).toEqual([
+      'Direct Partner Access (a direct line to your partner, Zjak Pieterse, by WhatsApp, phone or email, Monday to Friday 08:00 to 17:00; messages before 15:00 get a reply the same business day and later ones by 12:00 the next business day, with the answer or when to expect it; a call before big decisions such as hiring, a lease, a vehicle, a loan, a new entity or a large contract; urgent requests such as bank or funder letters, tax clearance and SARS letters handled first)',
+    ]);
+    expect(cumulativeInclusions(CORE, 'pro').some((t) => t.startsWith('Direct Partner Access'))).toBe(false);
     expect(premium).toContain('Monthly Tax Strategy & Planning');
     expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier Processing & Review');
   });

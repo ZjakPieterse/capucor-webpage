@@ -174,7 +174,7 @@ describe('addonsForTier', () => {
 
   it('no longer lists Dext from Pro up (withdrawn from view, tweaks round 1 2026-10-06)', () => {
     expect(addonsForTier([], 'pro')).toEqual([]);
-    expect(addonsForTier(['dext'], 'premium')).toEqual([]);
+    expect(addonsForTier(['dext'], 'premium')).not.toContain('dext');
   });
 
   it('keeps a Dext token already on a Basic proposal, priced as sent', () => {
@@ -283,9 +283,9 @@ describe('add-on tokens', () => {
 });
 
 describe('new add-on figures', () => {
-  it('prices WhatsApp at R750 and Category Tracking at R1 200 a month on every package', () => {
+  it('prices WhatsApp at R750 (included in Premium) and Category Tracking at R1 200 a month on every package', () => {
     for (const tier of ['basic', 'pro', 'premium']) {
-      expect(addonTotal(['whatsapp-support'], tier)).toBe(750);
+      expect(addonTotal(['whatsapp-support'], tier)).toBe(tier === 'premium' ? 0 : 750);
       expect(addonTotal(['category-tracking'], tier)).toBe(1200);
     }
   });
@@ -347,7 +347,7 @@ describe('retired Xero invoicing charge (proposals sent before 2026-10-06)', () 
 
   it('is never added by the package alone', () => {
     expect(addonsForTier([], 'basic')).toEqual([]);
-    expect(addonsForTier([], 'premium')).toEqual([]);
+    expect(addonsForTier([], 'premium')).not.toContain('xero-invoicing');
   });
 });
 

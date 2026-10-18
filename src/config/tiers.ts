@@ -18,6 +18,8 @@ export interface TierHighlightItem {
   group?: 'rhythm' | 'reports' | 'review';
   /** A card summary line ("Core Services Included"), not a schedule item. */
   summary?: boolean;
+  /** The signed schedule's wording where the contract must say more than the card line. */
+  scheduleText?: string;
 }
 
 // Each card lists its package in full, starting with the core services and the
@@ -117,10 +119,18 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A monthly planning cycle covering your tax position, cash flow and the decisions ahead.',
     },
+    // Direct Partner Access (decision 2026-10-18, terms confirmed by Zjak the
+    // same day): Zjak personally, a reply the same business day for messages
+    // before 15:00, no turnaround promised for urgent requests and no
+    // after-hours promise. The cap of 8 places stays internal; the site says
+    // "Limited places".
     {
-      text: 'On-call Partner Support',
+      text: 'Direct Partner Access',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A direct line to your partner for questions as they come up.',
+      tooltip:
+        "Your partner's direct line by WhatsApp or phone, Monday to Friday: message before 15:00 for a reply the same business day. A call before any big decision, and urgent requests handled first. Limited places.",
+      scheduleText:
+        'Direct Partner Access (a direct line to your partner, Zjak Pieterse, by WhatsApp, phone or email, Monday to Friday 08:00 to 17:00; messages before 15:00 get a reply the same business day and later ones by 12:00 the next business day, with the answer or when to expect it; a call before big decisions such as hiring, a lease, a vehicle, a loan, a new entity or a large contract; urgent requests such as bank or funder letters, tax clearance and SARS letters handled first)',
     },
     PAYROLL_SERVICES,
   ],
@@ -184,7 +194,7 @@ export const CORE_SERVICES: PackageCommonItem[] = [
     scheduleText:
       'Year-round support (email to zjak@capucor.com, Monday to Friday 08:00 to 17:00, reply within 2 business days; calls by appointment)',
     tooltip:
-      "Email zjak@capucor.com all year round. We work Monday to Friday, 08:00 to 17:00, and reply within 2 business days. If a question needs a conversation, we'll book a call. WhatsApp support is an add-on.",
+      "Email zjak@capucor.com all year round. We work Monday to Friday, 08:00 to 17:00, and reply within 2 business days. If a question needs a conversation, we'll book a call. WhatsApp support is an add-on, included in Premium.",
   },
   {
     text: 'Annual financial statements',
@@ -282,6 +292,8 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'WhatsApp Support',
     priceZAR: 750,
     description: 'A dedicated WhatsApp channel to your accountant and team for simpler questions and support.',
+    // Premium's Direct Partner Access includes WhatsApp (Zjak, 2026-10-18).
+    includedFromTier: 'premium',
   },
   {
     slug: 'category-tracking',

@@ -62,12 +62,13 @@ export function cumulativeInclusions(
     if (tierRank(tier) > maxRank) break;
     for (const h of TIER_HIGHLIGHTS[tier] ?? []) {
       if (h.summary || !h.services.some((s) => sel.has(s))) continue;
+      const text = h.scheduleText ?? h.text;
       if (h.group && groupAt.has(h.group)) {
-        out[groupAt.get(h.group)!] = h.text;
+        out[groupAt.get(h.group)!] = text;
         continue;
       }
       if (h.group) groupAt.set(h.group, out.length);
-      out.push(h.text);
+      out.push(text);
     }
   }
 

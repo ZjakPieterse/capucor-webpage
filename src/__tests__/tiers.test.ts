@@ -135,7 +135,7 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
       'Weekly Performance Review',
       'Supplier Processing & Review',
       'Monthly Tax Strategy & Planning',
-      'On-call Partner Support',
+      'Direct Partner Access',
       'Payroll Services',
     ]);
   });
@@ -144,9 +144,22 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text).join(' ')).not.toMatch(/supplier/i);
   });
 
-  it('on-call partner support makes no reply-time promise (decision 2026-10-08)', () => {
-    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'On-call Partner Support');
-    expect(item!.tooltip).not.toMatch(/same business day|within|hour/i);
+  it('Direct Partner Access: same business day before 15:00, weekdays only, never 24/7 (decision 2026-10-18)', () => {
+    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'Direct Partner Access')!;
+    for (const copy of [item.tooltip, item.scheduleText!]) {
+      expect(copy).toMatch(/Monday to Friday/);
+      expect(copy).toMatch(/before 15:00/);
+      expect(copy).toMatch(/same business day/);
+      expect(copy).toMatch(/WhatsApp/);
+      expect(copy).not.toMatch(/24\/7|24 hours|round the clock|any ?time|after.hours|weekend|evening|on-call/i);
+      // Urgent requests are handled first, with no turnaround promised.
+      expect(copy).toMatch(/urgent requests[^.;]*handled first/i);
+      expect(copy).not.toMatch(/urgent[^.;]*within/i);
+      // The cap of 8 places stays internal.
+      expect(copy).not.toMatch(/\b8\b|eight/i);
+    }
+    expect(item.tooltip).toMatch(/Limited places\.$/);
+    expect(item.scheduleText).toMatch(/by 12:00 the next business day/);
   });
 
   it('one Payroll Services line, the same on every card, covering the statutory basics only', () => {
@@ -344,7 +357,7 @@ describe('TierComparison accumulation', () => {
 
   it('marks premium items as covered in premium only', () => {
     expectCoverage(
-      ['Daily Processing', 'Weekly Performance Review', 'Monthly Tax Strategy & Planning', 'On-call Partner Support'],
+      ['Daily Processing', 'Weekly Performance Review', 'Monthly Tax Strategy & Planning', 'Direct Partner Access'],
       false,
       false,
     );
