@@ -196,8 +196,8 @@ export const PAYROLL_ONLY_TERMS: TermsBlock = {
   id: 'payroll-only',
   heading: 'How your payroll works',
   paragraphs: [
-    'The Payroll package is a monthly payroll. We run it in SimplePay, give you payslips, file your PAYE and UIF on the EMP201 every month, do your EMP501 reconciliations and IRP5 certificates, and look after your COIDA annual compliance.',
-    "Each month we ask for your changes before the cut-off. If we don't hear from you by then, we run payroll on last month's information. Changes that reach us after the cut-off go into the next month's run.",
+    'The Payroll package is a monthly payroll. We run it in SimplePay, give you payslips, file your PAYE, UIF and SDL on the EMP201 every month, do your EMP501 reconciliations and IRP5 certificates, and look after your COIDA annual compliance.',
+    "Each month we ask for your changes before the cut-off. If we don't hear from you by then, we run payroll on last month's information. Changes that reach us after the cut-off normally go into the next month's run.",
     "Before pay day we send you the month's payslips and payrun report. You pay your employees, and your PAYE, UIF and SDL to SARS, yourself. We make no payments for you and hold no access to your bank account for salaries.",
     'We act for you, the employer. If one of your employees contacts us about their pay, we refer them to you.',
     'Weekly or fortnightly pay runs, employer registrations, employment contracts and CCMA or labour disputes are not part of this package.',
