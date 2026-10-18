@@ -20,6 +20,7 @@ import type { Bracket, CalculatorAnswers, CalculatorStep, Service, Tier } from '
 
 const noop = () => {};
 const answers = (over: Partial<CalculatorAnswers> = {}): CalculatorAnswers => ({
+  needsAccounting: null,
   vatRegistered: null,
   needsPayroll: null,
   ...over,
@@ -114,17 +115,24 @@ describe('the calculator wires focus and the live region', () => {
 describe('stepPosition and the announcement', () => {
   const at = (step: CalculatorStep, a = answers()) => stepPosition(step, { answers: a });
 
-  it('counts the steps along the visitor path', () => {
-    expect(at('revenue')).toEqual({ index: 1, total: 7 });
-    expect(at('vat')).toEqual({ index: 3, total: 7 });
-    expect(at('review')).toEqual({ index: 7, total: 7 });
-    expect(stepAnnouncement(3, 7)).toBe('Step 3 of 7');
+  it('counts the steps along the visitor path, from the accounting question', () => {
+    expect(at('accounting')).toEqual({ index: 1, total: 8 });
+    expect(at('revenue')).toEqual({ index: 2, total: 8 });
+    expect(at('vat')).toEqual({ index: 4, total: 8 });
+    expect(at('review')).toEqual({ index: 8, total: 8 });
+    expect(stepAnnouncement(4, 8)).toBe('Step 4 of 8');
   });
 
   it('a payroll Yes adds the headcount screen; the review step stays last', () => {
     const yes = answers({ needsPayroll: true });
-    expect(at('employees', yes)).toEqual({ index: 5, total: 8 });
-    expect(at('package', yes)).toEqual({ index: 6, total: 8 });
-    expect(at('review', yes)).toEqual({ index: 8, total: 8 });
+    expect(at('employees', yes)).toEqual({ index: 6, total: 9 });
+    expect(at('package', yes)).toEqual({ index: 7, total: 9 });
+    expect(at('review', yes)).toEqual({ index: 9, total: 9 });
+  });
+
+  it('payroll only is four screens: accounting, payroll, headcount, review', () => {
+    const only = answers({ needsAccounting: false, needsPayroll: true });
+    expect(at('payroll', only)).toEqual({ index: 2, total: 4 });
+    expect(at('review', only)).toEqual({ index: 4, total: 4 });
   });
 });

@@ -628,4 +628,70 @@ describe('POST /api/proposals', () => {
     expect(res.status).toBe(422);
     expect(leadInsert).not.toHaveBeenCalled();
   });
+
+  // ── Payroll on its own (Zjak, 2026-10-18) ──────────────────────────────────
+  const payrollOnlyBody = {
+    ...validBody,
+    services: ['payroll'],
+    brackets: { payroll: 1 },
+    tierSlug: 'payroll-only',
+    intent: 'accept' as const,
+  };
+
+  it('28. a payroll-only proposal is created at the payroll Basic price, with no add-ons', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals', {
+        ...payrollOnlyBody,
+        // A stale add-on or VAT answer from the package path is not carried.
+        addons: ['whatsapp-support'],
+        answers: { vatRegistered: false },
+        brackets: { payroll: 1, accounting: 1, bookkeeping: 0 },
+      }),
+    );
+    const leadConfig = (leadInsert.mock.calls[0]![0] as { config: Record<string, unknown> }).config;
+    expect(leadConfig.brackets).toEqual({ payroll: 1 });
+    expect(leadConfig).not.toHaveProperty('answers');
+    expect(res.status).toBe(200);
+    expect((await res.json()).proposalUrl).toMatch(/\/proposal\//);
+    const propPayload = proposalInsert.mock.calls[0]![0] as Record<string, unknown>;
+    expect(propPayload).toMatchObject({
+      services: ['payroll'],
+      brackets: { payroll: 1 },
+      tier_slug: 'payroll-only',
+      addons: [],
+      monthly_total_zar: 450,
+      total_charge_zar: 450,
+    });
+    const clientHtml = sendEmailMock.mock.calls[0]![0].message.html as string;
+    const ownerText = sendEmailMock.mock.calls[1]![0].message.text as string;
+    expect(clientHtml).toContain('your Payroll package');
+    expect(clientHtml).not.toContain('Monthly accounting');
+    expect(ownerText).toContain('Package: Payroll');
+    expect(ownerText).toContain('Payroll (1 employee): R 450');
+  });
+
+  it.each([
+    [['accounting', 'bookkeeping', 'payroll'], { accounting: 1, bookkeeping: 0, payroll: 1 }],
+    [['payroll'], {}],
+    [['accounting'], { accounting: 1 }],
+  ])('28b. the payroll-only package with anything but payroll and a headcount is refused (%j)', async (services, brackets) => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', { ...payrollOnlyBody, services, brackets }));
+    expect(res.status).toBe(422);
+    expect((await res.json()).field).toBe('services');
+    expect(leadInsert).not.toHaveBeenCalled();
+    expect(proposalInsert).not.toHaveBeenCalled();
+  });
+
+  it('28c. a package the calculator does not offer is refused with 422', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', { ...validBody, tierSlug: 'gold' }));
+    expect(res.status).toBe(422);
+    expect((await res.json()).field).toBe('tierSlug');
+    expect(leadInsert).not.toHaveBeenCalled();
+  });
+
+  it('28d. a payroll-only request is refused: it is self-serve, not by application', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals', { ...payrollOnlyBody, intent: 'request' }));
+    expect(res.status).toBe(422);
+    expect(leadInsert).not.toHaveBeenCalled();
+  });
 });

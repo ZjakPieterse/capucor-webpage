@@ -20,15 +20,33 @@ import {
   buildAddonLineItems,
   formatBandLabel,
   monthlyTotal,
+  payrollOnlyError,
   resolveAddons,
 } from '@/lib/pricing';
 import { priceProposalSelection, type ProposalSelectionInput } from '@/lib/proposalPricing';
 import * as calculatorFlow from '@/lib/calculatorFlow';
 import { deriveServices, effectiveAddons } from '@/lib/calculatorFlow';
 import * as calculatorCopy from '@/config/calculatorCopy';
-import { PRICING_ADDONS, TIERS_BY_APPLICATION, TIER_ORDER, addonIncludedInTier } from '@/config/tiers';
+import {
+  PAYROLL_ONLY_TIER,
+  PRICING_ADDONS,
+  PROPOSAL_TIER_SLUGS,
+  TIERS_BY_APPLICATION,
+  TIER_ORDER,
+  addonIncludedInTier,
+  tierDisplayName,
+} from '@/config/tiers';
+import { PAYROLL } from '@/config/servicePages';
+import { cumulativeInclusions } from '@/lib/schedule';
 import { CATCHUP_FREE_MONTHS } from '@/config/serviceScope';
-import { FEES_NOTES, PROPOSAL_TERMS } from '@/config/proposalTerms';
+import {
+  FEES_NOTES,
+  PROPOSAL_TERMS,
+  RESPONSIBILITIES_OURS,
+  RESPONSIBILITIES_YOURS,
+  responsibilitiesFor,
+} from '@/config/proposalTerms';
+import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
 import { formatZAR } from '@/lib/utils';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
@@ -144,8 +162,8 @@ describe('core service (calculator-v2 package structure 1; review answers 2)', (
 describe('payroll on and off (package structure 3; pricing figures 2)', () => {
   it('a payroll No drops a remembered headcount, so it is not priced', () => {
     const brackets = { ...CORE, payroll: 1005 };
-    const no = [...deriveServices(brackets, { needsPayroll: false })];
-    const yes = [...deriveServices(brackets, { needsPayroll: true })];
+    const no = [...deriveServices(brackets, { needsAccounting: true, needsPayroll: false })];
+    const yes = [...deriveServices(brackets, { needsAccounting: true, needsPayroll: true })];
     expect(no).not.toContain('payroll');
     expect(monthlyTotal(yes, brackets, 'basic', ROWS) - monthlyTotal(no, brackets, 'basic', ROWS)).toBe(750);
   });
@@ -380,5 +398,96 @@ describe('catch-up (pricing figures 4)', () => {
     expect(CATCHUP_FREE_MONTHS).toBe(3);
     expect(FEES_NOTES.some((n) => n.includes(phrase))).toBe(true);
     expect(JSON.stringify(PROPOSAL_TERMS)).toContain(phrase);
+  });
+});
+
+// ── Payroll on its own (Zjak, 2026-10-18) ──────────────────────────────────
+//
+// Supersedes package structure 2 ("payroll-only buyers go to a fit call") for
+// payroll: "Do you need monthly accounting services?" No prices payroll alone
+// at the payroll bracket price (the Basic column, flat across packages), with
+// no add-ons, and the client gets a proposal to sign online like any package.
+
+describe('payroll-only package (2026-10-18)', () => {
+  const PAYROLL_ONLY = { tierSlug: PAYROLL_ONLY_TIER, services: ['payroll'], brackets: { payroll: 1005 } };
+
+  it('prices payroll alone at its Basic price, as one "Payroll" line', async () => {
+    const d = await price(PAYROLL_ONLY);
+    expect(d.lineItems).toEqual([{ slug: 'payroll', name: 'Payroll', label: '5 employees', price: 750 }]);
+    expect(d.monthlyTotalZAR).toBe(750);
+    expect(d.addonSlugs).toEqual([]);
+  });
+
+  it('costs exactly what payroll adds to any package', async () => {
+    const only = (await price(PAYROLL_ONLY)).monthlyTotalZAR;
+    for (const tier of TIER_ORDER) {
+      const core = (await price({ tierSlug: tier })).monthlyTotalZAR;
+      const all = (await price({ tierSlug: tier, services: ['accounting', 'bookkeeping', 'payroll'], brackets: { ...CORE, payroll: 1005 } })).monthlyTotalZAR;
+      expect(all - core).toBe(only);
+    }
+  });
+
+  it('a retired payroll row prices at its Basic column, never Pro or Premium', async () => {
+    const d = await price({ ...PAYROLL_ONLY, brackets: { payroll: 5 } });
+    expect(d.monthlyTotalZAR).toBe(750);
+  });
+
+  it('carries no add-ons and no VAT flag; Premium-only inclusions do not apply', () => {
+    expect(effectiveAddons(['whatsapp-support', 'personal-tax:2'], { needsAccounting: false, vatRegistered: false })).toEqual([]);
+    expect(addonsForTier([], PAYROLL_ONLY_TIER)).toEqual([]);
+    for (const addon of PRICING_ADDONS) expect(addonIncludedInTier(addon, PAYROLL_ONLY_TIER)).toBe(false);
+  });
+
+  it('is self-serve, shown as the "Payroll" package, and only payroll with a headcount qualifies', () => {
+    expect(TIERS_BY_APPLICATION).not.toContain(PAYROLL_ONLY_TIER);
+    expect(PROPOSAL_TIER_SLUGS).toEqual([...TIER_ORDER, PAYROLL_ONLY_TIER]);
+    expect(tierDisplayName(PAYROLL_ONLY_TIER)).toBe('Payroll');
+    expect(payrollOnlyError(['payroll'], { payroll: 1005 })).toBeNull();
+    expect(payrollOnlyError(['payroll'], {})).not.toBeNull();
+    expect(payrollOnlyError(['accounting', 'bookkeeping', 'payroll'], { ...CORE, payroll: 1005 })).not.toBeNull();
+  });
+
+  it('No to accounting drops remembered core bands from the priced services', () => {
+    const remembered = { ...CORE, payroll: 1005 };
+    expect([...deriveServices(remembered, { needsAccounting: false, needsPayroll: true })]).toEqual(['payroll']);
+  });
+
+  it('the review and the signed schedule list the /payroll page items, and only those', () => {
+    const items = PAYROLL.items.map((i) => i.title);
+    expect(items).toEqual([
+      'Payroll processing and payslips',
+      'PAYE and UIF filed every month',
+      'EMP501 recons and certificates',
+      'COIDA annual compliance',
+    ]);
+    expect(cumulativeInclusions(['payroll'], PAYROLL_ONLY_TIER, [])).toEqual(items);
+  });
+
+  it('the calculator asks about accounting first', () => {
+    expect(calculatorFlow.FIRST_STEP).toBe('accounting');
+    expect(calculatorCopy.QUESTION_COPY.accounting.title).toBe('Do you need monthly accounting services?');
+  });
+
+  it('the signed proposal speaks of payroll, not books, reports or Xero, and keeps the shared service standards', () => {
+    const { ours, yours } = responsibilitiesFor(PAYROLL_ONLY_TIER);
+    const all = [...ours, ...yours].join(' ');
+    expect(all).not.toMatch(/books|reports|Xero|bank statements|CIPC/);
+    expect(yours.join(' ')).toContain('by the agreed cut-off');
+    expect(yours.join(' ')).toMatch(/new starter/);
+    expect(ours).toEqual(expect.arrayContaining(RESPONSIBILITIES_OURS.filter((t) => /zjak@capucor.com|service standards|SAICA/.test(t))));
+    expect(responsibilitiesFor('pro')).toEqual({ ours: RESPONSIBILITIES_OURS, yours: RESPONSIBILITIES_YOURS });
+  });
+
+  it('the payroll-only PDF carries the payroll responsibilities and the same 3-month catch-up', () => {
+    const base = {
+      businessName: 'Pat Co', firstName: 'Pat', lastName: 'P', tierName: 'Payroll', refNumber: null, version: 1,
+      sentAt: null, expiresAt: null, firstDebitFrom: null, signedAt: null, signatureName: null, signatureMethod: null,
+      signatureImage: null, signatureIp: null, inclusions: [], fairUsage: [], outOfScope: [], lineItems: [], totalChargeZAR: 750,
+    };
+    const html = renderProposalDocumentHtml({ ...base, tierSlug: PAYROLL_ONLY_TIER });
+    expect(html).toContain('by the agreed cut-off');
+    expect(html).not.toContain('Keep your books reconciled');
+    expect(html).toContain('3 months before you accept');
+    expect(renderProposalDocumentHtml(base)).toContain('Keep your books reconciled');
   });
 });

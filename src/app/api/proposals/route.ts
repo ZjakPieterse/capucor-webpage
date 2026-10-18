@@ -38,9 +38,9 @@ import { priceProposalSelection } from '@/lib/proposalPricing';
 import { generateOpaqueToken } from '@/lib/token';
 import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
-import { TIERS_BY_APPLICATION, tierDisplayName } from '@/config/tiers';
+import { PAYROLL_ONLY_TIER, PROPOSAL_TIER_SLUGS, TIERS_BY_APPLICATION, tierDisplayName } from '@/config/tiers';
 import { effectiveAddons } from '@/lib/calculatorFlow';
-import { coreServiceError, parseAddonToken } from '@/lib/pricing';
+import { coreServiceError, parseAddonToken, payrollOnlyError } from '@/lib/pricing';
 import { formatZAR } from '@/lib/utils';
 import { sendEmail } from '@/lib/email/sendEmail';
 import {
@@ -91,7 +91,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: issue.message, field: issue.path.join('.') }, { status: 422 });
   }
 
-  const input = parsed.data;
+  // Only a package the calculator offers. Before the payroll-only package
+  // (2026-10-18) any slug priced at Basic; now an unknown one is refused.
+  if (!PROPOSAL_TIER_SLUGS.includes(parsed.data.tierSlug)) {
+    return NextResponse.json({ error: 'Choose a package', field: 'tierSlug' }, { status: 422 });
+  }
+  const payrollOnly = parsed.data.tierSlug === PAYROLL_ONLY_TIER;
+
+  // A payroll-only proposal and its lead keep only the headcount: a revenue
+  // band or VAT answer left from the package path is not stored.
+  const input = payrollOnly
+    ? {
+        ...parsed.data,
+        brackets:
+          parsed.data.brackets.payroll === undefined ? {} : { payroll: parsed.data.brackets.payroll },
+        answers: undefined,
+      }
+    : parsed.data;
 
   // Premium is sold by application (calculator-v2 Phase 0): the calculator
   // sends a request, never a proposal, and Zjak handles it outside the system
@@ -113,10 +129,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Monthly accounting (accounting plus bookkeeping) is in every package (F30).
-  const coreError = coreServiceError(input.services, input.brackets);
-  if (coreError) {
-    return NextResponse.json({ error: coreError, field: 'services' }, { status: 422 });
+  // Monthly accounting (accounting plus bookkeeping) is in every package (F30),
+  // except the payroll-only package, which is payroll and nothing else
+  // (Zjak, 2026-10-18).
+  const scopeError = payrollOnly
+    ? payrollOnlyError(input.services, input.brackets)
+    : coreServiceError(input.services, input.brackets);
+  if (scopeError) {
+    return NextResponse.json({ error: scopeError, field: 'services' }, { status: 422 });
   }
 
   // No revenue gate: every band is self-serve, only Premium starts with a call
@@ -127,8 +147,10 @@ export async function POST(req: NextRequest) {
   // replaced, which also strips the retired Xero invoicing charge.
   // Dext is no longer offered (tweaks round 1, 2026-10-06), so a stale page
   // cannot add it; proposals already carrying the token still price as sent.
+  // The payroll-only package carries no add-ons and no VAT flag.
   const offeredAddons = input.addons.filter((t) => parseAddonToken(t).slug !== 'dext');
   const addons = effectiveAddons(offeredAddons, {
+    needsAccounting: !payrollOnly,
     vatRegistered: input.answers?.vatRegistered ?? null,
   });
 

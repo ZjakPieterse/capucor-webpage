@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
+  FIRST_STEP,
   canProceed,
   deriveServices,
   effectiveAddons,
+  isPayrollOnly,
   nextStep,
+  pricedTier,
+  stepPosition,
   prevStep,
   progressFraction,
   revertStepFields,
@@ -12,24 +16,28 @@ import {
 import type { CalculatorAnswers, CalculatorStep } from '@/types';
 
 const answers = (over: Partial<CalculatorAnswers> = {}): CalculatorAnswers => ({
+  needsAccounting: true,
   vatRegistered: null,
   needsPayroll: null,
   ...over,
 });
 
-// Walks Continue from the first screen to review, as a visitor would.
+// Walks Continue from the first screen to the last (review, or the "let's
+// talk" screen), as a visitor would.
 function walk(a: CalculatorAnswers): CalculatorStep[] {
-  const path: CalculatorStep[] = ['revenue'];
-  while (path[path.length - 1] !== 'review') {
-    path.push(nextStep(path[path.length - 1]!, { answers: a }));
+  const path: CalculatorStep[] = [FIRST_STEP];
+  for (;;) {
+    const next = nextStep(path[path.length - 1]!, { answers: a });
+    if (next === path[path.length - 1]) return path;
+    path.push(next);
   }
-  return path;
 }
 
 describe('calculator-v2 navigation', () => {
-  it('payroll Yes asks for the headcount', () => {
+  it('opens on the accounting question; Yes is the package flow, unchanged', () => {
+    expect(FIRST_STEP).toBe('accounting');
     expect(walk(answers({ needsPayroll: true }))).toEqual([
-      'revenue', 'transactions', 'vat', 'payroll', 'employees', 'package', 'addons', 'review',
+      'accounting', 'revenue', 'transactions', 'vat', 'payroll', 'employees', 'package', 'addons', 'review',
     ]);
   });
 
@@ -133,8 +141,8 @@ describe('calculator-v2 gating', () => {
 
 describe('deriveServices', () => {
   it('prices core once both brackets are set', () => {
-    expect([...deriveServices({ accounting: 1 }, { needsPayroll: null })]).toEqual(['accounting']);
-    expect([...deriveServices({ accounting: 1, bookkeeping: 4 }, { needsPayroll: null })]).toEqual([
+    expect([...deriveServices({ accounting: 1 }, { needsAccounting: true, needsPayroll: null })]).toEqual(['accounting']);
+    expect([...deriveServices({ accounting: 1, bookkeeping: 4 }, { needsAccounting: true, needsPayroll: null })]).toEqual([
       'accounting',
       'bookkeeping',
     ]);
@@ -142,9 +150,9 @@ describe('deriveServices', () => {
 
   it('payroll No drops a remembered headcount from the proposal; Yes brings it back', () => {
     const brackets = { accounting: 1, bookkeeping: 4, payroll: 2 };
-    expect(deriveServices(brackets, { needsPayroll: false }).has('payroll')).toBe(false);
-    expect(deriveServices(brackets, { needsPayroll: true }).has('payroll')).toBe(true);
-    expect(deriveServices({ accounting: 1 }, { needsPayroll: true }).has('payroll')).toBe(false);
+    expect(deriveServices(brackets, { needsAccounting: true, needsPayroll: false }).has('payroll')).toBe(false);
+    expect(deriveServices(brackets, { needsAccounting: true, needsPayroll: true }).has('payroll')).toBe(true);
+    expect(deriveServices({ accounting: 1 }, { needsAccounting: true, needsPayroll: true }).has('payroll')).toBe(false);
   });
 });
 
@@ -179,5 +187,74 @@ describe('a revenue band above R50m follows the normal path', () => {
     expect(canProceed('package', s)).toBe(true);
     expect(nextStep('package', s)).toBe('addons');
     expect(nextStep('addons', s)).toBe('review');
+  });
+});
+
+// Payroll on its own (Zjak, 2026-10-18): "Do you need monthly accounting
+// services?" No goes straight to payroll, the headcount and a payroll-only
+// review, with no package or add-ons. No to both ends on a "let's talk" screen.
+describe('payroll-only path', () => {
+  const only = answers({ needsAccounting: false, needsPayroll: true });
+
+  it('accounting No walks payroll, headcount, review and nothing else', () => {
+    expect(walk(only)).toEqual(['accounting', 'payroll', 'employees', 'review']);
+  });
+
+  it('No to both ends on the contact screen, which Back leaves for the payroll question', () => {
+    const neither = answers({ needsAccounting: false, needsPayroll: false });
+    expect(walk(neither)).toEqual(['accounting', 'payroll', 'contact']);
+    expect(prevStep('contact', { answers: neither })).toBe('payroll');
+    expect(canProceed('contact', { selectedBrackets: {}, answers: neither, selectedTier: null })).toBe(false);
+    expect(stepPosition('contact', { answers: neither })).toEqual({ index: 3, total: 3 });
+    expect(progressFraction('contact', { answers: neither })).toBeLessThan(1);
+  });
+
+  it('Back retraces the payroll-only path screen by screen', () => {
+    const path = walk(only);
+    for (let i = path.length - 1; i > 0; i--) {
+      expect(prevStep(path[i]!, { answers: only })).toBe(path[i - 1]);
+    }
+  });
+
+  it('an unanswered accounting question counts the package path', () => {
+    expect(walk(answers({ needsAccounting: null, needsPayroll: false }))).toContain('package');
+    expect(canProceed('accounting', { selectedBrackets: {}, answers: answers({ needsAccounting: null }), selectedTier: null })).toBe(false);
+  });
+
+  it('prices payroll alone on the payroll-only package, whatever was chosen on the package path', () => {
+    const remembered = { accounting: 1, bookkeeping: 4, payroll: 2 };
+    expect([...deriveServices(remembered, only)]).toEqual(['payroll']);
+    expect(isPayrollOnly(only)).toBe(true);
+    expect(pricedTier({ answers: only, selectedTier: 'pro' })).toBe('payroll-only');
+    expect(pricedTier({ answers: answers(), selectedTier: 'pro' })).toBe('pro');
+  });
+
+  it('carries no add-ons, not even a VAT flag left from the package path', () => {
+    expect(effectiveAddons(['whatsapp-support'], { needsAccounting: false, vatRegistered: false })).toEqual([]);
+  });
+
+  it('scope is complete only with a payroll Yes and a headcount', () => {
+    const s = (a: CalculatorAnswers, payroll?: number) => ({
+      selectedBrackets: (payroll === undefined ? {} : { payroll }) as Record<string, number>,
+      answers: a,
+      selectedTier: null,
+    });
+    expect(scopeComplete(s(only, 1005))).toBe(true);
+    expect(scopeComplete(s(only))).toBe(false);
+    expect(scopeComplete(s(answers({ needsAccounting: false, needsPayroll: false }), 1005))).toBe(false);
+    expect(scopeComplete(s(answers({ needsAccounting: null, needsPayroll: true }), 1005))).toBe(false);
+  });
+
+  it('Back from the accounting question drops an unconfirmed answer', () => {
+    const base = {
+      step: 'accounting' as const,
+      selectedServices: new Set<string>(),
+      selectedBrackets: {} as Record<string, number>,
+      answers: answers({ needsAccounting: null }),
+      selectedTier: null,
+      selectedAddons: [] as string[],
+    };
+    const out = revertStepFields({ ...base, answers: only }, base, 'accounting');
+    expect(out.answers.needsAccounting).toBeNull();
   });
 });

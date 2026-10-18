@@ -11,6 +11,8 @@
 import { PRICING_ADDONS, addonIncludedInTier, tierDisplayName, type PricingAddon } from '../config/tiers.ts';
 import type { Bracket, BracketValue, Service } from '@/types';
 
+// Basic, and any other slug, prices at the Basic column: the payroll-only
+// package is payroll at its Basic price, the flat rate it has in every package.
 export function bracketPrice(
   bracket: Pick<Bracket, 'basic_price' | 'pro_price' | 'premium_price'>,
   tierSlug: string
@@ -67,6 +69,19 @@ export function coreServiceError(
   return missing
     ? 'Monthly accounting (a revenue band and a transaction band) is part of every package. Choose both to continue.'
     : null;
+}
+
+/**
+ * Null when the selection is a valid payroll-only proposal (payroll alone,
+ * with a priced headcount), else the message to show. /api/proposals refuses
+ * the payroll-only package with anything else in it (2026-10-18).
+ */
+export function payrollOnlyError(
+  services: string[],
+  brackets: Record<string, BracketValue>,
+): string | null {
+  const ok = services.length === 1 && services[0] === 'payroll' && typeof brackets.payroll === 'number';
+  return ok ? null : 'Payroll on its own needs only payroll and a number of employees.';
 }
 
 /**

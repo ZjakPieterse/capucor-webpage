@@ -55,9 +55,10 @@ export interface PricingData {
   tiers: Tier[];
 }
 
-// One screen per value (calculator-v2 wizard). The progress indicator groups
-// them into five stages; see CALCULATOR_STAGE_OF in usePricingState.
+// One screen per value (calculator-v2 wizard); the order is in
+// lib/calculatorFlow.ts.
 export type CalculatorStep =
+  | 'accounting'
   | 'revenue'
   | 'transactions'
   | 'vat'
@@ -65,12 +66,16 @@ export type CalculatorStep =
   | 'employees'
   | 'package'
   | 'addons'
-  | 'review';
+  | 'review'
+  // No accounting and no payroll: nothing to price, so a "let's talk" screen.
+  | 'contact';
 
-// Answers that change no price. VAT hides VAT201 from the schedule; payroll
-// decides whether the headcount is asked. They travel to
-// /api/proposals and are stored in leads.config for Capucor's reference.
+// Answers that change no price. Accounting chooses between a package and the
+// payroll-only path (2026-10-18); VAT hides VAT201 from the schedule; payroll
+// decides whether the headcount is asked. They travel to /api/proposals and
+// are stored in leads.config for Capucor's reference.
 export interface CalculatorAnswers {
+  needsAccounting: boolean | null;
   vatRegistered: boolean | null;
   needsPayroll: boolean | null;
 }

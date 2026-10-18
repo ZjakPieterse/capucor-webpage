@@ -9,6 +9,8 @@ export interface QuestionCopy {
 }
 
 export const QUESTION_COPY = {
+  // First, so a payroll-only client is not asked for revenue (Zjak, 2026-10-18).
+  accounting: { title: 'Do you need monthly accounting services?' },
   revenue: { title: 'What is your annual revenue?' },
   transactions: { title: 'How many transactions should be processed each month?' },
   vat: { title: 'Is your business registered for VAT?' },
@@ -93,6 +95,21 @@ export const PREMIUM_REQUEST_COPY = {
   doneTitle: 'Request received',
   doneBody: 'Thank you. We will be in touch to set up a short call about Premium.',
   priceLabel: 'Estimated monthly charge, from',
+} as const;
+
+// Payroll on its own (Zjak, 2026-10-18): the review lists what payroll
+// includes, from the /payroll page's items (config/servicePages.ts), so the
+// two never differ.
+export const PAYROLL_ONLY_REVIEW_COPY = {
+  includedHeading: 'What your payroll subscription includes',
+} as const;
+
+// No to accounting and No to payroll: nothing the calculator prices, so it
+// offers a conversation instead (Zjak, 2026-10-18).
+export const NOTHING_TO_PRICE_COPY = {
+  title: "Let's talk about what you need",
+  body: 'This calculator prices monthly accounting and payroll. Tell us what your business needs and we will come back to you.',
+  action: 'Contact us',
 } as const;
 
 // The review step's "what happens next" note (funnel review F14, 2026-10-08).

@@ -7,13 +7,18 @@ import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
 import {
   ANSWER_ADDON_SLUGS,
   effectiveAddons,
+  isPayrollOnly,
+  pricedTier,
   progressFraction,
   scopeComplete,
   stepPosition,
 } from '@/lib/calculatorFlow';
 import { parseAddonToken } from '@/lib/pricing';
 import { focusStepHeading } from '@/lib/stepFocus';
+import { PAYROLL } from '@/config/servicePages';
 import {
+  NOTHING_TO_PRICE_COPY,
+  PAYROLL_ONLY_REVIEW_COPY,
   PRICING_PAGE_HEADING,
   PRICING_PAGE_INTRO,
   PRICING_TRUST_ITEMS,
@@ -23,7 +28,7 @@ import {
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { CalculatorProgress } from './CalculatorProgress';
-import { BracketQuestion, YesNoQuestion } from './QuestionStep';
+import { BracketQuestion, NothingToPrice, YesNoQuestion } from './QuestionStep';
 import { Step2Tiers } from './Step2Tiers';
 import { AddonsStep } from './AddonsStep';
 import { ReviewStep, type ProposalAction } from './ReviewStep';
@@ -134,7 +139,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     }
   };
 
-  const isQuestion = (s: CalculatorStep) => !['package', 'addons', 'review'].includes(s);
+  const isQuestion = (s: CalculatorStep) => !['package', 'addons', 'review', 'contact'].includes(s);
   const advance = () => {
     goNext(returnToPackages && isQuestion(state.step) ? 'package' : undefined);
     markMoved();
@@ -162,7 +167,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   // Every question moves straight on once answered (package simplification,
   // 2026-10-06): a Yes / No tap or a pick from a dropdown. Continue stays for
   // a screen revisited with its answer already set.
-  const answerAndNext = (key: 'vatRegistered' | 'needsPayroll', value: boolean) => {
+  const answerAndNext = (key: 'needsAccounting' | 'vatRegistered' | 'needsPayroll', value: boolean) => {
     setAnswer(key, value);
     advance();
   };
@@ -179,15 +184,22 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     advance();
   };
 
-  const { step, selectedBrackets, answers, selectedTier } = state;
+  const { step, selectedBrackets, answers } = state;
+  // The package the selection is priced on: the visitor's choice, or the
+  // payroll-only package on that path (no package step there).
+  const payrollOnly = isPayrollOnly(answers);
+  const selectedTier = pricedTier(state);
   // The visitor's add-ons plus the answer-driven one (the not-VAT-registered
-  // flag). Every total, the summary
+  // flag); none on the payroll-only path. Every total, the summary
   // and the proposal payload use this list.
   const pricedAddons = effectiveAddons(state.selectedAddons, answers);
   // The package, add-ons and review screens need a complete scope and (after
   // the package step) a package. Normal navigation guarantees both.
   const pricedStepsReady = scopeComplete(state);
-  const showTotal = (step === 'addons' || step === 'review') && pricedStepsReady && !!selectedTier;
+  // The payroll-only review is one short card with its own total, so it has
+  // no bottom bar or sticky chip (both name a package from the tiers table).
+  const showTotal =
+    (step === 'addons' || step === 'review') && pricedStepsReady && !!selectedTier && !payrollOnly;
   // On the package step, once a package is tapped, phones get the bottom bar
   // with that package's price and a Continue button (the step is long at
   // 375 px). Only the answer-driven add-ons belong in that price, as on the card.
@@ -214,26 +226,29 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             value={bracketValue(slug)}
             onChange={(v) => pickAndNext(slug, v)}
             onNext={next}
-            onBack={step === 'revenue' ? undefined : back}
+            onBack={back}
             // Payroll starts at a headcount: a payroll Yes with no employees is a
             // fit call, so the "Dormant" band is not offered here (F18).
             excludeLabels={step === 'employees' ? ['Dormant'] : undefined}
           />
         );
       }
+      case 'accounting':
       case 'vat':
       case 'payroll': {
-        const key = step === 'vat' ? 'vatRegistered' : 'needsPayroll';
+        const key = step === 'accounting' ? 'needsAccounting' : step === 'vat' ? 'vatRegistered' : 'needsPayroll';
         return (
           <YesNoQuestion
             copy={QUESTION_COPY[step]}
             value={answers[key]}
             onAnswer={(v) => answerAndNext(key, v)}
             onNext={next}
-            onBack={back}
+            onBack={step === 'accounting' ? undefined : back}
           />
         );
       }
+      case 'contact':
+        return <NothingToPrice copy={NOTHING_TO_PRICE_COPY} href={siteConfig.links.fitCall} onBack={back} />;
       case 'package':
         return (
           <Step2Tiers
@@ -277,6 +292,11 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
             selectedAddons={pricedAddons}
+            inclusions={
+              payrollOnly
+                ? { heading: PAYROLL_ONLY_REVIEW_COPY.includedHeading, items: PAYROLL.items.map((i) => i.title) }
+                : undefined
+            }
             onBack={back}
             onAction={openModal}
           />
