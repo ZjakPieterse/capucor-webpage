@@ -29,11 +29,11 @@ type Line = { text: string; confirm?: boolean };
 
 const STORY: Line[] = [
   {
-    text: "I started Capucor more than ten years ago, after [what you saw or did before Capucor, e.g. years in practice watching owners hear from their accountant once a year, with a bill]. I wanted to be the accountant I'd want for my own business: close to the numbers every month, not only at year-end.",
+    text: "I started Capucor more than ten years ago, after years in practice watching good businesses hear from their accountant once a year, with a bill. I wanted to be the accountant I'd want for my own business: close to the numbers every month, not only at year-end.",
     confirm: true,
   },
   {
-    text: "Since then I've run the books, payroll and SARS work for owner-run businesses with staff, [the kinds of businesses you know best]. The pattern is always the same. The owner is good at the work, and the admin eats their evenings.",
+    text: "Since then I've run the books, payroll and SARS work for owner-run businesses with staff: professional services firms, builders and trades, shops and online stores. The pattern is always the same. The owner is good at the work, and the admin eats their evenings.",
     confirm: true,
   },
   {
