@@ -75,7 +75,7 @@ export default function HomePage() {
         {/* 6. Testimonials / social proof — placeholder between Services and Your first 90 days. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
         {/* 7. Your first 90 days (rhythm from month one, catch-up alongside, 90-day review) */}
         <FirstNinetyDays />
-        {/* 8. Founder/Team (audit decision 4, 2026-10-13): first draft, copy and photo to confirm */}
+        {/* 8. Meet the founder (audit decision 4, 2026-10-13; copy confirmed 2026-10-18, photo to come) */}
         <FounderTeam />
         {/* 9. Final CTA */}
         <FinalCTA />

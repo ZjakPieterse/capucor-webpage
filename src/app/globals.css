@@ -1398,8 +1398,7 @@
 
 /* ─── Founder/Team (FounderTeam.tsx) ─────────────────────────────────────────
    The photo slot holds the portrait's 4:5 footprint until a photo arrives (no
-   stock face). .draft-copy marks a line the owner has not confirmed yet;
-   delete it once FounderTeam.tsx has no `confirm` flag left. */
+   stock face). */
 .founder-photo-slot {
   border: 1px dashed color-mix(in oklch, white 18%, transparent);
   background:
@@ -1409,12 +1408,6 @@
       transparent
     ),
     color-mix(in oklch, var(--card) 70%, transparent);
-}
-
-.draft-copy {
-  text-decoration: underline dashed color-mix(in oklch, var(--warning) 80%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
 }
 
 @media all {
