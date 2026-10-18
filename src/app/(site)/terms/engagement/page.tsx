@@ -10,7 +10,7 @@ import {
 const CONTACT_EMAIL = 'info@capucor.com';
 
 export const metadata: Metadata = {
-  title: 'Engagement terms',
+  title: 'Terms of use',
   description:
     'The full terms of engagement that apply to a signed Capucor proposal: fees, fair usage, responsibilities, debit-order authorisation, and more.',
   robots: { index: true, follow: true },
@@ -34,7 +34,7 @@ export default function EngagementTermsPage() {
         ← Back to home
       </Link>
 
-      <h1 className="mb-3 text-3xl font-bold tracking-tight">Engagement terms</h1>
+      <h1 className="mb-3 text-3xl font-bold tracking-tight">Terms of use</h1>
       <p className="mb-10 text-sm text-muted-foreground">
         These terms apply to a signed Capucor proposal. Your proposal sets out the services and
         fees; these terms set out how we work together. If anything here conflicts with your
@@ -45,13 +45,13 @@ export default function EngagementTermsPage() {
         <div>
           <h2 className="mb-3 text-xl font-semibold">What each of us does</h2>
           <p className="mb-2 text-sm font-semibold text-foreground">We&apos;ll</p>
-          <ul className="mb-4 list-inside list-disc space-y-1 text-muted-foreground">
+          <ul className="mb-6 list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
             {RESPONSIBILITIES_OURS.map((t) => (
               <li key={t}>{t}</li>
             ))}
           </ul>
           <p className="mb-2 text-sm font-semibold text-foreground">You&apos;ll</p>
-          <ul className="list-inside list-disc space-y-1 text-muted-foreground">
+          <ul className="list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
             {RESPONSIBILITIES_YOURS.map((t) => (
               <li key={t}>{t}</li>
             ))}

@@ -78,16 +78,12 @@ export function AddonsStep({
       </div>
 
       <div
-        className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-5 flex items-baseline justify-between gap-4"
+        className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 sm:p-5 flex items-center justify-between gap-4"
         aria-live="polite"
       >
-        <div>
-          <p className="text-sm font-semibold">Your monthly total</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {tierDisplayName(selectedTier)} package and add-ons
-          </p>
-        </div>
-        <div className="flex items-baseline gap-1.5">
+        {/* Title and price only, both centred on the row (Zjak, 2026-10-18). */}
+        <p className="text-base sm:text-lg font-semibold leading-snug">Your monthly total</p>
+        <div className="flex items-baseline gap-1.5 leading-none">
           <AnimatedPrice amount={runningTotal} size="lg" />
           <span className="text-xs text-muted-foreground whitespace-nowrap">/month</span>
         </div>

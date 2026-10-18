@@ -292,7 +292,7 @@ export default async function ProposalPage({
                 className="text-primary underline underline-offset-2"
                 target="_blank"
               >
-                full engagement terms
+                full terms of use
               </Link>
               . Signing accepts them in full.
             </p>
