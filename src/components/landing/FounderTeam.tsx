@@ -1,6 +1,4 @@
 import Image from "next/image";
-import { UserRound } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { TypedHeading } from "@/components/ui/TypedHeading";
@@ -17,8 +15,9 @@ import { TypedHeading } from "@/components/ui/TypedHeading";
 // founder" and the story in plain body text. Desktop: portrait beside the card.
 // Phones: no big portrait, a small round photo by the signature instead.
 
-/** Portrait, 4:5. Set to e.g. "/team/founder.jpg" (in public/) once supplied. */
-const PHOTO: string | null = null;
+/** Zjak's own photo (2026-10-18), cropped from one shot: a 4:5 portrait for
+ *  desktop and a face crop for the phone's round photo. Never a stock face. */
+const PHOTO = { portrait: "/team/founder.jpg", face: "/team/founder-avatar.jpg" };
 
 const FOUNDER = {
   name: "Zjak Pieterse",
@@ -31,42 +30,27 @@ const STORY = [
   "So every way of working at Capucor has to pass one test: does it give you back time, or show you something you couldn't see? What I want is for you to tell another owner: “Look, this just works.”",
 ];
 
-function Photo({ className, sizes, label }: { className?: string; sizes: string; label?: boolean }) {
-  return PHOTO ? (
-    <Image
-      src={PHOTO}
-      alt={`${FOUNDER.name}, founder of Capucor Business Solutions`}
-      width={1200}
-      height={1500}
-      sizes={sizes}
-      className={cn("w-full border border-white/10 object-cover", className)}
-    />
-  ) : (
-    // Placeholder slot: no stock face. Same footprint as the photo.
-    <div
-      role="img"
-      aria-label="Photo to come"
-      className={cn("founder-photo-slot flex w-full flex-col items-center justify-center gap-4", className)}
-    >
-      <span aria-hidden className="svc-icon">
-        <UserRound className="h-[22px] w-[22px]" />
-      </span>
-      {label && <span className="text-sm text-muted-foreground">Photo to come</span>}
-    </div>
-  );
-}
+const ALT = `${FOUNDER.name}, founder of Capucor Business Solutions`;
 
 export function FounderTeam() {
   return (
     <section id="founder" className="premium-section py-14 lg:py-20">
       <SectionDivider />
-      <div className="mx-auto grid w-full max-w-5xl items-center gap-8 px-5 sm:px-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-12">
-        <ScrollReveal className="hidden md:block">
-          <Photo label sizes="380px" className="aspect-[4/5] rounded-2xl" />
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 sm:px-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-12">
+        {/* The photo fills the card's height so both share a top and bottom edge
+            (Zjak, 2026-10-18); the crop keeps the face in view. */}
+        <ScrollReveal className="relative hidden md:block">
+          <Image
+            src={PHOTO.portrait}
+            alt={ALT}
+            fill
+            sizes="(min-width: 1152px) 420px, 40vw"
+            className="rounded-2xl border border-white/10 object-cover object-[45%_25%]"
+          />
         </ScrollReveal>
 
         <ScrollReveal delay={0.1}>
-          <article className="svc-card relative rounded-2xl border border-white/10 bg-card/80 p-6 sm:p-8">
+          <article className="svc-card relative h-full rounded-2xl border border-white/10 bg-card/80 p-6 sm:p-8">
             <TypedHeading
               text="Meet the founder"
               className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl"
@@ -79,7 +63,14 @@ export function FounderTeam() {
 
             <div className="mt-6 flex items-center gap-4 border-t border-white/10 pt-5">
               <div className="w-14 shrink-0 md:hidden">
-                <Photo sizes="56px" className="aspect-square rounded-full" />
+                <Image
+                  src={PHOTO.face}
+                  alt={ALT}
+                  width={240}
+                  height={240}
+                  sizes="56px"
+                  className="aspect-square w-full rounded-full border border-white/10 object-cover"
+                />
               </div>
               <div>
                 <p className="text-lg font-semibold tracking-tight text-foreground">{FOUNDER.name}</p>

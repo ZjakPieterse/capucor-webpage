@@ -1396,20 +1396,6 @@
   color: var(--primary);
 }
 
-/* ─── Founder/Team (FounderTeam.tsx) ─────────────────────────────────────────
-   The photo slot holds the portrait's 4:5 footprint until a photo arrives (no
-   stock face). */
-.founder-photo-slot {
-  border: 1px dashed color-mix(in oklch, white 18%, transparent);
-  background:
-    radial-gradient(
-      closest-side at 50% 40%,
-      color-mix(in oklch, var(--primary) 10%, transparent),
-      transparent
-    ),
-    color-mix(in oklch, var(--card) 70%, transparent);
-}
-
 @media all {
   .svc-card:hover::after {
     opacity: 1;
