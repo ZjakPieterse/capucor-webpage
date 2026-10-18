@@ -14,8 +14,7 @@ import type { FairUsageLine } from '@/lib/schedule';
 import {
   FEES_NOTES,
   PROPOSAL_TERMS,
-  RESPONSIBILITIES_OURS,
-  RESPONSIBILITIES_YOURS,
+  responsibilitiesFor,
 } from '@/config/proposalTerms';
 import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 import { CAPUCOR_LOGO_LIGHT_DATA_URL } from '@/lib/proposal/capucorLogo';
@@ -26,6 +25,8 @@ export interface ProposalDocumentData {
   firstName: string;
   lastName: string;
   tierName: string;
+  /** The package slug; picks the payroll-only responsibilities. Generic when omitted. */
+  tierSlug?: string;
   refNumber: string | null;
   version: number;
   sentAt: string | null;
@@ -186,9 +187,9 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     <!-- Responsibilities -->
     <p style="${LABEL}">What each of us does</p>
     <p style="${SUBHEAD}">We&#39;ll</p>
-    ${list(RESPONSIBILITIES_OURS)}
+    ${list(responsibilitiesFor(d.tierSlug ?? '').ours)}
     <p style="${SUBHEAD}">You&#39;ll</p>
-    ${list(RESPONSIBILITIES_YOURS)}
+    ${list(responsibilitiesFor(d.tierSlug ?? '').yours)}
 
     <!-- Full terms -->
     <p style="${LABEL}">Engagement terms</p>

@@ -9,6 +9,8 @@
  * docs/voice-and-copy.md.
  */
 
+import { PAYROLL_ONLY_TIER } from '@/config/tiers';
+
 export interface TermsBlock {
   /** Stable id so the proposal page can pick which blocks to show inline. */
   id: string;
@@ -16,16 +18,23 @@ export interface TermsBlock {
   paragraphs: string[];
 }
 
-/** What Capucor does. */
-export const RESPONSIBILITIES_OURS: string[] = [
-  'Do the work in your schedule on its agreed cycle, and submit your SARS and CIPC filings on time.',
-  'Keep your books reconciled and give you the reports listed in your package.',
-  'Tell you in good time about payments that fall due, and flag anything that needs a decision.',
+// The service lines every package shares, accounting or payroll only.
+const SERVICE_STANDARD_LINES: string[] = [
   'Reply to your emails to zjak@capucor.com within 2 business days (we work Monday to Friday, 08:00 to 17:00), and set up a call by appointment when a question needs one.',
   // Zjak, 2026-10-18: the 2-business-day and Premium same-day reply times are
   // aims kept in the normal course, with exceptions both ways.
   'Reply times are our service standards, not guarantees. We meet them in the normal course and tell you when something will take longer.',
   'Act with reasonable care and skill, in line with the SAICA code we work under.',
+];
+
+const ACCURATE_INFORMATION = 'Make sure the information you give us is complete and accurate, and tell us when things change.';
+
+/** What Capucor does. */
+export const RESPONSIBILITIES_OURS: string[] = [
+  'Do the work in your schedule on its agreed cycle, and submit your SARS and CIPC filings on time.',
+  'Keep your books reconciled and give you the reports listed in your package.',
+  'Tell you in good time about payments that fall due, and flag anything that needs a decision.',
+  ...SERVICE_STANDARD_LINES,
 ];
 
 /** Footnotes shown under the fee total (proposal document + archived PDF). */
@@ -38,10 +47,34 @@ export const FEES_NOTES: string[] = [
 /** What the client does. */
 export const RESPONSIBILITIES_YOURS: string[] = [
   'Give us your bank statements, invoices and supporting documents in good time each cycle.',
-  'Make sure the information you give us is complete and accurate, and tell us when things change.',
+  ACCURATE_INFORMATION,
   'Approve returns and reports before we submit or file them where we ask you to.',
   'Keep your own copies of your records. We work mainly in the cloud (Xero), and the originals stay yours.',
 ];
+
+// The payroll-only package (Zjak, 2026-10-18): no books, reports or Xero, so
+// both lists speak of payroll. The service standards are the same.
+export const PAYROLL_ONLY_RESPONSIBILITIES_OURS: string[] = [
+  "Run your payroll every month on the agreed cycle, with payslips ready for pay day once the month's changes are in.",
+  'Submit your EMP201 every month, your EMP501 reconciliations twice a year and your COIDA Return of Earnings every year on time, and issue IRP5 certificates at year-end.',
+  'Tell you in good time about PAYE, UIF and SDL payments that fall due, and flag anything that needs a decision.',
+  ...SERVICE_STANDARD_LINES,
+];
+
+export const PAYROLL_ONLY_RESPONSIBILITIES_YOURS: string[] = [
+  "Give us the month's payroll inputs (hours, overtime, commission, leave taken and leavers) by the agreed cut-off.",
+  "Give us each new starter's details (ID number, tax number, start date and pay terms) by the cut-off before their first pay day.",
+  ACCURATE_INFORMATION,
+  "Approve each month's payroll before we finalise payslips, and approve returns before we submit them where we ask you to.",
+  'Keep your own copies of your employment and payroll records. The originals stay yours.',
+];
+
+/** The "what each of us does" lists for a proposal's package. */
+export function responsibilitiesFor(tierSlug: string): { ours: string[]; yours: string[] } {
+  return tierSlug === PAYROLL_ONLY_TIER
+    ? { ours: PAYROLL_ONLY_RESPONSIBILITIES_OURS, yours: PAYROLL_ONLY_RESPONSIBILITIES_YOURS }
+    : { ours: RESPONSIBILITIES_OURS, yours: RESPONSIBILITIES_YOURS };
+}
 
 /**
  * Full engagement terms. The proposal shows a curated subset inline (see

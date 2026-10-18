@@ -39,7 +39,14 @@ import {
 import { PAYROLL } from '@/config/servicePages';
 import { cumulativeInclusions } from '@/lib/schedule';
 import { CATCHUP_FREE_MONTHS } from '@/config/serviceScope';
-import { FEES_NOTES, PROPOSAL_TERMS } from '@/config/proposalTerms';
+import {
+  FEES_NOTES,
+  PROPOSAL_TERMS,
+  RESPONSIBILITIES_OURS,
+  RESPONSIBILITIES_YOURS,
+  responsibilitiesFor,
+} from '@/config/proposalTerms';
+import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
 import { formatZAR } from '@/lib/utils';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
@@ -459,5 +466,28 @@ describe('payroll-only package (2026-10-18)', () => {
   it('the calculator asks about accounting first', () => {
     expect(calculatorFlow.FIRST_STEP).toBe('accounting');
     expect(calculatorCopy.QUESTION_COPY.accounting.title).toBe('Do you need monthly accounting services?');
+  });
+
+  it('the signed proposal speaks of payroll, not books, reports or Xero, and keeps the shared service standards', () => {
+    const { ours, yours } = responsibilitiesFor(PAYROLL_ONLY_TIER);
+    const all = [...ours, ...yours].join(' ');
+    expect(all).not.toMatch(/books|reports|Xero|bank statements|CIPC/);
+    expect(yours.join(' ')).toContain('by the agreed cut-off');
+    expect(yours.join(' ')).toMatch(/new starter/);
+    expect(ours).toEqual(expect.arrayContaining(RESPONSIBILITIES_OURS.filter((t) => /zjak@capucor.com|service standards|SAICA/.test(t))));
+    expect(responsibilitiesFor('pro')).toEqual({ ours: RESPONSIBILITIES_OURS, yours: RESPONSIBILITIES_YOURS });
+  });
+
+  it('the payroll-only PDF carries the payroll responsibilities and the same 3-month catch-up', () => {
+    const base = {
+      businessName: 'Pat Co', firstName: 'Pat', lastName: 'P', tierName: 'Payroll', refNumber: null, version: 1,
+      sentAt: null, expiresAt: null, firstDebitFrom: null, signedAt: null, signatureName: null, signatureMethod: null,
+      signatureImage: null, signatureIp: null, inclusions: [], fairUsage: [], outOfScope: [], lineItems: [], totalChargeZAR: 750,
+    };
+    const html = renderProposalDocumentHtml({ ...base, tierSlug: PAYROLL_ONLY_TIER });
+    expect(html).toContain('by the agreed cut-off');
+    expect(html).not.toContain('Keep your books reconciled');
+    expect(html).toContain('3 months before you accept');
+    expect(renderProposalDocumentHtml(base)).toContain('Keep your books reconciled');
   });
 });

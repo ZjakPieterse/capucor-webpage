@@ -25,8 +25,7 @@ import type { Json } from '@/types/db';
 import {
   PROPOSAL_TERMS,
   INLINE_TERM_IDS,
-  RESPONSIBILITIES_OURS,
-  RESPONSIBILITIES_YOURS,
+  responsibilitiesFor,
 } from '@/config/proposalTerms';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
 
@@ -264,7 +263,7 @@ export default async function ProposalPage({
 
           <FeeChangesSection />
 
-          <ResponsibilitiesSection ours={RESPONSIBILITIES_OURS} yours={RESPONSIBILITIES_YOURS} />
+          <ResponsibilitiesSection {...responsibilitiesFor(row.tier_slug)} />
 
           {/* Debit-order authorisation. Signing authorises collection; bank
               details are arranged directly at onboarding, never captured on the site. */}

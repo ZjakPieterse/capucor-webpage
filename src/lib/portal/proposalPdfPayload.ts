@@ -69,6 +69,7 @@ export function buildSignedProposalPdfPayload(
     firstName: row.first_name,
     lastName: row.last_name,
     tierName: tierDisplayName(row.tier_slug),
+    tierSlug: row.tier_slug,
     refNumber: row.ref_number,
     version: row.version,
     sentAt: row.sent_at,
