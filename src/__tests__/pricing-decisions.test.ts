@@ -41,6 +41,9 @@ import { cumulativeInclusions, reviewInclusions } from '@/lib/schedule';
 import { CATCHUP_FREE_MONTHS } from '@/config/serviceScope';
 import {
   FEES_NOTES,
+  PAYROLL_ONLY_TERMS,
+  feesNotesFor,
+  proposalTermsFor,
   PROPOSAL_TERMS,
   RESPONSIBILITIES_OURS,
   RESPONSIBILITIES_YOURS,
@@ -493,5 +496,42 @@ describe('payroll-only package (2026-10-18)', () => {
     expect(html).not.toContain('Keep your books reconciled');
     expect(html).toContain('3 months before you accept');
     expect(renderProposalDocumentHtml(base)).toContain('Keep your books reconciled');
+  });
+});
+
+describe('payroll-only fee note and terms (#163 follow-up)', () => {
+  it('payroll-only drops the "first close" note; the accounting packages keep it unchanged', () => {
+    for (const slug of ['basic', 'pro', 'premium']) {
+      expect(feesNotesFor(slug)).toBe(FEES_NOTES);
+    }
+    expect(FEES_NOTES[0]).toBe('Billed monthly in advance. Your first close runs in the following new month.');
+    const payroll = feesNotesFor(PAYROLL_ONLY_TIER);
+    expect(payroll.join(' ')).not.toMatch(/close/);
+    expect(payroll[0]).toMatch(/^Billed monthly in advance\./);
+    expect(payroll.slice(1)).toEqual(FEES_NOTES.slice(1));
+  });
+
+  it('only payroll-only terms carry the payroll block; the accounting terms are unchanged', () => {
+    expect(proposalTermsFor('pro')).toBe(PROPOSAL_TERMS);
+    expect(proposalTermsFor(PAYROLL_ONLY_TIER)).toEqual([PAYROLL_ONLY_TERMS, ...PROPOSAL_TERMS]);
+    expect(JSON.stringify(PROPOSAL_TERMS)).not.toContain('SimplePay');
+    const text = PAYROLL_ONLY_TERMS.paragraphs.join(' ');
+    expect(text).toContain('SimplePay');
+    expect(text).toContain('EMP201');
+    expect(text).not.toContain('—');
+  });
+
+  it('the payroll-only PDF carries the payroll fee note and block; an accounting PDF does not', () => {
+    const base = {
+      businessName: 'Pat Co', firstName: 'Pat', lastName: 'P', tierName: 'Payroll', refNumber: null, version: 1,
+      sentAt: null, expiresAt: null, firstDebitFrom: null, signedAt: null, signatureName: null, signatureMethod: null,
+      signatureImage: null, signatureIp: null, inclusions: [], fairUsage: [], outOfScope: [], lineItems: [], totalChargeZAR: 750,
+    };
+    const payroll = renderProposalDocumentHtml({ ...base, tierSlug: PAYROLL_ONLY_TIER });
+    expect(payroll).toContain('How your payroll works');
+    expect(payroll).not.toContain('first close');
+    const pro = renderProposalDocumentHtml({ ...base, tierName: 'Pro', tierSlug: 'pro' });
+    expect(pro).toContain('Your first close runs in the following new month.');
+    expect(pro).not.toContain('How your payroll works');
   });
 });
