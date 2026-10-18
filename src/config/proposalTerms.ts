@@ -65,7 +65,8 @@ export const PAYROLL_ONLY_RESPONSIBILITIES_YOURS: string[] = [
   "Give us the month's payroll inputs (hours, overtime, commission, leave taken and leavers) by the agreed cut-off.",
   "Give us each new starter's details (ID number, tax number, start date and pay terms) by the cut-off before their first pay day.",
   ACCURATE_INFORMATION,
-  "Approve each month's payroll before we finalise payslips, and approve returns before we submit them where we ask you to.",
+  // Zjak, 2026-10-18 (PR #166): no draft approval round; we finalise, then send.
+  "Check each month's payslips and payrun report when we send them, and tell us before pay day if anything is wrong. Approve returns before we submit them where we ask you to.",
   'Keep your own copies of your employment and payroll records. The originals stay yours.',
 ];
 
@@ -172,4 +173,39 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
 ];
 
 /** Blocks shown in full on the proposal itself; the rest sit behind the link. */
-export const INLINE_TERM_IDS = ['period-review', 'changes', 'scope-limits', 'liability'] as const;
+// 'payroll-only' is only in the payroll-only package's terms (proposalTermsFor).
+export const INLINE_TERM_IDS = ['payroll-only', 'period-review', 'changes', 'scope-limits', 'liability'] as const;
+
+// Payroll-only fee footnotes: there is no month-end close, and the first run
+// depends on when SimplePay is set up. The other notes are shared.
+export const PAYROLL_ONLY_FEES_NOTES: string[] = [
+  'Billed monthly in advance. We agree the month of your first payroll run with you when we set up your payroll in SimplePay.',
+  ...FEES_NOTES.slice(1),
+];
+
+/** Fee footnotes for a proposal's package. */
+export function feesNotesFor(tierSlug: string): string[] {
+  return tierSlug === PAYROLL_ONLY_TIER ? PAYROLL_ONLY_FEES_NOTES : FEES_NOTES;
+}
+
+/**
+ * How payroll on its own works, from the monthly salaries playbook. Shown on
+ * /terms/engagement and in the payroll-only proposal document only, so the
+ * accounting packages' terms are unchanged.
+ */
+export const PAYROLL_ONLY_TERMS: TermsBlock = {
+  id: 'payroll-only',
+  heading: 'How your payroll works',
+  paragraphs: [
+    'The Payroll package is a monthly payroll. We run it in SimplePay, give you payslips, file your PAYE, UIF and SDL on the EMP201 every month, do your EMP501 reconciliations and IRP5 certificates, and look after your COIDA annual compliance.',
+    "Each month we ask for your changes before the cut-off. If we don't hear from you by then, we run payroll on last month's information. Changes that reach us after the cut-off normally go into the next month's run.",
+    "Before pay day we send you the month's payslips and payrun report. You pay your employees, and your PAYE, UIF and SDL to SARS, yourself. We make no payments for you and hold no access to your bank account for salaries.",
+    'We act for you, the employer. If one of your employees contacts us about their pay, we refer them to you.',
+    'Weekly or fortnightly pay runs, employer registrations, employment contracts and CCMA or labour disputes are not part of this package.',
+  ],
+};
+
+/** Full terms for a proposal's package: payroll-only adds how payroll works. */
+export function proposalTermsFor(tierSlug: string): TermsBlock[] {
+  return tierSlug === PAYROLL_ONLY_TIER ? [PAYROLL_ONLY_TERMS, ...PROPOSAL_TERMS] : PROPOSAL_TERMS;
+}

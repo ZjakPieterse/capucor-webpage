@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Check, X, RefreshCw } from 'lucide-react';
 import type { FairUsageLine } from '@/lib/schedule';
-import { FEES_NOTES, type TermsBlock } from '@/config/proposalTerms';
+import { feesNotesFor, type TermsBlock } from '@/config/proposalTerms';
 import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 
 // Server-rendered building blocks for the proposal document. No interactivity
@@ -143,10 +143,10 @@ export function ScheduleOfServices({
   );
 }
 
-export function FeesNotes() {
+export function FeesNotes({ tierSlug }: { tierSlug: string }) {
   return (
     <ul className="mt-3 space-y-1.5">
-      {FEES_NOTES.map((n) => (
+      {feesNotesFor(tierSlug).map((n) => (
         <li key={n} className="text-xs leading-relaxed text-muted-foreground">
           · {n}
         </li>

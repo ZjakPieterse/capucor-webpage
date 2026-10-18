@@ -12,8 +12,8 @@
 
 import type { FairUsageLine } from '@/lib/schedule';
 import {
-  FEES_NOTES,
-  PROPOSAL_TERMS,
+  feesNotesFor,
+  proposalTermsFor,
   responsibilitiesFor,
 } from '@/config/proposalTerms';
 import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
@@ -110,7 +110,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     )
     .join('');
 
-  const termsHtml = PROPOSAL_TERMS.map(
+  const termsHtml = proposalTermsFor(d.tierSlug ?? '').map(
     (b) =>
       `<div style="margin:0 0 12px;">
         <p style="${SUBHEAD}">${escapeHtml(b.heading)}</p>
@@ -177,7 +177,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
         <td style="padding:8px 0;font-size:14px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;">${formatZAR(d.totalChargeZAR)}</td>
       </tr>
     </table>
-    <ul style="margin:8px 0 0;padding-left:18px;">${FEES_NOTES.map((n) => `<li style="${LI}color:#6b7280;">${escapeHtml(n)}</li>`).join('')}</ul>
+    <ul style="margin:8px 0 0;padding-left:18px;">${feesNotesFor(d.tierSlug ?? '').map((n) => `<li style="${LI}color:#6b7280;">${escapeHtml(n)}</li>`).join('')}</ul>
     <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First debit order:</strong> ${dateZA(firstOfNextMonth(d.firstDebitFrom ? new Date(d.firstDebitFrom) : undefined).toISOString())}</p>
 
     <!-- Fee fairness -->

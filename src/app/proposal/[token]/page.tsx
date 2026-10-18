@@ -25,6 +25,7 @@ import type { Json } from '@/types/db';
 import {
   PROPOSAL_TERMS,
   INLINE_TERM_IDS,
+  proposalTermsFor,
   responsibilitiesFor,
 } from '@/config/proposalTerms';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
@@ -201,7 +202,7 @@ export default async function ProposalPage({
   const outOfScope = outOfScopeItems(row.services, services);
   const debitBlock = PROPOSAL_TERMS.find((b) => b.id === 'debit-order');
   const inlineIds = INLINE_TERM_IDS as readonly string[];
-  const inlineTerms = PROPOSAL_TERMS.filter((b) => inlineIds.includes(b.id));
+  const inlineTerms = proposalTermsFor(row.tier_slug).filter((b) => inlineIds.includes(b.id));
 
   // Billing starts on the 1st of the month after signing (see firstOfNextMonth),
   // so date it from today, the day the client would sign. The proposal email
@@ -254,7 +255,7 @@ export default async function ProposalPage({
               selectedAddons={row.addons ?? []}
               monthlyZAR={Number(row.monthly_total_zar)}
             />
-            <FeesNotes />
+            <FeesNotes tierSlug={row.tier_slug} />
             <p className="mt-3 text-xs text-muted-foreground">
               First debit order:{' '}
               <span className="font-medium text-foreground">{firstDebitDate}</span>

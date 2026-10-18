@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/config/site';
 import {
+  PAYROLL_ONLY_RESPONSIBILITIES_OURS,
+  PAYROLL_ONLY_RESPONSIBILITIES_YOURS,
+  PAYROLL_ONLY_TERMS,
   PROPOSAL_TERMS,
   RESPONSIBILITIES_OURS,
   RESPONSIBILITIES_YOURS,
@@ -24,6 +27,25 @@ export const metadata: Metadata = {
   },
 };
 
+function Responsibilities({ ours, yours }: { ours: string[]; yours: string[] }) {
+  return (
+    <>
+      <p className="mb-2 text-sm font-semibold text-foreground">We&apos;ll</p>
+      <ul className="mb-6 list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
+        {ours.map((t) => (
+          <li key={t}>{t}</li>
+        ))}
+      </ul>
+      <p className="mb-2 text-sm font-semibold text-foreground">You&apos;ll</p>
+      <ul className="list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
+        {yours.map((t) => (
+          <li key={t}>{t}</li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 export default function EngagementTermsPage() {
   return (
     <article className="mx-auto max-w-3xl px-6 py-20">
@@ -44,18 +66,24 @@ export default function EngagementTermsPage() {
       <section className="space-y-10">
         <div>
           <h2 className="mb-3 text-xl font-semibold">What each of us does</h2>
-          <p className="mb-2 text-sm font-semibold text-foreground">We&apos;ll</p>
-          <ul className="mb-6 list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
-            {RESPONSIBILITIES_OURS.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
-          <p className="mb-2 text-sm font-semibold text-foreground">You&apos;ll</p>
-          <ul className="list-outside list-disc space-y-1.5 pl-5 leading-relaxed text-muted-foreground">
-            {RESPONSIBILITIES_YOURS.map((t) => (
-              <li key={t}>{t}</li>
-            ))}
-          </ul>
+          <p className="mb-6 leading-relaxed text-muted-foreground">
+            Your proposal shows the list for your package. For the Basic, Pro and Premium packages:
+          </p>
+          <Responsibilities ours={RESPONSIBILITIES_OURS} yours={RESPONSIBILITIES_YOURS} />
+          <h3 className="mb-3 mt-8 text-lg font-semibold">For the Payroll package</h3>
+          <Responsibilities
+            ours={PAYROLL_ONLY_RESPONSIBILITIES_OURS}
+            yours={PAYROLL_ONLY_RESPONSIBILITIES_YOURS}
+          />
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-xl font-semibold">{PAYROLL_ONLY_TERMS.heading} (Payroll package)</h2>
+          {PAYROLL_ONLY_TERMS.paragraphs.map((p, i) => (
+            <p key={i} className="mb-3 leading-relaxed text-muted-foreground">
+              {p}
+            </p>
+          ))}
         </div>
 
         {PROPOSAL_TERMS.map((block) => (
