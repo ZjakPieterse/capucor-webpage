@@ -118,9 +118,11 @@ describe('core service (calculator-v2 package structure 1; review answers 2)', (
     const acc = ROWS.find((r) => r.service_slug === 'accounting' && r.ordinal === 1)!;
     const bk = ROWS.find((r) => r.service_slug === 'bookkeeping' && r.ordinal === 12)!;
     const key = `${tier}_price` as 'basic_price' | 'pro_price' | 'premium_price';
-    expect(d.lineItems).toEqual([
+    // Premium also lists WhatsApp Support, included at no charge (Direct Partner Access, 2026-10-18).
+    expect(d.lineItems.filter((l) => l.slug !== 'whatsapp-support')).toEqual([
       { slug: CORE_LINE_SLUG, name: CORE_LINE_NAME, label: 'R0 to R1m · up to 300 transactions', price: acc[key] + bk[key] },
     ]);
+    expect(d.lineItems.filter((l) => l.slug === 'whatsapp-support').map((l) => l.price)).toEqual(tier === 'premium' ? [0] : []);
     expect(d.monthlyTotalZAR).toBe(acc[key] + bk[key]);
   });
 
@@ -264,9 +266,11 @@ describe('add-on figures (Phase 0 figures; tweaks round 1 item 7; premium floor 
     expect(bySlug['not-vat-registered']).toMatchObject({ priceZAR: 0, scopeFlag: true, hidden: true });
   });
 
-  it('no visible add-on is included in any package (each is charged on every package)', () => {
+  it('WhatsApp is included in Premium only (Direct Partner Access, 2026-10-18); every other visible add-on is charged on every package', () => {
     for (const addon of PRICING_ADDONS.filter((a) => !a.hidden)) {
-      for (const tier of TIER_ORDER) expect(addonIncludedInTier(addon, tier)).toBe(false);
+      for (const tier of TIER_ORDER) {
+        expect(addonIncludedInTier(addon, tier)).toBe(addon.slug === 'whatsapp-support' && tier === 'premium');
+      }
     }
   });
 
@@ -274,7 +278,7 @@ describe('add-on figures (Phase 0 figures; tweaks round 1 item 7; premium floor 
     const addons = ['whatsapp-support', 'category-tracking', 'personal-tax:3'];
     const core = (await price({ tierSlug: tier })).monthlyTotalZAR;
     const d = await price({ tierSlug: tier, addons });
-    expect(d.monthlyTotalZAR - core).toBe(750 + 1200 + 3 * 75);
+    expect(d.monthlyTotalZAR - core).toBe((tier === 'premium' ? 0 : 750) + 1200 + 3 * 75);
     expect(sum(d.lineItems)).toBe(d.monthlyTotalZAR);
     expect(d.lineItems.find((l) => l.slug === 'personal-tax')).toMatchObject({ label: '3 people', price: 225 });
     expect(d.addonSlugs).toEqual(['whatsapp-support', 'category-tracking', 'personal-tax:3']);
@@ -336,7 +340,7 @@ describe('legacy slugs on proposals already sent (tweaks round 1 item 7; review 
     const d = await price({ tierSlug: 'pro', addons: ['dext'] });
     expect(d.monthlyTotalZAR).toBe((await price({ tierSlug: 'pro' })).monthlyTotalZAR);
     expect(d.addonSlugs).toEqual([]);
-    expect(addonsForTier([], 'premium')).toEqual([]);
+    expect(addonsForTier([], 'premium')).not.toContain('dext');
   });
 
   it('every legacy combination on Basic still sums line by line', async () => {
