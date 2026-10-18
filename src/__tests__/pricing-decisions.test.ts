@@ -37,7 +37,7 @@ import {
   tierDisplayName,
 } from '@/config/tiers';
 import { PAYROLL } from '@/config/servicePages';
-import { cumulativeInclusions } from '@/lib/schedule';
+import { cumulativeInclusions, reviewInclusions } from '@/lib/schedule';
 import { CATCHUP_FREE_MONTHS } from '@/config/serviceScope';
 import {
   FEES_NOTES,
@@ -461,6 +461,10 @@ describe('payroll-only package (2026-10-18)', () => {
       'COIDA annual compliance',
     ]);
     expect(cumulativeInclusions(['payroll'], PAYROLL_ONLY_TIER, [])).toEqual(items);
+    expect(reviewInclusions(['payroll'], PAYROLL_ONLY_TIER, [])).toEqual({
+      heading: 'What your Payroll subscription includes',
+      items,
+    });
   });
 
   it('the calculator asks about accounting first', () => {

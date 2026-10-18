@@ -15,10 +15,9 @@ import {
 } from '@/lib/calculatorFlow';
 import { parseAddonToken } from '@/lib/pricing';
 import { focusStepHeading } from '@/lib/stepFocus';
-import { PAYROLL } from '@/config/servicePages';
+import { reviewInclusions } from '@/lib/schedule';
 import {
   NOTHING_TO_PRICE_COPY,
-  PAYROLL_ONLY_REVIEW_COPY,
   PRICING_PAGE_HEADING,
   PRICING_PAGE_INTRO,
   PRICING_TRUST_ITEMS,
@@ -292,11 +291,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             selectedBrackets={selectedBrackets}
             selectedTier={selectedTier}
             selectedAddons={pricedAddons}
-            inclusions={
-              payrollOnly
-                ? { heading: PAYROLL_ONLY_REVIEW_COPY.includedHeading, items: PAYROLL.items.map((i) => i.title) }
-                : undefined
-            }
+            inclusions={reviewInclusions([...state.selectedServices], selectedTier, pricedAddons)}
             onBack={back}
             onAction={openModal}
           />
