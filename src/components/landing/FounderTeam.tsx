@@ -1,43 +1,45 @@
 import Image from "next/image";
-import { Check, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 
-// Founder/Team section, between Your first 90 days and the final CTA (audit
-// decision 4, 2026-10-13). Team voice: no personal name in customer-facing
-// copy (decision 2026-10-08), so the card names a role, not a person.
+// Meet the founder, between Your first 90 days and the final CTA (audit
+// decision 4, 2026-10-13). The one deliberate exception to team voice (Zjak,
+// 2026-10-18): visitors meet a real face and name here, told as a short
+// first-person story. Everywhere else the site still speaks as "we". No
+// location: the practice is presented as virtual. Credentials stay light here;
+// they belong to the wider site.
 //
-// FIRST DRAFT. Every line with `confirm: true` is unsourced and renders with a
-// dashed "to confirm" underline until the owner signs it off; remove the flag
-// (or the line) once confirmed. Delete the `.draft-copy` rule in globals.css
-// when no flag is left.
+// DRAFT. Every line with `confirm: true` renders with a dashed "to confirm"
+// underline until the owner signs it off; text in [square brackets] is a gap
+// only the owner can fill. Remove the flag once a line is final, and delete the
+// `.draft-copy` rule in globals.css when no flag is left.
 
 /** Portrait, 4:5. Set to e.g. "/team/founder.jpg" (in public/) once supplied. */
 const PHOTO: string | null = null;
-const PHOTO_ALT = "The founder of Capucor Business Solutions";
+
+const FOUNDER = {
+  name: "Zjak Pieterse",
+  credential: "Founder · AGA(SA)",
+};
 
 type Line = { text: string; confirm?: boolean };
 
-const ROLE: Line = { text: "Founder and lead accountant", confirm: true };
-
 const STORY: Line[] = [
   {
-    text: "Capucor has run the books, payroll and SARS work of South African businesses for more than ten years, from Centurion.",
+    text: "I started Capucor more than ten years ago, after [what you saw or did before Capucor, e.g. years in practice watching owners hear from their accountant once a year, with a bill]. I wanted to be the accountant I'd want for my own business: close to the numbers every month, not only at year-end.",
     confirm: true,
   },
   {
-    text: "We started it for owners who only heard from their accountant at year-end, with a bill. Your month is run by the accountant you talk to at your review, and that stays true as the team grows.",
+    text: "Since then I've run the books, payroll and SARS work for owner-run businesses with staff, [the kinds of businesses you know best]. The pattern is always the same. The owner is good at the work, and the admin eats their evenings.",
     confirm: true,
   },
-];
-
-const CREDENTIALS: Line[] = [
-  { text: "AGA(SA), a SAICA designation" },
-  { text: "Xero Gold Partner", confirm: true },
-  { text: "More than ten years in practice", confirm: true },
-  { text: "Based in Centurion, Gauteng" },
+  {
+    text: "So we built Capucor to run online, on a monthly rhythm, wherever you are. My job is simple: your month is handled, and you know what to do next.",
+    confirm: true,
+  },
 ];
 
 function Copy({ line }: { line: Line }) {
@@ -53,13 +55,13 @@ function Copy({ line }: { line: Line }) {
 
 export function FounderTeam() {
   return (
-    <section id="team" className="premium-section py-14 lg:py-20">
+    <section id="founder" className="premium-section py-14 lg:py-20">
       <SectionDivider />
       <div className="mx-auto w-full max-w-5xl px-5 sm:px-6">
         <ScrollReveal>
           <SectionHeading
-            title="Who runs your month"
-            subtitle="A small practice in Centurion, led by a SAICA-designated accountant. You hear from the same accountant every month."
+            title="Meet the founder"
+            subtitle="The person behind Capucor, and why it works the way it does."
           />
         </ScrollReveal>
 
@@ -68,7 +70,7 @@ export function FounderTeam() {
             {PHOTO ? (
               <Image
                 src={PHOTO}
-                alt={PHOTO_ALT}
+                alt={`${FOUNDER.name}, founder of Capucor Business Solutions`}
                 width={1200}
                 height={1500}
                 sizes="(min-width: 768px) 380px, 320px"
@@ -90,12 +92,8 @@ export function FounderTeam() {
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <article className="svc-card relative rounded-2xl border border-white/10 bg-card/80 p-6 sm:p-7">
-              <p className="text-sm font-medium text-primary">
-                <Copy line={ROLE} />
-              </p>
-
-              <div className="mt-4 space-y-4 text-base leading-relaxed text-muted-foreground">
+            <article className="svc-card relative rounded-2xl border border-white/10 bg-card/80 p-6 sm:p-8">
+              <div className="space-y-4 text-base leading-relaxed text-muted-foreground">
                 {STORY.map((line) => (
                   <p key={line.text}>
                     <Copy line={line} />
@@ -103,16 +101,12 @@ export function FounderTeam() {
                 ))}
               </div>
 
-              <ul className="mt-6 grid gap-2.5 border-t border-white/10 pt-5 sm:grid-cols-2">
-                {CREDENTIALS.map((line) => (
-                  <li key={line.text} className="flex items-start gap-2.5 text-sm">
-                    <span className="svc-check" aria-hidden>
-                      <Check className="h-3 w-3" strokeWidth={3} />
-                    </span>
-                    <Copy line={line} />
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <p className="text-lg font-semibold tracking-tight text-foreground">
+                  {FOUNDER.name}
+                </p>
+                <p className="mt-0.5 text-sm font-medium text-primary">{FOUNDER.credential}</p>
+              </div>
             </article>
           </ScrollReveal>
         </div>

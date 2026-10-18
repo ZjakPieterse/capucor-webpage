@@ -19,7 +19,8 @@ The slot reserved for **real client testimonials / social proof** sits between t
 ## Pending Content: Founder/Team photo and copy
 
 `FounderTeam.tsx` (homepage, between **Your first 90 days** and the final CTA; audit decision 4,
-2026-10-13) shipped as a first draft. Lines flagged `confirm: true` render with a dashed underline
-until the owner confirms them; the photo slot shows "Photo to come" until `PHOTO` points at a
-portrait in `public/team/` (4:5, at least 1200 × 1500 px). No stock faces. When the last flag goes,
-delete the `.draft-copy` rule in `globals.css`. Team voice holds: the card names a role, not a person.
+2026-10-13) is the **Meet the founder** draft, the one place the site names the founder (owner
+decision 2026-10-18; see `voice-and-copy.md`). Lines flagged `confirm: true` render with a dashed
+underline until confirmed, and [square-bracket] text is a gap only the owner can fill. The photo
+slot shows "Photo to come" until `PHOTO` points at a portrait in `public/team/` (4:5, at least
+1200 × 1500 px). No stock faces. When the last flag goes, delete the `.draft-copy` rule in `globals.css`.

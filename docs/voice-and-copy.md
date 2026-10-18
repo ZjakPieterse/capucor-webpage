@@ -107,6 +107,10 @@ Avoid "not X, but Y" and "A system, not ad-hoc work" constructions:
 - **Speak as a team, never as one person (owner decision, 2026-10-08).** "We'll be in touch", "Book a
   call with us". No personal name in customer-facing copy (site, emails, proposal, PDF), so the
   practice can grow without rewriting it. `site-copy.test.ts` checks the main surfaces.
+  **One exception (owner decision, 2026-10-18):** the homepage **Meet the founder** section
+  (`FounderTeam.tsx`) names the founder and tells a short first-person story with his photo, so
+  visitors meet a real person. It names no location (the practice is presented as virtual) and keeps
+  credentials light. Nothing else follows its lead.
 - **"Book a fit call" stays a plain button.** The booking page explains the call (length, cost, who
   takes it), so the site does not repeat it and the page can change as the team grows.
 
