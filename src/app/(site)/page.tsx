@@ -7,6 +7,7 @@ import { ProblemCards } from '@/components/landing/ProblemCards';
 import { ServicePillars } from '@/components/landing/ServicePillars';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { FirstNinetyDays } from '@/components/landing/FirstNinetyDays';
+import { FounderTeam } from '@/components/landing/FounderTeam';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { PageCursorGlow } from '@/components/landing/PageCursorGlow';
 import { ScrollToTopOnMount } from '@/components/landing/ScrollToTopOnMount';
@@ -74,7 +75,9 @@ export default function HomePage() {
         {/* 6. Testimonials / social proof — placeholder between Services and Your first 90 days. Hidden until real client quotes are collected. See AGENTS.md → Pending Content. */}
         {/* 7. Your first 90 days (rhythm from month one, catch-up alongside, 90-day review) */}
         <FirstNinetyDays />
-        {/* 8. Final CTA */}
+        {/* 8. Meet the founder (audit decision 4, 2026-10-13; copy and photo confirmed 2026-10-18) */}
+        <FounderTeam />
+        {/* 9. Final CTA */}
         <FinalCTA />
     </>
   );

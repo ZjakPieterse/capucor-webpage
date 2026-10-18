@@ -92,6 +92,15 @@ describe('funnel copy (F13, F14, F25)', () => {
     }
   });
 
+  // The one exception (Zjak, 2026-10-18): the homepage "Meet the founder"
+  // section names him, so visitors meet a real person. It stays the only one.
+  it('names the founder only in the Meet the founder section', () => {
+    const founder = src('components/landing/FounderTeam.tsx');
+    expect(founder).toContain('Meet the founder');
+    expect(founder).toMatch(/name: "Zjak Pieterse"/);
+    expect(src('app/(site)/page.tsx')).not.toMatch(/Zjak/);
+  });
+
   it('the header shows Home, Pricing and Contact only', () => {
     expect(siteConfig.nav.map((n) => n.label)).toEqual(['Home', 'Pricing', 'Contact']);
   });

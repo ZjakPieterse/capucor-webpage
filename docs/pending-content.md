@@ -15,3 +15,10 @@ The slot reserved for **real client testimonials / social proof** sits between t
 - Placement: `src/app/(site)/page.tsx`, between `ServicePillars` and `FirstNinetyDays` (look for the placeholder HTML comment). The homepage FAQ was retired and its `FaqAccordion` + `config/faq.ts` removed; rebuild fresh if a FAQ section is wanted later.
 - Blocker: testimonials still need to be collected from clients. Once 3–5 quotes (name, role, company, quote, ideally a headshot) are in hand, build a new `Testimonials.tsx` landing component and slot it in.
 - Do not ship the old four-week timeline visual back — it was scrapped intentionally. Build fresh around the real quotes.
+
+## Meet the founder: complete (2026-10-18)
+
+`FounderTeam.tsx` (homepage, between **Your first 90 days** and the final CTA) is the one place the
+site names the founder (owner decision 2026-10-18; see `voice-and-copy.md`). Its copy and photo
+(`public/team/founder.jpg`, `founder-avatar.jpg`) were confirmed by the owner line by line;
+change none of it without him. Nothing is pending.
