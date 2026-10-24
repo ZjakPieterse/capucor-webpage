@@ -102,8 +102,8 @@ export function Step2Tiers({
           // answer-driven add-ons. Chosen add-ons come on the next step.
           const displayTotal = regularTotal + addonTotal(answerAddons, tier.slug);
 
-          const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter(
-            (item) => !item.offCard && item.services.some((s) => selectedServices.has(s))
+          const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
+            item.services.some((s) => selectedServices.has(s))
           );
 
           const featured = tier.slug === FEATURED_TIER;

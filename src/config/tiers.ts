@@ -5,7 +5,8 @@
 // by processing rhythm (Basic monthly, Pro weekly, Premium daily), Premium sold
 // by application. Card lines from the Premium redesign, "more for better"
 // (Zjak, 2026-10-24): titles only, the same order on every card, the cadence
-// word first, and the cards grow from Basic to Premium.
+// word first, and the cards grow from Basic to Premium. Direct Partner Access
+// (2026-10-18) was removed from every surface the same day (Zjak).
 
 export interface TierHighlightItem {
   text: string;
@@ -22,8 +23,6 @@ export interface TierHighlightItem {
   summary?: boolean;
   /** The first word is the cadence ("Monthly", "Weekly"…), set in bold on the card. */
   cadence?: boolean;
-  /** Not a card line, but still a comparison row and a schedule item. */
-  offCard?: boolean;
   /** The signed schedule's wording where the contract must say more than the card line. */
   scheduleText?: string;
 }
@@ -130,21 +129,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Each quarter, a sit-down with your partner on your tax position: provisional tax estimates, year-end planning and practical steps to pay no more tax than the law requires, timed around SARS deadlines.',
       cadence: true,
-    },
-    // Direct Partner Access (decision 2026-10-18, terms confirmed by Zjak the
-    // same day): Zjak personally, a reply the same business day for messages
-    // before 15:00, no turnaround promised for urgent requests and no
-    // after-hours promise. The cap of 8 places stays internal; the site says
-    // "Limited places". Off the cards "for now" (Zjak, 2026-10-24); still a
-    // comparison row and on the signed schedule until he decides.
-    {
-      text: 'Direct Partner Access',
-      services: ['accounting', 'bookkeeping'],
-      offCard: true,
-      tooltip:
-        "Your partner's direct line by WhatsApp or phone, Monday to Friday: message before 15:00 for a reply the same business day. A call before any big decision, and urgent requests handled first. Limited places.",
-      scheduleText:
-        'Direct Partner Access (a direct line to your partner, Zjak Pieterse, by WhatsApp, phone or email, Monday to Friday 08:00 to 17:00; messages before 15:00 get a reply the same business day and later ones by 12:00 the next business day, with the answer or when to expect it; a call before big decisions such as hiring, a lease, a vehicle, a loan, a new entity or a large contract; urgent requests such as bank or funder letters, tax clearance and SARS letters handled first)',
     },
     PAYROLL_SERVICES,
   ],

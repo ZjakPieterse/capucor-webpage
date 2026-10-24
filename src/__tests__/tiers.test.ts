@@ -14,8 +14,8 @@ import { RESPONSIBILITIES_OURS } from '@/config/proposalTerms';
 // ─── helpers replicating Step2Tiers + TierComparison logic ──────────────────
 
 function visibleItems(tierSlug: 'basic' | 'pro' | 'premium', selected: Set<string>) {
-  return (TIER_HIGHLIGHTS[tierSlug] ?? []).filter(
-    (i) => !i.offCard && i.services.some((s) => selected.has(s))
+  return (TIER_HIGHLIGHTS[tierSlug] ?? []).filter((i) =>
+    i.services.some((s) => selected.has(s))
   );
 }
 
@@ -160,33 +160,15 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
     }
   });
 
-  it('Direct Partner Access is off the cards but stays a Premium item for the table and the schedule', () => {
-    const dpa = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'Direct Partner Access');
-    expect(dpa?.offCard).toBe(true);
-    expect(Object.values(TIER_HIGHLIGHTS).flat().filter((i) => i.offCard)).toEqual([dpa]);
+  it('Direct Partner Access is gone from every list (Zjak, 2026-10-24)', () => {
+    const all = Object.values(TIER_HIGHLIGHTS).flat();
+    expect(all.map((i) => `${i.text} ${i.tooltip} ${i.scheduleText ?? ''}`).join(' ')).not.toMatch(/partner access/i);
   });
 
   it('Basic has no supplier processing', () => {
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text).join(' ')).not.toMatch(/supplier/i);
   });
 
-  it('Direct Partner Access: same business day before 15:00, weekdays only, never 24/7 (decision 2026-10-18)', () => {
-    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'Direct Partner Access')!;
-    for (const copy of [item.tooltip, item.scheduleText!]) {
-      expect(copy).toMatch(/Monday to Friday/);
-      expect(copy).toMatch(/before 15:00/);
-      expect(copy).toMatch(/same business day/);
-      expect(copy).toMatch(/WhatsApp/);
-      expect(copy).not.toMatch(/24\/7|24 hours|round the clock|any ?time|after.hours|weekend|evening|on-call/i);
-      // Urgent requests are handled first, with no turnaround promised.
-      expect(copy).toMatch(/urgent requests[^.;]*handled first/i);
-      expect(copy).not.toMatch(/urgent[^.;]*within/i);
-      // The cap of 8 places stays internal.
-      expect(copy).not.toMatch(/\b8\b|eight/i);
-    }
-    expect(item.tooltip).toMatch(/Limited places\.$/);
-    expect(item.scheduleText).toMatch(/by 12:00 the next business day/);
-  });
 
   it('one Payroll processing line, the same on every card, covering the statutory basics only', () => {
     const payroll = (['basic', 'pro', 'premium'] as const).map((t) =>
@@ -256,6 +238,7 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
       'Weekly Performance Review',
       'Supplier Processing & Review',
       'Monthly Tax Strategy & Planning',
+      'Direct Partner Access',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -340,7 +323,7 @@ describe('service-filter behaviour', () => {
     const sel = new Set(['accounting', 'bookkeeping']);
     for (const t of ['basic', 'pro', 'premium'] as const) {
       expect(visibleItems(t, sel).map((i) => i.text)).toEqual(
-        TIER_HIGHLIGHTS[t].filter((i) => !i.offCard && !i.services.includes('payroll')).map((i) => i.text)
+        TIER_HIGHLIGHTS[t].filter((i) => !i.services.includes('payroll')).map((i) => i.text)
       );
     }
   });
@@ -398,7 +381,7 @@ describe('TierComparison accumulation', () => {
 
   it('marks premium items as covered in premium only', () => {
     expectCoverage(
-      ['Daily processing', 'Weekly KPI pulse', 'Cash-flow forecast and budget', 'Quarterly tax strategy', 'Direct Partner Access'],
+      ['Daily processing', 'Weekly KPI pulse', 'Cash-flow forecast and budget', 'Quarterly tax strategy'],
       false,
       false,
     );
