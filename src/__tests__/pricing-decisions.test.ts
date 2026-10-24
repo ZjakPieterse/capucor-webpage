@@ -139,7 +139,7 @@ describe('core service (calculator-v2 package structure 1; review answers 2)', (
     const acc = ROWS.find((r) => r.service_slug === 'accounting' && r.ordinal === 1)!;
     const bk = ROWS.find((r) => r.service_slug === 'bookkeeping' && r.ordinal === 12)!;
     const key = `${tier}_price` as 'basic_price' | 'pro_price' | 'premium_price';
-    // Premium also lists WhatsApp Support, included at no charge (Direct Partner Access, 2026-10-18).
+    // Premium also lists WhatsApp Support, included at no charge (2026-10-18, kept 2026-10-24).
     expect(d.lineItems.filter((l) => l.slug !== 'whatsapp-support')).toEqual([
       { slug: CORE_LINE_SLUG, name: CORE_LINE_NAME, label: 'R0 to R1m · up to 300 transactions', price: acc[key] + bk[key] },
     ]);
@@ -287,7 +287,7 @@ describe('add-on figures (Phase 0 figures; tweaks round 1 item 7; premium floor 
     expect(bySlug['not-vat-registered']).toMatchObject({ priceZAR: 0, scopeFlag: true, hidden: true });
   });
 
-  it('WhatsApp is included in Premium only (Direct Partner Access, 2026-10-18); every other visible add-on is charged on every package', () => {
+  it('WhatsApp is included in Premium only (2026-10-18, kept 2026-10-24); every other visible add-on is charged on every package', () => {
     for (const addon of PRICING_ADDONS.filter((a) => !a.hidden)) {
       for (const tier of TIER_ORDER) {
         expect(addonIncludedInTier(addon, tier)).toBe(addon.slug === 'whatsapp-support' && tier === 'premium');

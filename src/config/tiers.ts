@@ -300,7 +300,8 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'WhatsApp Support',
     priceZAR: 750,
     description: 'A dedicated WhatsApp channel to your accountant and team for simpler questions and support.',
-    // Premium's Direct Partner Access includes WhatsApp (Zjak, 2026-10-18).
+    // Included in Premium at no charge (Zjak, 2026-10-18; kept as a Premium
+    // inclusion in its own right when Direct Partner Access went, 2026-10-24).
     includedFromTier: 'premium',
   },
   {
