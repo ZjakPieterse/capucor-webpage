@@ -86,9 +86,11 @@ export const BOOKKEEPING: ServicePage = {
       covered: 'Numbers you can trust.',
     },
     {
-      title: 'Insights Report and review',
+      // The package line since the Premium redesign (2026-10-24): a written
+      // expert verdict in the report, not a meeting.
+      title: 'Insights report and business health check',
       description:
-        'Regular reports that show how your business is doing and what the numbers mean. Your accountant reviews the information behind them and is there to guide you on what to do next.',
+        "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next. Quarterly on Basic, monthly on Pro and Premium.",
       covered: 'You know what to do next.',
     },
   ],
