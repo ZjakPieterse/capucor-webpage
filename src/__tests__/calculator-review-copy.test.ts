@@ -24,11 +24,21 @@ describe('comparison table rhythm rows (F03)', () => {
   it('shows processing as one value per package, not cumulative ticks', () => {
     const processing = RHYTHM_ROWS.find((r) => r.label === 'Processing');
     expect(processing?.values).toEqual({ basic: 'Monthly', pro: 'Weekly', premium: 'Daily' });
-    expect(processing?.replaces).toEqual(['Monthly Processing', 'Weekly Processing', 'Daily Processing']);
-    const report = RHYTHM_ROWS.find((r) => r.label === 'Insights report');
-    expect(report?.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' });
-    const review = RHYTHM_ROWS.find((r) => r.label === 'Performance review');
-    expect(review?.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' });
+    expect(processing?.replaces).toEqual(['Monthly processing', 'Weekly processing', 'Daily processing']);
+    // You capture your own sales invoices (Zjak, 2026-10-24).
+    expect(processing?.tooltip).toMatch(/You capture your own sales invoices/);
+    // The insights report and performance review are one row (Premium redesign, 2026-10-24).
+    expect(RHYTHM_ROWS.map((r) => r.label)).toEqual(['Processing', 'Insights report and business health check']);
+    const report = RHYTHM_ROWS[1]!;
+    expect(report.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Monthly' });
+    expect(report.tooltip).not.toMatch(/meeting|with you/i);
+  });
+
+  it('every grouped card line is replaced by a value row, so none shows as a tick row too', () => {
+    const replaced = new Set(RHYTHM_ROWS.flatMap((r) => r.replaces));
+    for (const item of Object.values(TIER_HIGHLIGHTS).flat()) {
+      expect(replaced.has(item.text), item.text).toBe(!!item.group);
+    }
   });
 });
 
