@@ -166,19 +166,33 @@ export function Step2Tiers({
                 </span>
               </div>
 
-              {/* Row 3: Features list, below a hairline */}
-              <div className="pricing-card-features flex flex-grow flex-col border-t border-white/10 pt-5">
+              {/* Row 3: Features list below a short rule, each line its own
+                  block split by a hairline (Zjak, 2026-10-24). */}
+              <div className="pricing-card-features flex flex-grow flex-col">
+                <span aria-hidden className="tier-card-rule" />
                 {filteredItems.length > 0 && (
-                  <ul className="space-y-2.5">
-                    {/* Every line alike, "Core Services Included" too (tweaks round 3). */}
-                    {filteredItems.map((item) => (
-                      <li key={item.text} className="flex items-start gap-2.5 text-[13px] leading-snug">
-                        <span className="svc-check" aria-hidden>
-                          <Check className="h-3 w-3" strokeWidth={3} />
-                        </span>
-                        <span className="text-foreground/85">{item.text}</span>
-                      </li>
-                    ))}
+                  <ul className="mt-2.5 divide-y divide-white/10">
+                    {/* Every line alike, "Core services included" too (tweaks round 3);
+                        the cadence word leads in bold (2026-10-24). */}
+                    {filteredItems.map((item) => {
+                      const [first, ...rest] = item.text.split(' ');
+                      return (
+                        <li key={item.text} className="flex items-start gap-2.5 py-2.5 text-[13px] leading-snug last:pb-0">
+                          <span className="svc-check" aria-hidden>
+                            <Check className="h-3 w-3" strokeWidth={3} />
+                          </span>
+                          <span className="text-foreground/85">
+                            {item.cadence ? (
+                              <>
+                                <strong className="font-semibold text-foreground">{first}</strong> {rest.join(' ')}
+                              </>
+                            ) : (
+                              item.text
+                            )}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

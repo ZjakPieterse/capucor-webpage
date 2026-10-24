@@ -1789,6 +1789,16 @@
   pointer-events: none;
 }
 
+/* The short rule under the price, in place of a full-width hairline (Zjak,
+   2026-10-24): the lit edge's colour at a fraction of its width. */
+.tier-card-rule {
+  display: block;
+  width: 2.5rem;
+  height: 1px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklch, var(--primary) 55%, transparent);
+}
+
 .tier-card .tier-icon {
   width: 44px;
   height: 44px;

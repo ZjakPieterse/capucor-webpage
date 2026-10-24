@@ -22,27 +22,27 @@ describe('cumulativeInclusions', () => {
 
   it('accumulates up the packages: Premium carries Pro and Basic items', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
-    expect(premium.filter((t) => t === 'Supplier Processing & Review')).toHaveLength(1);
-    expect(premium.filter((t) => t.startsWith('Direct Partner Access'))).toEqual([
-      'Direct Partner Access (a direct line to your partner, Zjak Pieterse, by WhatsApp, phone or email, Monday to Friday 08:00 to 17:00; messages before 15:00 get a reply the same business day and later ones by 12:00 the next business day, with the answer or when to expect it; a call before big decisions such as hiring, a lease, a vehicle, a loan, a new entity or a large contract; urgent requests such as bank or funder letters, tax clearance and SARS letters handled first)',
-    ]);
-    expect(cumulativeInclusions(CORE, 'pro').some((t) => t.startsWith('Direct Partner Access'))).toBe(false);
-    expect(premium).toContain('Monthly Tax Strategy & Planning');
-    expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier Processing & Review');
+    expect(premium.filter((t) => t === 'Supplier bills captured and reconciled')).toHaveLength(1);
+    expect(premium.join(' ')).not.toMatch(/partner access/i);
+    for (const item of ['Weekly KPI pulse', 'Cash-flow forecast and budget', 'Quarterly tax strategy']) {
+      expect(premium).toContain(item);
+      expect(cumulativeInclusions(CORE, 'pro')).not.toContain(item);
+    }
+    expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier bills captured and reconciled');
   });
 
-  it('keeps one rhythm, report and review per schedule: the highest package wins', () => {
+  it('keeps one rhythm and one insights report per schedule: the highest package wins', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
-    expect(premium.filter((t) => t.endsWith('Processing') && !t.startsWith('Supplier'))).toEqual(['Daily Processing']);
-    expect(premium).not.toContain('Quarterly Performance Review');
-    expect(premium).not.toContain('Monthly Performance Review');
-    expect(premium).toContain('Weekly Performance Review');
-    expect(premium).toContain('Weekly Insights Report');
+    expect(premium.filter((t) => / processing$/.test(t))).toEqual(['Daily processing']);
+    expect(premium.filter((t) => t.includes('insights report'))).toEqual([
+      'Monthly insights report and business health check',
+    ]);
     const pro = cumulativeInclusions(CORE, 'pro');
-    expect(pro).toContain('Monthly Insights Report');
-    expect(pro).not.toContain('Quarterly Insights Report');
-    expect(pro).toContain('Weekly Processing');
-    expect(pro).not.toContain('Monthly Processing');
+    expect(pro).toContain('Monthly insights report and business health check');
+    expect(pro).not.toContain('Quarterly insights report and business health check');
+    expect(pro).toContain('Weekly processing');
+    expect(pro).not.toContain('Monthly processing');
+    expect([...premium, ...pro].join(' ')).not.toMatch(/performance review/i);
   });
 
   it('lists the five core services as the site names them, plus VAT201 for a VAT-registered business', () => {
@@ -55,13 +55,17 @@ describe('cumulativeInclusions', () => {
       'Xero accounting software',
       'VAT returns (VAT201)',
     ]);
-    expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll Processing');
+    expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll processing');
+    // Payroll last on every signed schedule, as on the cards (2026-10-24).
+    for (const tier of TIER_ORDER) {
+      expect(cumulativeInclusions(['payroll', ...CORE], tier).at(-1)).toBe('Payroll processing');
+    }
   });
 
   it('leaves out the card summary line and never mentions Dext', () => {
     for (const tier of ['basic', 'pro', 'premium']) {
       const items = cumulativeInclusions(CORE, tier);
-      expect(items).not.toContain('Core Services Included');
+      expect(items).not.toContain('Core services included');
       expect(items.join(' ')).not.toMatch(/dext/i);
     }
   });
@@ -125,23 +129,22 @@ describe('reviewInclusions', () => {
     }
   });
 
-  it("keeps one rhythm, report and review: the package's own, never a lower one beside it", () => {
+  it("keeps one rhythm and one report: the package's own, never a lower one beside it", () => {
     const pro = reviewInclusions(CORE, 'pro').items;
-    expect(pro).toContain('Weekly Processing');
-    expect(pro).toContain('Monthly Insights Report');
-    expect(pro).not.toContain('Monthly Processing');
-    expect(pro).not.toContain('Quarterly Insights Report');
-    expect(pro).not.toContain('Quarterly Performance Review');
+    expect(pro).toContain('Weekly processing');
+    expect(pro).toContain('Monthly insights report and business health check');
+    expect(pro).not.toContain('Monthly processing');
+    expect(pro).not.toContain('Quarterly insights report and business health check');
     const premium = reviewInclusions(CORE, 'premium').items;
-    expect(premium.filter((t) => /Processing$/.test(t) && t !== 'Supplier Processing & Review')).toEqual(['Daily Processing']);
-    expect(premium).toContain('Direct Partner Access');
-    expect(premium).not.toContain('Core Services Included');
+    expect(premium.filter((t) => / processing$/.test(t))).toEqual(['Daily processing']);
+    expect(premium).not.toContain('Direct Partner Access');
+    expect(premium).not.toContain('Core services included');
   });
 
   it('lists payroll only when payroll is chosen, and never an add-on', () => {
     for (const tier of TIER_ORDER) {
-      expect(reviewInclusions(CORE, tier).items).not.toContain('Payroll Processing');
-      expect(reviewInclusions(WITH_PAYROLL, tier).items.at(-1)).toBe('Payroll Processing');
+      expect(reviewInclusions(CORE, tier).items).not.toContain('Payroll processing');
+      expect(reviewInclusions(WITH_PAYROLL, tier).items.at(-1)).toBe('Payroll processing');
       expect(reviewInclusions(CORE, tier, ['whatsapp-support', 'personal-tax:2']).items).toEqual(
         reviewInclusions(CORE, tier).items,
       );

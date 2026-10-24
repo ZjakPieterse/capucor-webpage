@@ -59,24 +59,27 @@ export interface RhythmRow {
   replaces: string[];
 }
 
+// The insights report and performance review are one row since the Premium
+// redesign (Zjak, 2026-10-24): a written expert verdict, not a meeting. The
+// processing tooltip says the client captures their own sales invoices (Zjak,
+// same day); receivables are reviewed on every package.
 export const RHYTHM_ROWS: RhythmRow[] = [
   {
     label: 'Processing',
-    tooltip: 'How often we process what is available. Bank statements are still requested at every monthly close.',
+    tooltip:
+      'How often we capture and reconcile your bank, including checking which customers have paid. You capture your own sales invoices; we request bank statements at every monthly close.',
     values: { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' },
-    replaces: ['Monthly Processing', 'Weekly Processing', 'Daily Processing'],
+    replaces: ['Monthly processing', 'Weekly processing', 'Daily processing'],
   },
   {
-    label: 'Insights report',
-    tooltip: 'A report with the key numbers and what they mean for the business.',
-    values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
-    replaces: ['Quarterly Insights Report', 'Monthly Insights Report', 'Weekly Insights Report'],
-  },
-  {
-    label: 'Performance review',
-    tooltip: 'A review with you of how the business is performing and what needs attention.',
-    values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Weekly' },
-    replaces: ['Quarterly Performance Review', 'Monthly Performance Review', 'Weekly Performance Review'],
+    label: 'Insights report and business health check',
+    tooltip:
+      "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next.",
+    values: { basic: 'Quarterly', pro: 'Monthly', premium: 'Monthly' },
+    replaces: [
+      'Quarterly insights report and business health check',
+      'Monthly insights report and business health check',
+    ],
   },
 ];
 

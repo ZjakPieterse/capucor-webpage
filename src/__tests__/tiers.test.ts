@@ -60,9 +60,9 @@ describe('package cards (package simplification, 2026-10-06)', () => {
     const rhythm = { basic: 'Monthly', pro: 'Weekly', premium: 'Daily' } as const;
     for (const t of ['basic', 'pro', 'premium'] as const) {
       const [first, second] = TIER_HIGHLIGHTS[t];
-      expect(first!.text).toBe('Core Services Included');
+      expect(first!.text).toBe('Core services included');
       expect(first!.summary).toBe(true);
-      expect(second!.text).toBe(`${rhythm[t]} Processing`);
+      expect(second!.text).toBe(`${rhythm[t]} processing`);
       expect(second!.group).toBe('rhythm');
     }
   });
@@ -105,69 +105,92 @@ describe('tierDisplayName', () => {
 
 // ─── ordering + legacy absence ──────────────────────────────────────────────
 
-describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
-  it('basic: core, monthly processing, quarterly report and review, then payroll', () => {
-    expect(TIER_HIGHLIGHTS.basic.map((i) => i.text)).toEqual([
-      'Core Services Included',
-      'Monthly Processing',
-      'Quarterly Insights Report',
-      'Quarterly Performance Review',
-      'Payroll Processing',
+describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () => {
+  const ALL = new Set(['accounting', 'bookkeeping', 'payroll']);
+  const card = (t: 'basic' | 'pro' | 'premium') => visibleItems(t, ALL).map((i) => i.text);
+
+  it('basic: core, monthly processing, quarterly insights and health check, payroll', () => {
+    expect(card('basic')).toEqual([
+      'Core services included',
+      'Monthly processing',
+      'Quarterly insights report and business health check',
+      'Payroll processing',
     ]);
   });
 
-  it('pro: core, weekly processing, monthly report and review, supplier processing, payroll', () => {
-    expect(TIER_HIGHLIGHTS.pro.map((i) => i.text)).toEqual([
-      'Core Services Included',
-      'Weekly Processing',
-      'Monthly Insights Report',
-      'Monthly Performance Review',
-      'Supplier Processing & Review',
-      'Payroll Processing',
+  it('pro: adds supplier bills, monthly insights and health check', () => {
+    expect(card('pro')).toEqual([
+      'Core services included',
+      'Weekly processing',
+      'Supplier bills captured and reconciled',
+      'Monthly insights report and business health check',
+      'Payroll processing',
     ]);
   });
 
-  it('premium: core, daily processing, weekly report and review, supplier processing, planning, partner, payroll', () => {
-    expect(TIER_HIGHLIGHTS.premium.map((i) => i.text)).toEqual([
-      'Core Services Included',
-      'Daily Processing',
-      'Weekly Insights Report',
-      'Weekly Performance Review',
-      'Supplier Processing & Review',
-      'Monthly Tax Strategy & Planning',
-      'Direct Partner Access',
-      'Payroll Processing',
+  it('premium: adds the weekly KPI pulse, forecast and budget, and quarterly tax strategy', () => {
+    expect(card('premium')).toEqual([
+      'Core services included',
+      'Daily processing',
+      'Supplier bills captured and reconciled',
+      'Monthly insights report and business health check',
+      'Weekly KPI pulse',
+      'Cash-flow forecast and budget',
+      'Quarterly tax strategy',
+      'Payroll processing',
     ]);
+  });
+
+  it('cards grow in the same order: only the cadence word differs on shared lines', () => {
+    const shape = (t: 'basic' | 'pro' | 'premium') =>
+      card(t)
+        .filter((x) => x !== 'Payroll processing')
+        .map((x) => x.replace(/^(Monthly|Weekly|Daily|Quarterly) /, ''));
+    expect(card('basic').length).toBeLessThan(card('pro').length);
+    expect(card('pro').length).toBeLessThan(card('premium').length);
+    expect(shape('premium').slice(0, shape('pro').length)).toEqual(shape('pro'));
+    expect(shape('basic')).toEqual(shape('pro').filter((x) => !x.startsWith('Supplier')));
+  });
+
+  it('marks the cadence word, and only a cadence word, for bold', () => {
+    for (const t of ['basic', 'pro', 'premium'] as const) {
+      for (const i of TIER_HIGHLIGHTS[t]) {
+        expect(!!i.cadence, i.text).toBe(/^(Monthly|Weekly|Daily|Quarterly) /.test(i.text));
+      }
+    }
+  });
+
+  it('Direct Partner Access is gone from every list (Zjak, 2026-10-24)', () => {
+    const all = Object.values(TIER_HIGHLIGHTS).flat();
+    expect(all.map((i) => `${i.text} ${i.tooltip} ${i.scheduleText ?? ''}`).join(' ')).not.toMatch(/partner access/i);
   });
 
   it('Basic has no supplier processing', () => {
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text).join(' ')).not.toMatch(/supplier/i);
   });
 
-  it('Direct Partner Access: same business day before 15:00, weekdays only, never 24/7 (decision 2026-10-18)', () => {
-    const item = TIER_HIGHLIGHTS.premium.find((i) => i.text === 'Direct Partner Access')!;
-    for (const copy of [item.tooltip, item.scheduleText!]) {
-      expect(copy).toMatch(/Monday to Friday/);
-      expect(copy).toMatch(/before 15:00/);
-      expect(copy).toMatch(/same business day/);
-      expect(copy).toMatch(/WhatsApp/);
-      expect(copy).not.toMatch(/24\/7|24 hours|round the clock|any ?time|after.hours|weekend|evening|on-call/i);
-      // Urgent requests are handled first, with no turnaround promised.
-      expect(copy).toMatch(/urgent requests[^.;]*handled first/i);
-      expect(copy).not.toMatch(/urgent[^.;]*within/i);
-      // The cap of 8 places stays internal.
-      expect(copy).not.toMatch(/\b8\b|eight/i);
-    }
-    expect(item.tooltip).toMatch(/Limited places\.$/);
-    expect(item.scheduleText).toMatch(/by 12:00 the next business day/);
+  it('carries the comparison-table tooltips word for word (redesign note, 2026-10-24)', () => {
+    const tip = (text: string) =>
+      Object.values(TIER_HIGHLIGHTS).flat().find((i) => i.text === text)?.tooltip;
+    expect(tip('Supplier bills captured and reconciled')).toBe(
+      'Supplier bills and receipts captured, matched to payments and checked against supplier statements.',
+    );
+    expect(tip('Weekly KPI pulse')).toBe(
+      'A short weekly note on the handful of numbers that matter most to your business, agreed with you at the start, and what to act on this week.',
+    );
+    expect(tip('Cash-flow forecast and budget')).toBe(
+      "An annual budget, and a 12-month cash-flow forecast updated every month, so you can see what's coming before it arrives.",
+    );
+    expect(tip('Quarterly tax strategy')).toBe(
+      'Each quarter, a sit-down with your partner on your tax position: provisional tax estimates, year-end planning and practical steps to pay no more tax than the law requires, timed around SARS deadlines.',
+    );
   });
-
-  it('one Payroll Processing line, the same on every card, covering the statutory basics only', () => {
+  it('one Payroll processing line, the same on every card, covering the statutory basics only', () => {
     const payroll = (['basic', 'pro', 'premium'] as const).map((t) =>
       TIER_HIGHLIGHTS[t].filter((i) => i.services.includes('payroll'))
     );
     for (const items of payroll) {
-      expect(items.map((i) => i.text)).toEqual(['Payroll Processing']);
+      expect(items.map((i) => i.text)).toEqual(['Payroll processing']);
       expect(items[0]).toBe(payroll[0]![0]);
     }
     const tooltip = payroll[0]![0]!.tooltip;
@@ -221,6 +244,16 @@ describe('TIER_HIGHLIGHTS ordering (package simplification lists)', () => {
       'COIDA Annual Submission',
       'Employee Self-Service Portal',
       'Payroll Payment Files Prepared',
+      // Replaced in the Premium redesign (2026-10-24)
+      'Quarterly Insights Report',
+      'Monthly Insights Report',
+      'Weekly Insights Report',
+      'Quarterly Performance Review',
+      'Monthly Performance Review',
+      'Weekly Performance Review',
+      'Supplier Processing & Review',
+      'Monthly Tax Strategy & Planning',
+      'Direct Partner Access',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -313,26 +346,26 @@ describe('service-filter behaviour', () => {
   it('Case 2 — accounting only: hides bookkeeping-only items', () => {
     const sel = new Set(['accounting']);
     const basic = visibleItems('basic', sel).map((i) => i.text);
-    expect(basic).toContain('Quarterly Insights Report');
-    expect(basic).not.toContain('Monthly Processing');
-    expect(basic).not.toContain('Payroll Processing');
+    expect(basic).toContain('Quarterly insights report and business health check');
+    expect(basic).not.toContain('Monthly processing');
+    expect(basic).not.toContain('Payroll processing');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
-    expect(pro).not.toContain('Supplier Processing & Review');
-    expect(pro).toContain('Monthly Performance Review');
+    expect(pro).not.toContain('Supplier bills captured and reconciled');
+    expect(pro).toContain('Monthly insights report and business health check');
   });
 
   it('Case 3 — bookkeeping only: shows the processing items', () => {
     const sel = new Set(['bookkeeping']);
-    expect(visibleItems('basic', sel).map((i) => i.text)).toContain('Monthly Processing');
-    expect(visibleItems('pro', sel).map((i) => i.text)).toContain('Supplier Processing & Review');
-    expect(visibleItems('premium', sel).map((i) => i.text)).toContain('Daily Processing');
+    expect(visibleItems('basic', sel).map((i) => i.text)).toContain('Monthly processing');
+    expect(visibleItems('pro', sel).map((i) => i.text)).toContain('Supplier bills captured and reconciled');
+    expect(visibleItems('premium', sel).map((i) => i.text)).toContain('Daily processing');
   });
 
-  it('Case 4 — payroll only: one Payroll Processing line on every package', () => {
+  it('Case 4 — payroll only: one Payroll processing line on every package', () => {
     const sel = new Set(['payroll']);
     for (const t of ['basic', 'pro', 'premium'] as const) {
-      expect(visibleItems(t, sel).map((i) => i.text)).toEqual(['Payroll Processing']);
+      expect(visibleItems(t, sel).map((i) => i.text)).toEqual(['Payroll processing']);
     }
   });
 });
@@ -354,16 +387,16 @@ describe('TierComparison accumulation', () => {
   };
 
   it('marks every basic item as covered in basic, pro, and premium', () => {
-    expectCoverage(['Monthly Processing', 'Quarterly Insights Report', 'Quarterly Performance Review'], true, true);
+    expectCoverage(['Monthly processing', 'Quarterly insights report and business health check'], true, true);
   });
 
   it('marks pro items as covered in pro and premium only', () => {
-    expectCoverage(['Weekly Processing', 'Monthly Performance Review', 'Supplier Processing & Review'], false, true);
+    expectCoverage(['Weekly processing', 'Supplier bills captured and reconciled'], false, true);
   });
 
   it('marks premium items as covered in premium only', () => {
     expectCoverage(
-      ['Daily Processing', 'Weekly Performance Review', 'Monthly Tax Strategy & Planning', 'Direct Partner Access'],
+      ['Daily processing', 'Weekly KPI pulse', 'Cash-flow forecast and budget', 'Quarterly tax strategy'],
       false,
       false,
     );
@@ -391,8 +424,8 @@ describe('TierComparison accumulation', () => {
 describe('payroll in the comparison matrix', () => {
   const rows = buildMatrix(new Set(['payroll']));
 
-  it('places Payroll Processing at lowestTier "basic", so every package covers it', () => {
-    const row = rows.find((r) => r.text === 'Payroll Processing');
+  it('places Payroll processing at lowestTier "basic", so every package covers it', () => {
+    const row = rows.find((r) => r.text === 'Payroll processing');
     expect(row).toBeDefined();
     expect(row!.lowestTier).toBe('basic');
     for (const t of ['basic', 'pro', 'premium']) expect(isCovered(t, row!.lowestTier)).toBe(true);

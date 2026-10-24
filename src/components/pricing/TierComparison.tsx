@@ -64,7 +64,9 @@ export function TierComparison({
     }
 
     // Then what each package adds, ticked from the package that adds it.
+    // Payroll goes last, as on the cards (2026-10-24).
     const tierOrder: LowestTier[] = ['basic', 'pro', 'premium'];
+    const payroll: MatrixRow[] = [];
     for (const tierSlug of tierOrder) {
       const highlights: TierHighlightItem[] = TIER_HIGHLIGHTS[tierSlug] ?? [];
       for (const h of highlights) {
@@ -72,10 +74,11 @@ export function TierComparison({
         if (h.services.length > 0 && !h.services.some((s) => selectedServices.has(s))) continue;
         if (seen.has(h.text)) continue;
         seen.add(h.text);
-        result.push({ kind: 'tick', text: h.text, tooltip: h.tooltip, lowestTier: tierSlug });
+        const row: MatrixRow = { kind: 'tick', text: h.text, tooltip: h.tooltip, lowestTier: tierSlug };
+        (h.services.includes('payroll') ? payroll : result).push(row);
       }
     }
-    return result;
+    return [...result, ...payroll];
   }, [selectedServices]);
 
   if (selectedServices.size === 0) return null;

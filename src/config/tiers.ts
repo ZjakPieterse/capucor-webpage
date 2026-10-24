@@ -3,7 +3,10 @@
 // Package content follows the package simplification (2026-10-06): a
 // bare-minimum baseline of five core services in every package, tiers defined
 // by processing rhythm (Basic monthly, Pro weekly, Premium daily), Premium sold
-// by application.
+// by application. Card lines from the Premium redesign, "more for better"
+// (Zjak, 2026-10-24): titles only, the same order on every card, the cadence
+// word first, and the cards grow from Basic to Premium. Direct Partner Access
+// (2026-10-18) was removed from every surface the same day (Zjak).
 
 export interface TierHighlightItem {
   text: string;
@@ -12,12 +15,14 @@ export interface TierHighlightItem {
   calculatorOnly?: boolean;
   /**
    * Items in the same group replace each other as the package goes up (the
-   * rhythm, the reports, the review). A cumulative list, such as the signed
+   * rhythm, the insights report). A cumulative list, such as the signed
    * schedule, keeps only the highest package's item of each group.
    */
-  group?: 'rhythm' | 'reports' | 'review';
-  /** A card summary line ("Core Services Included"), not a schedule item. */
+  group?: 'rhythm' | 'reports';
+  /** A card summary line ("Core services included"), not a schedule item. */
   summary?: boolean;
+  /** The first word is the cadence ("Monthly", "Weekly"…), set in bold on the card. */
+  cadence?: boolean;
   /** The signed schedule's wording where the contract must say more than the card line. */
   scheduleText?: string;
 }
@@ -26,7 +31,7 @@ export interface TierHighlightItem {
 // processing rhythm (package simplification, 2026-10-06). Payroll is flat
 // across packages, so its one line repeats on every card when payroll is chosen.
 const CORE_SERVICES_INCLUDED: TierHighlightItem = {
-  text: 'Core Services Included',
+  text: 'Core services included',
   services: ['accounting', 'bookkeeping'],
   tooltip: 'Everything in the core services: your year-round finance team, annual financials, your SARS and CIPC returns and your accounting software.',
   summary: true,
@@ -35,102 +40,95 @@ const CORE_SERVICES_INCLUDED: TierHighlightItem = {
 // The statutory basics only (decision 2026-10-06): no employee self-service
 // portal or payment files on any package.
 const PAYROLL_SERVICES: TierHighlightItem = {
-  text: 'Payroll Processing',
+  text: 'Payroll processing',
   services: ['payroll'],
   tooltip: 'Monthly payroll and payslips, with EMP201, EMP501, UIF and COIDA submissions handled on their cycles.',
   calculatorOnly: true,
 };
 
-const SUPPLIER_PROCESSING: TierHighlightItem = {
-  text: 'Supplier Processing & Review',
+// Its own line from Pro up, so it is clear Basic does not include it (Zjak,
+// 2026-10-24).
+const SUPPLIER_BILLS: TierHighlightItem = {
+  text: 'Supplier bills captured and reconciled',
   services: ['bookkeeping'],
-  tooltip: 'Supplier bills captured and reviewed, so what you owe suppliers and what customers owe you is always up to date.',
+  tooltip: 'Supplier bills and receipts captured, matched to payments and checked against supplier statements.',
 };
+
+// A written report with an expert verdict, not a meeting (Zjak, 2026-10-24).
+const INSIGHTS_TOOLTIP =
+  "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next.";
 
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
     CORE_SERVICES_INCLUDED,
     {
-      text: 'Monthly Processing',
+      text: 'Monthly processing',
       services: ['bookkeeping'],
-      tooltip: 'Your transactions are processed and reconciled once a month, at the monthly close.',
+      tooltip: 'Your bank is captured and reconciled once a month, at the monthly close.',
       group: 'rhythm',
+      cadence: true,
     },
     {
-      text: 'Quarterly Insights Report',
+      text: 'Quarterly insights report and business health check',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A report every quarter with the key numbers and what they mean for the business.',
+      tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
-    },
-    {
-      text: 'Quarterly Performance Review',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'A review every quarter of how the business is performing and what needs attention.',
-      group: 'review',
+      cadence: true,
     },
     PAYROLL_SERVICES,
   ],
   pro: [
     CORE_SERVICES_INCLUDED,
     {
-      text: 'Weekly Processing',
+      text: 'Weekly processing',
       services: ['bookkeeping'],
       tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
       group: 'rhythm',
+      cadence: true,
     },
+    SUPPLIER_BILLS,
     {
-      text: 'Monthly Insights Report',
+      text: 'Monthly insights report and business health check',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A report every month with the key numbers and what they mean for the business.',
+      tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
+      cadence: true,
     },
-    {
-      text: 'Monthly Performance Review',
-      services: ['accounting', 'bookkeeping'],
-      tooltip: 'A review every month covering performance, key concerns and next steps.',
-      group: 'review',
-    },
-    SUPPLIER_PROCESSING,
     PAYROLL_SERVICES,
   ],
   premium: [
     CORE_SERVICES_INCLUDED,
     {
-      text: 'Daily Processing',
+      text: 'Daily processing',
       services: ['bookkeeping'],
       tooltip: 'We process what is available every business day, so your numbers are close to live.',
       group: 'rhythm',
+      cadence: true,
     },
+    SUPPLIER_BILLS,
     {
-      text: 'Weekly Insights Report',
+      text: 'Monthly insights report and business health check',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A report every week with the key numbers, so decisions are made on current figures.',
+      tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
+      cadence: true,
     },
     {
-      text: 'Weekly Performance Review',
+      text: 'Weekly KPI pulse',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A short review every week covering performance, key concerns and next steps.',
-      group: 'review',
+      tooltip: 'A short weekly note on the handful of numbers that matter most to your business, agreed with you at the start, and what to act on this week.',
+      cadence: true,
     },
-    SUPPLIER_PROCESSING,
     {
-      text: 'Monthly Tax Strategy & Planning',
+      text: 'Cash-flow forecast and budget',
       services: ['accounting', 'bookkeeping'],
-      tooltip: 'A monthly planning cycle covering your tax position, cash flow and the decisions ahead.',
+      tooltip: "An annual budget, and a 12-month cash-flow forecast updated every month, so you can see what's coming before it arrives.",
     },
-    // Direct Partner Access (decision 2026-10-18, terms confirmed by Zjak the
-    // same day): Zjak personally, a reply the same business day for messages
-    // before 15:00, no turnaround promised for urgent requests and no
-    // after-hours promise. The cap of 8 places stays internal; the site says
-    // "Limited places".
     {
-      text: 'Direct Partner Access',
+      text: 'Quarterly tax strategy',
       services: ['accounting', 'bookkeeping'],
-      tooltip:
-        "Your partner's direct line by WhatsApp or phone, Monday to Friday: message before 15:00 for a reply the same business day. A call before any big decision, and urgent requests handled first. Limited places.",
-      scheduleText:
-        'Direct Partner Access (a direct line to your partner, Zjak Pieterse, by WhatsApp, phone or email, Monday to Friday 08:00 to 17:00; messages before 15:00 get a reply the same business day and later ones by 12:00 the next business day, with the answer or when to expect it; a call before big decisions such as hiring, a lease, a vehicle, a loan, a new entity or a large contract; urgent requests such as bank or funder letters, tax clearance and SARS letters handled first)',
+      tooltip: 'Each quarter, a sit-down with your partner on your tax position: provisional tax estimates, year-end planning and practical steps to pay no more tax than the law requires, timed around SARS deadlines.',
+      cadence: true,
     },
     PAYROLL_SERVICES,
   ],
@@ -302,7 +300,8 @@ export const PRICING_ADDONS: PricingAddon[] = [
     name: 'WhatsApp Support',
     priceZAR: 750,
     description: 'A dedicated WhatsApp channel to your accountant and team for simpler questions and support.',
-    // Premium's Direct Partner Access includes WhatsApp (Zjak, 2026-10-18).
+    // Included in Premium at no charge (Zjak, 2026-10-18; kept as a Premium
+    // inclusion in its own right when Direct Partner Access went, 2026-10-24).
     includedFromTier: 'premium',
   },
   {
@@ -347,10 +346,11 @@ export const PRICING_ADDONS: PricingAddon[] = [
 // The line under each package name: what it gets (the Steady / Growing /
 // Fast-moving pills went on 2026-10-13, Zjak). No monthly, weekly or
 // daily here; the rhythm lives in the item lists (Zjak, calculator design
-// review, 2026-10-13). Basic still reads as complete: every package carries the
+// review, 2026-10-13). "Reviews" read as meetings, so the wording changed with
+// the Premium redesign (2026-10-24). Basic still reads as complete: every package carries the
 // core services.
 export const TIER_BUYER_FIT: Record<string, string> = {
-  basic: 'Essentials done properly, with regular reviews so you know where the business stands and what to do next.',
-  pro: "Current numbers, suppliers handled and closer reviews, so growth doesn't outrun the books.",
-  premium: 'Stay on top of your numbers, plan ahead for tax, and have a trusted partner to call when big decisions arise.',
+  basic: 'Essentials done properly, with regular check-ins on where the business stands and what to do next.',
+  pro: "Current numbers, suppliers handled and a closer eye every month, so growth doesn't outrun the books.",
+  premium: "Know where you stand every week, see what's coming, and plan ahead for tax with your partner.",
 };
