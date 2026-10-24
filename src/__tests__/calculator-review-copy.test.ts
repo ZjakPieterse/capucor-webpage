@@ -31,6 +31,12 @@ describe('comparison table rhythm rows (F03)', () => {
     expect(RHYTHM_ROWS.map((r) => r.label)).toEqual(['Processing', 'Insights report and business health check']);
     const report = RHYTHM_ROWS[1]!;
     expect(report.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Monthly' });
+    expect(report.tooltip).toBe(
+      "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next.",
+    );
+    expect(processing?.tooltip).toBe(
+      'How often we capture and reconcile your bank, including checking which customers have paid. You capture your own sales invoices; we request bank statements at every monthly close.',
+    );
     expect(report.tooltip).not.toMatch(/meeting|with you/i);
   });
 

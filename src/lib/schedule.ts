@@ -73,12 +73,14 @@ function inclusions(
     if (!SERVICE_TIED_TEXTS.has(item.text)) out.push(item.text);
   }
 
-  // A card summary line ("Core Services Included") is not a schedule item: the
-  // core items are listed above. Within a group (rhythm, reports, review) a
-  // higher package's item replaces the lower one, so a Premium schedule says
-  // "Processing Rhythm: Daily" once, not monthly, weekly and daily.
+  // A card summary line ("Core services included") is not a schedule item: the
+  // core items are listed above. Within a group (rhythm, reports) a higher
+  // package's item replaces the lower one, so a Premium schedule says "Daily
+  // processing" once, not monthly, weekly and daily. Payroll goes last, as on
+  // the cards (2026-10-24).
   const maxRank = tierRank(tierSlug);
   const groupAt = new Map<string, number>();
+  const payroll: string[] = [];
   const tiers = wording === 'card' ? [tierSlug] : TIER_ORDER.filter((t) => tierRank(t) <= maxRank);
   for (const tier of tiers) {
     for (const h of TIER_HIGHLIGHTS[tier] ?? []) {
@@ -89,11 +91,11 @@ function inclusions(
         continue;
       }
       if (h.group) groupAt.set(h.group, out.length);
-      out.push(text);
+      (h.services.includes('payroll') ? payroll : out).push(text);
     }
   }
 
-  return [...new Set(out)];
+  return [...new Set([...out, ...payroll])];
 }
 
 /** The signed Schedule of Services' "what's included" lines, in contract wording. */

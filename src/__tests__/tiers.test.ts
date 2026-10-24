@@ -169,7 +169,22 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
     expect(TIER_HIGHLIGHTS.basic.map((i) => i.text).join(' ')).not.toMatch(/supplier/i);
   });
 
-
+  it('carries the comparison-table tooltips word for word (redesign note, 2026-10-24)', () => {
+    const tip = (text: string) =>
+      Object.values(TIER_HIGHLIGHTS).flat().find((i) => i.text === text)?.tooltip;
+    expect(tip('Supplier bills captured and reconciled')).toBe(
+      'Supplier bills and receipts captured, matched to payments and checked against supplier statements.',
+    );
+    expect(tip('Weekly KPI pulse')).toBe(
+      'A short weekly note on the handful of numbers that matter most to your business, agreed with you at the start, and what to act on this week.',
+    );
+    expect(tip('Cash-flow forecast and budget')).toBe(
+      "An annual budget, and a 12-month cash-flow forecast updated every month, so you can see what's coming before it arrives.",
+    );
+    expect(tip('Quarterly tax strategy')).toBe(
+      'Each quarter, a sit-down with your partner on your tax position: provisional tax estimates, year-end planning and practical steps to pay no more tax than the law requires, timed around SARS deadlines.',
+    );
+  });
   it('one Payroll processing line, the same on every card, covering the statutory basics only', () => {
     const payroll = (['basic', 'pro', 'premium'] as const).map((t) =>
       TIER_HIGHLIGHTS[t].filter((i) => i.services.includes('payroll'))

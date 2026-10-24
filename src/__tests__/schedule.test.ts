@@ -56,6 +56,10 @@ describe('cumulativeInclusions', () => {
       'VAT returns (VAT201)',
     ]);
     expect(cumulativeInclusions(['payroll', ...CORE], 'basic')).toContain('Payroll processing');
+    // Payroll last on every signed schedule, as on the cards (2026-10-24).
+    for (const tier of TIER_ORDER) {
+      expect(cumulativeInclusions(['payroll', ...CORE], tier).at(-1)).toBe('Payroll processing');
+    }
   });
 
   it('leaves out the card summary line and never mentions Dext', () => {
