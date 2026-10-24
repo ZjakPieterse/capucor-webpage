@@ -22,7 +22,7 @@ const STEPS = [
   {
     number: "03",
     title: "Review",
-    body: "Before anything reaches you, your accountant checks it. Then your Insights Report lands: what came in, what went out, who still owes you, and the two things worth a closer look.",
+    body: "Before anything reaches you, your accountant checks it. Then your insights report lands with our business health check: what came in, what went out, who still owes you, and the two things worth a closer look.",
   },
   {
     number: "04",

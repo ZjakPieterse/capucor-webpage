@@ -224,7 +224,7 @@ function buildScenes(d: StoryDates): Scene[] {
         preview: "Books are closed and VAT201 is filed. Cash covers 4.2 months…",
         before: "Books are closed and VAT201 is filed. Cash covers ",
         figure: "4.2 months",
-        after: ". If the Midrand contract lands, the second site manager is affordable from next quarter. Let’s talk it through at your review.",
+        after: ". If the Midrand contract lands, the second site manager is affordable from next quarter. The full health check is in the report.",
       },
     },
     {
@@ -267,7 +267,7 @@ function buildScenes(d: StoryDates): Scene[] {
         preview: "Books are closed and your margin held at 38%…",
         before: "Books are closed and your margin held at ",
         figure: "38%",
-        after: ". You can fund next month’s stock run up to R 180 000 without touching the overdraft. Let’s plan the order at your review.",
+        after: ". You can fund next month’s stock run up to R 180 000 without touching the overdraft. The full health check is in the report.",
       },
     },
     {
@@ -1008,7 +1008,7 @@ export function HeroStory() {
         style={{ rotateX, rotateY, y: lift, scale, transformPerspective: 1200 }}
         className="hero-story-card tilt-card premium-card relative overflow-hidden rounded-2xl border-[0.5px] border-white/10 bg-card/80 p-4 shadow-2xl sm:p-5"
         role="figure"
-        aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's Insights Report arrives by email with one recommendation to discuss at your review. Figures are for illustration."
+        aria-label="Example: a month of receipts, bank lines, payslips, overdue invoices and SARS reminders piles up, then the month's transactions are reconciled and the returns filed, and the month's Insights Report arrives by email with a business health check and one recommendation. Figures are for illustration."
       >
         <div aria-hidden className="pointer-events-none absolute -inset-16 z-0 rounded-full bg-primary/10 blur-3xl" />
 
