@@ -13,7 +13,8 @@ import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 //              from home, an overdue invoice, a payslip, a sticky note
 //   order    → the month's transactions are reconciled one by one, then the
 //              returns are filed
-//   decision → the month's report arrives by email with one plain recommendation//              and the business health check in the report
+//   decision → the month's report arrives by email with one plain recommendation
+//              and the business health check in the report
 // Then it fades to the next owner's story. It keeps running on hover (Zjak,
 // 2026-10-07). Every figure, name and business is invented and the panel
 // says so in the footnote, as decided for the hero panel in website-v2 (Zjak,
