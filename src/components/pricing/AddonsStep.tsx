@@ -52,7 +52,8 @@ export function AddonsStep({
   onNext,
 }: AddonsStepProps) {
   const packageTotal = monthlyTotal([...selectedServices], selectedBrackets, selectedTier, brackets);
-  const runningTotal = packageTotal + addonTotal(pricedAddons, selectedTier);
+  const addonsTotal = addonTotal(pricedAddons, selectedTier);
+  const runningTotal = packageTotal + addonsTotal;
   const quantities = new Map(resolveAddons(selectedAddons).map((s) => [s.addon.slug, s.quantity]));
 
   return (
@@ -81,8 +82,16 @@ export function AddonsStep({
         className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 sm:p-5 flex items-center justify-between gap-4"
         aria-live="polite"
       >
-        {/* Title and price only, both centred on the row (Zjak, 2026-10-18). */}
-        <p className="text-base sm:text-lg font-semibold leading-snug">Your monthly total</p>
+        {/* Title and price, both centred on the row (Zjak, 2026-10-18), with
+            what the total is made of once add-ons are in it (design review E1). */}
+        <div>
+          <p className="text-base sm:text-lg font-semibold leading-snug">Your monthly total</p>
+          {addonsTotal > 0 && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {`${tierDisplayName(selectedTier)} ${formatZAR(packageTotal)} + add-ons ${formatZAR(addonsTotal)}`}
+            </p>
+          )}
+        </div>
         <div className="flex items-baseline gap-1.5 leading-none">
           <AnimatedPrice amount={runningTotal} size="lg" />
           <span className="text-xs text-muted-foreground whitespace-nowrap">/month</span>

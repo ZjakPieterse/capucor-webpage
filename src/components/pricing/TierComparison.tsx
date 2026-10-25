@@ -143,52 +143,57 @@ export function TierComparison({
 
       {open && (
         <div id="tier-comparison-table" className="border-t border-border">
-          {/* Mobile: card-per-package stack (no horizontal scroll) */}
-          <div className="md:hidden divide-y divide-border">
-            {sortedTiers.map((t) => (
-              <div key={t.slug} className="px-5 py-4">
-                <p className="mb-3 text-sm font-semibold">{t.name}</p>
-                <ul className="space-y-1.5">
-                  {visibleRows.map((row) => {
-                    if (row.kind === 'value') {
-                      return (
-                        <li key={row.text} className="flex items-start gap-2 text-xs text-foreground">
-                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-foreground/70" />
-                          <span>
-                            {row.text}: <span className="font-medium">{row.values[t.slug] ?? '—'}</span>
-                            {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
-                          </span>
-                        </li>
-                      );
-                    }
-                    const covered = isCovered(t.slug, row.lowestTier);
-                    return (
-                      <li
-                        key={row.text}
-                        className={cn(
-                          'flex items-start gap-2 text-xs',
-                          row.sub && 'pl-5',
-                          covered && !row.sub ? 'text-foreground' : 'text-muted-foreground/80'
-                        )}
-                      >
-                        {covered ? (
+          {/* Phones: the same comparison as a real three-column grid (design
+              review D6), not three stacked lists that repeat the cards. Each
+              row's label sits above its three short cells (tick, dash or
+              "Weekly"); every row is its own tbody so the label is a header
+              for its cells. Fits 390 px without horizontal scroll. */}
+          <table className="md:hidden w-full table-fixed text-xs">
+            <thead className="bg-muted/30">
+              <tr>
+                {sortedTiers.map((t) => (
+                  <th key={t.slug} scope="col" className="px-2 py-3 text-center font-semibold text-muted-foreground">
+                    {t.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {visibleRows.map((row) => {
+              const sub = isSub(row);
+              return (
+                <tbody key={row.text} className="border-t border-border/60">
+                  <tr>
+                    <th
+                      scope="rowgroup"
+                      colSpan={sortedTiers.length}
+                      className={cn(
+                        'px-5 pt-3 pb-1 text-left font-normal',
+                        sub ? 'pl-9 text-muted-foreground' : 'text-foreground'
+                      )}
+                    >
+                      {label(row)}
+                    </th>
+                  </tr>
+                  <tr>
+                    {sortedTiers.map((t) => (
+                      <td key={t.slug} className="px-2 pt-1 pb-3 text-center">
+                        {row.kind === 'value' ? (
+                          <span className="font-medium">{row.values[t.slug] ?? '—'}</span>
+                        ) : isCovered(t.slug, row.lowestTier) ? (
                           <Check
-                            className={cn(
-                              'h-3.5 w-3.5 shrink-0 mt-0.5',
-                              row.sub ? 'text-muted-foreground/60' : 'text-foreground/70'
-                            )}
+                            className={cn('inline h-4 w-4', sub ? 'text-muted-foreground/60' : 'text-foreground/70')}
+                            aria-label="Included"
                           />
                         ) : (
-                          <Minus className="h-3 w-3 shrink-0 mt-1 text-muted-foreground/60" />
+                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
                         )}
-                        <span>{label(row)}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              );
+            })}
+          </table>
 
           {/* Tablet/desktop: comparison table */}
           <div className="hidden md:block overflow-x-auto">

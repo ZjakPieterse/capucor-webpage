@@ -411,7 +411,7 @@ export function ActivateProposalModal({
                   </>
                 ) : (
                   <>
-                    {isRequest ? PREMIUM_REQUEST_COPY.submit : isAccept ? 'Accept and sign' : 'Email me my proposal'}
+                    {isRequest ? PREMIUM_REQUEST_COPY.submit : isAccept ? 'Accept and sign' : 'Email me the proposal'}
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}

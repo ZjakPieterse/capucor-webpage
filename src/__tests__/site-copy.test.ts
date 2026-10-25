@@ -48,6 +48,22 @@ describe('the package rhythm is true for every package (F04, F20)', () => {
   });
 });
 
+describe('review step and proposal fallbacks (design review F3, G3, 2026-10-25)', () => {
+  it('names what each review button does, and the modal echoes it', () => {
+    const review = src('components/pricing/ReviewStep.tsx');
+    expect(review).toContain('Accept and sign');
+    expect(review).toContain('Email me the proposal');
+    expect(review).not.toMatch(/Send proposal|^\s*Accept\s*$/m);
+    expect(src('components/pricing/ActivateProposalModal.tsx')).toContain("'Email me the proposal'");
+  });
+
+  it('gives an unavailable proposal a second route: a fit call or an email', () => {
+    const page = src('app/proposal/[token]/page.tsx');
+    expect(page).toMatch(/links.fitCall/);
+    expect(page).toMatch(/email.contact/);
+  });
+});
+
 describe('funnel copy (F13, F14, F25)', () => {
   it('has a de-duplicated, sentence-case trust bar', () => {
     const text = PRICING_TRUST_ITEMS.join(' ').toLowerCase();

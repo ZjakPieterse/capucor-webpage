@@ -139,7 +139,7 @@ describe('core service (calculator-v2 package structure 1; review answers 2)', (
     const acc = ROWS.find((r) => r.service_slug === 'accounting' && r.ordinal === 1)!;
     const bk = ROWS.find((r) => r.service_slug === 'bookkeeping' && r.ordinal === 12)!;
     const key = `${tier}_price` as 'basic_price' | 'pro_price' | 'premium_price';
-    // Premium also lists WhatsApp Support, included at no charge (2026-10-18, kept 2026-10-24).
+    // Premium also lists WhatsApp support, included at no charge (2026-10-18, kept 2026-10-24).
     expect(d.lineItems.filter((l) => l.slug !== 'whatsapp-support')).toEqual([
       { slug: CORE_LINE_SLUG, name: CORE_LINE_NAME, label: 'R0 to R1m · up to 300 transactions', price: acc[key] + bk[key] },
     ]);
@@ -267,7 +267,7 @@ describe('Premium by application (package structure 6; tweaks round 1 item 6)', 
 describe('add-on figures (Phase 0 figures; tweaks round 1 item 7; premium floor decision 2 parked)', () => {
   const bySlug = Object.fromEntries(PRICING_ADDONS.map((a) => [a.slug, a]));
 
-  it('the add-ons step offers exactly WhatsApp, Category Tracking and personal tax', () => {
+  it('the add-ons step offers exactly WhatsApp, category tracking and personal tax', () => {
     expect(PRICING_ADDONS.filter((a) => !a.hidden).map((a) => a.slug)).toEqual([
       'whatsapp-support',
       'category-tracking',

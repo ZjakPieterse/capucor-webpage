@@ -53,8 +53,10 @@ export function AnswerRecap({ brackets, selectedBrackets, answers, onEdit }: Ans
       <h3 id="answer-recap-heading" className="mb-1 text-left text-sm font-medium text-muted-foreground">
         {ANSWER_RECAP_HEADING}
       </h3>
-      <ul className="flex flex-wrap items-center gap-y-1">
-        {chips.map((chip, i) => (
+      {/* Separators are CSS dots (.answer-recap-list), never a literal "|"
+          that dangles where the row wraps (design review D5). */}
+      <ul className="answer-recap-list">
+        {chips.map((chip) => (
           <li key={chip.step} className="inline-flex items-center">
             <button
               type="button"
@@ -63,13 +65,8 @@ export function AnswerRecap({ brackets, selectedBrackets, answers, onEdit }: Ans
               className="answer-chip -mx-1 inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-foreground/90 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
               {chip.text}
-              <Pencil aria-hidden className="answer-chip-edit h-3 w-3 text-primary opacity-50 transition-opacity" />
+              <Pencil aria-hidden className="answer-chip-edit h-3 w-3 text-muted-foreground transition-colors" />
             </button>
-            {i < chips.length - 1 && (
-              <span aria-hidden className="px-2.5 text-border">
-                |
-              </span>
-            )}
           </li>
         ))}
       </ul>

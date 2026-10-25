@@ -283,7 +283,7 @@ describe('add-on tokens', () => {
 });
 
 describe('new add-on figures', () => {
-  it('prices WhatsApp at R750 (included in Premium) and Category Tracking at R1 200 a month on every package', () => {
+  it('prices WhatsApp at R750 (included in Premium) and category tracking at R1 200 a month on every package', () => {
     for (const tier of ['basic', 'pro', 'premium']) {
       expect(addonTotal(['whatsapp-support'], tier)).toBe(tier === 'premium' ? 0 : 750);
       expect(addonTotal(['category-tracking'], tier)).toBe(1200);
@@ -298,7 +298,7 @@ describe('new add-on figures', () => {
 
   it('labels a per-unit line with its count', () => {
     expect(buildAddonLineItems(['personal-tax:2'], 'basic')).toEqual([
-      { slug: 'personal-tax', name: 'Personal Tax Returns', label: '2 people', price: 150 },
+      { slug: 'personal-tax', name: 'Personal tax returns', label: '2 people', price: 150 },
     ]);
     expect(buildAddonLineItems(['personal-tax:1'], 'basic')[0]!.label).toBe('1 person');
   });

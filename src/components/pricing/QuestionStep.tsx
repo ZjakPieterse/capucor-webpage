@@ -224,7 +224,10 @@ export function YesNoQuestion({ value, onAnswer, ...shell }: YesNoQuestionProps)
                   isSelected ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
                 )}
               >
-                <Icon className="h-4 w-4" strokeWidth={2.5} />
+                {/* The mark appears only on the chosen answer (C3): at rest an
+                    icon reads as a pre-answer; the empty tile stays as the
+                    radio indicator so nothing shifts. */}
+                {isSelected && <Icon className="h-4 w-4" strokeWidth={2.5} />}
               </span>
               <span className="font-semibold">{label}</span>
             </button>

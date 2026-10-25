@@ -49,16 +49,18 @@ interface PricingCalculatorProps {
 
 const TRUST_ITEMS = PRICING_TRUST_ITEMS;
 
+// One quiet line under the screen (design review C5): neutral marks, since
+// cyan is for action, focus and selection only. Wraps on phones.
 function TrustBar() {
   return (
-    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+    <ul className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-x-5 gap-y-2 lg:flex-nowrap">
       {TRUST_ITEMS.map((item) => (
-        <div key={item} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <BadgeCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+        <li key={item} className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground/80">
+          <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {item}
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -334,13 +336,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
                 </motion.div>
               </AnimatePresence>
             </div>
-          </div>
-        </section>
-
-        {/* Trust signals near commitment, not in the warm-up */}
-        <section className="premium-section relative py-14 lg:py-20">
-          <SectionDivider />
-          <div className="max-w-[1090px] mx-auto px-6">
+            {/* Trust signals pulled up under the screen as one unit with it:
+                no section or hairline of their own (design review C5). */}
             <TrustBar />
           </div>
         </section>

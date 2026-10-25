@@ -1372,8 +1372,10 @@
   content: "";
   position: absolute;
   top: -1px;
-  left: 14%;
-  right: 14%;
+  /* Full hover width, scaled in at rest: the edge grows by transform, never
+     by animating left/right (design review D4, motion rule). */
+  left: 6%;
+  right: 6%;
   height: 1px;
   border-radius: var(--radius-full);
   background: linear-gradient(
@@ -1383,8 +1385,8 @@
     transparent
   );
   opacity: 0.55;
-  transition: opacity 360ms ease, left 480ms cubic-bezier(0.16, 1, 0.3, 1),
-    right 480ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scaleX(0.82);
+  transition: opacity 360ms ease, transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
 
@@ -1428,8 +1430,7 @@
 @media all {
   .svc-card:hover::after {
     opacity: 1;
-    left: 6%;
-    right: 6%;
+    transform: scaleX(1);
   }
   /* Only the service icon lifts and glows; the ticks stay put. */
   .svc-card:hover svg:not(.svc-icon svg) {
@@ -1607,7 +1608,50 @@
 /* Answers above the packages (AnswerRecap.tsx): tap one to change it. No
    border, so hover lifts the text colour instead. */
 .answer-chip {
+  position: relative;
   transition: color 200ms ease, transform 200ms ease;
+}
+
+/* A 44 px tall hit area without a taller row: the 28 px chip plus 8 px above
+   and below (design review D5). */
+.answer-chip::after {
+  content: "";
+  position: absolute;
+  inset: -8px 0;
+}
+
+/* Middle dots between the answers, drawn by CSS (D5): each dot sits in the
+   column gap before its item, and the list clips its left edge, so the dot
+   before the first item on a wrapped line is cut off instead of dangling.
+   The 8 px padding keeps the first chip's focus ring inside the clip. */
+.answer-recap-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 1.5rem;
+  row-gap: 0.25rem;
+  margin-left: -8px;
+  padding-left: 8px;
+  overflow-x: clip;
+}
+
+.answer-recap-list > li {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.answer-recap-list > li + li::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(-0.75rem - 1.5px);
+  width: 3px;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: var(--radius-full);
+  background: var(--muted-foreground);
+  opacity: 0.7;
 }
 
 @media all {
@@ -1616,7 +1660,7 @@
   }
 
   .answer-chip:hover .answer-chip-edit {
-    opacity: 1;
+    color: var(--primary);
   }
 }
 
@@ -1757,7 +1801,10 @@
   min-height: auto;
 }
 
-@media (min-width: 640px) {
+/* Three across from 1024 px, stacked below: at 640 px three 181 px cards let
+   their content cross the card edges (Codex audit, 2026-10-25), and at 768 px
+   a five-figure price still touched them. */
+@media (min-width: 1024px) {
   .pricing-grid-container {
     grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
@@ -1798,20 +1845,33 @@
 .tier-card-edge {
   position: absolute;
   top: -2px;
-  left: 14%;
-  right: 14%;
+  left: 6%;
+  right: 6%;
   height: 1px;
   border-radius: var(--radius-full);
+  /* Neutral at rest and on hover; cyan only on the recommended card and the
+     chosen one, so pointing at Basic no longer makes two cards look featured.
+     Grows by transform, not left/right (design review D4). */
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, white 20%, transparent),
+    transparent
+  );
+  opacity: 0.55;
+  transform: scaleX(0.82);
+  transition: opacity 360ms ease, transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.tier-card.popular-card .tier-card-edge,
+.tier-card.is-selected .tier-card-edge {
   background: linear-gradient(
     90deg,
     transparent,
     color-mix(in oklch, var(--primary) 70%, transparent),
     transparent
   );
-  opacity: 0.55;
-  transition: opacity 360ms ease, left 480ms cubic-bezier(0.16, 1, 0.3, 1),
-    right 480ms cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
 }
 
 .tier-card .tier-icon {
@@ -1833,8 +1893,13 @@
   .tier-card:hover .tier-card-edge,
   .tier-card.is-selected .tier-card-edge {
     opacity: 1;
-    left: 6%;
-    right: 6%;
+    transform: scaleX(1);
+  }
+  /* The lift stays, but a plain package's hover border and shadow are
+     neutral too: cyan is for the recommended and the chosen card (D4). */
+  .pricing-grid-container > .tier-card:not(.is-selected):not(.popular-card):hover {
+    border-color: color-mix(in oklch, white 20%, transparent);
+    box-shadow: 0 14px 38px -22px rgba(0, 0, 0, 0.7);
   }
 }
 
