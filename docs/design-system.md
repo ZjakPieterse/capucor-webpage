@@ -130,6 +130,11 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   grid declares `grid-template-rows: auto auto … 1fr` and each card uses
   `grid-template-rows: subgrid` (see `.pricing-grid-container` / `.pricing-card-item` in
   `globals.css`, consumed by `Step2Tiers.tsx`).
+- **The package cards sit three across from 1024 px only** (stacked below): at 640 px three
+  181 px cards spilled their content, and at 768 px a five-figure price still touched the edge
+  (design review 2026-10-25). Check a large price (e.g. R 46 900) when changing the breakpoint.
+- **Card top edges grow by `transform: scaleX()`, never `left`/`right`**; a package's edge is
+  neutral at rest and on hover, cyan only on the recommended and the chosen card (D4).
 - **Always reserve a row even when a card has no content for it** — render an invisible
   placeholder (`h-0 w-0 opacity-0 aria-hidden`) so the subgrid row still exists and the
   cards line up. See the `else` branch of the cumulative-label row in `Step2Tiers.tsx`.

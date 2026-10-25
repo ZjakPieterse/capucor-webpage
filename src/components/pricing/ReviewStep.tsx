@@ -98,7 +98,8 @@ export function ReviewStep({
               </p>
             </div>
             <Button size="lg" onClick={() => onAction('accept')} className="mt-auto gap-2 cta-armed">
-              Accept
+              {/* Says what happens next (design review F3, Zjak 2026-10-25). */}
+              Accept and sign
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -111,7 +112,7 @@ export function ReviewStep({
             </div>
             <Button variant="outline" size="lg" onClick={() => onAction('send')} className="mt-auto gap-2">
               <Mail className="h-4 w-4" />
-              Send proposal
+              Email me the proposal
             </Button>
           </div>
         </div>

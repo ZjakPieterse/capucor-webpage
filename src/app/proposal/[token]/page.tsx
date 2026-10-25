@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
 import { tierDisplayName } from '@/config/tiers';
+import { siteConfig } from '@/config/site';
 import { firstOfNextMonth } from '@/lib/utils';
 import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
 import type { Json } from '@/types/db';
@@ -369,9 +370,22 @@ function ProposalUnavailable({
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
       <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{body}</p>
-      <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
-        Build your subscription
-      </Button>
+      {/* A second route for someone whose link is gone (design review G3):
+          a fit call or an email, beside rebuilding the subscription. */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+        <Button nativeButton={false} render={<Link href="/pricing" />}>
+          Build your subscription
+        </Button>
+        <Button nativeButton={false} variant="outline" render={<Link href={siteConfig.links.fitCall} />}>
+          Book a fit call
+        </Button>
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">
+        Or email us at{' '}
+        <a href={`mailto:${siteConfig.email.contact}`} className="text-foreground underline underline-offset-2">
+          {siteConfig.email.contact}
+        </a>
+      </p>
     </div>
   );
 }

@@ -243,14 +243,14 @@ export function Step2Tiers({
         <Button variant="outline" size="lg" onClick={onBack}>
           <ArrowLeft aria-hidden /> Back
         </Button>
-        <Button
-          size="lg"
-          onClick={onNext}
-          disabled={!selectedTier}
-          className={cn('gap-2', selectedTier && 'cta-armed')}
-        >
-          Continue to add-ons <ArrowRight aria-hidden />
-        </Button>
+        {/* Choosing a package moves on by itself, so Continue appears only
+            when the visitor comes back with one chosen: no disabled button
+            on the first visit (design review D3). */}
+        {selectedTier && (
+          <Button size="lg" onClick={onNext} className="gap-2 cta-armed">
+            Continue to add-ons <ArrowRight aria-hidden />
+          </Button>
+        )}
       </div>
 
       {/* Below the buttons and open by default (tweaks round 1). */}

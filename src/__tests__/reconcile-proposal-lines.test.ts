@@ -4,8 +4,8 @@
  * The first send is POST /api/proposals (priced by priceProposalSelection); the
  * retry is scripts/reconcile-deliveries.mjs, which reloads the stored proposal
  * row and rebuilds the email. Until 2026-10-18 the retry built its own lines
- * (brackets plus Dext only), so a retried email dropped WhatsApp Support,
- * Category Tracking and Personal Tax Returns while its total still counted
+ * (brackets plus Dext only), so a retried email dropped WhatsApp support,
+ * category tracking and personal tax returns while its total still counted
  * them. Both now use buildProposalLineItems (src/lib/pricing.ts).
  */
 import { execFileSync } from 'node:child_process';
@@ -120,7 +120,7 @@ describe('a retried proposal email matches the first send', () => {
     expect(retriedClient).toEqual(firstClient);
     expect(retriedOwner).toEqual(firstOwner);
     // Not vacuous: the add-on lines are there, and the scope flag is not a line.
-    for (const text of ['WhatsApp Support', 'Category Tracking', 'Personal Tax Returns', '3 people', 'Monthly accounting']) {
+    for (const text of ['WhatsApp support', 'Category tracking', 'Personal tax returns', '3 people', 'Monthly accounting']) {
       expect(retriedClient.html).toContain(text);
       expect(retriedOwner.text).toContain(text);
     }

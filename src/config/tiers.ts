@@ -287,7 +287,7 @@ export const PRICING_ADDONS: PricingAddon[] = [
   },
   {
     slug: 'whatsapp-support',
-    name: 'WhatsApp Support',
+    name: 'WhatsApp support',
     priceZAR: 750,
     description: 'A dedicated WhatsApp channel to your accountant and team for simpler questions and support.',
     // Included in Premium at no charge (Zjak, 2026-10-18; kept as a Premium
@@ -296,14 +296,14 @@ export const PRICING_ADDONS: PricingAddon[] = [
   },
   {
     slug: 'category-tracking',
-    name: 'Category Tracking',
+    name: 'Category tracking',
     priceZAR: 1200,
     description:
       'Tracking categories set up for your branches, projects or departments, with every transaction coded to them so your reports split by category.',
   },
   {
     slug: 'personal-tax',
-    name: 'Personal Tax Returns',
+    name: 'Personal tax returns',
     priceZAR: 75,
     description:
       'Annual income tax returns (ITR12) prepared and filed for selected individuals.',
