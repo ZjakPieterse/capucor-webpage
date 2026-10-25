@@ -3,19 +3,39 @@
 
 import type { CalculatorStep } from '@/types';
 
-// One plain question per screen: no eyebrow, no hint (tweaks round 1, 2026-10-06).
+// One plain question per screen, with one line on why it matters to the price
+// (calculator journey, 2026-10-25, reversing "no subtexts" of 2026-10-06).
 export interface QuestionCopy {
   title: string;
+  why: string;
 }
 
 export const QUESTION_COPY = {
   // First, so a payroll-only client is not asked for revenue (Zjak, 2026-10-18).
-  accounting: { title: 'Do you need monthly accounting services?' },
-  revenue: { title: 'What is your annual revenue?' },
-  transactions: { title: 'How many transactions should be processed each month?' },
-  vat: { title: 'Is your business registered for VAT?' },
-  payroll: { title: 'Do you need payroll services?' },
-  employees: { title: 'How many active employees?' },
+  accounting: {
+    title: 'Do you need monthly accounting services?',
+    why: 'Your books, tax and compliance, done every month. Choose No if you only need payroll.',
+  },
+  revenue: {
+    title: 'What is your annual revenue?',
+    why: 'Your turnover sets the size of your compliance and reporting work, and so your fee.',
+  },
+  transactions: {
+    title: 'How many transactions do you have each month?',
+    why: 'Count every bank line, invoice, supplier bill and journal. This sets your monthly processing allowance.',
+  },
+  vat: {
+    title: 'Is your business registered for VAT?',
+    why: 'If you are, your VAT returns are included. Your answer does not change the price.',
+  },
+  payroll: {
+    title: 'Do you need payroll services?',
+    why: 'Payslips every month, plus your EMP201, EMP501 and UIF submissions to SARS.',
+  },
+  employees: {
+    title: 'How many employees are on your payroll?',
+    why: 'Count everyone paid through payroll each month. Your headcount sets the payroll fee.',
+  },
 } satisfies Partial<Record<CalculatorStep, QuestionCopy>>;
 
 // Above the packages: the visitor's answers, each tap-to-change, read as a
