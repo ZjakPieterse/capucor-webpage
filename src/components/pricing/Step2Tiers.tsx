@@ -170,28 +170,18 @@ export function Step2Tiers({
                   line under the price, Zjak, 2026-10-25). */}
               <div className="pricing-card-features flex flex-grow flex-col border-t border-white/10 pt-5">
                 {filteredItems.length > 0 && (
-                  <ul className="space-y-2.5">
-                    {/* Every line alike, "Core services included" too (tweaks round 3);
-                        the cadence word leads in bold (2026-10-24). */}
-                    {filteredItems.map((item) => {
-                      const [first, ...rest] = item.text.split(' ');
-                      return (
-                        <li key={item.text} className="flex items-start gap-2.5 text-[13px] leading-snug">
-                          <span className="svc-check" aria-hidden>
-                            <Check className="h-3 w-3" strokeWidth={3} />
-                          </span>
-                          <span className="text-foreground/85">
-                            {item.cadence ? (
-                              <>
-                                <strong className="font-semibold text-foreground">{first}</strong> {rest.join(' ')}
-                              </>
-                            ) : (
-                              item.text
-                            )}
-                          </span>
-                        </li>
-                      );
-                    })}
+                  <ul className="space-y-3">
+                    {/* Every line alike, "Core services included" and the
+                        cadence words too, a little more air between lines
+                        (Zjak, 2026-10-25). */}
+                    {filteredItems.map((item) => (
+                      <li key={item.text} className="flex items-start gap-2.5 text-[13px] leading-snug">
+                        <span className="svc-check" aria-hidden>
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        </span>
+                        <span className="text-foreground/85">{item.text}</span>
+                      </li>
+                    ))}
                   </ul>
                 )}
               </div>
@@ -205,7 +195,7 @@ export function Step2Tiers({
                   aria-hidden
                   className={cn(
                     buttonVariants({ variant: flagship ? 'default' : 'outline', size: 'lg' }),
-                    'w-full',
+                    'w-full backdrop-blur-none',
                     flagship && 'gradient-cta'
                   )}
                 >
@@ -239,7 +229,7 @@ export function Step2Tiers({
                 featured && (!selectedTier || isSelected) && 'popular-card',
                 'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
-                  ? 'is-selected border-primary bg-primary/10 backdrop-blur-md shadow-lg shadow-primary/10'
+                  ? 'is-selected border-primary bg-primary/10 shadow-lg shadow-primary/10'
                   : 'premium-glass border-white/10'
               )}
             >

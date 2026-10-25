@@ -5,7 +5,7 @@
 // by processing rhythm (Basic monthly, Pro weekly, Premium daily), Premium sold
 // by application. Card lines from the Premium redesign, "more for better"
 // (Zjak, 2026-10-24): titles only, the same order on every card, the cadence
-// word first, and the cards grow from Basic to Premium. Direct Partner Access
+// word first (plain text since 2026-10-25), and the cards grow from Basic to Premium. Direct Partner Access
 // (2026-10-18) was removed from every surface the same day (Zjak).
 
 export interface TierHighlightItem {
@@ -21,8 +21,6 @@ export interface TierHighlightItem {
   group?: 'rhythm' | 'reports';
   /** A card summary line ("Core services included"), not a schedule item. */
   summary?: boolean;
-  /** The first word is the cadence ("Monthly", "Weekly"…), set in bold on the card. */
-  cadence?: boolean;
   /** The signed schedule's wording where the contract must say more than the card line. */
   scheduleText?: string;
 }
@@ -66,14 +64,12 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['bookkeeping'],
       tooltip: 'Your bank is captured and reconciled once a month, at the monthly close.',
       group: 'rhythm',
-      cadence: true,
     },
     {
       text: 'Quarterly insights report and business health check',
       services: ['accounting', 'bookkeeping'],
       tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
-      cadence: true,
     },
     PAYROLL_SERVICES,
   ],
@@ -84,7 +80,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['bookkeeping'],
       tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
       group: 'rhythm',
-      cadence: true,
     },
     SUPPLIER_BILLS,
     {
@@ -92,7 +87,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
-      cadence: true,
     },
     PAYROLL_SERVICES,
   ],
@@ -103,7 +97,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['bookkeeping'],
       tooltip: 'We process what is available every business day, so your numbers are close to live.',
       group: 'rhythm',
-      cadence: true,
     },
     SUPPLIER_BILLS,
     {
@@ -111,13 +104,11 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       services: ['accounting', 'bookkeeping'],
       tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
-      cadence: true,
     },
     {
       text: 'Weekly KPI pulse',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'A short weekly note on the handful of numbers that matter most to your business, agreed with you at the start, and what to act on this week.',
-      cadence: true,
     },
     {
       text: 'Cash-flow forecast and budget',
@@ -128,7 +119,6 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       text: 'Quarterly tax strategy',
       services: ['accounting', 'bookkeeping'],
       tooltip: 'Each quarter, a sit-down with your partner on your tax position: provisional tax estimates, year-end planning and practical steps to pay no more tax than the law requires, timed around SARS deadlines.',
-      cadence: true,
     },
     PAYROLL_SERVICES,
   ],

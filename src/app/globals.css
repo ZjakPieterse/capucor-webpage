@@ -1795,6 +1795,16 @@
   border-radius: 13px;
 }
 
+/* No backdrop blur on the package cards (Zjak, 2026-10-25: the step scrolled
+   unevenly). Under the fixed page background every scroll frame re-blurred
+   all three cards; their fill is mostly opaque over a smooth gradient, so the
+   blur showed next to nothing. The card's outline button drops its blur in
+   Step2Tiers.tsx. */
+.tier-card.premium-glass {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 @media all {
   .tier-card:hover .tier-card-edge,
   .tier-card.is-selected .tier-card-edge {
