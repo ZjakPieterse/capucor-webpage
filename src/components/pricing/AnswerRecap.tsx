@@ -49,8 +49,8 @@ export function AnswerRecap({ brackets, selectedBrackets, answers, onEdit }: Ans
 
   return (
     <section aria-labelledby="answer-recap-heading" className="border-y border-border/60 py-2.5">
-      {/* In the old eyebrows' blue, sentence case (Zjak, 2026-10-13). */}
-      <h3 id="answer-recap-heading" className="mb-1 text-left text-sm font-medium text-primary">
+      {/* Muted, sentence case: cyan is for action and selection only (A2). */}
+      <h3 id="answer-recap-heading" className="mb-1 text-left text-sm font-medium text-muted-foreground">
         {ANSWER_RECAP_HEADING}
       </h3>
       <ul className="flex flex-wrap items-center gap-y-1">

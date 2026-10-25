@@ -72,9 +72,9 @@ export function ProposalSummary({
   return (
     <div className={cn('rounded-2xl border border-primary/25 bg-primary/[0.04] p-5', className)}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold text-primary">Your subscription</p>
+        <p className="text-xs font-semibold text-muted-foreground">Your subscription</p>
         {tierName && (
-          <span className="shrink-0 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+          <span className="shrink-0 rounded-md bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-foreground">
             {tierName} package
           </span>
         )}

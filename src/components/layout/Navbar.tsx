@@ -64,10 +64,12 @@ export function Navbar() {
 
         {/* Desktop actions */}
         <div className="hidden md:flex items-center gap-2">
+          {/* The quiet outline: the page's own gradient CTA is the one primary
+              action per screen (design review A1). */}
           <Button
             nativeButton={false}
             render={<a href={siteConfig.links.fitCall} />}
-            size="sm"
+            variant="outline"
           >
             Book a fit call
           </Button>
@@ -110,7 +112,8 @@ export function Navbar() {
                   <Button
                     nativeButton={false}
                     render={<a href={siteConfig.links.fitCall} />}
-                    className="w-full h-11"
+                    variant="outline"
+                    className="w-full"
                   >
                     Book a fit call
                   </Button>
