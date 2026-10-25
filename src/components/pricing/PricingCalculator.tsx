@@ -178,11 +178,11 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     advance();
   };
 
-  // Choosing a package moves straight on to the add-ons too (Zjak,
-  // 2026-10-18); Continue stays for a visitor who comes back to this step.
-  const chooseTierAndNext = (slug: string) => {
+  // Choosing a package only selects it: the visitor moves on with Continue
+  // (Zjak, 2026-10-25, reversing the 2026-10-18 auto-advance). The payroll
+  // question is the last screen that moves on by itself.
+  const chooseTier = (slug: string) => {
     setTier(slug);
-    advance();
   };
 
   const { step, selectedBrackets, answers } = state;
@@ -262,7 +262,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             pricedAddons={pricedAddons}
             answers={answers}
             onEditAnswer={editAnswer}
-            onTierSelect={chooseTierAndNext}
+            onTierSelect={chooseTier}
             onBack={back}
             onNext={next}
             testimonial={spotlightTestimonial}
