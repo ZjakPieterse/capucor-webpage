@@ -195,7 +195,7 @@ export function tierDisplayName(slug: string): string {
 }
 
 // The core services, included in every package. One list drives both the
-// "Core services" rows in the /pricing comparison and the signed Schedule of
+// core-service rows in the /pricing comparison and the signed Schedule of
 // Services (2026-10-13), so the site and the contract name the same things.
 // `scheduleText` is the schedule's wording where the contract must say more
 // than the row (the schedule shows names, not tooltips). `scheduleOnly` items
@@ -248,7 +248,7 @@ export const CORE_SERVICES: PackageCommonItem[] = [
   },
 ];
 
-/** The core services as rows under "Core services" in the comparison table. */
+/** The core services as the first rows of the comparison table. */
 export const CORE_SERVICE_LINES: PackageCommonItem[] = CORE_SERVICES.filter((item) => !item.scheduleOnly);
 
 /** The core items on the signed schedule, in schedule wording, hiding VAT201 when not VAT-registered. */
