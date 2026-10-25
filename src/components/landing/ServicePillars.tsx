@@ -40,7 +40,7 @@ export function ServicePillars() {
                       <h3 className="text-h3 font-semibold tracking-tight">
                         {svc.title}
                       </h3>
-                      <p className="mt-1 text-sm font-medium text-primary">{svc.hook}</p>
+                      <p className="mt-1 text-sm font-medium text-foreground/75">{svc.hook}</p>
                     </div>
                   </div>
 

@@ -161,7 +161,8 @@ function AddonCard({ addon, tierSlug, quantity, onToggle, onSetQuantity }: Addon
     <div
       className={cn(
         'relative rounded-2xl border-2 backdrop-blur-md',
-        isOn ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-border bg-card/40'
+        // Selected = cyan border + filled tick, no glow (design review E1).
+        isOn ? 'border-primary bg-card/40' : 'border-border bg-card/40'
       )}
     >
       <button

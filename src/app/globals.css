@@ -1169,7 +1169,7 @@
   margin: 0 0 14px;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 .deck-list {
@@ -1198,9 +1198,10 @@
   height: 20px;
   margin-top: 1px;
   border-radius: var(--radius-full);
-  background: color-mix(in oklch, var(--primary) 16%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 30%, transparent) inset;
-  color: var(--primary);
+  /* Neutral: cyan marks action and selection only (design review A2). */
+  background: color-mix(in oklch, white 6%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklch, white 14%, transparent) inset;
+  color: color-mix(in oklch, var(--foreground) 75%, transparent);
 }
 
 /* Phones are short: each card should still fit between the header and the
@@ -1417,9 +1418,11 @@
   height: 18px;
   margin-top: 1px;
   border-radius: var(--radius-full);
-  background: color-mix(in oklch, var(--primary) 14%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--primary) 28%, transparent) inset;
-  color: var(--primary);
+  /* Neutral on marketing and package cards; the review step's "what you are
+     buying" ticks stay cyan (design review A2). */
+  background: color-mix(in oklch, white 6%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklch, white 14%, transparent) inset;
+  color: color-mix(in oklch, var(--foreground) 75%, transparent);
 }
 
 @media all {
@@ -1504,9 +1507,7 @@
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-foreground);
-  box-shadow:
-    0 0 0 4px color-mix(in oklch, var(--primary) 18%, transparent),
-    0 6px 18px -6px color-mix(in oklch, var(--primary) 55%, transparent);
+  /* No halo: the selected add-on is the border and this filled tick (E1). */
   animation: service-card-toggle-pop 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 

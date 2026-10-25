@@ -33,7 +33,7 @@ export function ServiceConnects({ current }: { current: ServicePage["slug"] }) {
                 </span>
                 <span className="flex flex-col">
                   <span className="text-sm font-semibold">{svc.title}</span>
-                  <span className="text-xs font-medium text-primary">{svc.hook}</span>
+                  <span className="text-xs font-medium text-foreground/75">{svc.hook}</span>
                 </span>
                 <ArrowRight aria-hidden className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
               </a>

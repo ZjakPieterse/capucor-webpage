@@ -114,12 +114,11 @@ function FlipCard({ item }: { item: Problem }) {
           className="problem-card h-full rounded-2xl p-6 flex flex-col"
         >
           <div className="flex-1">
+            {/* Neutral tile, no label: red is for real errors only, and the
+                headline already names the problem (design review A3). */}
             <div className="mb-4 flex items-center gap-3">
-              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-destructive/15 bg-destructive/10">
-                <item.icon className="h-5 w-5 text-destructive" />
-              </div>
-              <div className="text-xs font-semibold text-destructive/80">
-                The problem
+              <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+                <item.icon className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
             <h3 className="text-h4 font-semibold mb-2">{item.title}</h3>
@@ -158,7 +157,7 @@ function FlipCard({ item }: { item: Problem }) {
               <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10">
                 <item.solution.icon className="h-5 w-5 text-primary" />
               </div>
-              <div className="text-xs font-semibold text-primary">
+              <div className="text-xs font-semibold text-muted-foreground">
                 Capucor solution
               </div>
             </div>

@@ -153,7 +153,7 @@ export function TierComparison({
                     if (row.kind === 'value') {
                       return (
                         <li key={row.text} className="flex items-start gap-2 text-xs text-foreground">
-                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary/80" />
+                          <Check className="h-3.5 w-3.5 shrink-0 mt-0.5 text-foreground/70" />
                           <span>
                             {row.text}: <span className="font-medium">{row.values[t.slug] ?? '—'}</span>
                             {row.tooltip.trim() !== '' && <InfoTooltip content={row.tooltip} />}
@@ -175,7 +175,7 @@ export function TierComparison({
                           <Check
                             className={cn(
                               'h-3.5 w-3.5 shrink-0 mt-0.5',
-                              row.sub ? 'text-muted-foreground/60' : 'text-primary/80'
+                              row.sub ? 'text-muted-foreground/60' : 'text-foreground/70'
                             )}
                           />
                         ) : (

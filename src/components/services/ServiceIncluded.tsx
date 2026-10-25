@@ -21,7 +21,7 @@ export function ServiceIncluded({ items }: { items: ServiceItem[] }) {
                 {item.description}
               </p>
               <p className="mt-4 flex items-start gap-2.5 border-t border-white/10 pt-4 text-sm text-foreground">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-foreground/60" aria-hidden />
                 {item.covered}
               </p>
             </article>

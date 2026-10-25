@@ -27,6 +27,11 @@ implements them. When the two disagree, the brand guide wins and this file or th
   the outline button or a link.
 - **Section sub-headers stay within two lines on desktop.**
 - **No uppercase eyebrow labels** above headings (decided 2026-10-08).
+- **What cyan may mark** (design review A1–A3, 2026-10-25): the primary button, focus rings,
+  selection (selected answer, package, add-on: border + tick, no glow) and the review step's
+  "what you are buying" ticks. Taglines, labels, section headings and marketing or package-card
+  ticks (`.svc-check`, `.deck-check`) are neutral. The header's "Book a fit call" is the outline
+  button. Red and amber are for real states only, never decoration.
 
 ### Type scale and control sizes (design review 2026-10-25, A4 / I1)
 
