@@ -63,20 +63,6 @@ export function ReviewStep({
         splitCore
       />
 
-      {inclusions && (
-        <div className="rounded-2xl border border-border bg-card/40 p-4">
-          <p className="font-semibold text-sm">{inclusions.heading}</p>
-          <ul className="mt-2 space-y-1.5">
-            {inclusions.items.map((item) => (
-              <li key={item} className="flex items-start gap-2 text-sm">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {byApplication ? (
         <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4 flex flex-col gap-3">
           <div>
@@ -118,15 +104,27 @@ export function ReviewStep({
         </div>
       )}
 
-      {/* Right under the actions, where the reassurance is needed (design review, 2026-10-13);
-          the band note joined it here (Zjak, 2026-10-14). */}
-      <div className="-mt-3 space-y-1.5 text-center text-xs text-muted-foreground leading-relaxed">
-        <p className="flex items-center justify-center gap-1.5">
-          <Check className="h-3.5 w-3.5 text-primary" />
-          No payment needed yet
-        </p>
-        <p>{ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.</p>
-      </div>
+      {/* The band note sits right under the actions (Zjak, 2026-10-14); the
+          payment-reassurance line went (Zjak, 2026-10-25). */}
+      <p className="-mt-3 text-center text-xs text-muted-foreground leading-relaxed">
+        {ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.
+      </p>
+
+      {/* Below the decision: price and actions first, the list backs them up
+          (design review F1/F2, Zjak 2026-10-25). */}
+      {inclusions && (
+        <div className="rounded-2xl border border-border bg-card/40 p-4">
+          <p className="font-semibold text-sm">{inclusions.heading}</p>
+          <ul className="mt-2 space-y-1.5">
+            {inclusions.items.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!byApplication && (
         <div className="rounded-2xl border border-border bg-card/40 p-4">

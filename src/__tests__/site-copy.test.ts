@@ -57,6 +57,16 @@ describe('review step and proposal fallbacks (design review F3, G3, 2026-10-25)'
     expect(src('components/pricing/ActivateProposalModal.tsx')).toContain("'Email me the proposal'");
   });
 
+  it('puts the actions before the inclusions list and drops the no-payment line (Zjak, 2026-10-25)', () => {
+    const review = src('components/pricing/ReviewStep.tsx');
+    const actions = review.indexOf('{byApplication ? (');
+    const inclusions = review.indexOf('{inclusions && (');
+    expect(actions).toBeGreaterThan(-1);
+    expect(inclusions).toBeGreaterThan(actions);
+    expect(inclusions).toBeLessThan(review.indexOf('What happens next'));
+    expect(review).not.toMatch(/no payment/i);
+  });
+
   it('gives an unavailable proposal a second route: a fit call or an email', () => {
     const page = src('app/proposal/[token]/page.tsx');
     expect(page).toMatch(/links.fitCall/);
