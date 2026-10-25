@@ -18,13 +18,11 @@ interface TierComparisonProps {
 type LowestTier = 'common' | 'basic' | 'pro' | 'premium';
 
 // A row is ticked from the lowest package that includes it, or carries a
-// value per package (the rhythm rows). "Core services" is a `group` row that
-// expands to its services as greyed, indented `sub` rows (Zjak, 2026-10-13).
+// value per package (the rhythm rows). The core services are ordinary rows
+// since the "Core services" group row went (Zjak, 2026-10-25).
 type MatrixRow =
-  | { kind: 'tick'; text: string; tooltip: string; lowestTier: LowestTier; group?: boolean; sub?: boolean }
+  | { kind: 'tick'; text: string; tooltip: string; lowestTier: LowestTier }
   | { kind: 'value'; text: string; tooltip: string; values: Record<string, string> };
-
-const isSub = (row: MatrixRow) => row.kind === 'tick' && row.sub === true;
 
 const RHYTHM_TEXTS = new Set(RHYTHM_ROWS.flatMap((r) => r.replaces));
 
@@ -36,8 +34,6 @@ export function TierComparison({
   defaultOpen = false,
 }: TierComparisonProps) {
   const [open, setOpen] = useState(defaultOpen);
-  // "Core services" starts expanded (Zjak, 2026-10-13).
-  const [coreOpen, setCoreOpen] = useState(true);
 
   const sortedTiers = useMemo(
     () => [...tiers].sort((a, b) => a.display_order - b.display_order),
@@ -50,12 +46,10 @@ export function TierComparison({
     const result: MatrixRow[] = [];
     const seen = new Set<string>();
 
-    // Core services first: a ticked row like the others, then each service
-    // on its own greyed sub-row (the strip above the cards went, so the
-    // detail lives here).
-    result.push({ kind: 'tick', text: 'Core services', tooltip: '', lowestTier: 'common', group: true });
+    // Core services first, each its own row like the others: the package
+    // cards now name them, so the group row was redundant (Zjak, 2026-10-25).
     for (const line of CORE_SERVICE_LINES) {
-      result.push({ kind: 'tick', text: line.text, tooltip: line.tooltip, lowestTier: 'common', sub: true });
+      result.push({ kind: 'tick', text: line.text, tooltip: line.tooltip, lowestTier: 'common' });
     }
 
     // Then the rhythm, one value per package.
@@ -89,27 +83,8 @@ export function TierComparison({
     return (tierRank[tierSlug] ?? 0) >= (tierRank[lowestTier] ?? 0);
   }
 
-  const visibleRows = coreOpen ? rows : rows.filter((row) => !isSub(row));
-
-  // The row label: plain text with its tooltip, or for the group row a
-  // toggle with the same chevron as the table's own header.
+  // The row label: plain text with its tooltip.
   function label(row: MatrixRow) {
-    if (row.kind === 'tick' && row.group) {
-      return (
-        <button
-          type="button"
-          onClick={() => setCoreOpen((v) => !v)}
-          aria-expanded={coreOpen}
-          className="inline-flex items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          {row.text}
-          <ChevronDown
-            aria-hidden
-            className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', coreOpen && 'rotate-180')}
-          />
-        </button>
-      );
-    }
     return (
       <>
         {row.text}
@@ -158,41 +133,32 @@ export function TierComparison({
                 ))}
               </tr>
             </thead>
-            {visibleRows.map((row) => {
-              const sub = isSub(row);
-              return (
-                <tbody key={row.text} className="border-t border-border/60">
-                  <tr>
-                    <th
-                      scope="rowgroup"
-                      colSpan={sortedTiers.length}
-                      className={cn(
-                        'px-5 pt-3 pb-1 text-left font-normal',
-                        sub ? 'pl-9 text-muted-foreground' : 'text-foreground'
+            {rows.map((row) => (
+              <tbody key={row.text} className="border-t border-border/60">
+                <tr>
+                  <th
+                    scope="rowgroup"
+                    colSpan={sortedTiers.length}
+                    className="px-5 pt-3 pb-1 text-left font-normal text-foreground"
+                  >
+                    {label(row)}
+                  </th>
+                </tr>
+                <tr>
+                  {sortedTiers.map((t) => (
+                    <td key={t.slug} className="px-2 pt-1 pb-3 text-center">
+                      {row.kind === 'value' ? (
+                        <span className="font-medium">{row.values[t.slug] ?? '—'}</span>
+                      ) : isCovered(t.slug, row.lowestTier) ? (
+                        <Check className="inline h-4 w-4 text-foreground/70" aria-label="Included" />
+                      ) : (
+                        <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
                       )}
-                    >
-                      {label(row)}
-                    </th>
-                  </tr>
-                  <tr>
-                    {sortedTiers.map((t) => (
-                      <td key={t.slug} className="px-2 pt-1 pb-3 text-center">
-                        {row.kind === 'value' ? (
-                          <span className="font-medium">{row.values[t.slug] ?? '—'}</span>
-                        ) : isCovered(t.slug, row.lowestTier) ? (
-                          <Check
-                            className={cn('inline h-4 w-4', sub ? 'text-muted-foreground/60' : 'text-foreground/70')}
-                            aria-label="Included"
-                          />
-                        ) : (
-                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              );
-            })}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            ))}
           </table>
 
           {/* Tablet/desktop: comparison table */}
@@ -214,41 +180,30 @@ export function TierComparison({
                 </tr>
               </thead>
               <tbody>
-                {visibleRows.map((row, idx) => {
-                  const sub = isSub(row);
-                  return (
-                    <tr
-                      key={row.text}
-                      className={cn(
-                        'border-t border-border/60',
-                        idx % 2 === 0 ? 'bg-transparent' : 'bg-muted/15'
-                      )}
-                    >
-                      <td
-                        className={cn(
-                          'py-2.5 pr-5 text-xs sm:text-sm',
-                          sub ? 'pl-10 text-muted-foreground' : 'pl-5'
+                {rows.map((row, idx) => (
+                  <tr
+                    key={row.text}
+                    className={cn(
+                      'border-t border-border/60',
+                      idx % 2 === 0 ? 'bg-transparent' : 'bg-muted/15'
+                    )}
+                  >
+                    <td className="py-2.5 pl-5 pr-5 text-xs sm:text-sm">
+                      {label(row)}
+                    </td>
+                    {sortedTiers.map((t) => (
+                      <td key={t.slug} className="px-3 py-2.5 text-center">
+                        {row.kind === 'value' ? (
+                          <span className="text-xs font-medium">{row.values[t.slug] ?? '—'}</span>
+                        ) : isCovered(t.slug, row.lowestTier) ? (
+                          <Check className="inline h-4 w-4 text-foreground/70" aria-label="Included" />
+                        ) : (
+                          <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
                         )}
-                      >
-                        {label(row)}
                       </td>
-                      {sortedTiers.map((t) => (
-                        <td key={t.slug} className="px-3 py-2.5 text-center">
-                          {row.kind === 'value' ? (
-                            <span className="text-xs font-medium">{row.values[t.slug] ?? '—'}</span>
-                          ) : isCovered(t.slug, row.lowestTier) ? (
-                            <Check
-                              className={cn('inline h-4 w-4', sub ? 'text-muted-foreground/60' : 'text-foreground/70')}
-                              aria-label="Included"
-                            />
-                          ) : (
-                            <Minus className="inline h-3.5 w-3.5 text-muted-foreground/60" aria-label="Not included" />
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
