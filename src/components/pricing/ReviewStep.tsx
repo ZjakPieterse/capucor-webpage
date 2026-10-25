@@ -60,6 +60,7 @@ export function ReviewStep({
         tierSlug={selectedTier}
         selectedAddons={selectedAddons}
         totalLabel={byApplication ? PREMIUM_REQUEST_COPY.priceLabel : undefined}
+        splitCore
       />
 
       {inclusions && (

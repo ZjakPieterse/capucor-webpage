@@ -140,6 +140,27 @@ describe('the signing page and calculator summary (ProposalSummary)', () => {
     expect(html).toContain('3 employees');
     expect(html).not.toMatch(/>Accounting<|>Bookkeeping</);
   });
+
+  it('with splitCore (the review step), lists Accounting and Bookkeeping as their own priced lines', () => {
+    const html = renderToStaticMarkup(
+      createElement(ProposalSummary, {
+        services,
+        brackets: ROWS as unknown as Bracket[],
+        tiers,
+        selectedServices: ['accounting', 'bookkeeping', 'payroll'],
+        selectedBrackets: { accounting: 5, bookkeeping: 7, payroll: 1003 },
+        tierSlug: 'pro',
+        selectedAddons: [],
+        splitCore: true,
+      }),
+    );
+    expect(html).not.toContain('Monthly accounting');
+    expect(html).toContain('Accounting<span class="text-muted-foreground"> · R10m to R15m</span>');
+    expect(html).toContain('Bookkeeping<span class="text-muted-foreground"> · up to 200 transactions</span>');
+    expect(html).toContain('R\u00a02\u00a0125');
+    expect(html).toContain('R\u00a02\u00a0925');
+    expect(html).toContain('R\u00a05\u00a0500');
+  });
 });
 
 describe('emails after signing (F10, F25)', () => {
