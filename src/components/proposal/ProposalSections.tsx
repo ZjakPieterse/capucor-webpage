@@ -10,7 +10,7 @@ import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-xs font-semibold text-muted-foreground">
+    <p className="mb-3 text-sm font-semibold text-foreground">
       {children}
     </p>
   );
@@ -42,9 +42,9 @@ export function DocumentHeader({
     <div className="border-b border-border bg-primary/[0.04] p-6 sm:p-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link href="/" className="inline-flex items-center transition-opacity hover:opacity-80">
+          <Link href="/" className="document-logo-link inline-flex items-center transition-opacity">
             <Image
-              src="/brand/capucor-logo-on-dark.png"
+              src="/brand/capucor-logo-on-light.png"
               alt="Capucor Business Solutions"
               height={40}
               width={200}
@@ -96,10 +96,10 @@ export function ScheduleOfServices({
     <div>
       <SectionLabel>Schedule of services</SectionLabel>
 
-      <p className="mb-2 text-xs font-semibold text-foreground">What&apos;s included</p>
+      <p className="mb-2 text-sm font-semibold text-foreground">What&apos;s included</p>
       <ul className="mb-5 grid gap-2 sm:grid-cols-2">
         {inclusions.map((text) => (
-          <li key={text} className="flex items-start gap-2 text-sm text-muted-foreground">
+          <li key={text} className="flex items-start gap-2 text-base text-foreground">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <span>{text}</span>
           </li>
@@ -108,7 +108,7 @@ export function ScheduleOfServices({
 
       {fairUsage.length > 0 && (
         <>
-          <p className="mb-2 text-xs font-semibold text-foreground">Your allowances</p>
+          <p className="mb-2 text-sm font-semibold text-foreground">Your allowances</p>
           <ul className="mb-3 space-y-3">
             {fairUsage.map((f) => (
               <li key={f.slug} className="rounded-lg border border-border bg-card/40 p-3">
@@ -118,7 +118,7 @@ export function ScheduleOfServices({
                     <span className="shrink-0 text-xs font-medium text-primary">{f.bracketLabel}</span>
                   )}
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.allowance}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{f.allowance}</p>
               </li>
             ))}
           </ul>
@@ -126,10 +126,10 @@ export function ScheduleOfServices({
         </>
       )}
 
-      <p className="mb-2 text-xs font-semibold text-foreground">What&apos;s not included</p>
+      <p className="mb-2 text-sm font-semibold text-foreground">What&apos;s not included</p>
       <ul className="space-y-2">
         {outOfScope.map((text) => (
-          <li key={text} className="flex items-start gap-2 text-sm text-muted-foreground">
+          <li key={text} className="flex items-start gap-2 text-base text-foreground">
             <X className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/70" />
             <span>{text}</span>
           </li>
@@ -161,7 +161,7 @@ export function FeeChangesSection() {
       <SectionLabel>How your fee stays fair</SectionLabel>
       <div className="flex items-start gap-2.5">
         <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="text-base leading-relaxed text-foreground">
           We review your engagement every quarter against your rolling average over the last 3 to 12
           months. One busy month won&apos;t move your price and a quiet one won&apos;t count against you.
           Any change applies from the next billing cycle and is never back-dated.
@@ -177,10 +177,10 @@ export function ResponsibilitiesSection({ ours, yours }: { ours: string[]; yours
       <SectionLabel>What each of us does</SectionLabel>
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <p className="mb-2 text-xs font-semibold text-foreground">We&apos;ll</p>
+          <p className="mb-2 text-sm font-semibold text-foreground">We&apos;ll</p>
           <ul className="space-y-2">
             {ours.map((t) => (
-              <li key={t} className="flex items-start gap-2 text-sm text-muted-foreground">
+              <li key={t} className="flex items-start gap-2 text-base text-foreground">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>{t}</span>
               </li>
@@ -188,10 +188,10 @@ export function ResponsibilitiesSection({ ours, yours }: { ours: string[]; yours
           </ul>
         </div>
         <div>
-          <p className="mb-2 text-xs font-semibold text-foreground">You&apos;ll</p>
+          <p className="mb-2 text-sm font-semibold text-foreground">You&apos;ll</p>
           <ul className="space-y-2">
             {yours.map((t) => (
-              <li key={t} className="flex items-start gap-2 text-sm text-muted-foreground">
+              <li key={t} className="flex items-start gap-2 text-base text-foreground">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>{t}</span>
               </li>
@@ -209,9 +209,9 @@ export function TermsBlocks({ blocks }: { blocks: TermsBlock[] }) {
     <div className="space-y-5">
       {blocks.map((block) => (
         <div key={block.id}>
-          <h3 className="text-sm font-semibold">{block.heading}</h3>
+          <h3 className="text-base font-semibold">{block.heading}</h3>
           {block.paragraphs.map((p, i) => (
-            <p key={i} className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            <p key={i} className="mt-1.5 text-base leading-relaxed text-foreground">
               {p}
             </p>
           ))}
