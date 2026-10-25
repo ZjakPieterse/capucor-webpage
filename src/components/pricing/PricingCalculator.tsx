@@ -6,6 +6,7 @@ import { ArrowRight, BadgeCheck } from 'lucide-react';
 import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
 import {
   ANSWER_ADDON_SLUGS,
+  FIRST_STEP,
   effectiveAddons,
   isPayrollOnly,
   pricedTier,
@@ -24,6 +25,7 @@ import {
   QUESTION_COPY,
   stepAnnouncement,
 } from '@/config/calculatorCopy';
+import { cn } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
 import { SectionDivider } from '@/components/ui/SectionDivider';
 import { CalculatorProgress } from './CalculatorProgress';
@@ -206,6 +208,7 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   // 375 px). Only the answer-driven add-ons belong in that price, as on the card.
   const showPackageBar = step === 'package' && pricedStepsReady && !!selectedTier;
   const position = stepPosition(step, state);
+  const firstScreen = step === FIRST_STEP;
   const packageAddons = pricedAddons.filter((t) => ANSWER_ADDON_SLUGS.has(parseAddonToken(t).slug));
 
   const bracketValue = (slug: string) => {
@@ -304,17 +307,27 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
   return (
     <MotionConfig reducedMotion="user">
       <>
-        {/* Heading, one promise and a single progress bar (tweaks round 1) */}
+        {/* The first screen opens with the page heading and its one promise;
+            from the second screen on, the heading is for screen readers only
+            and the progress bar leads the page (calculator journey,
+            2026-10-25). The bar stays a bar: no stage names or numbers. */}
         <section
           id="pricing-summary"
-          className="premium-section relative pt-14 lg:pt-20 pb-4 lg:pb-6"
+          className={cn(
+            'premium-section relative pb-4 lg:pb-6',
+            firstScreen ? 'pt-14 lg:pt-20' : 'pt-8 lg:pt-12'
+          )}
         >
           <div className="max-w-[1090px] mx-auto px-6">
-            <div className="mb-6 text-center">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-balance">{PRICING_PAGE_HEADING}</h1>
-              <p className="mt-1.5 text-sm text-muted-foreground text-balance">{PRICING_PAGE_INTRO}</p>
-            </div>
-            <CalculatorProgress value={progressFraction(step, state, completed)} />
+            {firstScreen ? (
+              <div className="mb-6 text-center">
+                <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-balance">{PRICING_PAGE_HEADING}</h1>
+                <p className="mt-1.5 text-sm text-muted-foreground text-balance">{PRICING_PAGE_INTRO}</p>
+              </div>
+            ) : (
+              <h1 className="sr-only">{PRICING_PAGE_HEADING}</h1>
+            )}
+            <CalculatorProgress value={progressFraction(step, state, completed)} wide={step === 'package'} />
             <p role="status" aria-live="polite" className="sr-only">
               {hasMoved ? stepAnnouncement(position.index, position.total) : ''}
             </p>

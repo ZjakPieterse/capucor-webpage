@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readSource } from './helpers/sourceText';
-import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY, PRICING_TRUST_ITEMS } from '@/config/calculatorCopy';
+import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY, PRICING_TRUST_ITEMS, QUESTION_COPY } from '@/config/calculatorCopy';
 import { siteConfig } from '@/config/site';
 import { ACCOUNTING, SERVICE_PAGES } from '@/config/servicePages';
 
@@ -71,6 +71,32 @@ describe('review step and proposal fallbacks (design review F3, G3, 2026-10-25)'
     const page = src('app/proposal/[token]/page.tsx');
     expect(page).toMatch(/links.fitCall/);
     expect(page).toMatch(/email.contact/);
+  });
+});
+
+describe('calculator journey (design review C2, Zjak 2026-10-25)', () => {
+  it('shows the page heading and promise on the first screen only, keeping one h1', () => {
+    const calc = src('components/pricing/PricingCalculator.tsx');
+    expect(calc).toMatch(/firstScreen = step === FIRST_STEP/);
+    expect(calc).toMatch(/<h1 className="sr-only">\{PRICING_PAGE_HEADING\}<\/h1>/);
+    expect(calc.match(/\{PRICING_PAGE_INTRO\}/g)).toHaveLength(1);
+  });
+
+  it('keeps the bar a bar: no stage names or step numbers on screen', () => {
+    expect(src('components/pricing/CalculatorProgress.tsx')).toMatch(/CalculatorProgress\(\{ value, wide = false \}/);
+  });
+
+  it('gives every question one approved "why we ask" line', () => {
+    expect(Object.fromEntries(Object.entries(QUESTION_COPY).map(([k, v]) => [k, v.why]))).toEqual({
+      accounting: 'Your books, tax and compliance, done every month. Choose No if you only need payroll.',
+      revenue: 'Your turnover sets the size of your compliance and reporting work, and so your fee.',
+      transactions: 'Count every bank line, invoice, supplier bill and journal. This sets your monthly processing allowance.',
+      vat: 'If you are, your VAT returns are included. Your answer does not change the price.',
+      payroll: 'Payslips every month, plus your EMP201, EMP501 and UIF submissions.',
+      employees: 'Count everyone paid through payroll each month. Your headcount sets the payroll fee.',
+    });
+    expect(QUESTION_COPY.transactions.title).toBe('How many transactions do you have each month?');
+    expect(QUESTION_COPY.employees.title).toBe('How many employees are on your payroll?');
   });
 });
 

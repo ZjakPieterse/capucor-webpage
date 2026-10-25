@@ -74,6 +74,13 @@ describe('every calculator screen has a focusable, marked heading', () => {
     expect(h2[0]).toContain('tabindex="-1"');
     expect(h2[0]).toContain('data-step-heading');
   });
+
+  // The "why we ask" line follows the question heading (calculator journey, 2026-10-25).
+  it('puts the why line straight under each question heading', () => {
+    for (const [, html] of screens.slice(0, 2)) {
+      expect(html).toMatch(/<\/h2><p class="[^"]*">(Your turnover|If you are)/);
+    }
+  });
 });
 
 describe('focusStepHeading', () => {
