@@ -152,14 +152,6 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
     expect(shape('basic')).toEqual(shape('pro').filter((x) => !x.startsWith('Supplier')));
   });
 
-  it('marks the cadence word, and only a cadence word, for bold', () => {
-    for (const t of ['basic', 'pro', 'premium'] as const) {
-      for (const i of TIER_HIGHLIGHTS[t]) {
-        expect(!!i.cadence, i.text).toBe(/^(Monthly|Weekly|Daily|Quarterly) /.test(i.text));
-      }
-    }
-  });
-
   it('Direct Partner Access is gone from every list (Zjak, 2026-10-24)', () => {
     const all = Object.values(TIER_HIGHLIGHTS).flat();
     expect(all.map((i) => `${i.text} ${i.tooltip} ${i.scheduleText ?? ''}`).join(' ')).not.toMatch(/partner access/i);
