@@ -1874,6 +1874,34 @@
   );
 }
 
+/* The package card's one control (Step2Tiers.tsx, design review D2): the
+   real button stays static so its ::after covers the whole card (the article
+   is the positioned ancestor), keeping the whole card clickable. The visible
+   button look sits above it so its own hover lift and shine still fire. Focus
+   shows on the card, as when the card itself was the button. */
+.tier-card-choose {
+  position: static;
+  cursor: pointer;
+}
+
+.tier-card-choose::after {
+  content: "";
+  position: absolute;
+  /* -2px: the card border selects too, as when the card was the button. */
+  inset: -2px;
+  z-index: 1;
+  border-radius: 1rem;
+}
+
+.tier-card-choose > span {
+  z-index: 2;
+}
+
+.tier-card:has(.tier-card-choose:focus-visible) {
+  outline: 3px solid color-mix(in oklch, var(--ring) 50%, transparent);
+  outline-offset: 2px;
+}
+
 .tier-card .tier-icon {
   width: 44px;
   height: 44px;

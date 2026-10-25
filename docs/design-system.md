@@ -153,6 +153,12 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   (`components/pricing/Step2Tiers.tsx`) each carry the same `.svc-icon` lockup, differing
   only in icon and name. The one deliberate exception: the featured package (Pro) gets the
   lit border and the "Recommended" badge.
+- **A selectable card is an `article` with one real button, never a `<button>` wrapping
+  content** (design review D2, 2026-10-25): the button (`.tier-card-choose` in
+  `Step2Tiers.tsx`) stays `position: static` so its `::after` covers the card, the visible
+  button look is an inner span above it, and focus shows on the card via `:has()`. A
+  `<button>` may hold phrasing content only, and its name hides everything inside it from
+  screen readers.
 - **Package cards borrow the service cards' language** (`ServicePillars.tsx`, Zjak
   2026-10-13): glass surface, icon-and-title lockup, a lit top edge, `.svc-check` ticks, and
   hairline-divided sections ending in a footer action row.
