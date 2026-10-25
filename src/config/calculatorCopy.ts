@@ -30,7 +30,7 @@ export const QUESTION_COPY = {
   },
   payroll: {
     title: 'Do you need payroll services?',
-    why: 'Payslips every month, plus your EMP201, EMP501 and UIF submissions to SARS.',
+    why: 'Payslips every month, plus your EMP201, EMP501 and UIF submissions.',
   },
   employees: {
     title: 'How many employees are on your payroll?',

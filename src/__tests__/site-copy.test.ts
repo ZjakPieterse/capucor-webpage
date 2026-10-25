@@ -92,7 +92,7 @@ describe('calculator journey (design review C2, Zjak 2026-10-25)', () => {
       revenue: 'Your turnover sets the size of your compliance and reporting work, and so your fee.',
       transactions: 'Count every bank line, invoice, supplier bill and journal. This sets your monthly processing allowance.',
       vat: 'If you are, your VAT returns are included. Your answer does not change the price.',
-      payroll: 'Payslips every month, plus your EMP201, EMP501 and UIF submissions to SARS.',
+      payroll: 'Payslips every month, plus your EMP201, EMP501 and UIF submissions.',
       employees: 'Count everyone paid through payroll each month. Your headcount sets the payroll fee.',
     });
     expect(QUESTION_COPY.transactions.title).toBe('How many transactions do you have each month?');
