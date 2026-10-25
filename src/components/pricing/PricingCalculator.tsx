@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useRef, useState } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
-import { BadgeCheck } from 'lucide-react';
+import { ArrowRight, BadgeCheck } from 'lucide-react';
 import { usePricingState, type PricingSeed } from '@/hooks/usePricingState';
 import {
   ANSWER_ADDON_SLUGS,
@@ -73,9 +73,9 @@ function BottomCTA() {
         </p>
         <a
           href={siteConfig.links.fitCall}
-          className="premium-button btn-quiet btn-outline-hover inline-flex items-center gap-2 rounded-lg border border-input bg-input/30 backdrop-blur-md px-5 py-2.5 text-sm font-medium transition-all"
+          className="premium-button btn-quiet btn-outline-hover inline-flex items-center gap-2 rounded-lg border border-input bg-input/30 backdrop-blur-md h-11 px-5 text-sm font-medium transition-all"
         >
-          Book a fit call →
+          Book a fit call <ArrowRight className="h-4 w-4" aria-hidden />
         </a>
       </div>
     </section>
@@ -319,7 +319,9 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
             {/* No minimum height: the next section follows the screen's own
                 content, so short question screens leave no gap (tweaks round 2). */}
             <div className="relative">
-              <AnimatePresence mode="wait">
+              {/* initial={false}: the first screen is final in the server HTML
+                  (no opacity:0 frame before hydration); later steps animate. */}
+              <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={step}
                   ref={focusNewScreen}

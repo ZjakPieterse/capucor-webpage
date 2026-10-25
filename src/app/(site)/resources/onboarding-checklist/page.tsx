@@ -34,7 +34,7 @@ export default function OnboardingChecklistPage() {
     <div className="print-doc py-14 lg:py-20">
       <div className="mx-auto max-w-3xl px-6">
         <header className="border-b border-white/10 pb-6">
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight md:text-h1">
             {ONBOARDING_CHECKLIST_META.title}
           </h1>
           <p className="mt-3 text-lg leading-relaxed text-muted-foreground">

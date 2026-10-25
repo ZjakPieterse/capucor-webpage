@@ -39,11 +39,20 @@ export function InfoTooltip({ content }: InfoTooltipProps) {
       setOpen(false);
       clickOpenRef.current = false;
     }
+    // Escape dismisses it however it opened (WCAG 1.4.13; Codex audit). Focus
+    // stays on the icon, so a fresh hover, click or focus opens it again.
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      clickOpenRef.current = false;
+    }
     document.addEventListener('mousedown', onOutside);
     document.addEventListener('touchstart', onOutside);
+    document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onOutside);
       document.removeEventListener('touchstart', onOutside);
+      document.removeEventListener('keydown', onKey);
     };
   }, [open]);
 

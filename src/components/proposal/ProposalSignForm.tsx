@@ -414,7 +414,7 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
           </p>
         )}
 
-        <Button type="submit" disabled={submitting} className="gradient-cta w-full gap-2">
+        <Button type="submit" size="lg" disabled={submitting} className="gradient-cta w-full gap-2">
           <span className="relative z-[2] inline-flex items-center gap-2">
             {submitting ? (
               <>

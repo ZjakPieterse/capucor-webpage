@@ -122,7 +122,7 @@ function FlipCard({ item }: { item: Problem }) {
                 The problem
               </div>
             </div>
-            <h3 className="text-base font-semibold mb-2">{item.title}</h3>
+            <h3 className="text-h4 font-semibold mb-2">{item.title}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {item.body}
             </p>
@@ -162,7 +162,7 @@ function FlipCard({ item }: { item: Problem }) {
                 Capucor solution
               </div>
             </div>
-            <h3 className="text-base font-semibold mb-2">
+            <h3 className="text-h4 font-semibold mb-2">
               {item.solution.title}
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">

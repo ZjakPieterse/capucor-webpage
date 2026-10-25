@@ -27,7 +27,8 @@ export function ConsentCheckbox({
           id={id}
           checked={checked}
           onCheckedChange={(val) => onCheckedChange?.(val === true)}
-          className="mt-0.5"
+          // 44 px hit area round the 16 px box; the label toggles it too.
+          className="mt-0.5 after:-inset-[15px]"
           aria-required="true"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}

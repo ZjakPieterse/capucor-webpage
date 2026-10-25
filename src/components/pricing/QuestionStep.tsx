@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Check, Minus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Minus } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Select,
@@ -44,18 +44,19 @@ function QuestionShell({
 
       <div className="flex items-center justify-between gap-3 pt-2">
         {onBack ? (
-          <Button variant="outline" onClick={onBack}>
-            ← Back
+          <Button variant="outline" size="lg" onClick={onBack}>
+            <ArrowLeft aria-hidden /> Back
           </Button>
         ) : (
           <span />
         )}
         <Button
+          size="lg"
           onClick={onNext}
           disabled={!canProceed}
           className={cn('gap-2', canProceed && 'cta-armed')}
         >
-          Continue →
+          Continue <ArrowRight aria-hidden />
         </Button>
       </div>
 
@@ -148,11 +149,11 @@ export function NothingToPrice({ copy, href, onBack }: NothingToPriceProps) {
         <p className="text-sm text-muted-foreground leading-relaxed">{copy.body}</p>
       </div>
       <div className="flex items-center justify-between gap-3 pt-2">
-        <Button variant="outline" onClick={onBack}>
-          ← Back
+        <Button variant="outline" size="lg" onClick={onBack}>
+          <ArrowLeft aria-hidden /> Back
         </Button>
-        <a href={href} className={cn(buttonVariants(), 'gap-2 cta-armed')}>
-          {copy.action} →
+        <a href={href} className={cn(buttonVariants({ size: 'lg' }), 'gap-2 cta-armed')}>
+          {copy.action} <ArrowRight aria-hidden />
         </a>
       </div>
     </div>

@@ -270,7 +270,7 @@ export function ActivateProposalModal({
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5" noValidate>
             <DialogHeader>
               <DialogTitle className="text-lg">
                 {isRequest ? PREMIUM_REQUEST_COPY.modalTitle : isAccept ? 'Accept your proposal' : 'Get your proposal'}
@@ -398,7 +398,7 @@ export function ActivateProposalModal({
               </p>
             )}
 
-            <Button type="submit" disabled={isSubmitting || redirecting} className="gradient-cta w-full gap-2">
+            <Button type="submit" size="lg" disabled={isSubmitting || redirecting} className="gradient-cta w-full gap-2">
               <span className="relative z-[2] inline-flex items-center gap-2">
                 {isSubmitting || redirecting ? (
                   <>

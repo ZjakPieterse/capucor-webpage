@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { DATA_REQUEST_SLA_DAYS, LEAD_RETENTION_DAYS } from '@/lib/consent';
 
@@ -26,12 +27,12 @@ export default function PrivacyPage() {
     <article className="max-w-3xl mx-auto px-6 py-20">
       <Link
         href="/"
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-10 inline-block"
+        className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-10 inline-flex items-center gap-1.5"
       >
-        ← Back to home
+        <ArrowLeft className="h-4 w-4" aria-hidden /> Back to home
       </Link>
 
-      <h1 className="text-3xl font-bold tracking-tight mb-3">Privacy Policy</h1>
+      <h1 className="text-3xl font-semibold tracking-tight mb-3 md:text-h1">Privacy Policy</h1>
       <p className="text-sm text-muted-foreground mb-10">
         Last updated: {new Date().toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>

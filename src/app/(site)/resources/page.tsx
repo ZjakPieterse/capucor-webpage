@@ -30,7 +30,7 @@ export default function ResourcesPage() {
     <section className="premium-section py-14 lg:py-20">
       <div className="mx-auto max-w-5xl px-6">
         <header className="text-center">
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Free resources</h1>
+          <h1 className="text-3xl font-semibold tracking-tight md:text-h1">Free resources</h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Practical one-pagers for running a South African small business.
           </p>

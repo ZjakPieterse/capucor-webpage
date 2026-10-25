@@ -142,7 +142,7 @@ export function LeadMagnetSignup() {
           </p>
         )}
 
-        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+        <Button type="submit" size="lg" disabled={submitting} className="w-full sm:w-auto">
           {submitting ? (
             <>
               <Loader2 className="size-4 mr-2 animate-spin" /> Getting it…

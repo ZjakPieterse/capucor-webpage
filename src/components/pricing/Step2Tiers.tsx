@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
@@ -240,15 +240,16 @@ export function Step2Tiers({
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
-        <Button variant="outline" onClick={onBack}>
-          ← Back
+        <Button variant="outline" size="lg" onClick={onBack}>
+          <ArrowLeft aria-hidden /> Back
         </Button>
         <Button
+          size="lg"
           onClick={onNext}
           disabled={!selectedTier}
           className={cn('gap-2', selectedTier && 'cta-armed')}
         >
-          Continue to add-ons →
+          Continue to add-ons <ArrowRight aria-hidden />
         </Button>
       </div>
 

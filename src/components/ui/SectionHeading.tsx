@@ -22,7 +22,7 @@ export function SectionHeading({
         className
       )}
     >
-      <TypedHeading text={title} className="text-3xl font-semibold tracking-tight md:text-4xl" />
+      <TypedHeading text={title} className="text-3xl font-semibold tracking-tight md:text-h2" />
       {subtitle && (
         <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto">
           {subtitle}

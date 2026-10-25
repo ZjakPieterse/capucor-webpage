@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, MessageCircle, Minus, Plus, ReceiptText, Tags, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, MessageCircle, Minus, Plus, ReceiptText, Tags, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { cn, formatZAR } from '@/lib/utils';
@@ -90,11 +90,11 @@ export function AddonsStep({
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
-        <Button variant="outline" onClick={onBack}>
-          ← Back
+        <Button variant="outline" size="lg" onClick={onBack}>
+          <ArrowLeft aria-hidden /> Back
         </Button>
-        <Button onClick={onNext} className="gap-2 cta-armed">
-          Review →
+        <Button size="lg" onClick={onNext} className="gap-2 cta-armed">
+          Review <ArrowRight aria-hidden />
         </Button>
       </div>
     </div>

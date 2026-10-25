@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, CalendarClock, Check, Mail } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarClock, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProposalSummary } from './ProposalSummary';
 import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
@@ -83,7 +83,7 @@ export function ReviewStep({
             <p className="font-semibold text-sm">{PREMIUM_REQUEST_COPY.reviewTitle}</p>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{PREMIUM_REQUEST_COPY.reviewBody}</p>
           </div>
-          <Button onClick={() => onAction('request')} className="gap-2 cta-armed sm:self-start">
+          <Button size="lg" onClick={() => onAction('request')} className="gap-2 cta-armed sm:self-start">
             <CalendarClock className="h-4 w-4" />
             {PREMIUM_REQUEST_COPY.action}
           </Button>
@@ -97,7 +97,7 @@ export function ReviewStep({
                 We create your proposal and open it for you to sign now. A copy is emailed to you.
               </p>
             </div>
-            <Button onClick={() => onAction('accept')} className="mt-auto gap-2 cta-armed">
+            <Button size="lg" onClick={() => onAction('accept')} className="mt-auto gap-2 cta-armed">
               Accept
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -109,7 +109,7 @@ export function ReviewStep({
                 We email the proposal to you. Review and sign it within 7 days.
               </p>
             </div>
-            <Button variant="outline" onClick={() => onAction('send')} className="mt-auto gap-2">
+            <Button variant="outline" size="lg" onClick={() => onAction('send')} className="mt-auto gap-2">
               <Mail className="h-4 w-4" />
               Send proposal
             </Button>
@@ -139,8 +139,8 @@ export function ReviewStep({
       )}
 
       <div className="flex justify-start pt-2">
-        <Button variant="outline" onClick={onBack}>
-          ← Back
+        <Button variant="outline" size="lg" onClick={onBack}>
+          <ArrowLeft aria-hidden /> Back
         </Button>
       </div>
     </div>

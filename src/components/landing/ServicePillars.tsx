@@ -37,7 +37,7 @@ export function ServicePillars() {
                       <Icon className="h-[22px] w-[22px]" />
                     </span>
                     <div className="min-w-0">
-                      <h3 className="text-xl font-semibold leading-tight tracking-tight">
+                      <h3 className="text-h3 font-semibold tracking-tight">
                         {svc.title}
                       </h3>
                       <p className="mt-1 text-sm font-medium text-primary">{svc.hook}</p>

@@ -24,7 +24,7 @@ export function ServiceHero({
         >
           <Icon className="h-6 w-6" />
         </span>
-        <h1 className="text-4xl lg:text-5xl font-bold tracking-tight mb-6 leading-[1.1]">
+        <h1 className="text-4xl lg:text-5xl font-semibold tracking-tight mb-6 leading-[1.1]">
           {title}
         </h1>
         <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-2xl mx-auto">

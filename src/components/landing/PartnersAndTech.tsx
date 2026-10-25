@@ -28,12 +28,19 @@ export function PartnersAndTech() {
           role="list"
         >
           {MARQUEE_ROW.map((p, i) => (
-            <li key={`${p.name}-${i}`} className="shrink-0">
+            // Copies 2-4 only fill the loop: hidden from screen readers and
+            // the tab order, so each partner is one link (Codex audit).
+            <li
+              key={`${p.name}-${i}`}
+              className="shrink-0"
+              aria-hidden={i >= PARTNERS.length || undefined}
+            >
               <a
                 href={p.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={p.name}
+                tabIndex={i >= PARTNERS.length ? -1 : undefined}
                 className="inline-flex items-center quiet-hover text-muted-foreground/70"
               >
                 <span

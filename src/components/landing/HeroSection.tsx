@@ -95,9 +95,14 @@ export function HeroSection() {
               </Button>
             </div>
 
-            <p className="mt-4 text-sm text-muted-foreground/80">
-              Fixed monthly fee <span aria-hidden className="mx-1.5">·</span> No lock-in contracts{" "}
-              <span aria-hidden className="mx-1.5">·</span> Start in any month
+            <p className="mt-4 text-sm text-muted-foreground/80 text-balance">
+              {/* Short enough for one line on a 390 px phone; each item stays
+                  whole if it ever wraps (design review B1). */}
+              <span className="whitespace-nowrap">Fixed monthly fee</span>{" "}
+              <span aria-hidden className="mx-1.5">·</span>{" "}
+              <span className="whitespace-nowrap">No lock-in</span>{" "}
+              <span aria-hidden className="mx-1.5">·</span>{" "}
+              <span className="whitespace-nowrap">Start any month</span>
             </p>
           </div>
 

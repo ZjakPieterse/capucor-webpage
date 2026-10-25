@@ -54,7 +54,7 @@ export function ConfirmSignButton({ ctoken }: { ctoken: string }) {
           {error}
         </p>
       )}
-      <Button type="button" onClick={confirm} disabled={submitting} className="gradient-cta w-full gap-2">
+      <Button type="button" size="lg" onClick={confirm} disabled={submitting} className="gradient-cta w-full gap-2">
         <span className="relative z-[2] inline-flex items-center gap-2">
           {submitting ? (
             <>
