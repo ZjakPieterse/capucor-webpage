@@ -5,8 +5,10 @@
 // by processing rhythm (Basic monthly, Pro weekly, Premium daily), Premium sold
 // by application. Card lines from the Premium redesign, "more for better"
 // (Zjak, 2026-10-24): titles only, the same order on every card, the cadence
-// word first (plain text since 2026-10-25), and the cards grow from Basic to Premium. Direct Partner Access
-// (2026-10-18) was removed from every surface the same day (Zjak).
+// word first (plain text since 2026-10-25). Since the package step value
+// decision (Zjak, 2026-10-25) the cards show them as the change from the
+// package below (tierCardLines). Direct Partner Access (2026-10-18) was
+// removed from every surface the same day (Zjak).
 
 export interface TierHighlightItem {
   text: string;
@@ -25,9 +27,10 @@ export interface TierHighlightItem {
   scheduleText?: string;
 }
 
-// Each card lists its package in full, starting with the core services and the
-// processing rhythm (package simplification, 2026-10-06). Payroll is flat
-// across packages, so its one line repeats on every card when payroll is chosen.
+// Each package's full list, starting with the core services and the processing
+// rhythm (package simplification, 2026-10-06), for the comparison table, the
+// review step and the signed schedule. Payroll is flat across packages, so its
+// one line repeats on every package when payroll is chosen.
 const CORE_SERVICES_INCLUDED: TierHighlightItem = {
   text: 'Core services included',
   services: ['accounting', 'bookkeeping'],
@@ -123,6 +126,32 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
     PAYROLL_SERVICES,
   ],
 };
+
+// The package cards build on each other (Zjak, package step value,
+// 2026-10-25): Basic lists three core services by name, then its own lines;
+// Pro and Premium open with "Everything in <lower>, plus:" and list only what
+// is new or changed against the package below. TIER_HIGHLIGHTS still drives
+// the comparison table, the review step and the signed schedule.
+export const TIER_CARD_LEAD: Record<string, string> = {
+  pro: 'Everything in Basic, plus:',
+  premium: 'Everything in Pro, plus:',
+};
+
+const CARD_CORE_TEXTS = ['Dedicated finance team', 'Annual financial statements', 'SARS & CIPC submission'];
+
+/** The lines on a package card: Basic in full, higher packages as the change from the one below. */
+export function tierCardLines(tierSlug: string): TierHighlightItem[] {
+  const own = (TIER_HIGHLIGHTS[tierSlug] ?? []).filter((item) => !item.summary);
+  const below = TIER_ORDER[TIER_ORDER.indexOf(tierSlug) - 1];
+  if (!below) {
+    const core = CORE_SERVICES.filter((c) => CARD_CORE_TEXTS.includes(c.text)).map(
+      (c): TierHighlightItem => ({ text: c.text, tooltip: c.tooltip, services: ['accounting', 'bookkeeping'] })
+    );
+    return [...core, ...own];
+  }
+  const lower = new Set((TIER_HIGHLIGHTS[below] ?? []).map((item) => item.text));
+  return own.filter((item) => !lower.has(item.text));
+}
 
 // Packages sold by application rather than self-serve acceptance. The
 // calculator shows a "from" price and ends in a request (tweaks round 1);

@@ -75,3 +75,29 @@ describe('package cards (design review D2)', () => {
     expect(pro).toMatch(/<span class="pointer-events-none absolute[^"]*">Recommended<\/span>/);
   });
 });
+
+// Package step value (Zjak, 2026-10-25): Basic names its core lines, Pro and
+// Premium open with a neutral "Everything in …, plus:" chip that names the list.
+describe('package card lines (package step value)', () => {
+  it('shows the chip on Pro and Premium only, neutral, naming the list', () => {
+    const [basic, pro, premium] = cards(render(null));
+    expect(basic).not.toContain('Everything in');
+    expect(pro).toContain('Everything in Basic, plus:');
+    expect(premium).toContain('Everything in Pro, plus:');
+    for (const [card, slug] of [[pro, 'pro'], [premium, 'premium']] as const) {
+      const chip = card!.match(new RegExp(`<p id="tier-lead-${slug}"[^>]*>`))![0];
+      expect(chip).not.toMatch(/primary|cyan/);
+      expect(card).toContain(`<ul aria-labelledby="tier-lead-${slug}"`);
+    }
+  });
+
+  it('without payroll: Basic core lines, no summary line, no payroll, no WhatsApp', () => {
+    const html = render(null);
+    const [basic, pro] = cards(html);
+    for (const line of ['Dedicated finance team', 'Annual financial statements', 'SARS &amp; CIPC submission', 'Monthly processing']) {
+      expect(basic).toContain(line);
+    }
+    expect(pro).not.toContain('Monthly processing');
+    expect(html).not.toMatch(/Core services included|Payroll processing|WhatsApp/);
+  });
+});

@@ -137,7 +137,9 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   neutral at rest and on hover, cyan only on the recommended and the chosen card (D4).
 - **Always reserve a row even when a card has no content for it** — render an invisible
   placeholder (`h-0 w-0 opacity-0 aria-hidden`) so the subgrid row still exists and the
-  cards line up. See the `else` branch of the cumulative-label row in `Step2Tiers.tsx`.
+  cards line up. Content that only some cards carry, such as Pro and Premium's
+  "Everything in …, plus:" chip, goes inside a shared row instead (top of the features row in
+  `Step2Tiers.tsx`), so every list still starts on the same line.
 
 ### Tailwind layering gotcha
 

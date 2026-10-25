@@ -7,6 +7,8 @@ import {
   CORE_SERVICE_LINES,
   scheduleCommonItemsFor,
   tierDisplayName,
+  tierCardLines,
+  TIER_CARD_LEAD,
   type TierHighlightItem,
 } from '@/config/tiers';
 import { RESPONSIBILITIES_OURS } from '@/config/proposalTerms';
@@ -425,5 +427,45 @@ describe('payroll in the comparison matrix', () => {
 
   it('contains no legacy "Payroll Included" row', () => {
     expect(rows.find((r) => r.text === 'Payroll Included')).toBeUndefined();
+  });
+});
+
+// Package step value (Zjak, 2026-10-25): cards build on each other.
+describe('package card lines', () => {
+  const texts = (slug: string) => tierCardLines(slug).map((i) => i.text);
+
+  it('Basic names three core services, then its own lines and payroll', () => {
+    expect(texts('basic')).toEqual([
+      'Dedicated finance team',
+      'Annual financial statements',
+      'SARS & CIPC submission',
+      'Monthly processing',
+      'Quarterly insights report and business health check',
+      'Payroll processing',
+    ]);
+  });
+
+  it('Pro and Premium list only what changes from the package below', () => {
+    expect(TIER_CARD_LEAD.pro).toBe('Everything in Basic, plus:');
+    expect(TIER_CARD_LEAD.premium).toBe('Everything in Pro, plus:');
+    expect(TIER_CARD_LEAD.basic).toBeUndefined();
+    expect(texts('pro')).toEqual([
+      'Weekly processing',
+      'Supplier bills captured and reconciled',
+      'Monthly insights report and business health check',
+    ]);
+    expect(texts('premium')).toEqual([
+      'Daily processing',
+      'Weekly KPI pulse',
+      'Cash-flow forecast and budget',
+      'Quarterly tax strategy',
+    ]);
+  });
+
+  it('no card shows the summary line or WhatsApp support', () => {
+    for (const slug of ['basic', 'pro', 'premium']) {
+      expect(texts(slug)).not.toContain('Core services included');
+      expect(texts(slug).join(' ')).not.toMatch(/WhatsApp/);
+    }
   });
 });
