@@ -74,6 +74,16 @@ describe('review step and proposal fallbacks (design review F3, G3, 2026-10-25)'
   });
 });
 
+describe('the proposal reads as a light document (design review G2, Zjak 2026-10-25)', () => {
+  it('sets the document card on the paper palette with the light logo', () => {
+    expect(src('app/proposal/[token]/page.tsx')).toMatch(/document-paper/);
+    const sections = src('components/proposal/ProposalSections.tsx');
+    expect(sections).toContain('capucor-logo-on-light.png');
+    expect(sections).not.toMatch(/hover:/);
+    expect(src('app/globals.css')).toContain('.document-paper {');
+  });
+});
+
 describe('funnel copy (F13, F14, F25)', () => {
   it('has a de-duplicated, sentence-case trust bar', () => {
     const text = PRICING_TRUST_ITEMS.join(' ').toLowerCase();

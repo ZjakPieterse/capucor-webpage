@@ -199,6 +199,44 @@
   --warning-soft: rgba(249, 156, 0, 0.15);
 }
 
+/* The proposal document as light "paper" (design review G2, Zjak 2026-10-25):
+   the page a client signs, and the debit-order mandate, reads like the PDF and
+   email they keep. Scoped to the document card; the site stays dark. */
+.document-paper {
+  --card: #ffffff;
+  --card-foreground: #111827;
+  --foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #4b5563;
+  --border: #e5e7eb;
+  --input: #d1d5db;
+  --input-edge: #6b7280;
+  --ring: #00175f;
+  --primary: #00175f;
+  --primary-foreground: #ffffff;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  /* AA on white: the sign button gradient ends in blue, not cyan, under white
+     text; error text in a darker red. */
+  --brand-cyan: #1d4ed8;
+  --destructive: #b91c1c;
+  --destructive-soft: rgba(185, 28, 28, 0.08);
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+@media all {
+  .document-logo-link:hover {
+    opacity: 0.8;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .document-logo-link:active {
+    opacity: 0.8;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

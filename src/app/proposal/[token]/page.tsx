@@ -217,7 +217,7 @@ export default async function ProposalPage({
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12 lg:py-20">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="document-paper overflow-hidden rounded-2xl border border-border bg-card">
         <DocumentHeader
           businessName={row.business_name}
           firstName={row.first_name}
@@ -230,7 +230,7 @@ export default async function ProposalPage({
         />
 
         <div className="space-y-8 p-6 sm:p-8">
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="text-base leading-relaxed text-foreground">
             Hi {row.first_name}, here&apos;s your proposed subscription. Everything we&apos;ll do, what it
             costs, and the terms are set out below. Review it, then sign at the bottom to get started.
             There&apos;s no payment needed up front.
@@ -243,7 +243,7 @@ export default async function ProposalPage({
           />
 
           <div>
-            <p className="mb-3 text-xs font-semibold text-muted-foreground">
+            <p className="mb-3 text-sm font-semibold text-foreground">
               Your fees
             </p>
             <ProposalSummary
@@ -271,9 +271,9 @@ export default async function ProposalPage({
               details are arranged directly at onboarding, never captured on the site. */}
           {debitBlock && (
             <div className="rounded-xl border border-border bg-card/40 p-5">
-              <h2 className="text-sm font-semibold">{debitBlock.heading}</h2>
+              <h2 className="text-base font-semibold">{debitBlock.heading}</h2>
               {debitBlock.paragraphs.map((p, i) => (
-                <p key={i} className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                <p key={i} className="mt-1.5 text-base leading-relaxed text-foreground">
                   {p}
                 </p>
               ))}
@@ -282,7 +282,7 @@ export default async function ProposalPage({
 
           {/* Key terms inline + link to the full engagement terms. */}
           <div>
-            <p className="mb-3 text-xs font-semibold text-muted-foreground">
+            <p className="mb-3 text-sm font-semibold text-foreground">
               Terms
             </p>
             <TermsBlocks blocks={inlineTerms} />
