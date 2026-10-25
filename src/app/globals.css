@@ -1887,9 +1887,10 @@
 .tier-card-choose::after {
   content: "";
   position: absolute;
-  inset: 0;
+  /* -2px: the card border selects too, as when the card was the button. */
+  inset: -2px;
   z-index: 1;
-  border-radius: inherit;
+  border-radius: 1rem;
 }
 
 .tier-card-choose > span {
