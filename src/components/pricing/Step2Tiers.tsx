@@ -176,16 +176,18 @@ export function Step2Tiers({
                     neutral under the cyan rule. Every card starts its list on
                     the same line. */}
                 {lead && (
-                  <p className="tier-card-lead mb-3 inline-flex w-fit items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-foreground">
+                  <p id={`tier-lead-${tier.slug}`} className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-foreground">
                     <CornerDownRight aria-hidden className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     {lead}
                   </p>
                 )}
                 {filteredItems.length > 0 && (
-                  <ul className="space-y-3">
-                    {/* Every line alike, "Core services included" and the
-                        cadence words too, a little more air between lines
-                        (Zjak, 2026-10-25). */}
+                  <ul
+                    aria-labelledby={lead ? `tier-lead-${tier.slug}` : undefined}
+                    className="space-y-3"
+                  >
+                    {/* Every line alike, the cadence words too, a little
+                        more air between lines (Zjak, 2026-10-25). */}
                     {filteredItems.map((item) => (
                       <li key={item.text} className="flex items-start gap-2.5 text-[13px] leading-snug">
                         <span className="svc-check" aria-hidden>

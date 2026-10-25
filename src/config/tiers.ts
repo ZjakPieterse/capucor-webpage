@@ -5,8 +5,10 @@
 // by processing rhythm (Basic monthly, Pro weekly, Premium daily), Premium sold
 // by application. Card lines from the Premium redesign, "more for better"
 // (Zjak, 2026-10-24): titles only, the same order on every card, the cadence
-// word first (plain text since 2026-10-25), and the cards grow from Basic to Premium. Direct Partner Access
-// (2026-10-18) was removed from every surface the same day (Zjak).
+// word first (plain text since 2026-10-25). Since the package step value
+// decision (Zjak, 2026-10-25) the cards show them as the change from the
+// package below (tierCardLines). Direct Partner Access (2026-10-18) was
+// removed from every surface the same day (Zjak).
 
 export interface TierHighlightItem {
   text: string;
@@ -25,9 +27,10 @@ export interface TierHighlightItem {
   scheduleText?: string;
 }
 
-// Each card lists its package in full, starting with the core services and the
-// processing rhythm (package simplification, 2026-10-06). Payroll is flat
-// across packages, so its one line repeats on every card when payroll is chosen.
+// Each package's full list, starting with the core services and the processing
+// rhythm (package simplification, 2026-10-06), for the comparison table, the
+// review step and the signed schedule. Payroll is flat across packages, so its
+// one line repeats on every package when payroll is chosen.
 const CORE_SERVICES_INCLUDED: TierHighlightItem = {
   text: 'Core services included',
   services: ['accounting', 'bookkeeping'],
