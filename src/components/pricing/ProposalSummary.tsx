@@ -24,6 +24,9 @@ interface ProposalSummaryProps {
   monthlyZAR?: number;
   /** Replaces "Total monthly charge", e.g. for a Premium "from" estimate. */
   totalLabel?: string;
+  /** Lists accounting and bookkeeping as their own lines instead of one
+   *  "Monthly accounting" line (the review step, Zjak 2026-10-25). */
+  splitCore?: boolean;
   className?: string;
 }
 
@@ -41,6 +44,7 @@ export function ProposalSummary({
   selectedAddons = [],
   monthlyZAR,
   totalLabel = 'Total monthly charge',
+  splitCore = false,
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
@@ -49,14 +53,14 @@ export function ProposalSummary({
   const addons = addonsForTier(selectedAddons, tierSlug);
   // Same as the server: a folded add-on (the retired Xero invoicing charge on
   // older proposals) is priced inside its service line, and accounting plus
-  // bookkeeping show as one "Monthly accounting" line on every surface.
+  // bookkeeping show as one "Monthly accounting" line unless splitCore.
   const serviceLines = foldAddonsIntoLines(
     buildLineItems(selectedServices, selectedBrackets, tierSlug, services, brackets),
     addons,
     tierSlug,
   );
   const lineItems = [
-    ...mergeCoreLines(serviceLines),
+    ...(splitCore ? serviceLines : mergeCoreLines(serviceLines)),
     ...buildAddonLineItems(addons, tierSlug),
   ];
 
