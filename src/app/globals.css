@@ -105,6 +105,22 @@
   }
 }
 
+/* ─── Type scale (design review A4, 2026-10-25) ──────────────────────────────
+   One heading scale for the public site: display (hero, set in place) /
+   h1 40 / h2 36 / h3 22 / h4 17 px, all semibold. Use text-h1…text-h4 (or
+   var(--text-h3) in CSS) rather than inventing a size; a card title never
+   outranks its section heading. */
+@theme {
+  --text-h1: 2.5rem;
+  --text-h1--line-height: 1.1;
+  --text-h2: 2.25rem;
+  --text-h2--line-height: 1.15;
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.25;
+  --text-h4: 1.0625rem;
+  --text-h4--line-height: 1.35;
+}
+
 /* ─── Capucor design tokens ─────────────────────────────────────────────── */
 
 @theme inline {
@@ -425,10 +441,20 @@
     opacity 260ms ease;
 }
 
+/* A disabled primary reads neutral, not as a dim cyan button that looks broken
+   (design review I4). Gradient CTAs only disable while sending, with a spinner. */
+.btn-primary:disabled:not(.gradient-cta) {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  box-shadow: none;
+  opacity: 1;
+}
+
 /* A dialog's close button is a premium-button too, and the rule above beat its
    `absolute top-2 right-2`, so the X fell to the bottom of every dialog
    (calculator design review, 2026-10-13). */
-[data-slot="dialog-close"].premium-button {
+[data-slot="dialog-close"].premium-button,
+[data-slot="sheet-close"].premium-button {
   position: absolute;
 }
 
@@ -567,7 +593,8 @@
 }
 
 @media all {
-  .animate-marquee:hover {
+  .animate-marquee:hover,
+  .animate-marquee:focus-within {
     animation-play-state: paused;
   }
 }
@@ -887,7 +914,7 @@
 
 .how-card-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--foreground);
@@ -931,7 +958,7 @@
     background: color-mix(in oklch, var(--background) 88%, transparent);
   }
   .how-card-title {
-    font-size: 1.75rem;
+    font-size: var(--text-h3);
   }
 }
 
@@ -1106,7 +1133,7 @@
 
 .deck-title {
   margin: 0;
-  font-size: 1.625rem;
+  font-size: var(--text-h3);
   font-weight: 600;
   letter-spacing: -0.015em;
   line-height: 1.1;
@@ -1311,8 +1338,9 @@
   .deck-card[data-flip] .deck-card-copy {
     order: 2;
   }
+  /* 24 px: a card title never outranks the section heading (A4). */
   .deck-title {
-    font-size: 2.5rem;
+    font-size: 1.5rem;
   }
   .deck-body {
     font-size: 1.0625rem;
@@ -1664,15 +1692,14 @@
     transform: none !important;
   }
 
-  /* No smooth animation for these users, so bump the static hover end state
-     so the position change is actually perceptible without motion blur. */
-  .premium-card:hover,
-  .feature-card:hover,
-  .problem-card:hover {
-    transform: translateY(-10px) scale(1.025) !important;
+  /* No animation for these users, so the hover end state is a small, still
+     lift: never bigger than the animated one, and no scale (I3). */
+  .premium-card:not(.tilt-card):hover,
+  .feature-card:hover {
+    transform: translateY(-4px) !important;
   }
   :not([data-hover-wait]) > .service-card:not(.is-selected):hover {
-    transform: translateY(-6px) !important;
+    transform: translateY(-3px) !important;
   }
 
   .cursor-glow::before {
@@ -2275,7 +2302,7 @@ html.lenis {
    phone-size type at every width. */
 @media (min-width: 1024px) {
   .deck-card.deck-card-solo .deck-title {
-    font-size: 1.625rem;
+    font-size: var(--text-h3);
   }
   .deck-card.deck-card-solo .deck-body {
     font-size: 0.9375rem;

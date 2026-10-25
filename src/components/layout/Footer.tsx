@@ -80,11 +80,11 @@ export function Footer() {
               <Image
                 src="/brand/capucor-logo-on-dark.png"
                 alt="Capucor Business Solutions"
+                // Rendered size (28 px at the file's ratio), as in the Navbar (I5).
                 height={28}
-                width={140}
-                sizes="140px"
+                width={128}
+                sizes="128px"
                 className="h-7 w-auto"
-                style={{ width: "auto" }}
               />
             </Link>
             <div className="flex gap-1">

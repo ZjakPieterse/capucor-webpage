@@ -367,7 +367,7 @@ function ProposalUnavailable({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{body}</p>
       <Button nativeButton={false} className="mt-6" render={<Link href="/pricing" />}>
         Build your subscription

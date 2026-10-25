@@ -55,7 +55,7 @@ export function DocumentHeader({
           <p className="mt-4 text-xs font-semibold text-muted-foreground">
             Proposal &amp; engagement
           </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">For {businessName}</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">For {businessName}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Prepared for {firstName} {lastName}, by Capucor Business Solutions
           </p>

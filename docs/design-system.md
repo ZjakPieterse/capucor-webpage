@@ -28,6 +28,19 @@ implements them. When the two disagree, the brand guide wins and this file or th
 - **Section sub-headers stay within two lines on desktop.**
 - **No uppercase eyebrow labels** above headings (decided 2026-10-08).
 
+### Type scale and control sizes (design review 2026-10-25, A4 / I1)
+
+- **One heading scale**, as tokens in `globals.css`: `text-h1` 40 / `text-h2` 36 (section
+  headings, via `SectionHeading`) / `text-h3` 22 (card titles) / `text-h4` 17 px; the hero sets
+  its own display size. **Titles are `font-semibold`**, never `font-bold` (bold stays for prices).
+  A card title never outranks its section heading.
+- **Controls are conversion-sized** through the shared variants, not per call site: `Button`
+  default 44 px, `lg` 48 px for the primary action of a view (and the buttons in the same row),
+  `sm` 36 px only where space is tight; `Input` and `SelectTrigger` 44 px. The internal tool has
+  its own controls and keeps 36 px.
+- **A disabled primary is neutral** (`.btn-primary:disabled` in `globals.css`), not a dim cyan.
+- **Arrows are Lucide icons** (`ArrowRight` / `ArrowLeft`), never the "→" / "←" glyphs.
+
 ### Section rhythm
 
 - Standard content sections use `className="premium-section py-14 lg:py-20"`. Hero and the

@@ -75,7 +75,7 @@ export default async function ConfirmSignPage({
           <ShieldCheck className="h-4 w-4 text-primary" />
           Confirm &amp; sign
         </div>
-        <h1 className="mt-3 text-xl font-bold tracking-tight">
+        <h1 className="mt-3 text-xl font-semibold tracking-tight">
           Finalise your signature for {row.business_name}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
@@ -132,7 +132,7 @@ function ConfirmUnavailable({ reason }: { reason: 'invalid' | 'expired' | 'signe
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
-      <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{body}</p>
       {/* A signed proposal needs nothing more from the visitor. */}
       {reason !== 'signed' && (

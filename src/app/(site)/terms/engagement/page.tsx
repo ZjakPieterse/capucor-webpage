@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import {
   PAYROLL_ONLY_RESPONSIBILITIES_OURS,
@@ -51,12 +52,12 @@ export default function EngagementTermsPage() {
     <article className="mx-auto max-w-3xl px-6 py-20">
       <Link
         href="/"
-        className="mb-10 inline-block text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="mb-10 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        ← Back to home
+        <ArrowLeft className="h-4 w-4" aria-hidden /> Back to home
       </Link>
 
-      <h1 className="mb-3 text-3xl font-bold tracking-tight">Terms of use</h1>
+      <h1 className="mb-3 text-3xl font-semibold tracking-tight md:text-h1">Terms of use</h1>
       <p className="mb-10 text-sm text-muted-foreground">
         These terms apply to a signed Capucor proposal. Your proposal sets out the services and
         fees; these terms set out how we work together. If anything here conflicts with your

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip, Pause, Play } from "lucide-react";
 import { use3DTilt } from "@/hooks/use3DTilt";
 import { signatureFont } from "@/lib/signatureFont";
 import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
@@ -392,6 +392,8 @@ function useStoryTimeline(timing: Timing) {
   const [scene, setScene] = useState(0);
   const [inView, setInView] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
+  // The visitor's own pause (WCAG 2.2.2: a loop longer than 5 s can be stopped).
+  const [userPaused, setUserPaused] = useState(false);
 
   // Pause off-screen and in background tabs, so the story is never mid-way when you look.
   useEffect(() => {
@@ -410,7 +412,7 @@ function useStoryTimeline(timing: Timing) {
   }, []);
 
   useEffect(() => {
-    if (reduce || !inView || !pageVisible) return;
+    if (reduce || !inView || !pageVisible || userPaused) return;
     const timer = setTimeout(() => {
       const next = NEXT_PHASE[phase];
       if (next) {
@@ -421,13 +423,15 @@ function useStoryTimeline(timing: Timing) {
       }
     }, phaseMs(phase, scene, timing));
     return () => clearTimeout(timer);
-  }, [phase, scene, timing, inView, pageVisible, reduce]);
+  }, [phase, scene, timing, inView, pageVisible, userPaused, reduce]);
 
   return {
     observeRef,
     phase: reduce ? ("decision" as const) : phase,
     scene: reduce ? 0 : scene,
-    paused: !inView || !pageVisible,
+    paused: !inView || !pageVisible || userPaused,
+    userPaused,
+    togglePaused: () => setUserPaused((p) => !p),
     reduce: !!reduce,
   };
 }
@@ -968,7 +972,7 @@ const STEPS: { label: string; phases: StoryPhase[] }[] = [
 
 export function HeroStory() {
   const timing = TIMING;
-  const { observeRef, phase, scene, paused, reduce } = useStoryTimeline(timing);
+  const { observeRef, phase, scene, paused, userPaused, togglePaused, reduce } = useStoryTimeline(timing);
   const dates = useMemo(() => computeStoryDates(), []);
   const scenes = useMemo(() => buildScenes(dates), [dates]);
   const s = scenes[scene];
@@ -1012,6 +1016,21 @@ export function HeroStory() {
       >
         <div aria-hidden className="pointer-events-none absolute -inset-16 z-0 rounded-full bg-primary/10 blur-3xl" />
 
+        {/* Pause / play for the loop (Codex audit, Zjak 2026-10-25). Quiet, top
+            right; 44 px hit area round a 28 px icon. Nothing moves under
+            reduced motion, so it is not shown there. */}
+        {!reduce && (
+          <button
+            type="button"
+            onClick={togglePaused}
+            aria-pressed={userPaused}
+            aria-label={userPaused ? "Play the example" : "Pause the example"}
+            className="quiet-hover absolute right-3 top-3 z-[60] inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-muted-foreground after:absolute after:-inset-2 after:content-[''] sm:right-4 sm:top-4"
+          >
+            {userPaused ? <Play className="h-3.5 w-3.5" aria-hidden /> : <Pause className="h-3.5 w-3.5" aria-hidden />}
+          </button>
+        )}
+
         {/* Header: the three beats */}
         <div aria-hidden className="relative z-50 mb-3 flex items-center justify-center">
           <ol className="flex items-center gap-1 text-[13px] font-semibold sm:text-[11px]">
@@ -1019,7 +1038,7 @@ export function HeroStory() {
               const active = step.phases.includes(phase);
               return (
                 <li key={step.label} className="flex items-center gap-1">
-                  {i > 0 && <span className="px-0.5 text-muted-foreground/50">→</span>}
+                  {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground/50" />}
                   <span
                     className="relative rounded-full px-2.5 py-1"
                     style={{ color: active ? "var(--foreground)" : "var(--muted-foreground)" }}

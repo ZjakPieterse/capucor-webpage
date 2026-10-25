@@ -23,7 +23,7 @@ export default function GlobalError({ error, reset }: ErrorProps) {
         <span className="text-xs text-muted-foreground">Something went sideways</span>
       </div>
 
-      <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 max-w-xl">
+      <h1 className="text-3xl sm:text-h1 font-semibold tracking-tight mb-4 max-w-xl">
         We&rsquo;ve hit an unexpected snag.
       </h1>
 

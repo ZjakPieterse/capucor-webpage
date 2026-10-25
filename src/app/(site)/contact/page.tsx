@@ -30,7 +30,7 @@ export default function ContactPage() {
     <section className="premium-section py-14 lg:py-20">
       <div className="mx-auto max-w-3xl px-6">
         <header className="text-center">
-          <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight md:text-h1">
             Let&apos;s get in touch
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">

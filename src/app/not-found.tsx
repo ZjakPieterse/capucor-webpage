@@ -11,7 +11,7 @@ export default function NotFound() {
         <span className="text-xs text-muted-foreground">Filed under: not found</span>
       </div>
 
-      <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4 max-w-xl">
+      <h1 className="text-3xl sm:text-h1 font-semibold tracking-tight mb-4 max-w-xl">
         Looks like this page got filed in the wrong folder.
       </h1>
 

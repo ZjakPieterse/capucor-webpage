@@ -73,7 +73,7 @@ export class PricingErrorBoundary extends Component<Props, State> {
 export function PricingUnavailable({ onRetry }: { onRetry?: () => void } = {}) {
   return (
     <div className="flex flex-col items-center justify-center py-32 px-6 text-center">
-      <h1 className="text-2xl font-bold tracking-tight mb-3">
+      <h1 className="text-2xl font-semibold tracking-tight mb-3">
         Pricing temporarily unavailable
       </h1>
       <p className="text-muted-foreground max-w-sm mb-8 text-sm">

@@ -53,7 +53,7 @@ export function FounderTeam() {
           <article className="svc-card relative h-full rounded-2xl border border-white/10 bg-card/80 p-6 sm:p-8">
             <TypedHeading
               text="Meet the founder"
-              className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl"
+              className="text-3xl font-semibold tracking-tight text-foreground md:text-h2"
             />
             <div className="mt-5 space-y-4 text-base leading-relaxed text-muted-foreground">
               {STORY.map((p) => (

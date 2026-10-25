@@ -37,12 +37,13 @@ export function Navbar() {
           <Image
             src="/brand/capucor-logo-on-dark.png"
             alt="Capucor Business Solutions"
-            height={40}
-            width={200}
+            // Rendered size (32 px tall at the file's 1208 × 265 ratio), so
+            // next/image sees no one-sided resize (design review I5).
+            height={32}
+            width={146}
             priority
-            sizes="200px"
+            sizes="146px"
             className="h-8 w-auto"
-            style={{ width: "auto" }}
           />
         </Link>
 

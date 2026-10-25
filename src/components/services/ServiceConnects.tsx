@@ -1,4 +1,4 @@
-import { BarChart2, BookMarked, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart2, BookMarked, Users, type LucideIcon } from "lucide-react";
 import { SectionDivider } from "@/components/ui/SectionDivider";
 import { SERVICE_PAGES, type ServicePage } from "@/config/servicePages";
 
@@ -35,7 +35,7 @@ export function ServiceConnects({ current }: { current: ServicePage["slug"] }) {
                   <span className="text-sm font-semibold">{svc.title}</span>
                   <span className="text-xs font-medium text-primary">{svc.hook}</span>
                 </span>
-                <span aria-hidden className="ml-auto text-muted-foreground text-sm">→</span>
+                <ArrowRight aria-hidden className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
               </a>
             );
           })}
