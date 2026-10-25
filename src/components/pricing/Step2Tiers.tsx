@@ -262,9 +262,9 @@ export function Step2Tiers({
         <Button variant="outline" size="lg" onClick={onBack}>
           <ArrowLeft aria-hidden /> Back
         </Button>
-        {/* Choosing a package moves on by itself, so Continue appears only
-            when the visitor comes back with one chosen: no disabled button
-            on the first visit (design review D3). */}
+        {/* Choosing a package only selects it; Continue appears once one is
+            chosen, so there is no disabled button before (design review D3;
+            no auto-advance since Zjak, 2026-10-25). */}
         {selectedTier && (
           <Button size="lg" onClick={onNext} className="gap-2 cta-armed">
             Continue to add-ons <ArrowRight aria-hidden />
