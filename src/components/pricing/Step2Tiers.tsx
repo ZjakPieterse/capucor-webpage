@@ -112,7 +112,10 @@ export function Step2Tiers({
 
           // The service cards' language (ServicePillars.tsx, Zjak 2026-10-13):
           // an icon-and-name lockup, a lit top edge, round ticks and hairline
-          // sections ending in the action row. The whole card still selects.
+          // sections ending in the action row. The card is an article and the
+          // action row a real button whose ::after covers the card, so the
+          // whole card still selects while the inclusions read as a normal
+          // list (design review D2).
           const rows = (
             <>
               <span aria-hidden className="tier-card-edge" />
@@ -120,10 +123,7 @@ export function Step2Tiers({
                   the grid flow, so the subgrid rows still align (design
                   review, 2026-10-13). Text only (Zjak, 2026-10-13). */}
               {featured && (
-                <span
-                  aria-hidden
-                  className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-md shadow-primary/30"
-                >
+                <span className="pointer-events-none absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground shadow-md shadow-primary/30">
                   {FEATURED_BADGE}
                 </span>
               )}
@@ -134,9 +134,9 @@ export function Step2Tiers({
                   <span aria-hidden className="svc-icon tier-icon">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <div className="text-xl font-semibold leading-tight tracking-tight text-foreground">
+                  <h3 id={`tier-name-${tier.slug}`} className="text-xl font-semibold leading-tight tracking-tight text-foreground">
                     {tier.name}
-                  </div>
+                  </h3>
                 </div>
                 {(TIER_BUYER_FIT[tier.slug] ?? tier.tagline) && (
                   <div className="mt-4 text-sm leading-relaxed text-muted-foreground">
@@ -150,17 +150,18 @@ export function Step2Tiers({
                 {/* "From" sits on its own line so the price and /month never wrap
                     apart; other cards reserve the line so prices stay aligned. */}
                 <span
+                  aria-hidden
                   className={cn('text-xs text-muted-foreground', !byApplication && 'invisible')}
-                  aria-hidden={!byApplication}
                 >
                   From
                 </span>
-                <div className="flex items-baseline gap-1.5">
+                <div aria-hidden className="flex items-baseline gap-1.5">
                   <AnimatedPrice amount={displayTotal} size="lg" />
                   <span className="text-xs text-muted-foreground whitespace-nowrap">/month</span>
                 </div>
-                {/* The animated figure is not a reliable accessible name, so
-                    the card is described by this plain-text price. */}
+                {/* The animated figure is not reliable for screen readers, so
+                    they get this plain-text price instead (the card's button
+                    is described by it too). */}
                 <span id={`tier-price-${tier.slug}`} className="sr-only">
                   {`${byApplication ? 'From ' : ''}${formatZAR(displayTotal)} a month`}
                 </span>
@@ -186,55 +187,60 @@ export function Step2Tiers({
                 )}
               </div>
 
-              {/* Row 4: what a click does, in the site's own button styles
+              {/* Row 4: the card's one control, in the site's own button styles
                   (Zjak, 2026-10-13). Every card starts with the plain outline
-                  button; only the chosen package gets the flagship style. A styled span, since
-                  the whole card is already the button. */}
+                  look; only the chosen package gets the flagship style. The
+                  real <button> is unstyled and static, so its ::after
+                  (.tier-card-choose) stretches over the whole card; the look
+                  is the inner span, which keeps the hover lift and shine. */}
               <div className="pricing-card-cta mt-6">
-                <span
-                  aria-hidden
-                  className={cn(
-                    buttonVariants({ variant: flagship ? 'default' : 'outline', size: 'lg' }),
-                    'w-full backdrop-blur-none',
-                    flagship && 'gradient-cta'
-                  )}
+                <button
+                  type="button"
+                  onClick={() => onTierSelect(tier.slug)}
+                  aria-pressed={isSelected}
+                  aria-describedby={`tier-price-${tier.slug}`}
+                  className="tier-card-choose block w-full outline-none"
                 >
-                  <span className="relative z-[2] inline-flex items-center gap-2">
-                    {isSelected ? (
-                      <>
-                        <Check className="h-4 w-4" strokeWidth={3} /> Selected
-                      </>
-                    ) : (
-                      <>Choose {tier.name}</>
+                  <span
+                    className={cn(
+                      buttonVariants({ variant: flagship ? 'default' : 'outline', size: 'lg' }),
+                      'w-full backdrop-blur-none',
+                      flagship && 'gradient-cta'
                     )}
+                  >
+                    <span className="relative z-[2] inline-flex items-center gap-2">
+                      {isSelected ? (
+                        <>
+                          <Check aria-hidden className="h-4 w-4" strokeWidth={3} /> Selected
+                          <span className="sr-only">: {tier.name}</span>
+                        </>
+                      ) : (
+                        <>Choose {tier.name}</>
+                      )}
+                    </span>
                   </span>
-                </span>
+                </button>
               </div>
             </>
           );
 
           return (
-            <button
+            <article
               key={tier.slug}
-              type="button"
-              onClick={() => onTierSelect(tier.slug)}
-              aria-pressed={isSelected}
-              aria-label={`${tier.name} package${featured ? `, ${FEATURED_BADGE.toLowerCase()}` : ''}`}
-              aria-describedby={`tier-price-${tier.slug}`}
+              aria-labelledby={`tier-name-${tier.slug}`}
               className={cn(
-                'service-card pricing-card-item tier-card relative min-w-0 rounded-2xl border-2 p-6 text-left outline-none w-full h-full flex flex-col',
+                'service-card pricing-card-item tier-card relative min-w-0 rounded-2xl border-2 p-6 text-left w-full h-full flex flex-col',
                 // The recommended package carries the lit border and glow
                 // until another package is chosen (Zjak, 2026-10-13); its
                 // badge stays.
                 featured && (!selectedTier || isSelected) && 'popular-card',
-                'focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2',
                 isSelected
                   ? 'is-selected border-primary bg-primary/10 shadow-lg shadow-primary/10'
                   : 'premium-glass border-white/10'
               )}
             >
               {rows}
-            </button>
+            </article>
           );
         })}
       </div>
