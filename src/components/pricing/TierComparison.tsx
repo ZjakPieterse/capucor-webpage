@@ -164,7 +164,7 @@ export function TierComparison({
                 <tbody key={row.text} className="border-t border-border/60">
                   <tr>
                     <th
-                      scope="colgroup"
+                      scope="rowgroup"
                       colSpan={sortedTiers.length}
                       className={cn(
                         'px-5 pt-3 pb-1 text-left font-normal',

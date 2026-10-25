@@ -53,7 +53,7 @@ describe('review step and proposal fallbacks (design review F3, G3, 2026-10-25)'
     const review = src('components/pricing/ReviewStep.tsx');
     expect(review).toContain('Accept and sign');
     expect(review).toContain('Email me the proposal');
-    expect(review).not.toMatch(/Send proposal|^s*Accepts*$/m);
+    expect(review).not.toMatch(/Send proposal|^\s*Accept\s*$/m);
     expect(src('components/pricing/ActivateProposalModal.tsx')).toContain("'Email me the proposal'");
   });
 
