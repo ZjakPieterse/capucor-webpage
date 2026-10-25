@@ -64,7 +64,7 @@ describe('review step and proposal fallbacks (design review F3, G3, 2026-10-25)'
     expect(actions).toBeGreaterThan(-1);
     expect(inclusions).toBeGreaterThan(actions);
     expect(inclusions).toBeLessThan(review.indexOf('What happens next'));
-    expect(review).not.toMatch(/No payment/);
+    expect(review).not.toMatch(/no payment/i);
   });
 
   it('gives an unavailable proposal a second route: a fit call or an email', () => {

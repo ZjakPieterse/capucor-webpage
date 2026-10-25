@@ -105,7 +105,7 @@ export function ReviewStep({
       )}
 
       {/* The band note sits right under the actions (Zjak, 2026-10-14); the
-          "no payment" line went (Zjak, 2026-10-25). */}
+          payment-reassurance line went (Zjak, 2026-10-25). */}
       <p className="-mt-3 text-center text-xs text-muted-foreground leading-relaxed">
         {ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.
       </p>
