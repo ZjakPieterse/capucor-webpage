@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Check, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CornerDownRight, Layers, TrendingUp, Zap, type LucideIcon } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { TestimonialSpotlight } from './TestimonialSpotlight';
@@ -9,7 +9,7 @@ import { AnswerRecap } from './AnswerRecap';
 import { cn, formatZAR } from '@/lib/utils';
 import { addonTotal, bracketPrice, parseAddonToken } from '@/lib/pricing';
 import { ANSWER_ADDON_SLUGS } from '@/lib/calculatorFlow';
-import { TIER_HIGHLIGHTS, TIER_BUYER_FIT, TIERS_BY_APPLICATION } from '@/config/tiers';
+import { TIER_BUYER_FIT, TIER_CARD_LEAD, TIERS_BY_APPLICATION, tierCardLines } from '@/config/tiers';
 import { FEATURED_BADGE, FEATURED_TIER } from '@/config/calculatorCopy';
 import type {
   Bracket,
@@ -102,7 +102,8 @@ export function Step2Tiers({
           // answer-driven add-ons. Chosen add-ons come on the next step.
           const displayTotal = regularTotal + addonTotal(answerAddons, tier.slug);
 
-          const filteredItems = (TIER_HIGHLIGHTS[tier.slug] ?? []).filter((item) =>
+          const lead = TIER_CARD_LEAD[tier.slug];
+          const filteredItems = tierCardLines(tier.slug).filter((item) =>
             item.services.some((s) => selectedServices.has(s))
           );
 
@@ -129,7 +130,7 @@ export function Step2Tiers({
               )}
 
               {/* Row 1: icon-and-name lockup, then what the package gets */}
-              <div className="pricing-card-header mb-5 flex flex-col justify-start">
+              <div className="pricing-card-header mb-4 lg:mb-5 flex flex-col justify-start">
                 <div className="flex items-center gap-3.5">
                   <span aria-hidden className="svc-icon tier-icon">
                     <Icon className="h-5 w-5" />
@@ -139,14 +140,14 @@ export function Step2Tiers({
                   </h3>
                 </div>
                 {(TIER_BUYER_FIT[tier.slug] ?? tier.tagline) && (
-                  <div className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  <div className="mt-3 lg:mt-4 text-sm leading-relaxed text-muted-foreground">
                     {TIER_BUYER_FIT[tier.slug] ?? tier.tagline}
                   </div>
                 )}
               </div>
 
               {/* Row 2: Pricing (Price / Period); "from" for a package sold by application */}
-              <div className="pricing-card-price mb-5 flex flex-col">
+              <div className="pricing-card-price mb-4 lg:mb-5 flex flex-col">
                 {/* "From" sits on its own line so the price and /month never wrap
                     apart; other cards reserve the line so prices stay aligned. */}
                 <span
@@ -169,7 +170,17 @@ export function Step2Tiers({
 
               {/* Row 3: Features list, below a hairline (back to the single
                   line under the price, Zjak, 2026-10-25). */}
-              <div className="pricing-card-features flex flex-grow flex-col border-t border-white/10 pt-5">
+              <div className="pricing-card-features flex flex-grow flex-col border-t border-white/10 pt-4 lg:pt-5">
+                {/* Pro and Premium build on the package below (Zjak, package
+                    step value, 2026-10-25): the earlier cumulative-label chip,
+                    neutral under the cyan rule. Every card starts its list on
+                    the same line. */}
+                {lead && (
+                  <p className="tier-card-lead mb-3 inline-flex w-fit items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-foreground">
+                    <CornerDownRight aria-hidden className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    {lead}
+                  </p>
+                )}
                 {filteredItems.length > 0 && (
                   <ul className="space-y-3">
                     {/* Every line alike, "Core services included" and the
@@ -193,7 +204,7 @@ export function Step2Tiers({
                   real <button> is unstyled and static, so its ::after
                   (.tier-card-choose) stretches over the whole card; the look
                   is the inner span, which keeps the hover lift and shine. */}
-              <div className="pricing-card-cta mt-6">
+              <div className="pricing-card-cta mt-5 lg:mt-6">
                 <button
                   type="button"
                   onClick={() => onTierSelect(tier.slug)}
@@ -229,7 +240,7 @@ export function Step2Tiers({
               key={tier.slug}
               aria-labelledby={`tier-name-${tier.slug}`}
               className={cn(
-                'service-card pricing-card-item tier-card relative min-w-0 rounded-2xl border-2 p-6 text-left w-full h-full flex flex-col',
+                'service-card pricing-card-item tier-card relative min-w-0 rounded-2xl border-2 p-5 lg:p-6 text-left w-full h-full flex flex-col',
                 // The recommended package carries the lit border and glow
                 // until another package is chosen (Zjak, 2026-10-13); its
                 // badge stays.

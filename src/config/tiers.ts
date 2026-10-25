@@ -124,6 +124,32 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   ],
 };
 
+// The package cards build on each other (Zjak, package step value,
+// 2026-10-25): Basic lists three core services by name, then its own lines;
+// Pro and Premium open with "Everything in <lower>, plus:" and list only what
+// is new or changed against the package below. TIER_HIGHLIGHTS still drives
+// the comparison table, the review step and the signed schedule.
+export const TIER_CARD_LEAD: Record<string, string> = {
+  pro: 'Everything in Basic, plus:',
+  premium: 'Everything in Pro, plus:',
+};
+
+const CARD_CORE_TEXTS = ['Dedicated finance team', 'Annual financial statements', 'SARS & CIPC submission'];
+
+/** The lines on a package card: Basic in full, higher packages as the change from the one below. */
+export function tierCardLines(tierSlug: string): TierHighlightItem[] {
+  const own = (TIER_HIGHLIGHTS[tierSlug] ?? []).filter((item) => !item.summary);
+  const below = TIER_ORDER[TIER_ORDER.indexOf(tierSlug) - 1];
+  if (!below) {
+    const core = CORE_SERVICES.filter((c) => CARD_CORE_TEXTS.includes(c.text)).map(
+      (c): TierHighlightItem => ({ text: c.text, tooltip: c.tooltip, services: ['accounting', 'bookkeeping'] })
+    );
+    return [...core, ...own];
+  }
+  const lower = new Set((TIER_HIGHLIGHTS[below] ?? []).map((item) => item.text));
+  return own.filter((item) => !lower.has(item.text));
+}
+
 // Packages sold by application rather than self-serve acceptance. The
 // calculator shows a "from" price and ends in a request (tweaks round 1);
 // /api/proposals creates no proposal for them, and nothing else does either
