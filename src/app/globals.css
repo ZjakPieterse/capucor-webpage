@@ -1694,7 +1694,7 @@
 
   /* No animation for these users, so the hover end state is a small, still
      lift: never bigger than the animated one, and no scale (I3). */
-  .premium-card:hover,
+  .premium-card:not(.tilt-card):hover,
   .feature-card:hover {
     transform: translateY(-4px) !important;
   }

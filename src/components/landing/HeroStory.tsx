@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip, Pause, Play } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip, Pause, Play } from "lucide-react";
 import { use3DTilt } from "@/hooks/use3DTilt";
 import { signatureFont } from "@/lib/signatureFont";
 import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
@@ -1038,7 +1038,7 @@ export function HeroStory() {
               const active = step.phases.includes(phase);
               return (
                 <li key={step.label} className="flex items-center gap-1">
-                  {i > 0 && <span className="px-0.5 text-muted-foreground/50">→</span>}
+                  {i > 0 && <ArrowRight className="h-3 w-3 text-muted-foreground/50" />}
                   <span
                     className="relative rounded-full px-2.5 py-1"
                     style={{ color: active ? "var(--foreground)" : "var(--muted-foreground)" }}
