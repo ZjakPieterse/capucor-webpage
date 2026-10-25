@@ -68,6 +68,12 @@ jobs:
       - name: Build (Cloudflare)
         run: npm run build:cf
 
+      # Tailwind's optimise step once kept only -webkit-backdrop-filter from
+      # hand-written rules, so Chrome showed no blur (2026-10-25). Gate the
+      # real built CSS, not just the source.
+      - name: Assert built CSS keeps unprefixed backdrop-filter
+        run: node scripts/check-built-css.mjs .next/static/css
+
       # Hard gate before deploy: prove the Supabase env actually reached the
       # build. A missing value ships a site whose every funnel form 500s.
       #
