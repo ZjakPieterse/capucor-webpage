@@ -15,7 +15,7 @@ import { PAYROLL_ONLY_TIER } from '@/config/tiers';
  * Version label of the engagement terms. Bump it on any change to the clause
  * text in this file; it is printed on /terms/engagement and the signed PDF.
  */
-export const TERMS_VERSION = '2026.1';
+export const TERMS_VERSION = '2026.2';
 
 /** The contracting entity, named on the terms page and the signed PDF (Zjak, 2026-10-26). */
 export const CAPUCOR_LEGAL = {
@@ -78,9 +78,8 @@ export const PAYROLL_ONLY_RESPONSIBILITIES_OURS: string[] = [
   ...SERVICE_STANDARD_LINES,
 ];
 
-// Payroll cut-off: 17:00, two business days before pay day (Zjak, 2026-10-26).
-// The salaries playbook still has changes due four business days before pay
-// day; the playbook is to be brought in line with these terms.
+// Payroll cut-off: 17:00, two business days before pay day (Zjak, 2026-10-26);
+// the salaries playbook was re-timed to match the same day.
 export const PAYROLL_ONLY_RESPONSIBILITIES_YOURS: string[] = [
   "Give us the month's payroll inputs (hours, overtime, commission, leave taken and leavers) by the payroll cut-off: 17:00, two business days before pay day.",
   "Give us each new starter's details (ID number, tax number, start date and pay terms) by the payroll cut-off before their first pay day.",
@@ -154,6 +153,8 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
       'You can cancel a debit-order authorisation in writing at any time. Cancelling it does not end this agreement or affect amounts already due.',
       'If a payment is still unpaid 30 days after its due date, we will tell you in writing, and we may pause work 7 days after that notice until your account is up to date. We charge no interest.',
       "We may update our prices once a year, from 1 March, with at least 30 days' written notice. If you don't accept the new price, you can end this agreement on the usual 30 days' notice.",
+      // SAICA guide comparison (Zjak, 2026-10-26, terms 2026.2).
+      'Statutory fees, such as CIPC filing fees, and any penalties or interest charged by SARS or CIPC are yours to pay.',
     ],
   },
   {
@@ -186,6 +187,8 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
       'We keep your information confidential and process it in line with POPIA. We only share it with the parties needed to do your work, for example SARS, CIPC or your software providers, or where the law requires it.',
       "Where we process personal information for you, such as your employees' payroll details or your customers' details in your books, we do so only on your instructions and for the work in this agreement. We keep it confidential, keep reasonable security measures in place, and tell you as soon as we become aware of a breach.",
       'We may use trusted sub-processors (such as Xero and our hosting and email providers) under the same confidentiality terms. Some of them, such as Xero and Google, store data on servers outside South Africa, under laws or agreements that protect it to a standard similar to POPIA.',
+      // SAICA Code: non-compliance with laws and regulations (NOCLAR), 2026.2.
+      'If we find that your business may have broken a law, our professional code (SAICA) requires us to act: where appropriate we raise it with you first so that you can put it right, and in serious cases we may have to report it to the right authority. Doing so is not a breach of confidentiality.',
     ],
   },
   {
@@ -203,13 +206,17 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     paragraphs: [
       'We act as your accountants, not your auditors. Our work, including any financial statements we compile and the payroll we run, is based on the information you give us. It is not designed to find fraud, theft or every error, and it is not an audit or an assurance opinion.',
       'Our advice is based on the law as it stands when we give it and on the facts you share with us.',
+      // SAICA guide comparison, 2026.2: management decisions, FAIS, reliance, subcontractors.
+      'We do not make management decisions for you. You decide what to do with our work and advice, and you are responsible for acting on it. We are not a registered financial services provider, so we do not give financial advice under the FAIS Act.',
+      'Our reports and statements are for you and the users named in them. Nobody else may rely on them without our written consent.',
+      'We may use subcontractors for parts of the work, under these same terms. We stay responsible for their work.',
     ],
   },
   {
     id: 'liability',
     heading: 'Limitation of liability',
     paragraphs: [
-      'Our liability for any claim arising from this engagement is limited to the fees you have paid us for the specific work the claim relates to. This limit does not apply to loss caused by our fraud, dishonesty or gross negligence.',
+      'Our liability for any claim arising from this engagement is limited to the fees you have paid us for the specific work the claim relates to, and we are not liable for indirect or consequential loss, such as lost profit. These limits do not apply to loss caused by our fraud, dishonesty or gross negligence.',
       'We are not liable for losses caused by information that was given to us late, incomplete or inaccurate.',
     ],
   },
@@ -234,6 +241,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     heading: 'Ending the engagement',
     paragraphs: [
       'Either of us can end this agreement with 30 days’ written notice. Your fees for the notice period are payable as usual, and we keep doing the work in your schedule until the agreement ends. We then help with a clean handover and return your records.',
+      'Either of us may also end it at once, in writing, if the other goes into liquidation or business rescue, or does not fix a breach of this agreement within 14 days of written notice.',
     ],
   },
   {
