@@ -101,17 +101,6 @@ export default function EngagementTermsPage() {
           </div>
         ))}
 
-        {/* If you sign as an individual: ECTA s44 cooling-off for natural-person clients. */}
-        <div>
-          <h2 className="mb-3 text-xl font-semibold">If you sign as an individual</h2>
-          <p className="mb-3 leading-relaxed text-muted-foreground">
-            If you sign this proposal as an individual (for example as a sole proprietor) rather
-            than for a company, close corporation or trust, you may cancel it within 7 days of
-            signing, without giving a reason and without penalty. We refund anything you have paid
-            within 30 days of your cancellation.
-          </p>
-        </div>
-
         {/* About us: ECTA s43 supplier details. No phone number by choice (Zjak, 2026-10-26). */}
         <div>
           <h2 className="mb-3 text-xl font-semibold">About us</h2>

@@ -137,6 +137,12 @@ describe('engagement letter terms (2026-10-26)', () => {
     expect(html).toContain(CAPUCOR_LEGAL.address);
   });
 
+  it('carries the ECTA s44 cooling-off for individuals into the signed PDF', () => {
+    expect(block('individuals')).toContain('cancel it within 7 days of signing');
+    expect(block('individuals')).toContain('within 30 days of your cancellation');
+    expect(signed()).toContain('If you sign as an individual');
+  });
+
   it('labels the first payment, not a debit order: payments are by EFT for now', () => {
     const html = signed();
     expect(html).toContain('First payment due:</strong> 1 December 2026');

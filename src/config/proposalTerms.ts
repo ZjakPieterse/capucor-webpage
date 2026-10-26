@@ -237,6 +237,15 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     ],
   },
   {
+    // ECTA s44 cooling-off for natural-person clients. In the shared terms so
+    // the signed PDF carries it too, not only the terms page.
+    id: 'individuals',
+    heading: 'If you sign as an individual',
+    paragraphs: [
+      'If you sign this proposal as an individual (for example as a sole proprietor) rather than for a company, close corporation or trust, you may cancel it within 7 days of signing, without giving a reason and without penalty. We refund anything you have paid within 30 days of your cancellation.',
+    ],
+  },
+  {
     id: 'jurisdiction',
     heading: 'Disputes and governing law',
     paragraphs: [
