@@ -159,7 +159,7 @@ export default async function ProposalPage({
   // acceptance and say what happens next.
   if (SIGNED_STATUSES.has(row.status)) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-16 lg:py-24">
+      <div className="mx-auto max-w-4xl px-6 py-16 lg:py-24">
         <SignedConfirmation row={row} />
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Questions? Reply to your proposal email or{' '}
@@ -255,6 +255,7 @@ export default async function ProposalPage({
               tierSlug={row.tier_slug}
               selectedAddons={row.addons ?? []}
               monthlyZAR={Number(row.monthly_total_zar)}
+              textSize="base"
             />
             <FeesNotes tierSlug={row.tier_slug} />
             <p className="mt-3 text-xs text-muted-foreground">

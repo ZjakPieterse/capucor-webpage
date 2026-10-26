@@ -30,7 +30,13 @@ describe('overage rates are not quoted (Zjak, 2026-10-08)', () => {
     const review = src('components/pricing/ReviewStep.tsx');
     expect(review).not.toMatch(/R ?200|R ?75|trued up/);
     expect(review).toContain('ALLOWANCE_CHANGE_NOTE');
-    expect(review).toMatch(/Catch-up for the 3 months before you accept is included/);
+    expect(review).toContain('REVIEW_PRIOR_MONTHS_INCLUDED');
+    expect(review).not.toMatch(/Catch-up for the 3 months/);
+  });
+
+  it('ticks the 3 included months in the review list, in the terms\' words (F2, 2026-10-26)', () => {
+    expect(src('config/calculatorCopy.ts')).toMatch(/REVIEW_PRIOR_MONTHS_INCLUDED = 'Work for the 3 months before you accept'/);
+    expect(src('config/proposalTerms.ts')).toMatch(/Work for the 3 months before you accept this proposal is included/);
   });
 });
 
@@ -355,8 +361,21 @@ describe('after signing (full-site audit A02/A03, 2026-10-13)', () => {
     expect(src('components/proposal/ConfirmSignButton.tsx')).toContain('<SignedMoment');
     expect(src('app/proposal/[token]/page.tsx')).toContain('<SignedMoment');
     const moment = src('components/proposal/SignedMoment.tsx');
-    expect(moment).toContain('<DeckCard card={HANDING_OVER_CARD}');
+    expect(moment).toContain('const card = HANDING_OVER_CARD');
+    expect(moment).toMatch(/card\.items\.map/);
     expect(src('components/landing/FirstNinetyDays.tsx')).toMatch(/HANDING_OVER_CARD = CARDS\[0\]/);
     expect(src('components/landing/FirstNinetyDays.tsx')).toMatch(/title: "Handing over"/);
+  });
+
+  // Paper like the proposal, and one icon only, the tick (design review G2,
+  // Zjak 2026-10-26; "too many icons", 2026-10-18).
+  it('the confirm step and the signed moment are on paper with one icon', () => {
+    const moment = src('components/proposal/SignedMoment.tsx');
+    const button = src('components/proposal/ConfirmSignButton.tsx');
+    expect(moment).toContain('document-paper');
+    expect(button).toContain('document-paper');
+    expect(moment).toMatch(/import \{ Check \} from 'lucide-react'/);
+    expect(button).toMatch(/import \{ Loader2 \} from 'lucide-react'/);
+    expect(src('app/proposal/confirm/[ctoken]/page.tsx')).not.toMatch(/lucide-react/);
   });
 });

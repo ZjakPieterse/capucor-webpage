@@ -124,6 +124,11 @@ export const PREMIUM_REQUEST_COPY = {
 // the comparison table's short wording (Zjak, 2026-10-18); the items come from
 // reviewInclusions in lib/schedule.ts. `packageName` is the display name
 // (Basic, Pro, Premium, Payroll).
+// The included prior months are the last tick in that list, worded as the
+// proposal terms put it (design review F2, Zjak 2026-10-26). Older work is
+// catch-up.
+export const REVIEW_PRIOR_MONTHS_INCLUDED = 'Work for the 3 months before you accept';
+
 export function reviewInclusionsHeading(packageName: string): string {
   return `What your ${packageName} subscription includes`;
 }

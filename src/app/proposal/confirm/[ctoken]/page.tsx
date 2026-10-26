@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { ConfirmSignButton } from '@/components/proposal/ConfirmSignButton';
 import { Button } from '@/components/ui/button';
@@ -69,22 +68,21 @@ export default async function ConfirmSignPage({
   const row = result.row;
 
   return (
-    <div className="mx-auto max-w-md px-6 py-16 lg:py-24">
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          Confirm &amp; sign
-        </div>
-        <h1 className="mt-3 text-xl font-semibold tracking-tight">
+    // Room for the signed moment's two columns on desktop; the confirm card
+    // itself keeps the proposal's width (design review G2, Zjak 2026-10-26).
+    <div className="mx-auto max-w-4xl px-6 py-16 lg:py-24">
+      <ConfirmSignButton ctoken={ctoken}>
+        <p className="text-sm font-semibold text-muted-foreground">Confirm &amp; sign</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
           Finalise your signature for {row.business_name}
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           You&rsquo;re confirming acceptance of the Capucor proposal
           {row.ref_number ? ` (${row.ref_number})` : ''}. Confirming records your signature, and we
           email you to say it&rsquo;s signed. There&rsquo;s no payment needed up front.
         </p>
 
-        <dl className="mt-5 space-y-2 rounded-xl border border-border bg-card/40 p-4 text-sm">
+        <dl className="mt-6 space-y-2 rounded-xl border border-border bg-muted/60 p-4 text-base">
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Business</dt>
             <dd className="font-medium">{row.business_name}</dd>
@@ -100,11 +98,7 @@ export default async function ConfirmSignPage({
             <dd className="font-semibold">{formatZAR(Number(row.total_charge_zar))}</dd>
           </div>
         </dl>
-
-        <div className="mt-6">
-          <ConfirmSignButton ctoken={ctoken} />
-        </div>
-      </div>
+      </ConfirmSignButton>
     </div>
   );
 }
