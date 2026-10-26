@@ -78,8 +78,9 @@ export const PAYROLL_ONLY_RESPONSIBILITIES_OURS: string[] = [
   ...SERVICE_STANDARD_LINES,
 ];
 
-// The payroll cut-off is the monthly salaries playbook's: 17:00 on pay day
-// minus 2 business days.
+// Payroll cut-off: 17:00, two business days before pay day (Zjak, 2026-10-26).
+// The salaries playbook still has changes due four business days before pay
+// day; the playbook is to be brought in line with these terms.
 export const PAYROLL_ONLY_RESPONSIBILITIES_YOURS: string[] = [
   "Give us the month's payroll inputs (hours, overtime, commission, leave taken and leavers) by the payroll cut-off: 17:00, two business days before pay day.",
   "Give us each new starter's details (ID number, tax number, start date and pay terms) by the payroll cut-off before their first pay day.",
@@ -248,7 +249,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     heading: 'Notices and general terms',
     paragraphs: [
       'Email counts as writing under this agreement. We send notices to the email address on your proposal, and you send them to team@capucor.com. Our address for legal notices is 19 Blue Crane, 273 Von Willich Avenue, Centurion, 0157.',
-      'This proposal and these terms are the whole agreement between us, and a change binds us only once it is agreed in writing. If any clause is unenforceable, the rest still applies. Neither of us is responsible for a delay caused by events outside our reasonable control, such as a power or SARS system outage.',
+      'This proposal and these terms are the whole agreement between us, and a change binds us only once it is agreed in writing, except a price update made under Fees and payment. If any clause is unenforceable, the rest still applies. Neither of us is responsible for a delay caused by events outside our reasonable control, such as a power or SARS system outage.',
     ],
   },
 ];

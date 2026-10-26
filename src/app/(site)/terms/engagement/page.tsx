@@ -120,7 +120,7 @@ export default function EngagementTermsPage() {
               {CAPUCOR_LEGAL.name}, a private company registered in South Africa, registration
               number {CAPUCOR_LEGAL.registrationNumber}, trading as {CAPUCOR_LEGAL.tradingAs}.
             </li>
-            <li>Registered and physical address: {CAPUCOR_LEGAL.address}.</li>
+            <li>Registered address: {CAPUCOR_LEGAL.address}.</li>
             <li>
               Email:{' '}
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary underline underline-offset-2">

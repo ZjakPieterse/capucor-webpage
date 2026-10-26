@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 // are no-break spaces (U+00A0), so a price never wraps, even where its element
 // has no `whitespace-nowrap`. Every price is whole rands today; an amount with
 // cents would still show them ("R 5 750.50") rather than be rounded, because
-// the signed PDF is the debit-order mandate. The email formatter in
+// the signed PDF is the engagement letter and debit-order authorisation. The email formatter in
 // lib/email/messages.mjs is a copy of this one (the retry runner cannot import
 // TypeScript); a test keeps the two identical.
 export const PRICE_SPACE = '\u00a0';

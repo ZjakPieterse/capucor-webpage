@@ -22,10 +22,10 @@
  * the lead is stored with source 'call', Capucor is told by email, and no
  * proposal row is created (tweaks round 1, 2026-10-06).
  *
- * The client reviews and signs at /proposal/<token>. Signing is the debit-order
- * mandate and stops at `signed` + the signed PDF in Drive (web-standalone
+ * The client reviews and signs at /proposal/<token>. Signing is the engagement
+ * letter and stops at `signed` + the signed PDF in Drive (web-standalone
  * phase 3) — there is no on-site payment step and no portal record; collection
- * is set up manually via Paysoft Flow.
+ * is set up by hand (EFT until Paysoft Flow is switched on).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
