@@ -94,7 +94,9 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     id: 'fair-usage',
     heading: 'Fair usage and what falls outside it',
     paragraphs: [
-      'Each service in your schedule has an allowance tied to the bracket you chose (your turnover band, transaction count or headcount). Work within that allowance is covered by your monthly fee.',
+      // Firm-wide wording (Zjak, 2026-10-26): one text for every client, so
+      // the shared blocks name accounting, bookkeeping and payroll alike.
+      'Each service in your schedule has an allowance tied to the bracket you chose for it, such as your annual turnover, your monthly transactions or the number of employees on your payroll. Work within those allowances is covered by your monthly fee.',
       'Work for the 3 months before you accept this proposal is included free of charge, provided it would have been in scope for those months. Anything older is out of scope and treated as catch-up work: we quote it before we begin, or bill it at our standard hourly rate (available on request).',
       'When work runs beyond your allowance, we measure it on the quarterly review against your rolling average rather than reacting to a single month, then adjust by agreement.',
     ],
@@ -128,7 +130,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     id: 'ownership',
     heading: 'Your records and our work',
     paragraphs: [
-      'Your source documents and records stay yours, and we return them to you on request. The financial statements, returns and reports we produce are yours to use in your business.',
+      'Your source documents and records stay yours, and we return them to you on request. What we produce for you, such as financial statements, returns, payslips and reports, is yours to use in your business.',
       'The templates, working papers, checklists and software we build to do the work stay ours.',
     ],
   },
@@ -136,7 +138,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     id: 'scope-limits',
     heading: 'Scope of our work',
     paragraphs: [
-      'We act as your accountants, not your auditors. Our work is a compilation based on the information you give us, so it is not designed to find fraud, theft or every error, and it is not an audit or an assurance opinion.',
+      'We act as your accountants, not your auditors. Our work, including any financial statements we compile and the payroll we run, is based on the information you give us. It is not designed to find fraud, theft or every error, and it is not an audit or an assurance opinion.',
       'Our advice is based on the law as it stands when we give it and on the facts you share with us.',
     ],
   },

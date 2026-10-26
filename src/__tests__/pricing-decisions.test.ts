@@ -535,3 +535,32 @@ describe('payroll-only fee note and terms (#163 follow-up)', () => {
     expect(pro).not.toContain('How your payroll works');
   });
 });
+
+// ── Firm-wide terms (Zjak, 2026-10-26) ─────────────────────────────────────
+//
+// One set of shared terms for every client: no package versions of the shared
+// blocks, and fair usage, records and scope speak of payroll as well as books.
+
+describe('firm-wide shared terms (2026-10-26)', () => {
+  const block = (id: string) => PROPOSAL_TERMS.find((b) => b.id === id)!.paragraphs.join(' ');
+
+  it('every package signs the same shared blocks', () => {
+    expect(proposalTermsFor(PAYROLL_ONLY_TIER).slice(1)).toEqual(PROPOSAL_TERMS);
+    for (const slug of ['basic', 'pro', 'premium']) {
+      expect(proposalTermsFor(slug)).toBe(PROPOSAL_TERMS);
+    }
+  });
+
+  it('fair usage, records and scope cover payroll as well as accounting', () => {
+    expect(block('fair-usage')).toContain(
+      'Each service in your schedule has an allowance tied to the bracket you chose for it, such as your annual turnover, your monthly transactions or the number of employees on your payroll. Work within those allowances is covered by your monthly fee.',
+    );
+    expect(block('ownership')).toContain(
+      'What we produce for you, such as financial statements, returns, payslips and reports, is yours to use in your business.',
+    );
+    expect(block('scope-limits')).toContain(
+      'We act as your accountants, not your auditors. Our work, including any financial statements we compile and the payroll we run, is based on the information you give us. It is not designed to find fraud, theft or every error, and it is not an audit or an assurance opinion.',
+    );
+    expect(JSON.stringify(PROPOSAL_TERMS)).not.toContain('—');
+  });
+});
