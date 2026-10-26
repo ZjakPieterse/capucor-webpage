@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, CalendarClock, Check, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProposalSummary } from './ProposalSummary';
-import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY } from '@/config/calculatorCopy';
+import { AFTER_YOU_SIGN, PREMIUM_REQUEST_COPY, REVIEW_PRIOR_MONTHS_INCLUDED } from '@/config/calculatorCopy';
 import { TIERS_BY_APPLICATION } from '@/config/tiers';
 import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 import type { Bracket, BracketValue, Service, Tier } from '@/types';
@@ -105,9 +105,10 @@ export function ReviewStep({
       )}
 
       {/* The band note sits right under the actions (Zjak, 2026-10-14); the
-          payment-reassurance line went (Zjak, 2026-10-25). */}
+          payment-reassurance line went (Zjak, 2026-10-25) and the included
+          prior months moved into the list below (F2, Zjak 2026-10-26). */}
       <p className="-mt-3 text-center text-xs text-muted-foreground leading-relaxed">
-        {ALLOWANCE_CHANGE_NOTE} Catch-up for the 3 months before you accept is included.
+        {ALLOWANCE_CHANGE_NOTE}
       </p>
 
       {/* Below the decision: price and actions first, the list backs them up
@@ -116,7 +117,7 @@ export function ReviewStep({
         <div className="rounded-2xl border border-border bg-card/40 p-4">
           <p className="font-semibold text-sm">{inclusions.heading}</p>
           <ul className="mt-2 space-y-1.5">
-            {inclusions.items.map((item) => (
+            {[...inclusions.items, REVIEW_PRIOR_MONTHS_INCLUDED].map((item) => (
               <li key={item} className="flex items-start gap-2 text-sm">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 {item}

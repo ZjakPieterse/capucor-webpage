@@ -27,6 +27,9 @@ interface ProposalSummaryProps {
   /** Lists accounting and bookkeeping as their own lines instead of one
    *  "Monthly accounting" line (the review step, Zjak 2026-10-25). */
   splitCore?: boolean;
+  /** 'base' sets the lines at 16 px to match the paper proposal body (design
+   *  review G2, Zjak 2026-10-26); the calculator and modal keep 'sm'. */
+  textSize?: 'sm' | 'base';
   className?: string;
 }
 
@@ -45,6 +48,7 @@ export function ProposalSummary({
   monthlyZAR,
   totalLabel = 'Total monthly charge',
   splitCore = false,
+  textSize = 'sm',
   className,
 }: ProposalSummaryProps) {
   const tier = tiers.find((t) => t.slug === tierSlug) ?? null;
@@ -64,6 +68,8 @@ export function ProposalSummary({
     ...buildAddonLineItems(addons, tierSlug),
   ];
 
+  const lineText = textSize === 'base' ? 'text-base' : 'text-sm';
+
   const monthly =
     monthlyZAR ??
     monthlyTotal(selectedServices, selectedBrackets, tierSlug, brackets) +
@@ -82,17 +88,17 @@ export function ProposalSummary({
 
       <ul className="mb-4 space-y-2">
         {lineItems.map((item) => (
-          <li key={item.slug} className="flex items-start justify-between gap-3 text-sm">
+          <li key={item.slug} className={cn('flex items-start justify-between gap-3', lineText)}>
             <span className="min-w-0">
               {item.name}
               {item.label ? <span className="text-muted-foreground"> · {item.label}</span> : null}
             </span>
-            <span className="text-sm font-medium tabular-nums whitespace-nowrap">{formatZAR(item.price)}</span>
+            <span className="font-medium tabular-nums whitespace-nowrap">{formatZAR(item.price)}</span>
           </li>
         ))}
       </ul>
 
-      <div className="space-y-1.5 border-t border-primary/20 pt-3 text-sm">
+      <div className={cn('space-y-1.5 border-t border-primary/20 pt-3', lineText)}>
         {/* The amount never wraps: a long label ("Estimated monthly charge,
             from") wraps on its own side instead (design review, 2026-10-13). */}
         <div className="flex items-baseline justify-between gap-3">
