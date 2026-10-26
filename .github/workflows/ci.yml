@@ -68,6 +68,30 @@ jobs:
       - name: Build (Cloudflare)
         run: npm run build:cf
 
+      # A clean build is not a working Worker: Next 16.4.1 on OpenNext 1.20.8
+      # built and passed every check, then threw Cloudflare error 1101 on every
+      # route in production (2026-10-26). Run the built Worker in local workerd
+      # and require /api/health to execute. Runtime secrets are not given to
+      # wrangler dev, so 503 {ok:false} is a pass; a crash or 500 is not.
+      - name: Runtime smoke (built Worker in local workerd)
+        timeout-minutes: 5
+        run: |
+          npx wrangler dev --ip 127.0.0.1 --port 8787 > /tmp/wrangler-dev.log 2>&1 &
+          code=""
+          for i in $(seq 1 60); do
+            code=$(curl -s --max-time 10 -o /tmp/health.json -w '%{http_code}' http://127.0.0.1:8787/api/health || true)
+            [ "$code" != "000" ] && [ -n "$code" ] && break
+            sleep 2
+          done
+          echo "GET /api/health -> $code: $(head -c 200 /tmp/health.json 2>/dev/null)"
+          if { [ "$code" = "200" ] || [ "$code" = "503" ]; } && grep -q '"app":"capucor-web"' /tmp/health.json; then
+            echo "✓ The built Worker serves a server route."
+          else
+            echo "::error::The built Worker did not serve /api/health (HTTP $code). It would fail in production."
+            tail -n 60 /tmp/wrangler-dev.log
+            exit 1
+          fi
+
       # Tailwind's optimise step once kept only -webkit-backdrop-filter from
       # hand-written rules, so Chrome showed no blur (2026-10-25). Gate the
       # real built CSS, not just the source.
