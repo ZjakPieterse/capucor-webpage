@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Loader2, Check, Type, PenLine, Upload, Eraser, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SignProposalSchema } from '@/lib/validations';
@@ -16,12 +17,34 @@ import { RENDER_COLORS } from '@/config/renderColors';
 
 type SignMethod = 'typed' | 'drawn' | 'uploaded';
 
-// Local schema for the printed-name field only; the full payload (incl. the
-// generated image) is validated against SignProposalSchema before posting.
-const NameSchema = z.object({
+// Local schema for the typed fields; the full payload (incl. the generated
+// image) is validated against SignProposalSchema before posting, and again on
+// the server. Messages and bounds match SignProposalSchema.
+const DetailsSchema = z.object({
   signatureName: z.string().min(2, 'Please type your full name').max(120, 'Name is too long'),
+  clientLegalName: z
+    .string()
+    .trim()
+    .min(2, 'Please enter the registered name of the business')
+    .max(160, 'That name is too long'),
+  clientRegistrationNumber: z
+    .string()
+    .trim()
+    .max(40, 'That registration number is too long')
+    .refine((v) => v === '' || v.length >= 2, 'Please check the registration number'),
+  clientRegisteredAddress: z
+    .string()
+    .trim()
+    .min(5, 'Please enter the registered address')
+    .max(300, 'That address is too long'),
 });
-type NameValues = z.infer<typeof NameSchema>;
+type DetailsValues = z.infer<typeof DetailsSchema>;
+const DETAIL_FIELDS = [
+  'clientLegalName',
+  'clientRegistrationNumber',
+  'clientRegisteredAddress',
+  'signatureName',
+] as const;
 
 const CANVAS_W = 600;
 const CANVAS_H = 200;
@@ -34,10 +57,15 @@ const METHODS: { value: SignMethod; label: string; icon: typeof Type }[] = [
   { value: 'uploaded', label: 'Upload', icon: Upload },
 ];
 
+// The registered name is NOT pre-filled from the proposal's business name: that
+// is often a trading name, and a click-through would record it as the legal
+// entity (verifier note, 2026-10-26).
 export function ProposalSignForm({ token, defaultName }: { token: string; defaultName: string }) {
   const [method, setMethod] = useState<SignMethod>('typed');
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
+  const [authorityConfirmed, setAuthorityConfirmed] = useState(false);
+  const [authorityError, setAuthorityError] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -59,10 +87,15 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
     trigger,
     getValues,
     formState: { errors },
-  } = useForm<NameValues>({
-    resolver: zodResolver(NameSchema),
+  } = useForm<DetailsValues>({
+    resolver: zodResolver(DetailsSchema),
     mode: 'onTouched',
-    defaultValues: { signatureName: defaultName ?? '' },
+    defaultValues: {
+      signatureName: defaultName ?? '',
+      clientLegalName: '',
+      clientRegistrationNumber: '',
+      clientRegisteredAddress: '',
+    },
   });
   // Mirror the name field into local state so the typed preview stays reactive
   // without RHF's watch() (which the React Compiler can't memoize safely).
@@ -177,13 +210,11 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
     e.preventDefault();
     setFormError(null);
 
-    const nameOk = await trigger('signatureName');
-    if (!nameOk) return;
-    if (!consentGiven) {
-      setConsentError('Please confirm before signing.');
-      return;
-    }
-    setConsentError('');
+    const detailsOk = await trigger([...DETAIL_FIELDS]);
+    // Show every missing tick at once, not one per attempt.
+    setAuthorityError(authorityConfirmed ? '' : 'Please confirm that you may sign for this business.');
+    setConsentError(consentGiven ? '' : 'Please confirm before signing.');
+    if (!detailsOk || !authorityConfirmed || !consentGiven) return;
 
     const name = getValues('signatureName').trim();
 
@@ -202,6 +233,10 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
       method,
       imageDataUrl,
       consentGiven: true as const,
+      clientLegalName: getValues('clientLegalName'),
+      clientRegistrationNumber: getValues('clientRegistrationNumber'),
+      clientRegisteredAddress: getValues('clientRegisteredAddress'),
+      authorityConfirmed: true as const,
       website: '',
     };
     const parsed = SignProposalSchema.safeParse(payload);
@@ -279,7 +314,77 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
       </p>
 
       <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
+        {/* Who is signing for whom (engagement-letter gap rows 2 and 3). */}
+        <fieldset className="space-y-4">
+          <legend className="mb-3 text-sm font-semibold text-foreground">The business you&apos;re signing for</legend>
+          <div>
+            <Label htmlFor="clientLegalName" className="mb-1.5 block text-sm">
+              Registered business name
+            </Label>
+            <Input
+              id="clientLegalName"
+              type="text"
+              autoComplete="organization"
+              aria-invalid={errors.clientLegalName ? 'true' : undefined}
+              aria-describedby={errors.clientLegalName ? 'clientLegalName-error' : 'clientLegalName-hint'}
+              {...register('clientLegalName')}
+            />
+            {errors.clientLegalName ? (
+              <p id="clientLegalName-error" className="mt-1 text-xs text-destructive">{errors.clientLegalName.message}</p>
+            ) : (
+              <p id="clientLegalName-hint" className="mt-1 text-xs text-muted-foreground">
+                As registered with CIPC, for example Acme Trading (Pty) Ltd. A sole proprietor enters their own full name.
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="clientRegistrationNumber" className="mb-1.5 block text-sm">
+              Registration number <span className="font-normal text-muted-foreground">(if registered)</span>
+            </Label>
+            <Input
+              id="clientRegistrationNumber"
+              type="text"
+              autoComplete="off"
+              placeholder="For example 2021/123456/07"
+              aria-invalid={errors.clientRegistrationNumber ? 'true' : undefined}
+              aria-describedby={
+                errors.clientRegistrationNumber ? 'clientRegistrationNumber-error' : 'clientRegistrationNumber-hint'
+              }
+              {...register('clientRegistrationNumber')}
+            />
+            {errors.clientRegistrationNumber ? (
+              <p id="clientRegistrationNumber-error" className="mt-1 text-xs text-destructive">
+                {errors.clientRegistrationNumber.message}
+              </p>
+            ) : (
+              <p id="clientRegistrationNumber-hint" className="mt-1 text-xs text-muted-foreground">
+                Leave it blank if you trade as a sole proprietor.
+              </p>
+            )}
+          </div>
+          <div>
+            <Label htmlFor="clientRegisteredAddress" className="mb-1.5 block text-sm">
+              Registered address
+            </Label>
+            <Textarea
+              id="clientRegisteredAddress"
+              rows={3}
+              autoComplete="street-address"
+              placeholder="Street, suburb, city, postal code"
+              aria-invalid={errors.clientRegisteredAddress ? 'true' : undefined}
+              aria-describedby={errors.clientRegisteredAddress ? 'clientRegisteredAddress-error' : undefined}
+              {...register('clientRegisteredAddress')}
+            />
+            {errors.clientRegisteredAddress && (
+              <p id="clientRegisteredAddress-error" className="mt-1 text-xs text-destructive">
+                {errors.clientRegisteredAddress.message}
+              </p>
+            )}
+          </div>
+        </fieldset>
+
         {/* Method chooser */}
+        <p className="border-t border-border pt-4 text-sm font-semibold text-foreground">Your signature</p>
         <div className="grid grid-cols-3 gap-2">
           {METHODS.map((m) => {
             const active = method === m.value;
@@ -382,6 +487,31 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
             {uploadError && <p className="mt-1 text-xs text-destructive">{uploadError}</p>}
           </div>
         )}
+
+        {/* Authority to sign (required). */}
+        <div className="space-y-1.5">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="sign-authority"
+              checked={authorityConfirmed}
+              onCheckedChange={(val) => {
+                setAuthorityConfirmed(val === true);
+                if (val) setAuthorityError('');
+              }}
+              className="mt-0.5"
+              aria-required="true"
+              aria-describedby={authorityError ? 'sign-authority-error' : undefined}
+            />
+            <Label htmlFor="sign-authority" className="cursor-pointer text-sm leading-relaxed text-muted-foreground">
+              I am authorised to sign for this business.
+            </Label>
+          </div>
+          {authorityError && (
+            <p id="sign-authority-error" className="pl-7 text-sm text-destructive">
+              {authorityError}
+            </p>
+          )}
+        </div>
 
         {/* Affirmation */}
         <div className="space-y-1.5">

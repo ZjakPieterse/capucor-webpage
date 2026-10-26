@@ -41,3 +41,29 @@ export function firstOfNextMonth(from: Date = new Date()): Date {
     Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1, 0, 0, 0, 0),
   );
 }
+
+// South Africa is UTC+2 all year (no daylight saving), so the SA calendar day
+// of an instant is its UTC day two hours on.
+const SAST_OFFSET_MS = 2 * 60 * 60 * 1000;
+
+/**
+ * The first payment date, with ONE anchor everywhere (engagement-letter gap row
+ * 15): the day the client signs, in South African time. Before signing, pass
+ * "now" (the day they would sign). The fee starts on the 1st of the month after
+ * the signing day; a plan with an effective_from (a plan review) starts then,
+ * unless it is signed on or after that date, when it rolls to the next 1st.
+ * This is commit_proposal_signature's rule (migration 004), so the page, the
+ * signed PDF and the stored effective_from agree. Midnight UTC on the 1st;
+ * format it with timeZone 'UTC'. The email copy is in lib/email/messages.mjs.
+ */
+export function firstPaymentDue(
+  signedAt: Date = new Date(),
+  effectiveFrom?: string | null,
+): Date {
+  const saDay = new Date(signedAt.getTime() + SAST_OFFSET_MS);
+  const saDayIso = saDay.toISOString().slice(0, 10);
+  if (effectiveFrom && saDayIso < effectiveFrom) {
+    return new Date(`${effectiveFrom}T00:00:00.000Z`);
+  }
+  return firstOfNextMonth(saDay);
+}

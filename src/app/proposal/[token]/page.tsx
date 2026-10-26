@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { cumulativeInclusions, buildFairUsage, outOfScopeItems } from '@/lib/schedule';
 import { tierDisplayName } from '@/config/tiers';
 import { siteConfig } from '@/config/site';
-import { firstOfNextMonth } from '@/lib/utils';
+import { firstPaymentDue } from '@/lib/utils';
 import { addonSlugsFromStored, bracketMapFromStored } from '@/lib/portal/proposalJson';
 import type { Json } from '@/types/db';
 import {
@@ -63,6 +63,7 @@ interface ProposalRow {
   signature_name: string | null;
   signature_method: string | null;
   signature_image: string | null;
+  effective_from: string | null;
 }
 
 const SIGNED_STATUSES = new Set(['signed', 'paid', 'active']);
@@ -82,7 +83,7 @@ async function loadProposal(token: string): Promise<LoadResult> {
   const { data, error } = await admin
     .from('proposals')
     .select(
-      'id, ref_number, version, first_name, last_name, business_name, email, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, status, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image',
+      'id, ref_number, version, first_name, last_name, business_name, email, services, brackets, tier_slug, addons, monthly_total_zar, vat_zar, total_charge_zar, status, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image, effective_from',
     )
     .eq('token', token)
     .maybeSingle();
@@ -205,13 +206,21 @@ export default async function ProposalPage({
   const inlineIds = INLINE_TERM_IDS as readonly string[];
   const inlineTerms = proposalTermsFor(row.tier_slug).filter((b) => inlineIds.includes(b.id));
 
-  // Billing starts on the 1st of the month after signing (see firstOfNextMonth),
-  // so date it from today, the day the client would sign. The proposal email
-  // and the signed PDF use the same rule (F23, October 2026 review).
-  const firstDebitDate = firstOfNextMonth().toLocaleDateString('en-ZA', {
+  // One anchor for the first payment (gap row 15): the signing day in SA time.
+  // Unsigned, that is today, so the date is stated for signing this month, as
+  // the proposal email does; the signed PDF dates it from the real signature
+  // with the same helper. A plan review's effective_from wins while ahead.
+  const firstPayment = firstPaymentDue(undefined, row.effective_from);
+  const firstDebitDate = firstPayment.toLocaleDateString('en-ZA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: 'UTC',
+  });
+  const fromSigningMonth = firstPayment.toISOString().slice(0, 10) !== row.effective_from;
+  // The day before the 1st is in the signing month.
+  const signingMonth = new Date(firstPayment.getTime() - 24 * 60 * 60 * 1000).toLocaleDateString('en-ZA', {
+    month: 'long',
     timeZone: 'UTC',
   });
 
@@ -261,6 +270,7 @@ export default async function ProposalPage({
             <p className="mt-3 text-xs text-muted-foreground">
               First payment due:{' '}
               <span className="font-medium text-foreground">{firstDebitDate}</span>
+              {fromSigningMonth && ` if you sign in ${signingMonth} (the 1st of the month after you sign)`}
             </p>
           </div>
 
@@ -303,8 +313,7 @@ export default async function ProposalPage({
           {/* Sign & accept (signed proposals are handled by the minimal view above). */}
           <ProposalSignForm
             token={token}
-            defaultName={`${row.first_name} ${row.last_name}`.trim()}
-          />
+            defaultName={`${row.first_name} ${row.last_name}`.trim()}          />
         </div>
       </div>
 

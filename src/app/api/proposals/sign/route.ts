@@ -35,6 +35,7 @@ import { renderSignConfirmEmail } from '@/lib/portal/signEmails';
 import { maskEmail } from '@/lib/maskEmail';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { TERMS_VERSION } from '@/config/proposalTerms';
 
 // Minutes a "Confirm & sign" link stays valid.
 const CONFIRM_TTL_MINUTES = 30;
@@ -170,6 +171,14 @@ export async function POST(req: NextRequest) {
         pending_signature_method: input.method,
         pending_signature_image: input.imageDataUrl,
         pending_signature_ip: ip === 'unknown' ? null : ip,
+        // Who signs for whom, on which terms (migration 005). Written with the
+        // pending signature; a re-submit overwrites them, and once the client
+        // confirms the status guard above freezes them as the record.
+        client_legal_name: input.clientLegalName,
+        client_registration_number: input.clientRegistrationNumber ?? null,
+        client_registered_address: input.clientRegisteredAddress,
+        signer_authority_confirmed: true,
+        terms_version: TERMS_VERSION,
         ...(reuseConfirmation
           ? {}
           : {

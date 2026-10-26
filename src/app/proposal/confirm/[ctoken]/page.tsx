@@ -17,6 +17,8 @@ interface ConfirmRow {
   status: string;
   sign_confirm_expires_at: string | null;
   pending_signature_name: string | null;
+  client_legal_name: string | null;
+  signer_authority_confirmed: boolean;
 }
 
 type LoadResult =
@@ -30,7 +32,7 @@ async function loadPending(ctoken: string): Promise<LoadResult> {
   const { data, error } = await admin
     .from('proposals')
     .select(
-      'business_name, ref_number, total_charge_zar, status, sign_confirm_expires_at, pending_signature_name',
+      'business_name, ref_number, total_charge_zar, status, sign_confirm_expires_at, pending_signature_name, client_legal_name, signer_authority_confirmed',
     )
     .eq('sign_confirm_token', ctoken)
     .maybeSingle();
@@ -51,6 +53,9 @@ async function loadPending(ctoken: string): Promise<LoadResult> {
   ) {
     return { ok: false, reason: 'expired' };
   }
+  // A pending signature from before the legal details were captured (005):
+  // the confirm route refuses it, so ask for a fresh signature here too.
+  if (!row.signer_authority_confirmed) return { ok: false, reason: 'expired' };
   return { ok: true, row };
 }
 
@@ -87,6 +92,12 @@ export default async function ConfirmSignPage({
             <dt className="text-muted-foreground">Business</dt>
             <dd className="font-medium">{row.business_name}</dd>
           </div>
+          {row.client_legal_name && (
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-muted-foreground">Signing for</dt>
+              <dd className="text-right font-medium">{row.client_legal_name}</dd>
+            </div>
+          )}
           {row.pending_signature_name && (
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Signed by</dt>

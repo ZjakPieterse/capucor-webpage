@@ -51,3 +51,4 @@ export function buildSignedClientMessage(
 export function buildSignedOwnerMessage(p: SignedProposalSource, ownerEmail: string): BuiltEmail;
 export function renderAmendEmail(data: object): string;
 export function renderResendEmail(data: object): string;
+export function firstOfNextMonthSast(iso: string): Date;

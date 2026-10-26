@@ -28,6 +28,7 @@ vi.mock('@/lib/email/sendEmail', () => ({
 
 import { checkRateLimit } from '@/lib/rate-limit';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { TERMS_VERSION } from '@/config/proposalTerms';
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
 import { POST } from '@/app/api/proposals/sign/route';
 
@@ -99,6 +100,10 @@ const validBody = {
   method: 'typed' as const,
   imageDataUrl: PNG,
   consentGiven: true as const,
+  clientLegalName: 'Pat Trading (Pty) Ltd',
+  clientRegistrationNumber: '2021/123456/07',
+  clientRegisteredAddress: '1 Main Road, Centurion, 0157',
+  authorityConfirmed: true as const,
 };
 
 beforeEach(() => {
@@ -221,6 +226,44 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     );
     expect(res.status).toBe(422);
     expect((await res.json()).field).toBe('signatureName');
+  });
+
+  it('stores who signs for whom and the terms version with the pending signature (gap rows 2, 3, 30)', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        clientLegalName: '  Pat Trading (Pty) Ltd  ',
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(updatePayloads[0]).toMatchObject({
+      client_legal_name: 'Pat Trading (Pty) Ltd',
+      client_registration_number: '2021/123456/07',
+      client_registered_address: '1 Main Road, Centurion, 0157',
+      signer_authority_confirmed: true,
+      terms_version: TERMS_VERSION,
+    });
+  });
+
+  it('stores no registration number for a sole proprietor who leaves it blank', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, clientRegistrationNumber: '   ' }),
+    );
+    expect(res.status).toBe(200);
+    expect(updatePayloads[0]!.client_registration_number).toBeNull();
+  });
+
+  it.each([
+    ['authorityConfirmed', { authorityConfirmed: false }],
+    ['authorityConfirmed', { authorityConfirmed: undefined }],
+    ['clientLegalName', { clientLegalName: ' ' }],
+    ['clientRegisteredAddress', { clientRegisteredAddress: undefined }],
+    ['clientRegistrationNumber', { clientRegistrationNumber: 'x' }],
+  ])('refuses a signature without valid %s (422, no update)', async (field, over) => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', { ...validBody, ...over }));
+    expect(res.status).toBe(422);
+    expect((await res.json()).field).toBe(field);
+    expect(updatePayloads).toHaveLength(0);
   });
 
   it('8. zod — consentGiven:false returns 422 with field', async () => {

@@ -49,6 +49,7 @@ function pendingRow(overrides: Record<string, unknown> = {}) {
     pending_signature_method: 'typed',
     pending_signature_image: PNG,
     pending_signature_ip: '203.0.113.1',
+    signer_authority_confirmed: true,
     ...overrides,
   };
 }
@@ -194,6 +195,21 @@ describe('POST /api/proposals/sign/confirm', () => {
       }),
     );
     expect(res.status).toBe(410);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('5b. a pending signature without the authority tick (pre-005) is refused before the commit RPC', async () => {
+    lookupResult = {
+      data: pendingRow({ signer_authority_confirmed: false }),
+      error: null,
+    };
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals/sign/confirm', {
+        ctoken: CTOKEN,
+      }),
+    );
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toContain('re-sign');
     expect(rpc).not.toHaveBeenCalled();
   });
 

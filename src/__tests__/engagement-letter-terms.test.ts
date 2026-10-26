@@ -35,8 +35,13 @@ const allTermsText = [
   ...FEES_NOTES,
 ].join('\n');
 
-function signed() {
+function signed(over: Partial<Parameters<typeof renderProposalDocumentHtml>[0]> = {}) {
   return renderProposalDocumentHtml({
+    clientLegalName: 'Pat Trading (Pty) Ltd',
+    clientRegistrationNumber: '2021/123456/07',
+    clientRegisteredAddress: '1 Main Road, Centurion, 0157',
+    signerAuthorityConfirmed: true,
+    termsVersion: TERMS_VERSION,
     businessName: 'Pat Trading Co',
     firstName: 'Pat',
     lastName: 'Patterson',
@@ -57,6 +62,7 @@ function signed() {
     outOfScope: [],
     lineItems: [{ name: 'Accounting', label: null, price: 1325 }],
     totalChargeZAR: 1325,
+    ...over,
   });
 }
 
@@ -135,6 +141,39 @@ describe('engagement letter terms (2026-10-26)', () => {
     expect(html).toContain(`Engagement terms (version ${TERMS_VERSION})`);
     expect(html).toContain('the proposal wins');
     expect(html).toContain(CAPUCOR_LEGAL.address);
+  });
+
+  it('shows the client legal details, authority, start date and stored terms version (rows 2, 3, 15, 30)', () => {
+    const html = signed();
+    expect(html).toContain('Who this agreement is between');
+    expect(html).toContain('Pat Trading (Pty) Ltd');
+    expect(html).toContain('2021/123456/07');
+    expect(html).toContain('1 Main Road, Centurion, 0157');
+    expect(html).toContain('authorised to sign for Pat Trading (Pty) Ltd');
+    expect(html).toContain('Start date</td><td style="padding:3px 0;">3 November 2026 (the day you signed)');
+  });
+
+  it('prints the version the client signed, not the live one', () => {
+    const html = signed({ termsVersion: '2025.9' });
+    expect(html).toContain('Engagement terms (version 2025.9)');
+    expect(html).toContain('Terms version 2025.9');
+    expect(html).toContain(`You signed terms version 2025.9. The text below is version ${TERMS_VERSION}`);
+    expect(html).not.toContain(`Terms version ${TERMS_VERSION}`);
+  });
+
+  it('leaves out what an older signature never captured', () => {
+    const html = signed({
+      clientLegalName: null,
+      clientRegistrationNumber: null,
+      clientRegisteredAddress: null,
+      signerAuthorityConfirmed: false,
+      termsVersion: null,
+    });
+    expect(html).toContain('<p style="margin:24px 0 8px;font-size:13px;font-weight:700;color:#6b7280;">Engagement terms</p>');
+    expect(html).not.toContain('Terms version');
+    expect(html).not.toContain('Registration number</td>');
+    expect(html).not.toContain('Authority</td>');
+    expect(html).toContain('Pat Trading Co'); // falls back to the business name
   });
 
   it('carries the ECTA s44 cooling-off for individuals into the signed PDF', () => {
