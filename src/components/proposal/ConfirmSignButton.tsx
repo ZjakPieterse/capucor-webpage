@@ -48,6 +48,7 @@ export function ConfirmSignButton({ ctoken, children }: { ctoken: string; childr
       <SignedMoment
         title="That’s signed"
         deliveryPending={completion.deliveryStatus === 'pending'}
+        animateIn
       />
     );
   }

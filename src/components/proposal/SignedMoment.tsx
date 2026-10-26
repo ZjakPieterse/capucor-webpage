@@ -29,22 +29,28 @@ export function SignedMoment({
   title,
   detail,
   deliveryPending = false,
+  animateIn = false,
 }: {
   title: string;
   /** "Signed by … on …", when known. */
   detail?: string | null;
   /** The follow-up email could not be confirmed yet. */
   deliveryPending?: boolean;
+  /** Enter with motion: only right after confirming, where the moment is
+   *  drawn in the browser. The signed link is server-rendered, so it shows
+   *  final at first paint (design-system rule; the old reduced-motion branch
+   *  left it at opacity 0, found 2026-10-26). */
+  animateIn?: boolean;
 }) {
   const reduce = useReducedMotion();
-  // Always animate to visible: the server renders the `initial` style, so
-  // dropping the props for reduced motion left the card at opacity 0 for
-  // those visitors (found 2026-10-26). Reduced motion just jumps there.
-  const enter = (delay: number) => ({
-    initial: { opacity: 0, y: 24 },
-    animate: { opacity: 1, y: 0 },
-    transition: reduce ? { duration: 0 } : { duration: 0.7, ease: EASE, delay },
-  });
+  const enter = (delay: number) =>
+    animateIn && !reduce
+      ? {
+          initial: { opacity: 0, y: 24 },
+          animate: { opacity: 1, y: 0 },
+          transition: { duration: 0.7, ease: EASE, delay },
+        }
+      : {};
   const card = HANDING_OVER_CARD;
 
   return (

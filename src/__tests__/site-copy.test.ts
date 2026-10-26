@@ -378,4 +378,10 @@ describe('after signing (full-site audit A02/A03, 2026-10-13)', () => {
     expect(button).toMatch(/import \{ Loader2 \} from 'lucide-react'/);
     expect(src('app/proposal/confirm/[ctoken]/page.tsx')).not.toMatch(/lucide-react/);
   });
+
+  // The signed link is server-rendered: final at first paint, no entrance.
+  it('animates the signed moment only right after confirming', () => {
+    expect(src('components/proposal/ConfirmSignButton.tsx')).toMatch(/<SignedMoment[\s\S]*?animateIn/);
+    expect(src('app/proposal/[token]/page.tsx')).not.toMatch(/animateIn/);
+  });
 });
