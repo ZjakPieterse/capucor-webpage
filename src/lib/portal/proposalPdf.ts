@@ -11,7 +11,7 @@ import type { Bracket, Service } from '@/types';
 /**
  * PR10 — archive a SIGNED proposal as a PDF in the firm's Shared Drive.
  *
- * The signed proposal is the legal debit-order mandate, so we keep a durable PDF
+ * The signed proposal is the engagement letter (and debit-order authorisation), so we keep a durable PDF
  * of exactly what was signed. The Worker renders the document to self-contained
  * HTML (renderProposalDocumentHtml) and POSTs it to a Google Apps Script web app
  * (deployed by Zjak), which converts HTML→PDF and files it into the central
@@ -191,7 +191,7 @@ export async function archiveSignedProposal(
     });
     if (!priced.ok) return { ok: false, error: priced.error };
 
-    // The PDF is the debit-order mandate: it states the total the client SIGNED
+    // The PDF is the engagement letter: it states the total the client SIGNED
     // (stored), never a re-priced one. A disagreement is logged, not hidden.
     const signedTotalZAR = Number(row.total_charge_zar);
     if (Math.abs(priced.data.totalChargeZAR - signedTotalZAR) > 0.005) {

@@ -15,7 +15,9 @@ billing decision** changed that:
 
 - **Subscriptions** are collected via **Paysoft Flow** (Xero-integrated bulk debit orders). It has
   **no developer API**, so billing is set up **by hand** in Xero/Paysoft Flow — the signed proposal
-  is the debit-order mandate and **no banking details are captured on the site**. Signing stops at
+  carries the debit-order authorisation and **no banking details are captured on the site**.
+  ⚠️ **Paysoft Flow is not active yet (owner, 2026-10-26):** clients pay by EFT against the Xero
+  invoice, due on the 1st; the terms' debit-order authorisation applies once one is set up. Signing stops at
   `signed` + the signed PDF in Drive (web-standalone phase 3, 2026-10-07); the owner email, with
   the Drive link, is the cue to set up billing. There is no payment webhook and no portal record.
 - **Shop one-offs** will use **PayFast** (signed redirect + an ITN webhook validated by MD5

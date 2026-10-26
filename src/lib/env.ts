@@ -54,7 +54,7 @@ export const RUNTIME_VARS: RuntimeVar[] = [
   {
     name: 'APPS_SCRIPT_PDF_URL',
     impact:
-      'Signed-proposal PDF archival to the Drive "Engagements" folder cannot run (PR10). Signing still works, so the client sees nothing wrong — but the executed engagement document, which is the debit-order mandate, is never filed, and because the "signed" emails wait on the PDF stage, neither is sent; the retry runner fails the stage after six attempts.',
+      'Signed-proposal PDF archival to the Drive "Engagements" folder cannot run (PR10). Signing still works, so the client sees nothing wrong — but the executed engagement letter is never filed, and because the "signed" emails wait on the PDF stage, neither is sent; the retry runner fails the stage after six attempts.',
     required: true,
   },
   {

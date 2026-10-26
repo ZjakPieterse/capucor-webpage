@@ -201,7 +201,7 @@ export default async function ProposalPage({
   const inclusions = cumulativeInclusions(row.services, row.tier_slug, row.addons ?? []);
   const fairUsage = buildFairUsage(row.services, selectedBrackets, brackets, row.tier_slug);
   const outOfScope = outOfScopeItems(row.services, services);
-  const debitBlock = PROPOSAL_TERMS.find((b) => b.id === 'debit-order');
+  const paymentBlock = PROPOSAL_TERMS.find((b) => b.id === 'payment');
   const inlineIds = INLINE_TERM_IDS as readonly string[];
   const inlineTerms = proposalTermsFor(row.tier_slug).filter((b) => inlineIds.includes(b.id));
 
@@ -259,7 +259,7 @@ export default async function ProposalPage({
             />
             <FeesNotes tierSlug={row.tier_slug} />
             <p className="mt-3 text-xs text-muted-foreground">
-              First debit order:{' '}
+              First payment due:{' '}
               <span className="font-medium text-foreground">{firstDebitDate}</span>
             </p>
           </div>
@@ -268,12 +268,12 @@ export default async function ProposalPage({
 
           <ResponsibilitiesSection {...responsibilitiesFor(row.tier_slug)} />
 
-          {/* Debit-order authorisation. Signing authorises collection; bank
+          {/* Fees and payment, incl. the debit-order authorisation. Bank
               details are arranged directly at onboarding, never captured on the site. */}
-          {debitBlock && (
+          {paymentBlock && (
             <div className="rounded-xl border border-border bg-card/40 p-5">
-              <h2 className="text-base font-semibold">{debitBlock.heading}</h2>
-              {debitBlock.paragraphs.map((p, i) => (
+              <h2 className="text-base font-semibold">{paymentBlock.heading}</h2>
+              {paymentBlock.paragraphs.map((p, i) => (
                 <p key={i} className="mt-1.5 text-base leading-relaxed text-foreground">
                   {p}
                 </p>
@@ -294,7 +294,7 @@ export default async function ProposalPage({
                 className="text-primary underline underline-offset-2"
                 target="_blank"
               >
-                full terms of use
+                full engagement terms
               </Link>
               . Signing accepts them in full.
             </p>

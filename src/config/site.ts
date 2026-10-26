@@ -23,13 +23,14 @@ export const siteConfig = {
   // Email senders. The domain (capucor.com) must be verified in Resend before
   // any of these will deliver. Resend only needs the DOMAIN verified, not a
   // real mailbox — so noreply@capucor.com works without an inbox existing.
-  // Client-facing emails carry a reply-to of the monitored info@ address.
+  // Client-facing emails carry a reply-to of the monitored team@ address
+  // (the one client-facing address everywhere, Zjak 2026-10-26).
   email: {
     sender: 'Capucor <noreply@capucor.com>',
     senderWebsite: 'Capucor Website <noreply@capucor.com>',
     senderPrivacy: 'Capucor Privacy <noreply@capucor.com>',
-    replyTo: 'info@capucor.com',
-    contact: 'info@capucor.com',
+    replyTo: 'team@capucor.com',
+    contact: 'team@capucor.com',
   },
   links: {
     facebook: 'https://www.facebook.com/capucorbusinesssolutions',

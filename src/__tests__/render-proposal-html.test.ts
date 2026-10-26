@@ -64,7 +64,7 @@ describe('renderProposalDocumentHtml', () => {
     expect(html).toContain('SARS audits'); // an out-of-scope line
     expect(html).toContain('Total monthly charge');
     expect(html).toContain(formatZAR(1325));
-    expect(html).toContain('Debit-order authorisation'); // full PROPOSAL_TERMS inline
+    expect(html).toContain('Fees and payment'); // full PROPOSAL_TERMS inline
     expect(html).toContain('Pat Patterson'); // signature name
     expect(html).toContain('203.0.113.1'); // signature IP
     expect(html).toContain(PNG); // signature image embedded
@@ -90,7 +90,7 @@ describe('renderProposalDocumentHtml', () => {
       month: 'long',
       year: 'numeric',
     });
-    expect(html).toContain('First debit order:');
+    expect(html).toContain('First payment due:');
     expect(html).toContain(expected);
   });
 
