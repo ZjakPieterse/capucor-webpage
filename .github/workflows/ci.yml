@@ -74,11 +74,12 @@ jobs:
       # and require /api/health to execute. Runtime secrets are not given to
       # wrangler dev, so 503 {ok:false} is a pass; a crash or 500 is not.
       - name: Runtime smoke (built Worker in local workerd)
+        timeout-minutes: 5
         run: |
           npx wrangler dev --ip 127.0.0.1 --port 8787 > /tmp/wrangler-dev.log 2>&1 &
           code=""
           for i in $(seq 1 60); do
-            code=$(curl -s -o /tmp/health.json -w '%{http_code}' http://127.0.0.1:8787/api/health || true)
+            code=$(curl -s --max-time 10 -o /tmp/health.json -w '%{http_code}' http://127.0.0.1:8787/api/health || true)
             [ "$code" != "000" ] && [ -n "$code" ] && break
             sleep 2
           done

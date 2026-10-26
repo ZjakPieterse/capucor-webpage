@@ -17,9 +17,9 @@
     "were mostly false alarms. A cron that stops silently is the accepted residual."
   ],
   "version": 2,
-  "lastReviewed": "2026-10-07",
+  "lastReviewed": "2026-10-26",
   "coupledDependencies": {
-    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.8 requires Next >=16.3.8 AND wrangler ^4.125.0, and moving one side alone can make a clean install select an adapter whose peer range the app does not satisfy. React, supabase-js and resend are pinned for the same reason: a range lets a clean install pick a runtime nobody has built against. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped. ⚠️ THE PEER RANGES ARE NOW TIGHTER IN BOTH DIRECTIONS THAN THEY WERE AT 1.20.2, so the triple is less separable than it used to be: 1.20.2 accepted wrangler ^4.86.0, while every release from 1.20.3 onward names ^4.125.0. Bumping wrangler for a security fix therefore drags OpenNext, and OpenNext drags Next. That is the whole reason AE-04 moved four packages to close alerts against two.",
+    "why": "Next, OpenNext and Wrangler are a runtime TRIPLE, not three independent packages: OpenNext 1.20.13 requires Next >=16.4.1 AND wrangler ^4.148.0, and moving one side alone can make a clean install select an adapter whose peer range the app does not satisfy. React, supabase-js and resend are pinned for the same reason: a range lets a clean install pick a runtime nobody has built against. All are pinned EXACT (no caret) on purpose — PH-01 pinned them after an unverified runtime pair shipped. ⚠️ THE PEER RANGES ARE NOW TIGHTER IN BOTH DIRECTIONS THAN THEY WERE AT 1.20.2, so the triple is less separable than it used to be: 1.20.2 accepted wrangler ^4.86.0, releases 1.20.3–1.20.9 named ^4.125.0 and 1.20.10 onward name ^4.148.0. ⛔ An open-ended Next range is NOT proof of support: Next 16.4.1 on OpenNext 1.20.8 (>=16.3.8) built cleanly and crashed every route in production on 2026-10-26; Next 16.4 support first shipped in 1.20.12. Bumping wrangler for a security fix therefore drags OpenNext, and OpenNext drags Next. That is the whole reason AE-04 moved four packages to close alerts against two.",
     "exact": {
       "next": "16.4.1",
       "eslint-config-next": "16.4.1",
