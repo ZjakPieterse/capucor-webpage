@@ -154,7 +154,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
       'If a payment is still unpaid 30 days after its due date, we will tell you in writing, and we may pause work 7 days after that notice until your account is up to date. We charge no interest.',
       "We may update our prices once a year, from 1 March, with at least 30 days' written notice. If you don't accept the new price, you can end this agreement on the usual 30 days' notice.",
       // SAICA guide comparison (Zjak, 2026-10-26, terms 2026.2).
-      'Statutory fees, such as CIPC filing fees, and any penalties or interest charged by SARS or CIPC are yours to pay, unless a penalty is caused by our own error.',
+      'Statutory fees, such as CIPC filing fees, and any penalties or interest charged by SARS or CIPC are yours to pay.',
     ],
   },
   {
@@ -188,7 +188,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
       "Where we process personal information for you, such as your employees' payroll details or your customers' details in your books, we do so only on your instructions and for the work in this agreement. We keep it confidential, keep reasonable security measures in place, and tell you as soon as we become aware of a breach.",
       'We may use trusted sub-processors (such as Xero and our hosting and email providers) under the same confidentiality terms. Some of them, such as Xero and Google, store data on servers outside South Africa, under laws or agreements that protect it to a standard similar to POPIA.',
       // SAICA Code: non-compliance with laws and regulations (NOCLAR), 2026.2.
-      'If we find that your business may have broken a law, our professional code (SAICA) requires us to raise it with you first so that you can put it right. In serious cases it may require us to report it to the right authority. Doing so is not a breach of confidentiality.',
+      'If we find that your business may have broken a law, our professional code (SAICA) requires us to act: where appropriate we raise it with you first so that you can put it right, and in serious cases we may have to report it to the right authority. Doing so is not a breach of confidentiality.',
     ],
   },
   {
@@ -208,7 +208,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
       'Our advice is based on the law as it stands when we give it and on the facts you share with us.',
       // SAICA guide comparison, 2026.2: management decisions, FAIS, reliance, subcontractors.
       'We do not make management decisions for you. You decide what to do with our work and advice, and you are responsible for acting on it. We are not a registered financial services provider, so we do not give financial advice under the FAIS Act.',
-      'Our reports and statements are for you and the users named in them. Nobody else may rely on them without our written consent. Drafts and what we say on calls are not final; only the version we send you as final is.',
+      'Our reports and statements are for you and the users named in them. Nobody else may rely on them without our written consent.',
       'We may use subcontractors for parts of the work, under these same terms. We stay responsible for their work.',
     ],
   },
@@ -216,8 +216,8 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     id: 'liability',
     heading: 'Limitation of liability',
     paragraphs: [
-      'Our liability for any claim arising from this engagement is limited to the fees you have paid us for the specific work the claim relates to. This limit does not apply to loss caused by our fraud, dishonesty or gross negligence.',
-      'We are not liable for losses caused by information that was given to us late, incomplete or inaccurate, or for indirect or consequential loss, such as lost profit.',
+      'Our liability for any claim arising from this engagement is limited to the fees you have paid us for the specific work the claim relates to, and we are not liable for indirect or consequential loss, such as lost profit. These limits do not apply to loss caused by our fraud, dishonesty or gross negligence.',
+      'We are not liable for losses caused by information that was given to us late, incomplete or inaccurate.',
     ],
   },
   {
@@ -241,7 +241,7 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     heading: 'Ending the engagement',
     paragraphs: [
       'Either of us can end this agreement with 30 days’ written notice. Your fees for the notice period are payable as usual, and we keep doing the work in your schedule until the agreement ends. We then help with a clean handover and return your records.',
-      'Either of us may also end it at once, in writing, if the other goes into liquidation or business rescue, or does not fix a breach of this agreement within 14 days of written notice. Fees for work already done stay payable.',
+      'Either of us may also end it at once, in writing, if the other goes into liquidation or business rescue, or does not fix a breach of this agreement within 14 days of written notice.',
     ],
   },
   {

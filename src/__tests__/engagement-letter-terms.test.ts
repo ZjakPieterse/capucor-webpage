@@ -82,7 +82,7 @@ describe('engagement letter terms (2026-10-26)', () => {
 
   it('keeps the "specific work" cap, adds the exception, and shows it inline (decision 2, CPA s49)', () => {
     expect(block('liability')).toContain('the fees you have paid us for the specific work the claim relates to');
-    expect(block('liability')).toContain('does not apply to loss caused by our fraud, dishonesty or gross negligence');
+    expect(block('liability')).toContain('do not apply to loss caused by our fraud, dishonesty or gross negligence');
     expect(INLINE_TERM_IDS).toContain('liability');
   });
 
@@ -227,7 +227,7 @@ describe('terms 2026.2: SAICA guide points', () => {
 
   it('puts statutory fees and penalties on the client and excludes consequential loss, cap unchanged', () => {
     expect(block('payment')).toContain('Statutory fees');
-    expect(block('payment')).toContain('unless a penalty is caused by our own error');
+    expect(block('payment')).not.toContain('our own error');
     expect(block('liability')).toContain('indirect or consequential loss');
     expect(block('liability')).toContain('the fees you have paid us for the specific work the claim relates to');
   });
