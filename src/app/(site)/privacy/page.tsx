@@ -5,7 +5,7 @@ import { siteConfig } from '@/config/site';
 import { DATA_REQUEST_SLA_DAYS, LEAD_RETENTION_DAYS } from '@/lib/consent';
 
 const LEAD_RETENTION_MONTHS = Math.round(LEAD_RETENTION_DAYS / 30);
-const CONTACT_EMAIL = 'info@capucor.com';
+const CONTACT_EMAIL = 'team@capucor.com';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',

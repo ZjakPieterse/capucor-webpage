@@ -198,7 +198,7 @@ export function Footer() {
               href="/terms/engagement"
               className="hover:text-foreground transition-colors"
             >
-              Terms of use
+              Engagement terms
             </Link>
           </div>
         </div>

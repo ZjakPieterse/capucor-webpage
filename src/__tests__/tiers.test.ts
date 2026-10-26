@@ -273,11 +273,11 @@ describe('CORE_SERVICES (core services included)', () => {
 
   it('states the year-round support level Zjak set (2026-10-17) on the site and the schedule', () => {
     const support = CORE_SERVICE_LINES.find((i) => i.text === 'Year-round support')!;
-    const term = RESPONSIBILITIES_OURS.find((t) => t.includes('zjak@capucor.com'));
+    const term = RESPONSIBILITIES_OURS.find((t) => t.includes('team@capucor.com'));
     expect(term).toBeDefined();
     for (const copy of [support.tooltip, support.scheduleText!, term!]) {
       expect(copy).not.toContain('—');
-      expect(copy).toContain('zjak@capucor.com');
+      expect(copy).toContain('team@capucor.com');
       expect(copy).toContain('Monday to Friday');
       expect(copy).toContain('08:00 to 17:00');
       expect(copy).toContain('2 business days');

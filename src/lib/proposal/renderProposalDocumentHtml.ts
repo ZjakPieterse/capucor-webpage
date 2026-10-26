@@ -12,6 +12,8 @@
 
 import type { FairUsageLine } from '@/lib/schedule';
 import {
+  CAPUCOR_LEGAL,
+  TERMS_VERSION,
   feesNotesFor,
   proposalTermsFor,
   responsibilitiesFor,
@@ -77,6 +79,10 @@ const BRAND_NAVY = '#00175f';
 const SIG_BG = '#eef3fb';
 const SIG_BORDER = '#c9d6ee';
 
+// The contracting party (decision 10, 2026-10-26): named in the header, the
+// acceptance block and the footer. No personal name.
+const LEGAL_ENTITY = `${CAPUCOR_LEGAL.name} t/a ${CAPUCOR_LEGAL.tradingAs}`;
+
 function list(items: string[]): string {
   if (items.length === 0) return '';
   return `<ul style="margin:0 0 8px;padding-left:18px;">${items
@@ -134,6 +140,13 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
              </div>`
           : ''
       }
+    </div>
+    <div style="margin-top:12px;border:1px solid ${SIG_BORDER};background:${SIG_BG};border-radius:10px;padding:16px;">
+      <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:${BRAND_NAVY};">Accepted for ${escapeHtml(LEGAL_ENTITY)}</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;color:#374151;">
+        <tr><td style="padding:3px 0;color:#6b7280;width:120px;">Date</td><td style="padding:3px 0;">${dateZA(d.signedAt)}</td></tr>
+      </table>
+      <p style="margin:8px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">Accepted when you signed, subject to our identity checks. If those checks are not met, we may decline within 10 business days of your signature and will tell you in writing.</p>
     </div>`;
 
   return `<!doctype html>
@@ -147,7 +160,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       <img src="${CAPUCOR_LOGO_LIGHT_DATA_URL}" alt="Capucor Business Solutions" style="height:38px;width:auto;display:block;" />
       <p style="${LABEL}margin-top:12px;">Proposal &amp; engagement</p>
       <h1 style="margin:2px 0 4px;font-size:22px;color:#111827;">For ${escapeHtml(d.businessName)}</h1>
-      <p style="margin:0;font-size:13px;color:#6b7280;">Prepared for ${escapeHtml(fullName)}, by Capucor Business Solutions</p>
+      <p style="margin:0;font-size:13px;color:#6b7280;">Prepared for ${escapeHtml(fullName)}, by ${escapeHtml(LEGAL_ENTITY)} (registration number ${escapeHtml(CAPUCOR_LEGAL.registrationNumber)})</p>
       <p style="margin:10px 0 0;"><span style="display:inline-block;background:${SIG_BG};border:1px solid ${SIG_BORDER};border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;color:${BRAND_NAVY};">${escapeHtml(d.tierName)} package</span></p>
       <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
         ${d.refNumber ? `Reference ${escapeHtml(d.refNumber)}${d.version > 1 ? ` · Revision ${d.version}` : ''} &nbsp;·&nbsp; ` : ''}
@@ -178,7 +191,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       </tr>
     </table>
     <ul style="margin:8px 0 0;padding-left:18px;">${feesNotesFor(d.tierSlug ?? '').map((n) => `<li style="${LI}color:#6b7280;">${escapeHtml(n)}</li>`).join('')}</ul>
-    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First debit order:</strong> ${dateZA(firstOfNextMonth(d.firstDebitFrom ? new Date(d.firstDebitFrom) : undefined).toISOString())}</p>
+    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First payment due:</strong> ${dateZA(firstOfNextMonth(d.firstDebitFrom ? new Date(d.firstDebitFrom) : undefined).toISOString())}</p>
 
     <!-- Fee fairness -->
     <p style="${LABEL}">How your fee stays fair</p>
@@ -192,7 +205,8 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     ${list(responsibilitiesFor(d.tierSlug ?? '').yours)}
 
     <!-- Full terms -->
-    <p style="${LABEL}">Engagement terms</p>
+    <p style="${LABEL}">Engagement terms (version ${escapeHtml(TERMS_VERSION)})</p>
+    <p style="${PARA}">This proposal and the terms below are the engagement letter between us. If anything in the terms conflicts with the proposal, the proposal wins.</p>
     ${termsHtml}
 
     <!-- Signature -->
@@ -200,7 +214,8 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     ${signatureBlock}
 
     <p style="margin:24px 0 0;font-size:11px;color:#6b7280;text-align:center;">
-      Capucor Business Solutions · capucor.com
+      ${escapeHtml(LEGAL_ENTITY)} · Reg. ${escapeHtml(CAPUCOR_LEGAL.registrationNumber)}<br/>
+      ${escapeHtml(CAPUCOR_LEGAL.address)} · ${escapeHtml(CAPUCOR_LEGAL.email)} · capucor.com · Terms version ${escapeHtml(TERMS_VERSION)}
     </p>
   </div>
 </body>

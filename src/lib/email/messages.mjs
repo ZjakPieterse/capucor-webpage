@@ -14,7 +14,7 @@
 export const EMAIL_SENDER = 'Capucor <noreply@capucor.com>';
 export const WEBSITE_SENDER = 'Capucor Website <noreply@capucor.com>';
 export const PRIVACY_SENDER = 'Capucor Privacy <noreply@capucor.com>';
-export const EMAIL_REPLY_TO = 'info@capucor.com';
+export const EMAIL_REPLY_TO = 'team@capucor.com';
 
 const zarWhole = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const zarDecimal = new Intl.NumberFormat('en-US', {
@@ -271,7 +271,7 @@ export function renderCreatedProposalClientEmail(d) {
       <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
         <tr><td style="padding:8px 0;color:#111827;font-size:16px;font-weight:700;">Total monthly charge</td><td style="padding:8px 0;text-align:right;color:#111827;font-size:16px;font-weight:700;">${formatZAR(d.totalChargeZAR)}</td></tr>
       </table>
-      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">Your first debit order is on the 1st of the month after you sign: <strong>${firstDebitDate}</strong> if you sign in ${signingMonth}.</p>
+      <p style="margin:12px 0 0;font-size:13px;line-height:1.6;color:#4b5563;">Your first payment is due on the 1st of the month after you sign: <strong>${firstDebitDate}</strong> if you sign in ${signingMonth}.</p>
       ${button(d.proposalUrl, 'View &amp; sign your proposal')}
       <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-align:center;">Billed monthly in advance · cancel any time with 30 days&rsquo; notice</p>
       <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;text-align:center;">This proposal link is valid for 7 days.</p>

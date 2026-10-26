@@ -175,7 +175,7 @@ describe('the "signed" emails: first attempt and retry send the same request', (
     );
     expect(runnerOwner).toEqual(workerOwner.message);
     expect((runnerOwner as { html: string }).html).toContain('https://drive.google.com/file/d/drive_1/view');
-    expect(toResendPayload(runnerClient).reply_to).toBe('info@capucor.com');
+    expect(toResendPayload(runnerClient).reply_to).toBe('team@capucor.com');
   });
 
   it('refuses the pre-phase-3 signed events permanently (migration 003)', async () => {

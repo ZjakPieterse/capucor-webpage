@@ -80,8 +80,8 @@ describe('a proposal sent with the retired xero-invoicing token', () => {
     expect(html).toContain('Monthly accounting');
     expect(html).toContain('R\u00a04\u00a0075');
     expect(html).not.toMatch(/>Accounting<|>Bookkeeping</);
-    // First debit dated from the signature (F23): signed 2 November → 1 December.
-    expect(html).toMatch(/First debit order:<\/strong> 1 December 2026/);
+    // First payment dated from the signature (F23): signed 2 November → 1 December.
+    expect(html).toMatch(/First payment due:<\/strong> 1 December 2026/);
   });
 });
 
@@ -193,7 +193,7 @@ describe('emails after signing (F10, F25)', () => {
     const m = buildSignedClientMessage(proposal);
     expect(m.to).toBe('Pat@Example.com');
     expect(m.subject).toBe('Your Capucor proposal is signed');
-    expect(m.replyTo).toBe('info@capucor.com');
+    expect(m.replyTo).toBe('team@capucor.com');
     expect(m.html).not.toMatch(/portal|log ?in/i);
   });
 
@@ -227,7 +227,7 @@ describe('proposal email first-debit line (F23)', () => {
       firstDebitFrom: '2026-10-28T08:00:00Z',
     });
     expect(html).toContain(
-      'Your first debit order is on the 1st of the month after you sign: <strong>1 November 2026</strong> if you sign in October.',
+      'Your first payment is due on the 1st of the month after you sign: <strong>1 November 2026</strong> if you sign in October.',
     );
   });
 });

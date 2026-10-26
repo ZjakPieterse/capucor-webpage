@@ -479,9 +479,9 @@ describe('payroll-only package (2026-10-18)', () => {
     const { ours, yours } = responsibilitiesFor(PAYROLL_ONLY_TIER);
     const all = [...ours, ...yours].join(' ');
     expect(all).not.toMatch(/books|reports|Xero|bank statements|CIPC/);
-    expect(yours.join(' ')).toContain('by the agreed cut-off');
+    expect(yours.join(' ')).toContain('by the payroll cut-off: 17:00, two business days before pay day');
     expect(yours.join(' ')).toMatch(/new starter/);
-    expect(ours).toEqual(expect.arrayContaining(RESPONSIBILITIES_OURS.filter((t) => /zjak@capucor.com|service standards|SAICA/.test(t))));
+    expect(ours).toEqual(expect.arrayContaining(RESPONSIBILITIES_OURS.filter((t) => /team@capucor.com|service standards|SAICA/.test(t))));
     expect(responsibilitiesFor('pro')).toEqual({ ours: RESPONSIBILITIES_OURS, yours: RESPONSIBILITIES_YOURS });
   });
 
@@ -492,7 +492,7 @@ describe('payroll-only package (2026-10-18)', () => {
       signatureImage: null, signatureIp: null, inclusions: [], fairUsage: [], outOfScope: [], lineItems: [], totalChargeZAR: 750,
     };
     const html = renderProposalDocumentHtml({ ...base, tierSlug: PAYROLL_ONLY_TIER });
-    expect(html).toContain('by the agreed cut-off');
+    expect(html).toContain('by the payroll cut-off: 17:00, two business days before pay day');
     expect(html).not.toContain('Keep your books reconciled');
     expect(html).toContain('3 months before you accept');
     expect(renderProposalDocumentHtml(base)).toContain('Keep your books reconciled');
@@ -514,7 +514,9 @@ describe('payroll-only fee note and terms (#163 follow-up)', () => {
   it('only payroll-only terms carry the payroll block; the accounting terms are unchanged', () => {
     expect(proposalTermsFor('pro')).toBe(PROPOSAL_TERMS);
     expect(proposalTermsFor(PAYROLL_ONLY_TIER)).toEqual([PAYROLL_ONLY_TERMS, ...PROPOSAL_TERMS]);
-    expect(JSON.stringify(PROPOSAL_TERMS)).not.toContain('SimplePay');
+    // The firm-wide terms name SimplePay among the systems we access (2026-10-26),
+    // but the payroll block itself stays out of them.
+    expect(PROPOSAL_TERMS.map((b) => b.id)).not.toContain(PAYROLL_ONLY_TERMS.id);
     const text = PAYROLL_ONLY_TERMS.paragraphs.join(' ');
     expect(text).toContain('SimplePay');
     expect(text).toContain('EMP201');
