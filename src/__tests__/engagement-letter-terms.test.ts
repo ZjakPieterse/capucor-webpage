@@ -207,3 +207,35 @@ describe('engagement letter terms (2026-10-26)', () => {
     expect(allTermsText).not.toContain('—');
   });
 });
+
+// SAICA guide comparison (Zjak, 2026-10-26): the points added in terms 2026.2.
+describe('terms 2026.2: SAICA guide points', () => {
+  it('is version 2026.2', () => {
+    expect(TERMS_VERSION).toBe('2026.2');
+  });
+
+  it('lets either party end the agreement at once on insolvency or an unremedied breach', () => {
+    expect(block('termination')).toContain('liquidation or business rescue');
+    expect(block('termination')).toContain('within 14 days of written notice');
+  });
+
+  it('states the SAICA Code reporting duty and the FAIS position', () => {
+    expect(block('confidentiality')).toContain('our professional code (SAICA)');
+    expect(block('confidentiality')).toContain('not a breach of confidentiality');
+    expect(block('scope-limits')).toContain('FAIS Act');
+  });
+
+  it('puts statutory fees and penalties on the client and excludes consequential loss, cap unchanged', () => {
+    expect(block('payment')).toContain('Statutory fees');
+    expect(block('payment')).toContain('unless a penalty is caused by our own error');
+    expect(block('liability')).toContain('indirect or consequential loss');
+    expect(block('liability')).toContain('the fees you have paid us for the specific work the claim relates to');
+  });
+
+  it('covers management decisions, third-party reliance and subcontractors', () => {
+    const t = block('scope-limits');
+    expect(t).toContain('We do not make management decisions for you');
+    expect(t).toContain('Nobody else may rely on them without our written consent');
+    expect(t).toContain('We stay responsible for their work');
+  });
+});
