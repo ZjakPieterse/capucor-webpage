@@ -57,15 +57,10 @@ const METHODS: { value: SignMethod; label: string; icon: typeof Type }[] = [
   { value: 'uploaded', label: 'Upload', icon: Upload },
 ];
 
-export function ProposalSignForm({
-  token,
-  defaultName,
-  defaultBusinessName,
-}: {
-  token: string;
-  defaultName: string;
-  defaultBusinessName: string;
-}) {
+// The registered name is NOT pre-filled from the proposal's business name: that
+// is often a trading name, and a click-through would record it as the legal
+// entity (verifier note, 2026-10-26).
+export function ProposalSignForm({ token, defaultName }: { token: string; defaultName: string }) {
   const [method, setMethod] = useState<SignMethod>('typed');
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
@@ -97,7 +92,7 @@ export function ProposalSignForm({
     mode: 'onTouched',
     defaultValues: {
       signatureName: defaultName ?? '',
-      clientLegalName: defaultBusinessName ?? '',
+      clientLegalName: '',
       clientRegistrationNumber: '',
       clientRegisteredAddress: '',
     },

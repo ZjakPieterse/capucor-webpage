@@ -313,9 +313,7 @@ export default async function ProposalPage({
           {/* Sign & accept (signed proposals are handled by the minimal view above). */}
           <ProposalSignForm
             token={token}
-            defaultName={`${row.first_name} ${row.last_name}`.trim()}
-            defaultBusinessName={row.business_name}
-          />
+            defaultName={`${row.first_name} ${row.last_name}`.trim()}          />
         </div>
       </div>
 

@@ -37,11 +37,12 @@ import {
 // `column 'pending_signature_ipp' does not exist on 'proposals'`; concatenated,
 // the same typo is invisible and you get a shapeless type error instead.
 const PENDING_COLUMNS =
-  'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, sign_confirm_expires_at, pending_signature_name, pending_signature_method, pending_signature_image, pending_signature_ip';
+  'id, token, ref_number, first_name, last_name, business_name, email, status, expires_at, sign_confirm_expires_at, pending_signature_name, pending_signature_method, pending_signature_image, pending_signature_ip, signer_authority_confirmed';
 
 interface ConfirmRow extends FinalizeSignRow {
   expires_at: string | null;
   sign_confirm_expires_at: string | null;
+  signer_authority_confirmed: boolean;
 }
 
 // The legally binding commit, and the last step of the money path. It gets its
@@ -114,6 +115,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: 'Could not load this confirmation. Please try again.' },
       { status: 500 },
+    );
+  }
+
+  // Engagement letter (005): never commit a signature without the signer's
+  // authority and legal details. Only a pending signature written before the
+  // sign form captured them lands here; the client signs again.
+  if (!row.signer_authority_confirmed) {
+    return NextResponse.json(
+      {
+        error:
+          'We need a few more details before you sign. Please open your proposal again and re-sign.',
+      },
+      { status: 409 },
     );
   }
 
