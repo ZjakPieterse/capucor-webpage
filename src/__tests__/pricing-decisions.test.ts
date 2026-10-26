@@ -552,10 +552,15 @@ describe('firm-wide shared terms (2026-10-26)', () => {
   });
 
   it('fair usage, records and scope cover payroll as well as accounting', () => {
-    expect(block('fair-usage')).toContain('the number of employees on your payroll');
-    expect(block('ownership')).toContain('financial statements, returns, payslips and reports');
-    expect(block('scope-limits')).toContain('any financial statements we compile and the payroll we run');
-    expect(block('scope-limits')).not.toContain('Our work is a compilation');
+    expect(block('fair-usage')).toContain(
+      'Each service in your schedule has an allowance tied to the bracket you chose for it, such as your annual turnover, your monthly transactions or the number of employees on your payroll. Work within those allowances is covered by your monthly fee.',
+    );
+    expect(block('ownership')).toContain(
+      'What we produce for you, such as financial statements, returns, payslips and reports, is yours to use in your business.',
+    );
+    expect(block('scope-limits')).toContain(
+      'We act as your accountants, not your auditors. Our work, including any financial statements we compile and the payroll we run, is based on the information you give us. It is not designed to find fraud, theft or every error, and it is not an audit or an assurance opinion.',
+    );
     expect(JSON.stringify(PROPOSAL_TERMS)).not.toContain('—');
   });
 });
