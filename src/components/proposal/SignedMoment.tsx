@@ -37,14 +37,14 @@ export function SignedMoment({
   deliveryPending?: boolean;
 }) {
   const reduce = useReducedMotion();
-  const enter = (delay: number) =>
-    reduce
-      ? {}
-      : {
-          initial: { opacity: 0, y: 24 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.7, ease: EASE, delay },
-        };
+  // Always animate to visible: the server renders the `initial` style, so
+  // dropping the props for reduced motion left the card at opacity 0 for
+  // those visitors (found 2026-10-26). Reduced motion just jumps there.
+  const enter = (delay: number) => ({
+    initial: { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    transition: reduce ? { duration: 0 } : { duration: 0.7, ease: EASE, delay },
+  });
   const card = HANDING_OVER_CARD;
 
   return (
