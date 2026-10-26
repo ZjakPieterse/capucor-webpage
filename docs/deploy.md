@@ -36,7 +36,7 @@ These are hard-won and load-bearing — ignoring them has taken production down:
   recover with **`wrangler rollback`**.
 - **The build is pinned to webpack** (`next build --webpack`), not Turbopack — OpenNext-for-
   Cloudflare cannot bundle a Turbopack build into a working worker.
-- **The coupled runtime is pinned exact:** Next.js / `eslint-config-next` **16.3.8**,
+- **The coupled runtime is pinned exact:** Next.js / `eslint-config-next` **16.4.1** (Next alone moved 16.3.8 → 16.4.1 on 2026-10-26 to clear critical RCE advisories GHSA-2464-fhr4-w9xw and GHSA-673q-mjm6-r5xr; OpenNext 1.20.8's `>=16.3.8` peer range already admitted it, so OpenNext and Wrangler did NOT move),
   `@opennextjs/cloudflare` **1.20.8** and Wrangler **4.143.1** (Next and OpenNext moved together 2026-10-08 to clear
   the critical `next/og` RCE advisory and every other Next < 16.3.8 alert — 1.20.8 is the first OpenNext whose peer range
   names `>=16.3.8`; before that 16.3.4 / 1.20.6, moved together 2026-09-04, AE-04; previously 16.3.0 / 1.20.2 / 4.86.0). Wrangler alone then moved 4.129.0 → 4.131.0 on 2026-09-11 (EH-12) to clear the sharp advisory GHSA-rgj7-g3m4-5g8c (libheif, sharp < 0.35.4) reached through `miniflare`; OpenNext 1.20.6’s `^4.125.0` peer range already admitted 4.131.0, so Next and OpenNext did NOT have to move with it. Wrangler alone moved again 4.131.0 → 4.143.1 on 2026-10-08 — the first release whose Miniflare pins `undici` 7.29.1 — to clear six undici advisories; same reasoning. `sharp` stays at 0.35.4 (Miniflare pins it exact through at least Wrangler 4.148.0), so its advisory stays open until Cloudflare moves it. Move them together and verify a full `build:cf`; a caret on
