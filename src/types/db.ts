@@ -2163,7 +2163,10 @@ export type Database = {
           brackets: Json
           business_name: string
           change_summary: Json | null
+          client_legal_name: string | null
           client_org_id: string | null
+          client_registered_address: string | null
+          client_registration_number: string | null
           consent_language: string
           consent_version: string
           created_at: string
@@ -2198,9 +2201,11 @@ export type Database = {
           signature_name: string | null
           signed_at: string | null
           signed_email_sent_at: string | null
+          signer_authority_confirmed: boolean
           status: string
           superseded_by_id: string | null
           supersedes_id: string | null
+          terms_version: string | null
           tier_slug: string
           token: string
           total_charge_zar: number
@@ -2214,7 +2219,10 @@ export type Database = {
           brackets: Json
           business_name: string
           change_summary?: Json | null
+          client_legal_name?: string | null
           client_org_id?: string | null
+          client_registered_address?: string | null
+          client_registration_number?: string | null
           consent_language?: string
           consent_version?: string
           created_at?: string
@@ -2249,9 +2257,11 @@ export type Database = {
           signature_name?: string | null
           signed_at?: string | null
           signed_email_sent_at?: string | null
+          signer_authority_confirmed?: boolean
           status?: string
           superseded_by_id?: string | null
           supersedes_id?: string | null
+          terms_version?: string | null
           tier_slug: string
           token: string
           total_charge_zar: number
@@ -2265,7 +2275,10 @@ export type Database = {
           brackets?: Json
           business_name?: string
           change_summary?: Json | null
+          client_legal_name?: string | null
           client_org_id?: string | null
+          client_registered_address?: string | null
+          client_registration_number?: string | null
           consent_language?: string
           consent_version?: string
           created_at?: string
@@ -2300,9 +2313,11 @@ export type Database = {
           signature_name?: string | null
           signed_at?: string | null
           signed_email_sent_at?: string | null
+          signer_authority_confirmed?: boolean
           status?: string
           superseded_by_id?: string | null
           supersedes_id?: string | null
+          terms_version?: string | null
           tier_slug?: string
           token?: string
           total_charge_zar?: number

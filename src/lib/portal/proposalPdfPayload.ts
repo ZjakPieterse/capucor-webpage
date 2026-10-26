@@ -26,6 +26,13 @@ export interface SignedProposalPdfSource {
   signature_method: string | null;
   signature_image: string | null;
   signature_ip: string | null;
+  /** 004/005 columns. Older callers omit them; the PDF then leaves them out. */
+  effective_from?: string | null;
+  client_legal_name?: string | null;
+  client_registration_number?: string | null;
+  client_registered_address?: string | null;
+  signer_authority_confirmed?: boolean | null;
+  terms_version?: string | null;
 }
 
 export interface SignedProposalPdfPayload {
@@ -76,7 +83,13 @@ export function buildSignedProposalPdfPayload(
     expiresAt: row.expires_at,
     // Dated from the signature, as the signing page showed it that day (F23).
     firstDebitFrom: row.signed_at ?? row.sent_at,
+    effectiveFrom: row.effective_from ?? null,
     signedAt: row.signed_at,
+    clientLegalName: row.client_legal_name ?? null,
+    clientRegistrationNumber: row.client_registration_number ?? null,
+    clientRegisteredAddress: row.client_registered_address ?? null,
+    signerAuthorityConfirmed: row.signer_authority_confirmed === true,
+    termsVersion: row.terms_version ?? null,
     signatureName: row.signature_name,
     signatureMethod: row.signature_method,
     signatureImage: row.signature_image,

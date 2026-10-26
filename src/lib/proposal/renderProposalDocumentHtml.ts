@@ -20,7 +20,7 @@ import {
 } from '@/config/proposalTerms';
 import { ALLOWANCE_CHANGE_NOTE } from '@/config/serviceScope';
 import { CAPUCOR_LOGO_LIGHT_DATA_URL } from '@/lib/proposal/capucorLogo';
-import { formatZAR, firstOfNextMonth } from '@/lib/utils';
+import { formatZAR, firstPaymentDue } from '@/lib/utils';
 
 export interface ProposalDocumentData {
   businessName: string;
@@ -35,7 +35,16 @@ export interface ProposalDocumentData {
   expiresAt: string | null;
   /** Stable proposal timestamp used to calculate the first debit month. */
   firstDebitFrom: string | null;
+  /** A plan review's start date (004); the first payment when still ahead. */
+  effectiveFrom?: string | null;
   signedAt: string | null;
+  /** Who is bound and on which terms, as captured with the signature (005). */
+  clientLegalName?: string | null;
+  clientRegistrationNumber?: string | null;
+  clientRegisteredAddress?: string | null;
+  signerAuthorityConfirmed?: boolean;
+  /** The terms version the client signed; null on signatures before 005. */
+  termsVersion?: string | null;
   signatureName: string | null;
   signatureMethod: string | null;
   signatureImage: string | null; // normalised PNG data URL
@@ -56,12 +65,14 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function dateZA(iso: string | null): string {
+// Dates read in South African time, whatever the renderer's own zone.
+function dateZA(iso: string | null, timeZone = 'Africa/Johannesburg'): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-ZA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone,
   });
 }
 
@@ -92,6 +103,37 @@ function list(items: string[]): string {
 
 export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
   const fullName = `${d.firstName} ${d.lastName}`.trim();
+  const clientName = d.clientLegalName ?? d.businessName;
+
+  // One anchor (gap row 15): the signing day, through the helper the proposal
+  // page uses, so both show the same date for the same day.
+  const firstPayment = firstPaymentDue(
+    d.firstDebitFrom ? new Date(d.firstDebitFrom) : undefined,
+    d.effectiveFrom,
+  ).toISOString();
+
+  // The version the client signed, never the live constant. The text below is
+  // rendered from the live terms, so say so if the two ever differ (a re-render
+  // after a terms change).
+  const termsLabel = d.termsVersion ? `Engagement terms (version ${escapeHtml(d.termsVersion)})` : 'Engagement terms';
+  const termsMismatch =
+    d.termsVersion && d.termsVersion !== TERMS_VERSION
+      ? `<p style="${PARA}">You signed terms version ${escapeHtml(d.termsVersion)}. The text below is version ${escapeHtml(TERMS_VERSION)}; the version you signed is on our record.</p>`
+      : '';
+
+  const legalRows = [
+    `<tr><td style="padding:3px 0;color:#6b7280;width:150px;">Client</td><td style="padding:3px 0;">${escapeHtml(clientName)}</td></tr>`,
+    d.clientRegistrationNumber
+      ? `<tr><td style="padding:3px 0;color:#6b7280;">Registration number</td><td style="padding:3px 0;">${escapeHtml(d.clientRegistrationNumber)}</td></tr>`
+      : '',
+    d.clientRegisteredAddress
+      ? `<tr><td style="padding:3px 0;color:#6b7280;">Registered address</td><td style="padding:3px 0;">${escapeHtml(d.clientRegisteredAddress)}</td></tr>`
+      : '',
+    `<tr><td style="padding:3px 0;color:#6b7280;">Service provider</td><td style="padding:3px 0;">${escapeHtml(LEGAL_ENTITY)}, registration number ${escapeHtml(CAPUCOR_LEGAL.registrationNumber)}, ${escapeHtml(CAPUCOR_LEGAL.address)}</td></tr>`,
+    d.signedAt
+      ? `<tr><td style="padding:3px 0;color:#6b7280;">Start date</td><td style="padding:3px 0;">${dateZA(d.signedAt)} (the day you signed)</td></tr>`
+      : '',
+  ].join('');
 
   const feeRows = d.lineItems
     .map(
@@ -129,7 +171,10 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:${BRAND_NAVY};">Accepted and signed</p>
       <table style="width:100%;border-collapse:collapse;font-size:13px;color:#374151;">
         <tr><td style="padding:3px 0;color:#6b7280;width:120px;">Signed by</td><td style="padding:3px 0;">${escapeHtml(d.signatureName ?? fullName)}</td></tr>
+        <tr><td style="padding:3px 0;color:#6b7280;">For</td><td style="padding:3px 0;">${escapeHtml(clientName)}</td></tr>
+        ${d.signerAuthorityConfirmed ? `<tr><td style="padding:3px 0;color:#6b7280;">Authority</td><td style="padding:3px 0;">Confirmed by the signer: authorised to sign for ${escapeHtml(clientName)}</td></tr>` : ''}
         <tr><td style="padding:3px 0;color:#6b7280;">Date</td><td style="padding:3px 0;">${dateZA(d.signedAt)}</td></tr>
+        ${d.termsVersion ? `<tr><td style="padding:3px 0;color:#6b7280;">Terms version</td><td style="padding:3px 0;">${escapeHtml(d.termsVersion)}</td></tr>` : ''}
         ${d.signatureMethod ? `<tr><td style="padding:3px 0;color:#6b7280;">Method</td><td style="padding:3px 0;">${escapeHtml(d.signatureMethod)}</td></tr>` : ''}
         ${d.signatureIp ? `<tr><td style="padding:3px 0;color:#6b7280;">IP address</td><td style="padding:3px 0;">${escapeHtml(d.signatureIp)}</td></tr>` : ''}
       </table>
@@ -172,6 +217,10 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       d.businessName,
     )}, what it costs, and the terms you accepted by signing.</p>
 
+    <!-- Parties -->
+    <p style="${LABEL}">Who this agreement is between</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;color:#374151;">${legalRows}</table>
+
     <!-- Schedule of services -->
     <p style="${LABEL}">Schedule of services</p>
     <p style="${SUBHEAD}">What&#39;s included</p>
@@ -191,7 +240,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
       </tr>
     </table>
     <ul style="margin:8px 0 0;padding-left:18px;">${feesNotesFor(d.tierSlug ?? '').map((n) => `<li style="${LI}color:#6b7280;">${escapeHtml(n)}</li>`).join('')}</ul>
-    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First payment due:</strong> ${dateZA(firstOfNextMonth(d.firstDebitFrom ? new Date(d.firstDebitFrom) : undefined).toISOString())}</p>
+    <p style="${PARA}margin-top:8px;"><strong style="color:#111827;">First payment due:</strong> ${dateZA(firstPayment, 'UTC')}</p>
 
     <!-- Fee fairness -->
     <p style="${LABEL}">How your fee stays fair</p>
@@ -205,8 +254,9 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
     ${list(responsibilitiesFor(d.tierSlug ?? '').yours)}
 
     <!-- Full terms -->
-    <p style="${LABEL}">Engagement terms (version ${escapeHtml(TERMS_VERSION)})</p>
+    <p style="${LABEL}">${termsLabel}</p>
     <p style="${PARA}">This proposal and the terms below are the engagement letter between us. If anything in the terms conflicts with the proposal, the proposal wins.</p>
+    ${termsMismatch}
     ${termsHtml}
 
     <!-- Signature -->
@@ -215,7 +265,7 @@ export function renderProposalDocumentHtml(d: ProposalDocumentData): string {
 
     <p style="margin:24px 0 0;font-size:11px;color:#6b7280;text-align:center;">
       ${escapeHtml(LEGAL_ENTITY)} · Reg. ${escapeHtml(CAPUCOR_LEGAL.registrationNumber)}<br/>
-      ${escapeHtml(CAPUCOR_LEGAL.address)} · ${escapeHtml(CAPUCOR_LEGAL.email)} · capucor.com · Terms version ${escapeHtml(TERMS_VERSION)}
+      ${escapeHtml(CAPUCOR_LEGAL.address)} · ${escapeHtml(CAPUCOR_LEGAL.email)} · capucor.com${d.termsVersion ? ` · Terms version ${escapeHtml(d.termsVersion)}` : ''}
     </p>
   </div>
 </body>

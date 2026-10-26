@@ -51,6 +51,12 @@ interface ProposalArchiveRow {
   signature_method: string | null;
   signature_image: string | null;
   signature_ip: string | null;
+  effective_from: string | null;
+  client_legal_name: string | null;
+  client_registration_number: string | null;
+  client_registered_address: string | null;
+  signer_authority_confirmed: boolean;
+  terms_version: string | null;
   proposal_pdf_drive_id: string | null;
 }
 
@@ -125,7 +131,7 @@ export async function fetchSignedProposalPdf(
 }
 
 const PDF_COLUMNS =
-  'id, ref_number, version, first_name, last_name, business_name, services, brackets, tier_slug, addons, total_charge_zar, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image, signature_ip, proposal_pdf_drive_id';
+  'id, ref_number, version, first_name, last_name, business_name, services, brackets, tier_slug, addons, total_charge_zar, sent_at, expires_at, signed_at, signature_name, signature_method, signature_image, signature_ip, effective_from, client_legal_name, client_registration_number, client_registered_address, signer_authority_confirmed, terms_version, proposal_pdf_drive_id';
 
 export async function archiveSignedProposal(
   admin: SupabaseClient<Database>,

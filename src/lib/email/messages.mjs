@@ -60,8 +60,11 @@ function formatSast(iso) {
   });
 }
 
-function firstOfNextMonth(iso) {
-  const from = new Date(iso);
+// The 1st of the month after the South African calendar day of `iso` (UTC+2,
+// no daylight saving): firstPaymentDue in src/lib/utils.ts, which the page and
+// the signed PDF use. A test keeps the two in step.
+export function firstOfNextMonthSast(iso) {
+  const from = new Date(new Date(iso).getTime() + 2 * 60 * 60 * 1000);
   return new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + 1, 1));
 }
 
@@ -237,7 +240,7 @@ export function renderCreatedProposalClientEmail(d) {
   // The signing page and the signed PDF date the first debit from the day the
   // client signs, so the email states that rule and gives the date for signing
   // this month, rather than a fixed date that a later signature would move.
-  const firstDebitDate = firstOfNextMonth(d.firstDebitFrom).toLocaleDateString('en-ZA', {
+  const firstDebitDate = firstOfNextMonthSast(d.firstDebitFrom).toLocaleDateString('en-ZA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -245,7 +248,7 @@ export function renderCreatedProposalClientEmail(d) {
   });
   const signingMonth = new Date(d.firstDebitFrom).toLocaleDateString('en-ZA', {
     month: 'long',
-    timeZone: 'UTC',
+    timeZone: 'Africa/Johannesburg',
   });
   const rows = d.lineItems
     .map(
