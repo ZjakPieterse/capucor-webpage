@@ -18,3 +18,9 @@ export function jumpToTop() {
   if (lenis) lenis.scrollTo(0, { immediate: true, force: true });
   else window.scrollTo({ top: 0, behavior: 'auto' });
 }
+
+/** Glides the page to an element, clear of the sticky navbar. Same reason as above. */
+export function glideTo(el: HTMLElement) {
+  if (lenis) lenis.scrollTo(el, { offset: -80, force: true });
+  else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
