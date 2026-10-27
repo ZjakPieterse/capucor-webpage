@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { jumpToTop } from "@/lib/pageScroll";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ export function Navbar() {
 
   const handleHomeClick = (href: string) => {
     if (href === "/" && pathname === "/") {
-      window.scrollTo({ top: 0, behavior: "auto" });
+      jumpToTop();
     }
   };
 

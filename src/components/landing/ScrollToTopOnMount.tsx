@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { jumpToTop } from '@/lib/pageScroll';
 
 export function ScrollToTopOnMount() {
   useEffect(() => {
@@ -25,7 +26,7 @@ export function ScrollToTopOnMount() {
       return;
     }
 
-    window.scrollTo(0, 0);
+    jumpToTop();
   }, []);
 
   return null;

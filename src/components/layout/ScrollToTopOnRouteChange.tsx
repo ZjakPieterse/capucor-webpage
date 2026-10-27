@@ -2,6 +2,7 @@
 
 import { useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { jumpToTop } from '@/lib/pageScroll';
 
 /**
  * Every page change lands at the top of the new page. Next.js's own scroll on
@@ -24,7 +25,7 @@ export function ScrollToTopOnRouteChange() {
       /* ignore — older browsers */
     }
     if (window.location.hash) return;
-    window.scrollTo(0, 0);
+    jumpToTop();
   }, [pathname]);
 
   return null;

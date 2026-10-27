@@ -124,8 +124,8 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
     expect(card('pro')).toEqual([
       'Core services included',
       'Weekly processing',
-      'Supplier bills captured and reconciled',
       'Monthly insights report and business health check',
+      'Supplier bills captured and reconciled',
       'Payroll processing',
     ]);
   });
@@ -134,8 +134,8 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
     expect(card('premium')).toEqual([
       'Core services included',
       'Daily processing',
-      'Supplier bills captured and reconciled',
       'Monthly insights report and business health check',
+      'Supplier bills captured and reconciled',
       'Weekly KPI pulse',
       'Cash-flow forecast and budget',
       'Quarterly tax strategy',
@@ -451,8 +451,8 @@ describe('package card lines', () => {
     expect(TIER_CARD_LEAD.basic).toBeUndefined();
     expect(texts('pro')).toEqual([
       'Weekly processing',
-      'Supplier bills captured and reconciled',
       'Monthly insights report and business health check',
+      'Supplier bills captured and reconciled',
     ]);
     expect(texts('premium')).toEqual([
       'Daily processing',

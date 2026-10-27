@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Lenis from 'lenis';
+import { setPageScroller } from '@/lib/pageScroll';
 
 /**
  * Weighted, eased wheel scrolling for the marketing site (Lenis). Touch keeps
@@ -22,7 +23,11 @@ export function SmoothScroll() {
       autoRaf: true,
       allowNestedScroll: true,
     });
-    return () => lenis.destroy();
+    setPageScroller(lenis);
+    return () => {
+      setPageScroller(null);
+      lenis.destroy();
+    };
   }, []);
 
   return null;

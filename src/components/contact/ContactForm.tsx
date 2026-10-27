@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
 import { siteConfig } from '@/config/site';
+import { jumpToTop } from '@/lib/pageScroll';
 import { CONTACT_QUESTIONS, type NextStep } from '@/config/contactQuestions';
 import { cn } from '@/lib/utils';
 
@@ -112,7 +113,7 @@ export function ContactForm() {
         throw new Error(body?.error ?? 'Could not send your answers. Please try again.');
       }
       setDone(nextStep);
-      window.scrollTo({ top: 0, behavior: 'auto' });
+      jumpToTop();
       // The lead is saved; only now does the visitor reach the calendar.
       if (nextStep === 'meeting') window.location.assign(siteConfig.links.booking);
     } catch (err) {

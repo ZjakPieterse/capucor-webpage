@@ -243,6 +243,18 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* The page glow on its own fixed layer, not background-attachment: fixed:
+     that kept the browser from scrolling on the GPU, so every scroll frame
+     repainted the whole screen and the calculator steps stuttered (Zjak,
+     2026-10-27). A fixed layer is composited once and never repaints. Below
+     every other negative layer (the hero's -z-10 glow). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -100;
+    pointer-events: none;
     background:
       radial-gradient(
         circle at 18% -10%,
@@ -260,7 +272,6 @@
         transparent 38rem
       ),
       var(--background);
-    background-attachment: fixed;
   }
   /* Baseline focus-visible. The `*` rule above sets only the outline COLOUR;
      with no width or style nothing paints, so any element that is not one of
@@ -1796,8 +1807,11 @@
 }
 
 @media (max-width: 640px) {
+  /* Phones keep one glow that scrolls away with the top of the page. */
+  body::before {
+    display: none;
+  }
   body {
-    background-attachment: scroll;
     background:
       radial-gradient(
         circle at 50% -8%,
@@ -1980,6 +1994,9 @@
 
   body {
     background: #fff !important;
+  }
+  body::before {
+    display: none;
   }
 
   .print-doc,

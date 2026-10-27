@@ -16,6 +16,7 @@ import {
 } from '@/lib/calculatorFlow';
 import { parseAddonToken } from '@/lib/pricing';
 import { focusStepHeading } from '@/lib/stepFocus';
+import { jumpToTop } from '@/lib/pageScroll';
 import { reviewInclusions } from '@/lib/schedule';
 import {
   NOTHING_TO_PRICE_COPY,
@@ -136,11 +137,8 @@ function PricingCalculatorInner({ data, testimonials = [], seed }: PricingCalcul
     if (moved.current) focusStepHeading(el);
   }, []);
 
-  const scrollToTop = () => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'auto' });
-    }
-  };
+  // Through Lenis, so a step opened mid-scroll lands at the top (pageScroll.ts).
+  const scrollToTop = jumpToTop;
 
   const isQuestion = (s: CalculatorStep) => !['package', 'addons', 'review', 'contact'].includes(s);
   const advance = () => {
