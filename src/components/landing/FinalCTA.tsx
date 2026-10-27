@@ -10,19 +10,8 @@ export function FinalCTA() {
   return (
     <section className="premium-section relative overflow-hidden py-20 sm:py-24 lg:py-28">
       <SectionDivider />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-      >
-        <div
-          className="absolute left-1/2 top-1/2 h-[440px] w-[640px] max-w-[140%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(closest-side, color-mix(in oklch, var(--primary) 18%, transparent), transparent 70%)",
-          }}
-        />
-      </div>
-
+      {/* No glow behind the section: the page is one solid colour (Zjak,
+          2026-10-27). */}
       <div className="max-w-3xl mx-auto px-5 sm:px-6 text-center">
         <ScrollReveal>
           <TypedHeading
