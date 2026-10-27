@@ -84,13 +84,15 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'We process what is available each week, so your books stay current between month-ends. Bank statements are still requested at every monthly close.',
       group: 'rhythm',
     },
-    SUPPLIER_BILLS,
+    // Cadence, then the report, then supplier bills (Zjak, 2026-10-27);
+    // Premium follows, so the cards grow in the same order.
     {
       text: 'Monthly insights report and business health check',
       services: ['accounting', 'bookkeeping'],
       tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
     },
+    SUPPLIER_BILLS,
     PAYROLL_SERVICES,
   ],
   premium: [
@@ -101,13 +103,13 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       tooltip: 'We process what is available every business day, so your numbers are close to live.',
       group: 'rhythm',
     },
-    SUPPLIER_BILLS,
     {
       text: 'Monthly insights report and business health check',
       services: ['accounting', 'bookkeeping'],
       tooltip: INSIGHTS_TOOLTIP,
       group: 'reports',
     },
+    SUPPLIER_BILLS,
     {
       text: 'Weekly KPI pulse',
       services: ['accounting', 'bookkeeping'],

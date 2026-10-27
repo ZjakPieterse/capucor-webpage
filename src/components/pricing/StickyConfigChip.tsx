@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, monthlyTotal } from '@/lib/pricing';
 import { TIERS_BY_APPLICATION } from '@/config/tiers';
+import { glideTo } from '@/lib/pageScroll';
 import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface StickyConfigChipProps {
@@ -47,7 +48,7 @@ export function StickyConfigChip({
 
   const scrollToCalculator = useCallback(() => {
     const el = document.getElementById(scrollToId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (el) glideTo(el);
   }, [scrollToId]);
 
   const activeSlugs = [...selectedServices];

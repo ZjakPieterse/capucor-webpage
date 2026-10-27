@@ -108,7 +108,12 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   load are marked revealed first, so they never re-type. Don't extend it to body copy or above the fold.
 - **Smooth wheel scrolling is Lenis** (`SmoothScroll` in `app/(site)/layout.tsx`). Touch stays
   native, it is off under reduced motion, and `html.lenis` turns off the CSS `scroll-behavior: smooth`
-  so the two don't fight. Anchor jumps are offset 80px for the sticky navbar.
+  so the two don't fight. Anchor jumps are offset 80px for the sticky navbar. ⚠️ **Never call
+  `window.scrollTo` / `scrollIntoView` for a page scroll**: Lenis ignores a native scroll while it is
+  still easing a wheel scroll, so the page snaps back (calculator steps opened mid-page, 2026-10-27).
+  Use `jumpToTop()` / `glideTo(el)` from `src/lib/pageScroll.ts`.
+- **The page glow is a fixed `body::before` layer** (z-index -100), never `background-attachment:
+  fixed`, which stops the browser scrolling on the GPU and repaints the screen every frame.
 - Word-by-word "scroll-lit" text was tried on section intros and rejected (Zjak, 2026-10-12):
   intros stay plain.
 - **Layout that differs by screen size is CSS, not a `matchMedia` switch in React.** The server

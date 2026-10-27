@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AnimatedPrice } from '@/components/ui/AnimatedPrice';
 import { addonTotal, monthlyTotal } from '@/lib/pricing';
 import { TIERS_BY_APPLICATION } from '@/config/tiers';
+import { glideTo } from '@/lib/pageScroll';
 import type { Bracket, BracketValue, Tier } from '@/types';
 
 interface MobileTotalBarProps {
@@ -45,7 +46,7 @@ export function MobileTotalBar({
 
   const scrollToSummary = useCallback(() => {
     const el = document.getElementById(summaryAnchorId);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (el) glideTo(el);
   }, [summaryAnchorId]);
 
   if (activeSlugs.length === 0 || !tier) return null;
