@@ -124,6 +124,9 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   desktop piece so the chaos is felt, with the three meant to be read landing on top at 13px or
   more, on the desktop timeline (F07, Zjak, 2026-10-13). `hero-phone.test.ts` checks it and that
   desktop is unchanged.
+- The hero visual's pause button (WCAG 2.2.2) is out of sight for mouse and touch, so only
+  Chaos → Order → Decision sits at the top (Zjak, 2026-10-27). It shows on keyboard focus and
+  stays while paused. Pointer users cannot pause the loop; don't delete the button.
 - **Cards that stack as you scroll:** reuse `useCardDeck` (`hooks/useCardDeck.ts`) with `.stack-deck` /
   `.stack-card` in `globals.css`.
   It handles centring, equal heights, phones shorter than a card and the dim. Add `.stack-deck-phone` to
