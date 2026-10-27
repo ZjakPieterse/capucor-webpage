@@ -241,37 +241,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* One solid page colour, no glow (Zjak, 2026-10-27: "Midnight", chosen
+     over a navy and a graphite after a side-by-side preview). Cards, buttons
+     and effects keep their own surfaces. */
   body {
     @apply bg-background text-foreground;
-  }
-  /* The page glow on its own fixed layer, not background-attachment: fixed:
-     that kept the browser from scrolling on the GPU, so every scroll frame
-     repainted the whole screen and the calculator steps stuttered (Zjak,
-     2026-10-27). A fixed layer is composited once and never repaints. Below
-     every other negative layer (the hero's -z-10 glow). */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -100;
-    pointer-events: none;
-    background:
-      radial-gradient(
-        circle at 18% -10%,
-        color-mix(in oklch, var(--primary) 15%, transparent),
-        transparent 34rem
-      ),
-      radial-gradient(
-        circle at 86% 14%,
-        color-mix(in oklch, var(--brand-cyan) 12%, transparent),
-        transparent 30rem
-      ),
-      radial-gradient(
-        circle at 50% 110%,
-        color-mix(in oklch, var(--brand-navy) 10%, transparent),
-        transparent 38rem
-      ),
-      var(--background);
   }
   /* Baseline focus-visible. The `*` rule above sets only the outline COLOUR;
      with no width or style nothing paints, so any element that is not one of
@@ -305,40 +279,6 @@
 .premium-section {
   position: relative;
   isolation: isolate;
-}
-
-.premium-section::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      640px circle at 12% 18%,
-      color-mix(in oklch, var(--primary) 7%, transparent),
-      transparent 64%
-    ),
-    radial-gradient(
-      560px circle at 92% 22%,
-      color-mix(in oklch, var(--brand-cyan) 6%, transparent),
-      transparent 62%
-    );
-  opacity: 0.55;
-}
-
-.premium-section-muted {
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklch, var(--muted) 20%, transparent),
-      color-mix(in oklch, var(--background) 92%, transparent)
-    ),
-    radial-gradient(
-      720px circle at 50% 0%,
-      color-mix(in oklch, var(--primary) 5%, transparent),
-      transparent 62%
-    );
 }
 
 .premium-card,
@@ -753,8 +693,9 @@
 
 /* Both faces: the near-black page colour of the How it works cards (solid,
    so the card stays opaque as it turns) and a clear, neutral border at rest.
-   Red or cyan shows only on hover, tap or once the card has been clicked
-   (focus-within), never at rest (Zjak, 2026-10-12). Plain colours, never red
+   Red or cyan shows only while the pointer is on the card, on a tap, or for
+   keyboard focus (:focus-visible), never at rest and never left on after a
+   click flips it (Zjak, 2026-10-12; 2026-10-27). Plain colours, never red
    mixed into the navy, which read purple. */
 .problem-card[data-state="problem"],
 .problem-card[data-state="solution"] {
@@ -776,7 +717,7 @@
 
   .problem-card[data-state="problem"]:hover,
   .problem-card[data-state="problem"]:active,
-  .problem-card[data-state="problem"]:focus-within {
+  .problem-card[data-state="problem"]:has(:focus-visible) {
     border-color: rgba(255, 101, 104, 0.46);
     box-shadow: 0 12px 40px -8px
       color-mix(in oklch, var(--destructive) 20%, transparent);
@@ -784,7 +725,7 @@
 
   .problem-card[data-state="solution"]:hover,
   .problem-card[data-state="solution"]:active,
-  .problem-card[data-state="solution"]:focus-within {
+  .problem-card[data-state="solution"]:has(:focus-visible) {
     border-color: color-mix(in oklch, var(--primary) 40%, transparent);
     box-shadow: 0 12px 40px -8px
       color-mix(in oklch, var(--primary) 18%, transparent);
@@ -922,11 +863,19 @@
   padding: 40px 20px 24px;
   text-align: center;
   border-radius: var(--radius-xl);
-  /* Opaque on mobile so the centre spine doesn't show through. */
-  background: var(--card);
-  border: 1px solid color-mix(in oklch, var(--primary) 12%, transparent);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  /* The Three disciplines card surface (.premium-card), mixed into the page
+     colour instead of transparency so it stays opaque and the centre spine
+     never shows through (Zjak, 2026-10-27). No blur: nothing shows behind it. */
+  background: linear-gradient(
+    145deg,
+    color-mix(in oklch, var(--card) 86%, var(--background)) 0%,
+    color-mix(in oklch, var(--card) 64%, var(--background)) 100%
+  );
+  border: 1px solid color-mix(in oklch, white 10%, var(--border));
+  box-shadow:
+    0 1px 0 color-mix(in oklch, white 8%, transparent) inset,
+    0 18px 60px -42px color-mix(in oklch, var(--primary) 35%, transparent),
+    0 12px 32px -28px rgba(0, 0, 0, 0.85);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -959,6 +908,58 @@
 .how-step-row[data-reached] .how-card {
   transform: none;
   border-color: color-mix(in oklch, var(--primary) 28%, var(--border));
+}
+
+/* The service cards' sheen and lit top edge (.premium-card::before,
+   .svc-card::after); the edge sits inside the border because the card clips. */
+.how-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    480px circle at 22% 0%,
+    color-mix(in oklch, white 9%, transparent),
+    transparent 42%
+  );
+  opacity: 0.72;
+}
+
+.how-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 6%;
+  height: 1px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--primary) 70%, transparent),
+    transparent
+  );
+  opacity: 0.55;
+  transform: scaleX(0.82);
+  transition: opacity 360ms ease, transform 480ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* The service cards' hover, once the step has been reached. */
+@media all {
+  .how-step-row[data-reached] .how-card:hover {
+    transform: translateY(-6px) scale(1.012);
+    border-color: color-mix(in oklch, var(--primary) 38%, var(--border));
+    box-shadow:
+      0 1px 0 color-mix(in oklch, white 12%, transparent) inset,
+      0 28px 70px -36px color-mix(in oklch, var(--primary) 52%, transparent),
+      0 22px 44px -30px rgba(0, 0, 0, 0.9);
+  }
+  .how-card:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 
 .how-card-title {
@@ -1004,7 +1005,6 @@
   .how-card {
     padding: 24px 28px;
     text-align: left;
-    background: color-mix(in oklch, var(--background) 88%, transparent);
   }
   .how-card-title {
     font-size: var(--text-h3);
@@ -1807,29 +1807,6 @@
 }
 
 @media (max-width: 640px) {
-  /* Phones keep one glow that scrolls away with the top of the page. */
-  body::before {
-    display: none;
-  }
-  body {
-    background:
-      radial-gradient(
-        circle at 50% -8%,
-        color-mix(in oklch, var(--primary) 11%, transparent),
-        transparent 24rem
-      ),
-      var(--background);
-  }
-
-  .premium-section::before {
-    opacity: 0.55;
-    background: radial-gradient(
-      420px circle at 50% 0%,
-      color-mix(in oklch, var(--primary) 7%, transparent),
-      transparent 68%
-    );
-  }
-
   .premium-card,
   .premium-glass {
     backdrop-filter: blur(12px) saturate(130%);
@@ -1995,10 +1972,6 @@
   body {
     background: #fff !important;
   }
-  body::before {
-    display: none;
-  }
-
   .print-doc,
   .print-doc * {
     color: #111 !important;

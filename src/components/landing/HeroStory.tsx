@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, CalendarDays, Check, Info, Landmark, ListTodo, Mail, MessageCircle, Paperclip, Pause, Play } from "lucide-react";
 import { use3DTilt } from "@/hooks/use3DTilt";
 import { signatureFont } from "@/lib/signatureFont";
+import { cn } from "@/lib/utils";
 import { nextEmp201Due, nextVat201Due } from "@/lib/complianceDates";
 
 // ── The hero story ────────────────────────────────────────────────────────────────
@@ -1016,16 +1017,22 @@ export function HeroStory() {
       >
         <div aria-hidden className="pointer-events-none absolute -inset-16 z-0 rounded-full bg-primary/10 blur-3xl" />
 
-        {/* Pause / play for the loop (Codex audit, Zjak 2026-10-25). Quiet, top
-            right; 44 px hit area round a 28 px icon. Nothing moves under
-            reduced motion, so it is not shown there. */}
+        {/* Pause / play for the loop (Codex audit, Zjak 2026-10-25; WCAG 2.2.2:
+            a loop longer than 5 s can be stopped). Out of sight for mouse and
+            touch, so only the three beats sit at the top (Zjak, 2026-10-27);
+            it shows on keyboard focus and stays while paused. 44 px hit area
+            round a 28 px icon. Nothing moves under reduced motion, so it is
+            not rendered there. */}
         {!reduce && (
           <button
             type="button"
             onClick={togglePaused}
             aria-pressed={userPaused}
             aria-label={userPaused ? "Play the example" : "Pause the example"}
-            className="quiet-hover absolute right-3 top-3 z-[60] inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-muted-foreground after:absolute after:-inset-2 after:content-[''] sm:right-4 sm:top-4"
+            className={cn(
+              "quiet-hover absolute right-3 top-3 z-[60] inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-muted-foreground after:absolute after:-inset-2 after:content-[''] sm:right-4 sm:top-4",
+              !userPaused && "pointer-events-none opacity-0 focus-visible:pointer-events-auto focus-visible:opacity-100"
+            )}
           >
             {userPaused ? <Play className="h-3.5 w-3.5" aria-hidden /> : <Pause className="h-3.5 w-3.5" aria-hidden />}
           </button>

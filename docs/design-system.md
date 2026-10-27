@@ -53,8 +53,9 @@ implements them. When the two disagree, the brand guide wins and this file or th
   inventing new spacing. Examples: `ProblemCards`, `ServicePillars`,
   `HowItWorks`.
 - `.premium-section` (in `globals.css`) is a primitive: it sets `position: relative` and
-  paints a faint dual radial-gradient backdrop via `::before`. Use `.premium-section-muted`
-  for the alternate muted-gradient surface.
+  isolates its stacking context. **The page is one solid colour** (`--background`, "Midnight",
+  Zjak 2026-10-27): no page, section or CTA glows. Cards, buttons and effects (hero orbs,
+  cursor glow) keep their own surfaces.
 - **Every `premium-section` opens with `<SectionDivider />`** as its first child — a faint
   1px `.premium-divider` gradient hairline pinned to the section's top edge
   (`components/ui/SectionDivider.tsx`). It gives the section boundary its rhythm; do not
@@ -112,8 +113,8 @@ layout, no Navbar/Footer and no section rhythm. It lives here and stays here.
   `window.scrollTo` / `scrollIntoView` for a page scroll**: Lenis ignores a native scroll while it is
   still easing a wheel scroll, so the page snaps back (calculator steps opened mid-page, 2026-10-27).
   Use `jumpToTop()` / `glideTo(el)` from `src/lib/pageScroll.ts`.
-- **The page glow is a fixed `body::before` layer** (z-index -100), never `background-attachment:
-  fixed`, which stops the browser scrolling on the GPU and repaints the screen every frame.
+- Never `background-attachment: fixed`: it stops the browser scrolling on the GPU and repaints
+  the screen every frame (2026-10-27).
 - Word-by-word "scroll-lit" text was tried on section intros and rejected (Zjak, 2026-10-12):
   intros stay plain.
 - **Layout that differs by screen size is CSS, not a `matchMedia` switch in React.** The server
