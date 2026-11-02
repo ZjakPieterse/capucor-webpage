@@ -20,15 +20,16 @@ name: Cron — signed-proposal fulfilment and email retries
 # and runs the script every ten minutes until 16:00 UTC or for 5 h 30 min,
 # whichever is first. The ten-minute crons are now only triggers: the first one
 # GitHub honours starts a loop, later ones see the loop and do a single pass.
-# Outside business hours every run is a single pass, as before.
+# Outside the loop window every run is a single pass. Since 2026-11-02 the
+# weekday window opens at 00:00 UTC and a capped loop hands over (below).
 #
 # Handover and early start (2026-11-02). Still left ~2-4 h gaps: a loop that hit
 # its 5 h 30 min cap mid-afternoon waited for a trigger GitHub might drop, and on
 # some days no trigger started before 10:30 SAST. Now (1) a loop that ends at its
 # cap before 16:00 UTC dispatches its own successor (a workflow_dispatch from
 # GITHUB_TOKEN does start a run; needs actions: write), and (2) the loop window
-# opens at 00:00 UTC (02:00 SAST) on weekdays: every weekday 19-30 Oct GitHub
-# started at least one hourly run between 00:00 and 06:00 UTC, so the chain is
+# opens at 00:00 UTC (02:00 SAST) on weekdays: on 10 of 11 weekdays 19 Oct-2 Nov
+# GitHub started an hourly run between 00:00 and 06:00 UTC, so the chain is
 # usually up before the working day starts, with no outside trigger or token.
 
 on:
