@@ -194,6 +194,14 @@ subrequests per request.
   `workflow_dispatch` takes an optional `loop_minutes` to force a short loop for testing. The
   workflow has no concurrency group (a queued run would wait behind the loop); overlapping passes
   are safe because every item is claimed by compare-and-swap with a lease.
+- **Handover and early start (2026-11-02).** The loop still left 2–4 h gaps (26–30 Oct: no
+  pass before 11:42 SAST on one day; a 2 h 18 min afternoon gap after a loop's cap on another).
+  Now a loop that stops at its 5 h 30 min cap before 18:00 SAST dispatches its successor
+  (`after_run` = its run id, so the successor does not mistake it for a running loop; needs
+  `actions: write`), and on weekdays the loop window opens at 02:00 SAST (00:00 UTC) instead of
+  08:00: GitHub started at least one hourly run between 02:00 and 08:00 SAST on every weekday
+  19–30 Oct, so the chain is normally up before the working day. Night passes are harmless. If a
+  handover dispatch fails, the triggers restart the loop as before.
 
 - **PDF timeouts.** The Worker waits up to 25 s for the Apps Script archive
   (`PDF_ARCHIVE_TIMEOUT_MS`; successful archives take 6–7 s, and 8 s proved too tight on
