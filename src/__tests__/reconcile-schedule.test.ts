@@ -44,11 +44,19 @@ describe('cron-reconcile-deliveries schedule', () => {
     expect(timeout).toBeLessThanOrEqual(360);
     expect(workflow).toMatch(/date -u -d 'today 16:00'/);
     expect(workflow).toMatch(/gh run list --workflow cron-reconcile-deliveries\.yml --status in_progress/);
-    expect(workflow).toMatch(/^\s+actions: read/m);
+    expect(workflow).toMatch(/^\s+actions: write/m);
     expect(workflow).not.toMatch(/^concurrency:/m);
     expect(workflow).toMatch(/IDLE_WARN_DAYS=45/);
     // A failed pass ends the run so the failure email is not held back by the loop.
     expect(workflow).toMatch(/failed=1\s+break/);
+  });
+
+  it('opens the loop at 00:00 UTC on weekdays and hands over at the cap (2026-11-02)', () => {
+    expect(workflow).toMatch(/\[ "\$\(date -u \+%u\)" -le 5 \] && \[ "\$\(date -u \+%-H\)" -lt 16 \]; then/);
+    expect(workflow).toMatch(/capped=1/);
+    expect(workflow).toMatch(/gh workflow run cron-reconcile-deliveries\.yml --ref "\$GITHUB_REF_NAME" -f after_run="\$GITHUB_RUN_ID"/);
+    expect(workflow).toMatch(/\.databaseId != \$\{AFTER_RUN:-0\}/);
+    expect(workflow).toMatch(/^\s+after_run:/m);
   });
 
   it('the docs no longer say every silent stop goes undetected', () => {

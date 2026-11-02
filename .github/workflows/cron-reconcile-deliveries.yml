@@ -20,7 +20,17 @@ name: Cron — signed-proposal fulfilment and email retries
 # and runs the script every ten minutes until 16:00 UTC or for 5 h 30 min,
 # whichever is first. The ten-minute crons are now only triggers: the first one
 # GitHub honours starts a loop, later ones see the loop and do a single pass.
-# Outside business hours every run is a single pass, as before.
+# Outside the loop window every run is a single pass. Since 2026-11-02 the
+# weekday window opens at 00:00 UTC and a capped loop hands over (below).
+#
+# Handover and early start (2026-11-02). Still left ~2-4 h gaps: a loop that hit
+# its 5 h 30 min cap mid-afternoon waited for a trigger GitHub might drop, and on
+# some days no trigger started before 10:30 SAST. Now (1) a loop that ends at its
+# cap before 16:00 UTC dispatches its own successor (a workflow_dispatch from
+# GITHUB_TOKEN does start a run; needs actions: write), and (2) the loop window
+# opens at 00:00 UTC (02:00 SAST) on weekdays: on 10 of 11 weekdays 19 Oct-2 Nov
+# GitHub started an hourly run between 00:00 and 06:00 UTC, so the chain is
+# usually up before the working day starts, with no outside trigger or token.
 
 on:
   schedule:
@@ -41,6 +51,10 @@ on:
         description: 'Loop for this many minutes regardless of the time (blank = normal behaviour). For testing.'
         required: false
         default: ''
+      after_run:
+        description: 'Set by a loop handing over at its cap: the run id this run takes over from (blank = none).'
+        required: false
+        default: ''
 
 # No concurrency group: a queued run would wait behind a five-hour loop. Runs
 # may overlap briefly; the script claims each item by compare-and-swap with a
@@ -48,7 +62,7 @@ on:
 
 permissions:
   contents: read
-  actions: read # to see whether a loop is already running (gh run list)
+  actions: write # gh run list (is a loop running?) and gh workflow run (handover)
 
 jobs:
   reconcile:
@@ -72,6 +86,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           LOOP_MINUTES: ${{ inputs.loop_minutes || '' }}
+          AFTER_RUN: ${{ inputs.after_run || '' }}
           SCHEDULE: ${{ github.event.schedule || '' }}
         run: |
           set -uo pipefail
@@ -101,22 +116,26 @@ jobs:
               exit 1
             fi
             end=$(( now + 10#$LOOP_MINUTES * 60 ))
-          elif [ "$(date -u +%u)" -le 5 ] && [ "$(date -u +%-H)" -ge 6 ] && [ "$(date -u +%-H)" -lt 16 ]; then
+          elif [ "$(date -u +%u)" -le 5 ] && [ "$(date -u +%-H)" -lt 16 ]; then
             end=$(date -u -d 'today 16:00' +%s)
           fi
+          capped=0
           if [ "$end" -gt $(( now + MAX_LOOP_SECONDS )) ]; then
             end=$(( now + MAX_LOOP_SECONDS ))
+            capped=1
           fi
+          [[ "$AFTER_RUN" =~ ^[0-9]*$ ]] || AFTER_RUN=''
 
           # One loop at a time: if an older run of this workflow is still in
           # progress, it is the loop, so this run does a single pass. If the
           # lookup fails, loop anyway; overlapping passes are safe.
           if [ "$end" -gt "$now" ]; then
             older=$(gh run list --workflow cron-reconcile-deliveries.yml --status in_progress --limit 20 \
-              --json databaseId --jq "[.[] | select(.databaseId < $GITHUB_RUN_ID)] | length" 2>/dev/null || echo 0)
+              --json databaseId --jq "[.[] | select(.databaseId < $GITHUB_RUN_ID and .databaseId != ${AFTER_RUN:-0})] | length" 2>/dev/null || echo 0)
             if [ "${older:-0}" -gt 0 ]; then
               echo "An earlier run is still in progress (the loop); this run does a single pass."
               end=$now
+              capped=0
             else
               echo "Looping every $((PASS_SECONDS / 60)) minutes until $(date -u -d "@$end" +%H:%M) UTC."
             fi
@@ -145,4 +164,16 @@ jobs:
           done
 
           echo "$pass pass(es) done."
+
+          # Handover: a loop stopped by its cap (not by 16:00 UTC, a failure or a
+          # test loop) starts its successor, which ignores this run when it looks
+          # for a running loop. If the dispatch fails, the triggers still restart it.
+          if [ "$failed" -eq 0 ] && [ "$capped" -eq 1 ] && [ -z "$LOOP_MINUTES" ] \
+            && [ "$(date -u +%s)" -lt "$(date -u -d 'today 16:00' +%s)" ]; then
+            if gh workflow run cron-reconcile-deliveries.yml --ref "$GITHUB_REF_NAME" -f after_run="$GITHUB_RUN_ID"; then
+              echo "Loop cap reached; dispatched the next loop."
+            else
+              echo "::warning::Loop cap reached but the handover dispatch failed; the next trigger GitHub honours restarts the loop."
+            fi
+          fi
           exit "$failed"
