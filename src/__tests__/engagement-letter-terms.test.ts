@@ -210,9 +210,6 @@ describe('engagement letter terms (2026-10-26)', () => {
 
 // SAICA guide comparison (Zjak, 2026-10-26): the points added in terms 2026.2.
 describe('terms 2026.2: SAICA guide points', () => {
-  it('is version 2026.2', () => {
-    expect(TERMS_VERSION).toBe('2026.2');
-  });
 
   it('lets either party end the agreement at once on insolvency or an unremedied breach', () => {
     expect(block('termination')).toContain('liquidation or business rescue');
@@ -237,5 +234,19 @@ describe('terms 2026.2: SAICA guide points', () => {
     expect(t).toContain('We do not make management decisions for you');
     expect(t).toContain('Nobody else may rely on them without our written consent');
     expect(t).toContain('We stay responsible for their work');
+  });
+});
+
+// AI assistants as sub-processors (Zjak, 2026-11-05): POPIA openness, terms 2026.3.
+describe('terms 2026.3: AI assistants as sub-processors', () => {
+  it('is version 2026.3', () => {
+    expect(TERMS_VERSION).toBe('2026.3');
+  });
+
+  it('names AI assistants such as Claude as sub-processors, stored outside South Africa', () => {
+    const t = block('confidentiality');
+    expect(t).toContain('AI assistants such as Claude');
+    expect(t).toContain('Xero, Google and Anthropic (Claude), store data on servers outside South Africa');
+    expect(t).toContain('under the same confidentiality terms');
   });
 });
