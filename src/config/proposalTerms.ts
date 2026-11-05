@@ -15,7 +15,8 @@ import { PAYROLL_ONLY_TIER } from '@/config/tiers';
  * Version label of the engagement terms. Bump it on any change to the clause
  * text in this file; it is printed on /terms/engagement and the signed PDF.
  */
-export const TERMS_VERSION = '2026.2';
+// 2026.3 (Zjak, 2026-11-05): AI assistants such as Claude named as sub-processors.
+export const TERMS_VERSION = '2026.3';
 
 /** The contracting entity, named on the terms page and the signed PDF (Zjak, 2026-10-26). */
 export const CAPUCOR_LEGAL = {
@@ -186,7 +187,8 @@ export const PROPOSAL_TERMS: TermsBlock[] = [
     paragraphs: [
       'We keep your information confidential and process it in line with POPIA. We only share it with the parties needed to do your work, for example SARS, CIPC or your software providers, or where the law requires it.',
       "Where we process personal information for you, such as your employees' payroll details or your customers' details in your books, we do so only on your instructions and for the work in this agreement. We keep it confidential, keep reasonable security measures in place, and tell you as soon as we become aware of a breach.",
-      'We may use trusted sub-processors (such as Xero and our hosting and email providers) under the same confidentiality terms. Some of them, such as Xero and Google, store data on servers outside South Africa, under laws or agreements that protect it to a standard similar to POPIA.',
+      // AI assistants named as sub-processors (Zjak, 2026-11-05, terms 2026.3; POPIA openness).
+      'We may use trusted sub-processors (such as Xero, our hosting and email providers, and AI assistants such as Claude) under the same confidentiality terms. Some of them, such as Xero, Google and Anthropic (Claude), store data on servers outside South Africa, under laws or agreements that protect it to a standard similar to POPIA.',
       // SAICA Code: non-compliance with laws and regulations (NOCLAR), 2026.2.
       'If we find that your business may have broken a law, our professional code (SAICA) requires us to act: where appropriate we raise it with you first so that you can put it right, and in serious cases we may have to report it to the right authority. Doing so is not a breach of confidentiality.',
     ],
