@@ -210,7 +210,6 @@ describe('engagement letter terms (2026-10-26)', () => {
 
 // SAICA guide comparison (Zjak, 2026-10-26): the points added in terms 2026.2.
 describe('terms 2026.2: SAICA guide points', () => {
-
   it('lets either party end the agreement at once on insolvency or an unremedied breach', () => {
     expect(block('termination')).toContain('liquidation or business rescue');
     expect(block('termination')).toContain('within 14 days of written notice');
