@@ -1,7 +1,8 @@
-name: Cron — prune stale leads
+name: Cron — retention prune (POPIA)
 
-# POPIA P3 — daily retention job. Calls /api/cron/prune-leads on production
-# with the REVALIDATE_SECRET so old new-status leads are deleted.
+# POPIA s14 — daily retention job. Calls /api/cron/prune-leads on production
+# with the REVALIDATE_SECRET: stale leads, unsigned proposals, data requests and
+# old email delivery records are deleted (src/lib/retention.ts).
 #
 # Why GitHub Actions and not a Cloudflare cron trigger? OpenNext for
 # Cloudflare exports a fetch-only Worker; there is no `scheduled()` hook to

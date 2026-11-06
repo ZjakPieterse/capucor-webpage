@@ -70,7 +70,7 @@ describe('POST /api/data-request', () => {
     const expiresMs = new Date(inserted.token_expires_at as string).getTime();
     const targetMs = Date.now() + 24 * 60 * 60 * 1000;
     expect(Math.abs(expiresMs - targetMs)).toBeLessThan(5 * 60 * 1000);
-    expect(inserted.consent_version).toBe('v2');
+    expect(inserted.consent_version).toBe('v3');
     expect(inserted.consent_language).toBe('en-ZA');
   });
 
