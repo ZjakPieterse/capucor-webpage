@@ -12,7 +12,7 @@ import {
   UNSIGNED_PROPOSAL_RETENTION_DAYS,
 } from '@/lib/consent';
 
-// Privacy notice v2 (Zjak, 2026-11-06). Written to POPIA s18(1): what we
+// Privacy notice v3 (Zjak, 2026-11-06; v2 + retention periods). Written to POPIA s18(1): what we
 // collect, who we are, why, whether it is required, the law, transfers abroad,
 // who receives it, and the person's rights, including a complaint to the
 // Information Regulator. Bump CONSENT_VERSION and PRIVACY_POLICY_UPDATED in
@@ -102,7 +102,7 @@ const OPERATORS = [
 
 const RETENTION = [
   `Enquiries and resource requests that don’t lead to an engagement: deleted automatically after ${LEAD_RETENTION_MONTHS} months.`,
-  `Proposals that are not signed: they expire after 7 days, and we delete them ${UNSIGNED_PROPOSAL_RETENTION_DAYS} days after that.`,
+  `Proposals that are not signed: they expire after 7 days, and we delete them ${UNSIGNED_PROPOSAL_RETENTION_DAYS} days after that. A proposal sent as part of a plan review for an existing client is kept with that client’s records.`,
   'Signed proposals and the records of our work for you: for the length of our engagement and afterwards for as long as the law requires us to keep them (generally five years).',
   `Requests about your information, and our record of how we handled them: ${DATA_REQUEST_RETENTION_YEARS} years.`,
   `Records of the emails we sent you and whether they were delivered: ${EMAIL_DELIVERY_RETENTION_MONTHS} months. For a signed proposal, the record of the signed copy we sent is kept with the signed proposal.`,

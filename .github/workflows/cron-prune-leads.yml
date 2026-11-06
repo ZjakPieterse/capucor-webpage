@@ -1,4 +1,4 @@
-name: Cron — prune stale leads
+name: Cron — retention prune (POPIA)
 
 # POPIA s14 — daily retention job. Calls /api/cron/prune-leads on production
 # with the REVALIDATE_SECRET: stale leads, unsigned proposals, data requests and
