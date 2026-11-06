@@ -33,7 +33,7 @@ numbered migrations:
 | `005_engagement_letter_capture.sql` | Engagement letter (PR B): `proposals` gains `client_legal_name`, `client_registration_number`, `client_registered_address`, `signer_authority_confirmed` and `terms_version`, written by the sign form with the pending signature and shown on the signed PDF. `commit_proposal_signature` unchanged. Drops nothing. | Applied 2026-10-26 |
 | `006_sign_without_registered_address.sql` | Sign form stops asking for the registered address (Zjak, 2026-11-06): `proposals_signer_authority_complete_check` no longer requires `client_registered_address`. Column and its format check stay; old rows keep their address. ⚠️ Apply **before** deploying the code that stops sending it. | Pending |
 
-⚠️ Since 004, deleting a proposal (nothing here does) needs care: delete its `plan_reviews` rows
+⚠️ Since 004, deleting a proposal needs care (only the daily retention prune does, and it keeps every proposal a `plan_reviews` row points at; see `src/lib/retention.ts`): delete its `plan_reviews` rows
 first, and a client's review proposals before the plan they supersede. See 004's header.
 
 **Not owned here:** `client_orgs`, `client_org_members`, `subscriptions` and every other portal

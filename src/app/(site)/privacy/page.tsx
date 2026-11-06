@@ -3,15 +3,24 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { CAPUCOR_LEGAL } from '@/config/proposalTerms';
-import { DATA_REQUEST_SLA_DAYS, LEAD_RETENTION_DAYS, PRIVACY_POLICY_UPDATED } from '@/lib/consent';
+import {
+  DATA_REQUEST_RETENTION_DAYS,
+  DATA_REQUEST_SLA_DAYS,
+  EMAIL_DELIVERY_RETENTION_DAYS,
+  LEAD_RETENTION_DAYS,
+  PRIVACY_POLICY_UPDATED,
+  UNSIGNED_PROPOSAL_RETENTION_DAYS,
+} from '@/lib/consent';
 
-// Privacy notice v2 (Zjak, 2026-11-06). Written to POPIA s18(1): what we
+// Privacy notice v4 (Zjak, 2026-11-06; v2 + retention periods = v3; no registered address at signing = v4). Written to POPIA s18(1): what we
 // collect, who we are, why, whether it is required, the law, transfers abroad,
 // who receives it, and the person's rights, including a complaint to the
 // Information Regulator. Bump CONSENT_VERSION and PRIVACY_POLICY_UPDATED in
 // lib/consent.ts when this text changes substantively.
 
 const LEAD_RETENTION_MONTHS = Math.round(LEAD_RETENTION_DAYS / 30);
+const DATA_REQUEST_RETENTION_YEARS = Math.round(DATA_REQUEST_RETENTION_DAYS / 365);
+const EMAIL_DELIVERY_RETENTION_MONTHS = Math.round(EMAIL_DELIVERY_RETENTION_DAYS / 30);
 const CONTACT_EMAIL = CAPUCOR_LEGAL.email;
 
 export const metadata: Metadata = {
@@ -93,10 +102,13 @@ const OPERATORS = [
 
 const RETENTION = [
   `Enquiries and resource requests that don’t lead to an engagement: deleted automatically after ${LEAD_RETENTION_MONTHS} months.`,
-  'Proposals that are not signed: they expire after 7 days, and we keep the record only as long as we need it to follow up.',
+  `Proposals that are not signed: they expire after 7 days, and we delete them ${UNSIGNED_PROPOSAL_RETENTION_DAYS} days after that. A proposal sent as part of a plan review for an existing client is kept with that client’s records.`,
   'Signed proposals and the records of our work for you: for the length of our engagement and afterwards for as long as the law requires us to keep them (generally five years).',
+  `Requests about your information, and our record of how we handled them: ${DATA_REQUEST_RETENTION_YEARS} years.`,
+  `Records of the emails we sent you and whether they were delivered: ${EMAIL_DELIVERY_RETENTION_MONTHS} months. For a signed proposal, the record of the signed copy we sent is kept with the signed proposal.`,
   'Abuse-protection records of your IP address: up to 10 minutes.',
   'Website traffic data: kept by Cloudflare in aggregate, under its own retention rules.',
+  'Backups: deleted records can stay in our backup copies for up to six months, until those copies expire.',
 ];
 
 const RIGHTS = [

@@ -70,7 +70,7 @@ The only things still pointing at capucor.app (the legacy portal) are the `APP_P
   attached) → owner email (Drive link). Nothing here writes a portal table.
 - **Web contract** — exact version pins, the redirect table and rule wording live in
   `contracts/web-contract.json`, checked by `npm test`.
-- **Scheduled workflows** — lead prune and proposal expiry (daily), retries (every ten minutes in
+- **Scheduled workflows** — retention prune (leads, unsigned proposals, data requests, email records; `src/lib/retention.ts`) and proposal expiry (daily), retries (every ten minutes in
   weekday business hours, hourly otherwise) via `cron-reconcile-deliveries.yml`, which rebuilds
   emails from `src/lib/email/messages.mjs` (proposal lines from `src/lib/pricing.ts` and
   `src/config/tiers.ts`) and runs from `master`: deploy soon after merging a change to any of

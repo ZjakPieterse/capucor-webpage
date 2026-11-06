@@ -116,7 +116,7 @@ only. Copies elsewhere are not kept in step.
 
 ### Scheduled workflows
 
-This repo runs three scheduled workflows — the POPIA lead prune (daily), the proposal expiry
+This repo runs three scheduled workflows — the POPIA retention prune (daily; leads, unsigned proposals, data requests and email delivery records, see `src/lib/retention.ts`), the proposal expiry
 (daily) and the fulfilment/email retry runner (`cron-reconcile-deliveries.yml`, every ten
 minutes in weekday business hours and hourly otherwise; see the email section below). GitHub
 emails the owner when a run fails.

@@ -1,17 +1,22 @@
 /**
  * GET / POST /api/cron/prune-leads
  *
- * POPIA P3 — daily retention job. Deletes leads with status='new' that are
- * older than LEAD_RETENTION_DAYS. Engaged-client leads are excluded by the
- * status filter and retained per the engagement letter.
+ * POPIA s14: the daily retention job. Despite the path (kept so the GitHub
+ * Actions cron in .github/workflows/cron-prune-leads.yml needs no change), it
+ * now prunes every retained record type: stale 'new' leads, unsigned
+ * proposals, data requests and finished email delivery records. The rules and
+ * periods are in src/lib/retention.ts and src/lib/consent.ts, and /privacy
+ * states them.
  *
- * Auth: ?secret=REVALIDATE_SECRET. The Cloudflare cron trigger in
- * wrangler.jsonc fires this URL on a daily schedule.
+ * Responds 500 when any step failed (the workflow then fails and shows the
+ * body), with per-table counts either way.
+ *
+ * Auth: ?secret=REVALIDATE_SECRET.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { LEAD_RETENTION_DAYS } from '@/lib/consent';
+import { runRetention } from '@/lib/retention';
 import { timingSafeEqual } from '@/lib/security';
 
 export async function GET(req: NextRequest) {
@@ -24,33 +29,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid secret.' }, { status: 401 });
   }
 
-  const cutoffIso = new Date(
-    Date.now() - LEAD_RETENTION_DAYS * 24 * 60 * 60 * 1000,
-  ).toISOString();
-
+  let result;
   try {
-    const supabase = createSupabaseAdminClient();
-    const { error, count } = await supabase
-      .from('leads')
-      .delete({ count: 'exact' })
-      .eq('status', 'new')
-      .lt('created_at', cutoffIso);
-
-    if (error) throw error;
-
-    return NextResponse.json({
-      ok: true,
-      deleted: count ?? 0,
-      cutoff: cutoffIso,
-      retention_days: LEAD_RETENTION_DAYS,
-    });
+    result = await runRetention(createSupabaseAdminClient());
   } catch (err) {
-    console.error('[CRON:prune-leads] failed:', err);
-    return NextResponse.json(
-      { error: 'Prune failed.' },
-      { status: 500 },
-    );
+    console.error('[CRON:prune-leads] failed:', err instanceof Error ? err.message : 'unknown');
+    return NextResponse.json({ error: 'Prune failed.' }, { status: 500 });
   }
+
+  const failed = Object.entries(result).filter(([, step]) => step.error);
+  if (failed.length > 0) {
+    console.error('[CRON:prune-leads] steps failed:', failed.map(([name, step]) => `${name}: ${step.error}`).join('; '));
+  }
+  return NextResponse.json({ ok: failed.length === 0, ...result }, { status: failed.length ? 500 : 200 });
 }
 
 export const POST = GET;
