@@ -170,11 +170,8 @@ export const SignProposalSchema = z.object({
     .optional()
     .transform((v) => (v ? v : undefined))
     .pipe(z.string().min(2, 'Please check the registration number').optional()),
-  clientRegisteredAddress: z
-    .string()
-    .trim()
-    .min(5, 'Please enter the registered address')
-    .max(300, 'That address is too long'),
+  // No registered address (Zjak, 2026-11-06): notices go to the proposal email
+  // (proposalTerms.ts, notices block), and onboarding collects the address.
   authorityConfirmed: z.literal(true, {
     message: 'Please confirm that you may sign for this business.',
   }),

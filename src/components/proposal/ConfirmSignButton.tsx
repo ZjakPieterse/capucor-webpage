@@ -54,7 +54,7 @@ export function ConfirmSignButton({ ctoken, children }: { ctoken: string; childr
   }
 
   return (
-    <div className="document-paper mx-auto max-w-2xl rounded-2xl border border-border p-6 sm:p-8">
+    <div className="document-paper mx-auto max-w-4xl rounded-2xl border border-border p-6 sm:p-8 lg:p-12">
       {children}
       <div className="mt-6 space-y-3">
         {error && (

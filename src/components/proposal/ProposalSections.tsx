@@ -39,7 +39,7 @@ export function DocumentHeader({
   version: number;
 }) {
   return (
-    <div className="border-b border-border bg-primary/[0.04] p-6 sm:p-8">
+    <div className="border-b border-border bg-primary/[0.04] p-6 sm:p-8 lg:px-12">
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link href="/" className="document-logo-link inline-flex items-center transition-opacity">

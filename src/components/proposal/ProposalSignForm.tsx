@@ -7,7 +7,6 @@ import { z } from 'zod';
 import { Loader2, Check, Type, PenLine, Upload, Eraser, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SignProposalSchema } from '@/lib/validations';
@@ -32,17 +31,11 @@ const DetailsSchema = z.object({
     .trim()
     .max(40, 'That registration number is too long')
     .refine((v) => v === '' || v.length >= 2, 'Please check the registration number'),
-  clientRegisteredAddress: z
-    .string()
-    .trim()
-    .min(5, 'Please enter the registered address')
-    .max(300, 'That address is too long'),
 });
 type DetailsValues = z.infer<typeof DetailsSchema>;
 const DETAIL_FIELDS = [
   'clientLegalName',
   'clientRegistrationNumber',
-  'clientRegisteredAddress',
   'signatureName',
 ] as const;
 
@@ -94,7 +87,6 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
       signatureName: defaultName ?? '',
       clientLegalName: '',
       clientRegistrationNumber: '',
-      clientRegisteredAddress: '',
     },
   });
   // Mirror the name field into local state so the typed preview stays reactive
@@ -235,7 +227,6 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
       consentGiven: true as const,
       clientLegalName: getValues('clientLegalName'),
       clientRegistrationNumber: getValues('clientRegistrationNumber'),
-      clientRegisteredAddress: getValues('clientRegisteredAddress'),
       authorityConfirmed: true as const,
       website: '',
     };
@@ -359,25 +350,6 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
             ) : (
               <p id="clientRegistrationNumber-hint" className="mt-1 text-xs text-muted-foreground">
                 Leave it blank if you trade as a sole proprietor.
-              </p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor="clientRegisteredAddress" className="mb-1.5 block text-sm">
-              Registered address
-            </Label>
-            <Textarea
-              id="clientRegisteredAddress"
-              rows={3}
-              autoComplete="street-address"
-              placeholder="Street, suburb, city, postal code"
-              aria-invalid={errors.clientRegisteredAddress ? 'true' : undefined}
-              aria-describedby={errors.clientRegisteredAddress ? 'clientRegisteredAddress-error' : undefined}
-              {...register('clientRegisteredAddress')}
-            />
-            {errors.clientRegisteredAddress && (
-              <p id="clientRegisteredAddress-error" className="mt-1 text-xs text-destructive">
-                {errors.clientRegisteredAddress.message}
               </p>
             )}
           </div>

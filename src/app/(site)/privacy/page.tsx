@@ -12,7 +12,7 @@ import {
   UNSIGNED_PROPOSAL_RETENTION_DAYS,
 } from '@/lib/consent';
 
-// Privacy notice v3 (Zjak, 2026-11-06; v2 + retention periods). Written to POPIA s18(1): what we
+// Privacy notice v4 (Zjak, 2026-11-06; v2 + retention periods = v3; no registered address at signing = v4). Written to POPIA s18(1): what we
 // collect, who we are, why, whether it is required, the law, transfers abroad,
 // who receives it, and the person's rights, including a complaint to the
 // Information Regulator. Bump CONSENT_VERSION and PRIVACY_POLICY_UPDATED in
@@ -65,7 +65,7 @@ const ACTIVITIES: Activity[] = [
   {
     title: 'When you sign a proposal',
     collect:
-      'Your business’s legal name, registration number and registered address, the name you sign with, your signature (typed, drawn or uploaded), your confirmation that you may sign for the business, the terms version, the time, and your IP address.',
+      'Your business’s legal name and registration number (if it has one), the name you sign with, your signature (typed, drawn or uploaded), your confirmation that you may sign for the business, the terms version, the time, and your IP address.',
     why: 'To conclude our agreement and keep evidence of your electronic signature. The signed proposal is also the debit-order mandate, so we need it for billing.',
   },
   {

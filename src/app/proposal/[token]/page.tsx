@@ -225,7 +225,9 @@ export default async function ProposalPage({
   });
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12 lg:py-20">
+    // A4-like width (Zjak, 2026-11-06): the page a client signs should read as
+    // a document, not a web card. Phones are unchanged.
+    <div className="mx-auto max-w-4xl px-6 py-12 lg:py-20">
       <div className="document-paper overflow-hidden rounded-2xl border border-border bg-card">
         <DocumentHeader
           businessName={row.business_name}
@@ -238,7 +240,7 @@ export default async function ProposalPage({
           version={row.version}
         />
 
-        <div className="space-y-8 p-6 sm:p-8">
+        <div className="space-y-8 p-6 sm:p-8 lg:p-12">
           <p className="text-base leading-relaxed text-foreground">
             Hi {row.first_name}, here&apos;s your proposed subscription. Everything we&apos;ll do, what it
             costs, and the terms are set out below. Review it, then sign at the bottom to get started.

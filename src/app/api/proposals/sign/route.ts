@@ -176,7 +176,9 @@ export async function POST(req: NextRequest) {
         // confirms the status guard above freezes them as the record.
         client_legal_name: input.clientLegalName,
         client_registration_number: input.clientRegistrationNumber ?? null,
-        client_registered_address: input.clientRegisteredAddress,
+        // No longer asked (2026-11-06, migration 006); null clears a value
+        // left by an earlier submit on this proposal.
+        client_registered_address: null,
         signer_authority_confirmed: true,
         terms_version: TERMS_VERSION,
         ...(reuseConfirmation
