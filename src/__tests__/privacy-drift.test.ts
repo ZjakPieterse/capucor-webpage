@@ -105,7 +105,7 @@ describe('privacy drift guard', () => {
     expect(page).not.toMatch(/new Date\(/);
     expect(page).toContain('PRIVACY_POLICY_UPDATED');
     expect({ CONSENT_VERSION, PRIVACY_POLICY_UPDATED }).toEqual({
-      CONSENT_VERSION: 'v2',
+      CONSENT_VERSION: 'v3',
       PRIVACY_POLICY_UPDATED: '6 November 2026',
     });
   });
