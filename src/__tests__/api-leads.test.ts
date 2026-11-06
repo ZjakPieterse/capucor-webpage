@@ -36,7 +36,6 @@ const validBody = {
   name: 'Pat Patterson',
   email: 'pat@example.com',
   business: 'Pat Co',
-  consent_given: true as const,
 };
 
 beforeEach(() => {
@@ -62,11 +61,11 @@ describe('POST /api/leads', () => {
     expect(insertSpy).toHaveBeenCalledTimes(1);
     const inserted = insertSpy.mock.calls[0]![0] as Record<string, unknown>;
     expect(inserted.name).toBe('Pat Patterson');
-    expect(inserted.consent_given).toBe(true);
-    expect(typeof inserted.consent_timestamp).toBe('string');
-    expect(() => new Date(inserted.consent_timestamp as string).toISOString()).not.toThrow();
-    // P2: consent_version + consent_language stamped from server constants
-    expect(inserted.consent_version).toBe('v1');
+    // Privacy notice v2: no consent is asked, so none is written (the column
+    // keeps its default); the version records which notice the visitor saw.
+    expect(inserted).not.toHaveProperty('consent_given');
+    expect(inserted).not.toHaveProperty('consent_timestamp');
+    expect(inserted.consent_version).toBe('v2');
     expect(inserted.consent_language).toBe('en-ZA');
   });
 
@@ -106,7 +105,6 @@ describe('POST /api/leads', () => {
       source: validBody.source,
       email: validBody.email,
       business: validBody.business,
-      consent_given: validBody.consent_given,
     };
     const res = await POST(makeJsonRequest('http://test/api/leads', withoutName));
     expect(res.status).toBe(422);
@@ -115,15 +113,16 @@ describe('POST /api/leads', () => {
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
-  it('6. zod invalid â consent_given:false returns 422 with field', async () => {
+  it('6. a stale page that still sends consent_given is accepted; nothing is stored', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/leads', {
         ...validBody,
-        consent_given: false,
+        consent_given: true,
       }),
     );
-    expect(res.status).toBe(422);
-    expect((await res.json()).field).toBe('consent_given');
+    expect(res.status).toBe(200);
+    const inserted = insertSpy.mock.calls[0]![0] as Record<string, unknown>;
+    expect(inserted).not.toHaveProperty('consent_given');
   });
 
   it('7. zod invalid â config.brackets with negative number rejected (C4)', async () => {
@@ -150,13 +149,18 @@ describe('POST /api/leads', () => {
     errorSpy.mockRestore();
   });
 
-  it('9. no RESEND_API_KEY â falls through to console.log path', async () => {
+  it('9. no owner address set: lead saved, a warning with no personal information', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const res = await POST(makeJsonRequest('http://test/api/leads', validBody));
     expect(res.status).toBe(200);
     expect(insertSpy).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('[LEAD] source=signup'));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('OWNER_NOTIFICATION_EMAIL not set'));
+    const logged = [...warnSpy.mock.calls, ...logSpy.mock.calls].flat().join(' ');
+    expect(logged).not.toContain(validBody.email);
+    expect(logged).not.toContain(validBody.name);
     expect(sendEmailMock).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
     logSpy.mockRestore();
   });
 

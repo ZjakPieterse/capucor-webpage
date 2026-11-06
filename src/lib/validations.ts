@@ -60,9 +60,10 @@ export const LeadSchema = z.object({
   message: z.string().max(2000).optional(),
   config: CalculatorConfigSchema.optional(),
   answers: ContactAnswersSchema.optional(),
-  consent_given: z.literal(true, {
-    message: 'You must consent before submitting.',
-  }),
+  // No consent field since privacy notice v2 (2026-11-06): replying to an
+  // enquiry rests on POPIA s11(1)(b), and the form shows a notice instead of a
+  // required checkbox. A page loaded before the deploy may still send
+  // consent_given; z.object strips it.
   website: z.string().max(0).optional(), // honeypot — must be empty
 });
 
@@ -110,10 +111,8 @@ export const ProposalRequestSchema = z.object({
   lastName: z.string().min(1, 'Surname is required').max(80),
   businessName: z.string().min(2, 'Business name is required').max(120),
   email: z.string().email('Enter a valid email address'),
-  // Consent + honeypot
-  consentGiven: z.literal(true, {
-    message: 'You must consent before continuing.',
-  }),
+  // Honeypot. No consent field since privacy notice v2 (see LeadSchema); a
+  // stale page's consentGiven is stripped.
   website: z.string().max(0).optional(), // honeypot — must be empty
 });
 

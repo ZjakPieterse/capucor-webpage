@@ -135,7 +135,6 @@ const validBody = {
   lastName: 'Patterson',
   businessName: 'Pat Trading Co',
   email: 'pat@example.com',
-  consentGiven: true as const,
 };
 
 beforeEach(() => {
@@ -253,15 +252,14 @@ describe('POST /api/proposals', () => {
     expect((await res.json()).field).toBe('services');
   });
 
-  it('7. zod invalid — consentGiven:false returns 422 with field', async () => {
+  it('7. a stale page that still sends consentGiven is not rejected (privacy notice v2)', async () => {
     const res = await POST(
       makeJsonRequest('http://test/api/proposals', {
         ...validBody,
         consentGiven: false,
       }),
     );
-    expect(res.status).toBe(422);
-    expect((await res.json()).field).toBe('consentGiven');
+    expect(res.status).not.toBe(422);
   });
 
   it('8. zod invalid — missing firstName returns 422 with field', async () => {

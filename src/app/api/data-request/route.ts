@@ -146,7 +146,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  if (requesterDelivery.errorCode === 'missing_api_key') {
+  // Local dev only: the log would put personal information in Workers Logs.
+  if (requesterDelivery.errorCode === 'missing_api_key' && process.env.NODE_ENV !== 'production') {
     console.log(`[DATA_REQUEST] type=${request_type} email=${email} confirm=${confirmUrl}`);
   }
 

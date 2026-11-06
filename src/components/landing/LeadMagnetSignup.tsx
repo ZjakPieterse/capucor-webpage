@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Loader2, FileText, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
+import { PrivacyNotice } from '@/components/ui/PrivacyNotice';
 
 // Lead-magnet email capture (source='lead_magnet'). On success we record the
 // lead and reveal the resource directly — DOWNLOAD_HREF points at the printable
@@ -18,7 +18,6 @@ const DOWNLOAD_HREF = '/resources/compliance-calendar';
 export function LeadMagnetSignup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState(''); // honeypot
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +34,6 @@ export function LeadMagnetSignup() {
       setError('Please enter your email address.');
       return;
     }
-    if (!consent) {
-      setError('Please tick the consent box so we can send it.');
-      return;
-    }
 
     setSubmitting(true);
     try {
@@ -50,7 +45,6 @@ export function LeadMagnetSignup() {
           name: name.trim(),
           email: email.trim(),
           message: `Requested: ${DOWNLOAD_TITLE}`,
-          consent_given: true,
           website,
         }),
       });
@@ -116,12 +110,7 @@ export function LeadMagnetSignup() {
           />
         </div>
 
-        <ConsentCheckbox
-          id="magnet-consent"
-          checked={consent}
-          onCheckedChange={setConsent}
-          subject="the compliance calendar and related updates"
-        />
+        <PrivacyNotice purpose="record your request (we won't add you to a mailing list)" />
 
         {/* Honeypot */}
         <div className="hidden" aria-hidden="true">

@@ -62,10 +62,9 @@ export async function POST(req: NextRequest) {
   // The /contact answers have no column of their own: they go in leads.config
   // (a contact lead carries no calculator config), so the owner email and the
   // retry runner render them with the rest of the row.
-  const { website: _honeypot, consent_given, answers, ...rest } = parsed.data;
+  const { website: _honeypot, answers, ...rest } = parsed.data;
   const fields = { ...rest, config: rest.config ?? answers };
   const leadId = crypto.randomUUID();
-  const consentTimestamp = new Date().toISOString();
 
   // 5. Insert into Supabase
   try {
@@ -73,8 +72,8 @@ export async function POST(req: NextRequest) {
     const { error: dbError } = await supabase.from('leads').insert({
       id: leadId,
       ...fields,
-      consent_given,
-      consent_timestamp: consentTimestamp,
+      // From v2 no consent is asked: consent_given keeps its default (false)
+      // and consent_version records which privacy notice the visitor saw.
       consent_version: CONSENT_VERSION,
       consent_language: CONSENT_LANGUAGE,
     });
@@ -100,11 +99,13 @@ export async function POST(req: NextRequest) {
         ...buildLeadOwnerEmail(fields),
       },
     });
-    if (delivery.errorCode === 'missing_api_key') {
+    // Local dev only: the log would put personal information in Workers Logs.
+    if (delivery.errorCode === 'missing_api_key' && process.env.NODE_ENV !== 'production') {
       console.log(`[LEAD] source=${fields.source} name=${fields.name} email=${fields.email}`);
     }
   } else {
-    console.log(`[LEAD] source=${fields.source} name=${fields.name} email=${fields.email}`);
+    // No owner address set: log the row id only, never personal information.
+    console.warn(`[LEAD] OWNER_NOTIFICATION_EMAIL not set; lead ${leadId} saved without a notification`);
   }
 
   return NextResponse.json({ ok: true });
