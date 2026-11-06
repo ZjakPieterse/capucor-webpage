@@ -113,7 +113,6 @@ export interface LeadPayload {
   phone?: string;
   message?: string;
   config?: Record<string, unknown>;
-  consent_given: true;
   website?: string;
 }
 

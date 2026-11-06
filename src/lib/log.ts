@@ -60,3 +60,13 @@ export function logWarn(evt: string, fields: Fields = {}) {
 export function logInfo(evt: string, fields: Fields = {}) {
   emit('info', evt, fields);
 }
+
+/**
+ * The parts of a database error that are safe to log. A Postgres constraint
+ * error carries the failing row in `details` (names, emails), so only the code
+ * and message are kept (privacy notice v2, 2026-11-06).
+ */
+export function dbErrorSummary(error: unknown): { code: unknown; message: unknown } {
+  const e = (error ?? {}) as { code?: unknown; message?: unknown };
+  return { code: e.code ?? null, message: e.message ?? String(error) };
+}

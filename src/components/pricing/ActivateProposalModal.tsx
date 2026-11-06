@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
+import { PrivacyNotice } from '@/components/ui/PrivacyNotice';
 import { ProposalSummary } from './ProposalSummary';
 import type { ProposalAction } from './ReviewStep';
 import { z } from 'zod';
@@ -75,8 +75,6 @@ export function ActivateProposalModal({
   const isRequest = mode === 'request';
   const [serverError, setServerError] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
-  const [consentGiven, setConsentGiven] = useState(false);
-  const [consentError, setConsentError] = useState('');
   const [delivery, setDelivery] = useState<ProposalDelivery | null>(null);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -132,19 +130,12 @@ export function ActivateProposalModal({
       setRequested(false);
       setRedirecting(false);
       setServerError(null);
-      setConsentGiven(false);
-      setConsentError('');
       reset();
     }
     onOpenChange(next);
   }
 
   async function onSubmit(values: FormValues) {
-    if (!consentGiven) {
-      setConsentError('You must consent before continuing.');
-      return;
-    }
-    setConsentError('');
     setServerError(null);
 
     if (!selectedTier) {
@@ -168,7 +159,6 @@ export function ActivateProposalModal({
       lastName: values.lastName,
       businessName: values.businessName,
       email: values.email,
-      consentGiven: true as const,
       website: values.website ?? '',
     };
 
@@ -382,15 +372,7 @@ export function ActivateProposalModal({
               {...register('website')}
             />
 
-            <ConsentCheckbox
-              id="proposal-consent"
-              checked={consentGiven}
-              onCheckedChange={(val) => {
-                setConsentGiven(val);
-                if (val) setConsentError('');
-              }}
-              error={consentError}
-            />
+            <PrivacyNotice purpose={isRequest ? 'reply to your request' : 'prepare and send your proposal'} />
 
             {serverError && (
               <p className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">

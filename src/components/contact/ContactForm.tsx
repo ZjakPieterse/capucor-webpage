@@ -8,14 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ConsentCheckbox } from '@/components/ui/ConsentCheckbox';
+import { PrivacyNotice } from '@/components/ui/PrivacyNotice';
 import { siteConfig } from '@/config/site';
 import { jumpToTop } from '@/lib/pageScroll';
 import { CONTACT_QUESTIONS, type NextStep } from '@/config/contactQuestions';
 import { cn } from '@/lib/utils';
 
 type SingleKey = 'turnover' | 'teamSize' | 'booksNow';
-type FieldKey = 'firstName' | 'lastName' | 'business' | 'email' | SingleKey | 'services' | 'consent';
+type FieldKey = 'firstName' | 'lastName' | 'business' | 'email' | SingleKey | 'services';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,7 +29,6 @@ const FIELD_IDS: Record<FieldKey, string> = {
   teamSize: 'ct-teamSize',
   booksNow: 'ct-booksNow',
   services: 'ct-service-0',
-  consent: 'ct-consent',
 };
 
 // Every "Book a fit call" on the site lands here, and the answers come first
@@ -45,7 +44,6 @@ export function ContactForm() {
   const [single, setSingle] = useState<Partial<Record<SingleKey, string>>>({});
   const [services, setServices] = useState<string[]>([]);
   const [message, setMessage] = useState('');
-  const [consent, setConsent] = useState(false);
   const [website, setWebsite] = useState(''); // honeypot
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState<NextStep | null>(null);
@@ -74,7 +72,6 @@ export function ContactForm() {
       if (!single[key]) e[key] = 'Please choose an option.';
     }
     if (services.length === 0) e.services = 'Please pick at least one.';
-    if (!consent) e.consent = 'Please tick the consent box so we can reply.';
     return e;
   }
 
@@ -104,7 +101,6 @@ export function ContactForm() {
           business: business.trim(),
           message: message.trim() || undefined,
           answers: { ...single, services, nextStep },
-          consent_given: true,
           website,
         }),
       });
@@ -239,7 +235,7 @@ export function ContactForm() {
         </Field>
       </div>
 
-      <ConsentCheckbox id="ct-consent" checked={consent} onCheckedChange={setConsent} error={errors.consent} />
+      <PrivacyNotice purpose="reply to you and prepare for a fit call" />
 
       {/* Honeypot — hidden from humans, visible to bots */}
       <div className="hidden" aria-hidden="true">

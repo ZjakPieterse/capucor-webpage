@@ -1,11 +1,18 @@
-// Current consent text version + language captured against every lead.
-// Bump CONSENT_VERSION whenever the wording on the website's consent
-// checkbox or privacy notice changes substantively — this lets us prove,
-// per-row, exactly which version of the notice the user agreed to (POPIA).
+// Version + language of the privacy notice, stamped on every lead, proposal
+// and data-request row so we can show, per row, which notice the person saw
+// (POPIA s18). Bump CONSENT_VERSION, and PRIVACY_POLICY_UPDATED, whenever the
+// /privacy text or the form notice (components/ui/PrivacyNotice.tsx) changes
+// substantively.
+//   v1: a required "I consent to … contacting me" checkbox (consent_given true).
+//   v2 (2026-11-06): a notice line, no consent asked (consent_given stays at
+//       its default, false). Replying rests on POPIA s11(1)(b).
+// The e-signature consent on /proposal/<token> is separate and unchanged.
 //
-// Add a new language code here when localised consent copy ships.
+// Add a new language code here when localised copy ships.
 
-export const CONSENT_VERSION = 'v1';
+export const CONSENT_VERSION = 'v2';
+// Shown as "Last updated" on /privacy. A fixed date, never new Date().
+export const PRIVACY_POLICY_UPDATED = '6 November 2026';
 export const CONSENT_LANGUAGE = 'en-ZA';
 
 // POPIA P4: maximum number of days within which we will respond to a verified

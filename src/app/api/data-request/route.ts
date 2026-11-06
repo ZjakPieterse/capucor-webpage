@@ -26,6 +26,7 @@ import { CONSENT_VERSION, CONSENT_LANGUAGE, DATA_REQUEST_SLA_DAYS, DATA_REQUEST_
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { renderDataRequestConfirmationText, renderDataRequestPendingOwnerText } from '@/lib/email/messages.mjs';
+import { dbErrorSummary } from '@/lib/log';
 
 // Its own bucket, so a POPIA request cannot be starved by — or starve — the
 // contact form or the signing path.
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
 
     if (dbError) throw dbError;
   } catch (err) {
-    console.error('[DATA_REQUEST] Supabase insert error:', err);
+    console.error('[DATA_REQUEST] Supabase insert error:', dbErrorSummary(err));
     return NextResponse.json({ error: 'Could not save your request. Please try again.' }, { status: 500 });
   }
 
@@ -146,7 +147,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  if (requesterDelivery.errorCode === 'missing_api_key') {
+  // Local dev only: the log would put personal information in Workers Logs.
+  if (requesterDelivery.errorCode === 'missing_api_key' && process.env.NODE_ENV !== 'production') {
     console.log(`[DATA_REQUEST] type=${request_type} email=${email} confirm=${confirmUrl}`);
   }
 

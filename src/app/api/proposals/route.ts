@@ -28,6 +28,7 @@
  * is set up by hand (EFT until Paysoft Flow is switched on).
  */
 
+import { dbErrorSummary } from '@/lib/log';
 import { NextRequest, NextResponse } from 'next/server';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { readJsonBody } from '@/lib/readJsonBody';
@@ -196,8 +197,7 @@ export async function POST(req: NextRequest) {
           ...(input.intent && { intent: input.intent }),
           ...(byApplication && { estimatedMonthlyZAR: monthlyTotalZAR }),
         },
-        consent_given: true,
-        consent_timestamp: nowIso,
+        // Privacy notice v2: no consent asked; the version records the notice shown.
         consent_version: CONSENT_VERSION,
         consent_language: CONSENT_LANGUAGE,
       })
@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
     if (leadErr) throw leadErr;
     leadId = (leadRow?.id as string) ?? null;
   } catch (err) {
-    console.error('[PROPOSALS] lead insert error:', err);
+    console.error('[PROPOSALS] lead insert error:', dbErrorSummary(err));
     return NextResponse.json({ error: 'Could not save your details. Please try again.' }, { status: 500 });
   }
 
@@ -236,11 +236,13 @@ export async function POST(req: NextRequest) {
           text: renderLeadOwnerText(fields),
         },
       });
-      if (delivery.errorCode === 'missing_api_key') {
+      // Local dev only: the log would put personal information in Workers Logs.
+      if (delivery.errorCode === 'missing_api_key' && process.env.NODE_ENV !== 'production') {
         console.log(`[PREMIUM REQUEST] business=${input.businessName} email=${input.email}`);
       }
     } else {
-      console.log(`[PREMIUM REQUEST] business=${input.businessName} email=${input.email}`);
+      // No owner address set: log no personal information.
+      console.warn(`[PREMIUM REQUEST] OWNER_NOTIFICATION_EMAIL not set; lead ${leadId ?? 'unknown'} saved without a notification`);
     }
     return NextResponse.json({ ok: true, requested: true });
   }
@@ -285,7 +287,7 @@ export async function POST(req: NextRequest) {
     refNumber = (propRow?.ref_number as string) ?? null;
     if (!proposalId) throw new Error('Proposal insert did not return an id.');
   } catch (err) {
-    console.error('[PROPOSALS] proposal insert error:', err);
+    console.error('[PROPOSALS] proposal insert error:', dbErrorSummary(err));
     return NextResponse.json({ error: 'Could not generate your proposal. Please try again.' }, { status: 500 });
   }
 
@@ -346,7 +348,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  if (clientDelivery.errorCode === 'missing_api_key') {
+  // Local dev only: the log would put personal information in Workers Logs.
+  if (clientDelivery.errorCode === 'missing_api_key' && process.env.NODE_ENV !== 'production') {
     console.log(`[PROPOSAL] business=${input.businessName} email=${input.email} url=${proposalUrl}`);
   }
 
