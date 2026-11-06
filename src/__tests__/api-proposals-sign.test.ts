@@ -102,7 +102,6 @@ const validBody = {
   consentGiven: true as const,
   clientLegalName: 'Pat Trading (Pty) Ltd',
   clientRegistrationNumber: '2021/123456/07',
-  clientRegisteredAddress: '1 Main Road, Centurion, 0157',
   authorityConfirmed: true as const,
 };
 
@@ -239,7 +238,7 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     expect(updatePayloads[0]).toMatchObject({
       client_legal_name: 'Pat Trading (Pty) Ltd',
       client_registration_number: '2021/123456/07',
-      client_registered_address: '1 Main Road, Centurion, 0157',
+      client_registered_address: null,
       signer_authority_confirmed: true,
       terms_version: TERMS_VERSION,
     });
@@ -253,11 +252,21 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     expect(updatePayloads[0]!.client_registration_number).toBeNull();
   });
 
+  it('ignores a registered address an old form still sends, and stores none', async () => {
+    const res = await POST(
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        clientRegisteredAddress: '1 Main Road, Centurion, 0157',
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(updatePayloads[0]!.client_registered_address).toBeNull();
+  });
+
   it.each([
     ['authorityConfirmed', { authorityConfirmed: false }],
     ['authorityConfirmed', { authorityConfirmed: undefined }],
     ['clientLegalName', { clientLegalName: ' ' }],
-    ['clientRegisteredAddress', { clientRegisteredAddress: undefined }],
     ['clientRegistrationNumber', { clientRegistrationNumber: 'x' }],
   ])('refuses a signature without valid %s (422, no update)', async (field, over) => {
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', { ...validBody, ...over }));

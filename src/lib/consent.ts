@@ -6,11 +6,12 @@
 //   v1: a required "I consent to … contacting me" checkbox (consent_given true).
 //   v2 (2026-11-06): a notice line, no consent asked (consent_given stays at
 //       its default, false). Replying rests on POPIA s11(1)(b).
+//   v3 (2026-11-06): the sign form no longer asks for a registered address.
 // The e-signature consent on /proposal/<token> is separate and unchanged.
 //
 // Add a new language code here when localised copy ships.
 
-export const CONSENT_VERSION = 'v2';
+export const CONSENT_VERSION = 'v3';
 // Shown as "Last updated" on /privacy. A fixed date, never new Date().
 export const PRIVACY_POLICY_UPDATED = '6 November 2026';
 export const CONSENT_LANGUAGE = 'en-ZA';
