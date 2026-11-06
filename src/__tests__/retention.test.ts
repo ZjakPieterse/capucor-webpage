@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BATCH, isPrunableProposal, runRetention } from '@/lib/retention';
+import { BATCH, SCAN_LIMIT, isPrunableProposal, runRetention } from '@/lib/retention';
 
 // A small in-memory stand-in for the supabase-js query builder: enough of
 // select / delete with eq, is, in, lt, order and limit to run lib/retention.ts
@@ -14,11 +14,13 @@ interface FakeOptions {
   failTable?: string;
   blocked?: Set<string>;
   inCalls?: number[];
+  calls?: { n: number };
 }
 
 function fakeSupabase(db: Db, opts: FakeOptions = {}) {
   return {
     from(table: string) {
+      if (opts.calls) opts.calls.n += 1;
       const filters: ((r: Row) => boolean)[] = [];
       let op: 'select' | 'delete' = 'select';
       let limit = Infinity;
@@ -151,9 +153,9 @@ describe('runRetention', () => {
 
     expect(result).toEqual({
       leads: { deleted: 1 },
-      proposals: { deleted: 2 },
+      proposals: { deleted: 2, kept: 2 }, // the plan-review proposal and the open legacy row
       data_requests: { deleted: 1 },
-      email_deliveries: { deleted: 2 },
+      email_deliveries: { deleted: 2, kept: 1 }, // the signed proposal's email
     });
     expect(ids(db, 'leads')).toEqual(['l-old-engaged', 'l-recent']);
     expect(ids(db, 'proposals')).toEqual([
@@ -189,15 +191,35 @@ describe('runRetention', () => {
     }
     const inCalls: number[] = [];
     const result = await runRetention(fakeSupabase(db, { inCalls }) as never, NOW);
-    expect(result.proposals).toEqual({ deleted: 252 });
+    expect(result.proposals).toEqual({ deleted: 252, kept: 2 });
     expect(Math.max(...inCalls)).toBeLessThanOrEqual(BATCH);
   });
 
   it('skips a row a foreign key blocks and deletes the rest of its batch', async () => {
     const db = seed();
     const result = await runRetention(fakeSupabase(db, { blocked: new Set(['e-old']) }) as never, NOW);
-    expect(result.email_deliveries).toEqual({ deleted: 1, skipped: 1 });
+    expect(result.email_deliveries).toEqual({ deleted: 1, kept: 1, skipped: 1 });
     expect(ids(db, 'email_deliveries')).toContain('e-old');
     expect(ids(db, 'email_deliveries')).not.toContain('e-old-failed');
+  });
+  it('stays inside the Workers Free budget of 50 calls, even with a big backlog and a blocked row', async () => {
+    const db = seed();
+    for (let i = 0; i < 1000; i++) {
+      db.proposals.push({ id: `bulk-${i}`, status: 'expired', signed_at: null, expires_at: daysAgo(120), created_at: daysAgo(127) });
+      db.email_deliveries.push({ id: `mail-${i}`, source_type: 'lead', status: 'accepted', created_at: daysAgo(400) });
+    }
+    const calls = { n: 0 };
+    const result = await runRetention(fakeSupabase(db, { calls, blocked: new Set(['bulk-7']) }) as never, NOW);
+    expect(calls.n).toBeLessThanOrEqual(50);
+    expect(result.proposals.skipped).toBe(1);
+    expect(result.proposals.deleted).toBeLessThanOrEqual(SCAN_LIMIT);
+    expect(result.proposals.error).toBeUndefined();
+  });
+
+  it('reports any other delete error instead of skipping it', async () => {
+    const db = seed();
+    const result = await runRetention(fakeSupabase(db, { failTable: 'data_requests' }) as never, NOW);
+    expect(result.data_requests).toEqual({ deleted: 0, error: 'XX: boom' });
+    expect(db.data_requests).toHaveLength(2);
   });
 });

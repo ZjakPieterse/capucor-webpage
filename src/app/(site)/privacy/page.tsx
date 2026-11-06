@@ -108,6 +108,7 @@ const RETENTION = [
   `Records of the emails we sent you and whether they were delivered: ${EMAIL_DELIVERY_RETENTION_MONTHS} months. For a signed proposal, the record of the signed copy we sent is kept with the signed proposal.`,
   'Abuse-protection records of your IP address: up to 10 minutes.',
   'Website traffic data: kept by Cloudflare in aggregate, under its own retention rules.',
+  'Backups: deleted records can stay in our backup copies for up to six months, until those copies expire.',
 ];
 
 const RIGHTS = [

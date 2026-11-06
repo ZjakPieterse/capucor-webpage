@@ -104,7 +104,7 @@ jobs:
           # per ten-minute trigger.
           idle_days=$(( (now - $(git log -1 --format=%ct)) / 86400 ))
           if [ "$idle_days" -ge "$IDLE_WARN_DAYS" ]; then
-            echo "::error::No commit for $idle_days days. GitHub disables this repo's scheduled workflows (retries, lead prune, proposal expiry) after 60 days without activity. Push any commit to master to reset the clock."
+            echo "::error::No commit for $idle_days days. GitHub disables this repo's scheduled workflows (retries, retention prune, proposal expiry) after 60 days without activity. Push any commit to master to reset the clock."
             [ "$SCHEDULE" != '5,15,25,35,45,55 6-15 * * 1-5' ] && failed=1
           fi
 

@@ -18,9 +18,18 @@
  *
  * Each step runs on its own, so one failure does not stop the others. Every
  * id lookup and delete goes in batches of BATCH ids to keep request URLs
- * short. A batch a foreign key blocks (23503) falls back to one id at a time,
- * so a single blocked row is skipped and reported instead of failing the job
- * every day.
+ * short. A batch a foreign key blocks (23503) is split in halves until the
+ * blocked rows are found, so they are skipped and reported instead of failing
+ * the job every day.
+ *
+ * Request budget: capucor.com runs on Workers Free, which allows 50
+ * subrequests per invocation. SCAN_LIMIT keeps a normal run near 15 Supabase
+ * calls; a bigger backlog is worked off over the following days. Each step
+ * reports `kept` (rows past their period it deliberately keeps), so a scan
+ * window filling up with kept rows shows in the job's output.
+ *
+ * Not pruned: email deliveries still pending or retrying (the retry runner owns
+ * them; it finishes or fails every send).
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -33,7 +42,7 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 export const BATCH = 100;
-const SCAN_LIMIT = 1000;
+export const SCAN_LIMIT = 300;
 const FK_VIOLATION = '23503';
 
 // Statuses a proposal can hold without ever having been signed.
@@ -67,6 +76,8 @@ export function isPrunableProposal(row: UnsignedProposalRow, now: Date): boolean
 
 export interface StepResult {
   deleted: number;
+  // Rows past their period that the rules keep (plan reviews, signed evidence).
+  kept?: number;
   // Rows a foreign key blocked; they are left in place and reported.
   skipped?: number;
   error?: string;
@@ -97,24 +108,40 @@ function batches<T>(items: T[]): T[][] {
   return out;
 }
 
-async function deleteByIds(supabase: AnyClient, table: string, ids: string[]): Promise<StepResult> {
-  let deleted = 0;
-  let skipped = 0;
-  for (const batch of batches(ids)) {
-    const { error, count } = await supabase.from(table).delete({ count: 'exact' }).in('id', batch);
-    if (!error) {
-      deleted += count ?? 0;
-      continue;
-    }
-    if (errorCode(error) !== FK_VIOLATION) throw error;
-    for (const id of batch) {
-      const one = await supabase.from(table).delete({ count: 'exact' }).eq('id', id);
-      if (!one.error) deleted += one.count ?? 0;
-      else if (errorCode(one.error) === FK_VIOLATION) skipped += 1;
-      else throw one.error;
-    }
+/** Deletes `ids`; a group a foreign key blocks is halved until the blocked rows are isolated. */
+async function deleteGroup(
+  supabase: AnyClient,
+  table: string,
+  ids: string[],
+  tally: { deleted: number; skipped: number },
+): Promise<void> {
+  const { error, count } = await supabase.from(table).delete({ count: 'exact' }).in('id', ids);
+  if (!error) {
+    tally.deleted += count ?? 0;
+    return;
   }
-  return skipped ? { deleted, skipped } : { deleted };
+  if (errorCode(error) !== FK_VIOLATION) throw error;
+  if (ids.length === 1) {
+    tally.skipped += 1;
+    return;
+  }
+  const mid = Math.ceil(ids.length / 2);
+  await deleteGroup(supabase, table, ids.slice(0, mid), tally);
+  await deleteGroup(supabase, table, ids.slice(mid), tally);
+}
+
+async function deleteByIds(
+  supabase: AnyClient,
+  table: string,
+  ids: string[],
+  kept = 0,
+): Promise<StepResult> {
+  const tally = { deleted: 0, skipped: 0 };
+  for (const batch of batches(ids)) await deleteGroup(supabase, table, batch, tally);
+  const result: StepResult = { deleted: tally.deleted };
+  if (kept) result.kept = kept;
+  if (tally.skipped) result.skipped = tally.skipped;
+  return result;
 }
 
 /** The values of `column` in `table` that match `ids`, looked up in batches. */
@@ -160,10 +187,11 @@ async function pruneUnsignedProposals(supabase: AnyClient, now: Date): Promise<S
     .order('created_at', { ascending: true })
     .limit(SCAN_LIMIT);
   if (error) throw error;
-  let ids = ((data ?? []) as UnsignedProposalRow[])
+  const scanned = (data ?? []).length;
+  const ids = ((data ?? []) as UnsignedProposalRow[])
     .filter((row) => isPrunableProposal(row, now))
     .map((row) => row.id);
-  if (ids.length === 0) return { deleted: 0 };
+  if (ids.length === 0) return scanned ? { deleted: 0, kept: scanned } : { deleted: 0 };
 
   // plan_reviews points at proposals twice (no ON DELETE rule): keep those
   // rows with the client's review history.
@@ -171,8 +199,9 @@ async function pruneUnsignedProposals(supabase: AnyClient, now: Date): Promise<S
     ...(await referenced(supabase, 'plan_reviews', 'proposal_id', ids)),
     ...(await referenced(supabase, 'plan_reviews', 'new_proposal_id', ids)),
   ]);
-  ids = ids.filter((id) => !kept.has(id));
-  return deleteByIds(supabase, 'proposals', ids);
+  const prunable = ids.filter((id) => !kept.has(id));
+  // kept = scanned rows the rules keep (plan reviews, open legacy rows).
+  return deleteByIds(supabase, 'proposals', prunable, scanned - prunable.length);
 }
 
 async function pruneDataRequests(supabase: AnyClient, now: Date): Promise<StepResult> {
@@ -194,7 +223,7 @@ async function pruneEmailDeliveries(supabase: AnyClient, now: Date): Promise<Ste
     .order('created_at', { ascending: true })
     .limit(SCAN_LIMIT);
   if (error) throw error;
-  let ids = (data ?? []).map((r: { id: string }) => r.id);
+  const ids = (data ?? []).map((r: { id: string }) => r.id);
   if (ids.length === 0) return { deleted: 0 };
 
   // Signed proposals keep the record of their "signed" emails (and the
@@ -203,8 +232,8 @@ async function pruneEmailDeliveries(supabase: AnyClient, now: Date): Promise<Ste
     ...(await referenced(supabase, 'proposal_fulfilment', 'client_email_delivery_id', ids)),
     ...(await referenced(supabase, 'proposal_fulfilment', 'owner_email_delivery_id', ids)),
   ]);
-  ids = ids.filter((id) => !kept.has(id));
-  return deleteByIds(supabase, 'email_deliveries', ids);
+  const prunable = ids.filter((id) => !kept.has(id));
+  return deleteByIds(supabase, 'email_deliveries', prunable, ids.length - prunable.length);
 }
 
 export async function runRetention(supabase: AnyClient, now = new Date()): Promise<RetentionResult> {
