@@ -68,8 +68,14 @@ commit;
 -- No type change: `npm run db:types` is not needed.
 --
 -- ── ROLL BACK ────────────────────────────────────────────────────────────────
--- Only while no row is signed without an address (the old check would refuse
--- it), and only after rolling the code back. In one run:
+-- Only after rolling the code back, and only while no row (signed OR pending:
+-- the sign route sets the flag with the pending signature) has a confirmed
+-- authority without an address; the old check would refuse it. Expect 0:
+--
+-- select count(*) from public.proposals
+--  where signer_authority_confirmed and client_registered_address is null;
+--
+-- Then, in one run:
 --
 -- begin;
 -- alter table public.proposals
