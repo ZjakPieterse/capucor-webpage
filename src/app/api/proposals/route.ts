@@ -28,6 +28,7 @@
  * is set up by hand (EFT until Paysoft Flow is switched on).
  */
 
+import { dbErrorSummary } from '@/lib/log';
 import { NextRequest, NextResponse } from 'next/server';
 import { ProposalRequestSchema } from '@/lib/validations';
 import { readJsonBody } from '@/lib/readJsonBody';
@@ -206,7 +207,7 @@ export async function POST(req: NextRequest) {
     if (leadErr) throw leadErr;
     leadId = (leadRow?.id as string) ?? null;
   } catch (err) {
-    console.error('[PROPOSALS] lead insert error:', err);
+    console.error('[PROPOSALS] lead insert error:', dbErrorSummary(err));
     return NextResponse.json({ error: 'Could not save your details. Please try again.' }, { status: 500 });
   }
 
@@ -286,7 +287,7 @@ export async function POST(req: NextRequest) {
     refNumber = (propRow?.ref_number as string) ?? null;
     if (!proposalId) throw new Error('Proposal insert did not return an id.');
   } catch (err) {
-    console.error('[PROPOSALS] proposal insert error:', err);
+    console.error('[PROPOSALS] proposal insert error:', dbErrorSummary(err));
     return NextResponse.json({ error: 'Could not generate your proposal. Please try again.' }, { status: 500 });
   }
 

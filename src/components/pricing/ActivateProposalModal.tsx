@@ -372,7 +372,7 @@ export function ActivateProposalModal({
               {...register('website')}
             />
 
-            <PrivacyNotice purpose="prepare and send your proposal" />
+            <PrivacyNotice purpose={isRequest ? 'reply to your request' : 'prepare and send your proposal'} />
 
             {serverError && (
               <p className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">

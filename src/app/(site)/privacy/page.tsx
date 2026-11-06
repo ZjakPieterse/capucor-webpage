@@ -65,12 +65,23 @@ const ACTIVITIES: Activity[] = [
       'Technical data: your IP address, browser type, the pages you open and the site that sent you. Your IP address is held for up to 10 minutes to stop abuse of our forms.',
     why: 'To keep the site secure and working, and to count visits in aggregate.',
   },
+  {
+    title: 'When you ask about your information',
+    collect:
+      'Your email address and what you asked for (a copy or deletion), with the time, your IP address and browser type.',
+    why: 'To confirm the request is yours and keep a record of how we handled it.',
+  },
+  {
+    title: 'When we email you',
+    collect: 'Your email address, which message we sent, and whether it was delivered.',
+    why: 'To make sure important emails, such as your proposal, reach you, and to resend them if they fail.',
+  },
 ];
 
 const BASES = [
   'Replying to you, preparing a proposal and concluding our agreement: these steps are needed to enter into or carry out a contract with you (POPIA section 11(1)(b)).',
   'Keeping signed proposals and billing records: we must keep certain records by law, and the agreement needs them (section 11(1)(b) and (c)).',
-  'Security, abuse protection and counting visits: our legitimate interest in running a safe, working website (section 11(1)(f)).',
+  'Security, abuse protection, counting visits, delivery records and keeping a record of resource requests: our legitimate interest in running a safe, working website (section 11(1)(f)).',
 ];
 
 const OPERATORS = [
@@ -190,8 +201,9 @@ export default function PrivacyPage() {
           </ul>
           <p className={`${p} mt-3`}>
             We may also share information where the law requires it. Some of these providers store or
-            process information outside South Africa, including in the United States. We only use providers bound by agreements that give your information a level of
-            protection similar to POPIA&apos;s (POPIA section 72).
+            process information outside South Africa, including in the United States. We only use
+            providers bound by agreements that give your information a level of protection similar to
+            POPIA&apos;s (POPIA section 72).
           </p>
         </div>
 
@@ -235,9 +247,18 @@ export default function PrivacyPage() {
           </p>
           <p className={`${p} mt-3`}>
             If you&apos;re not happy with how we&apos;ve handled your information, please tell us first.
-            You may also complain to the Information Regulator through its website,{' '}
-            <a href="https://inforegulator.org.za/" className={a} rel="noopener noreferrer" target="_blank">
-              inforegulator.org.za
+            You may also complain to the Information Regulator through its{' '}
+            <a
+              href="https://inforegulator.org.za/complaints/"
+              className={a}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              complaints page
+            </a>{' '}
+            (online through its eServices portal) or by email at{' '}
+            <a href="mailto:enquiries@inforegulator.org.za" className={a}>
+              enquiries@inforegulator.org.za
             </a>
             .
           </p>

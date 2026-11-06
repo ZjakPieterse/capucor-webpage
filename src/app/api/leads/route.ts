@@ -8,6 +8,7 @@ import { CONSENT_VERSION, CONSENT_LANGUAGE } from '@/lib/consent';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { buildLeadOwnerEmail } from '@/lib/email/messages.mjs';
+import { dbErrorSummary } from '@/lib/log';
 
 // Its own bucket. Sharing one counter across every public endpoint meant a
 // visitor who resubmitted the contact form could exhaust the allowance that
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     if (dbError) throw dbError;
   } catch (err) {
-    console.error('[LEADS] Supabase insert error:', err);
+    console.error('[LEADS] Supabase insert error:', dbErrorSummary(err));
     return NextResponse.json({ error: 'Could not save your enquiry. Please try again.' }, { status: 500 });
   }
 

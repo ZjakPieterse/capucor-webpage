@@ -82,6 +82,12 @@ The only things still pointing at capucor.app (the legacy portal) are the `APP_P
   `Resend` elsewhere. `accepted` means the provider took it, not that anyone received it.
 - ⚠️ **Never delete the capucor.com zone or any of its DNS records** — several serve more than
   this website and break silently.
+- ⚠️ **Privacy (POPIA):** a change that collects a new field, logs personal information, adds a
+  third-party host or sets a cookie must update `/privacy` and bump `CONSENT_VERSION` and
+  `PRIVACY_POLICY_UPDATED` in `src/lib/consent.ts` in the same PR. Forms show the
+  `PrivacyNotice` line, never a required consent box. A tracking tag needs a consent banner
+  first. `src/__tests__/privacy-drift.test.ts` fails on new fields or hosts; never update its
+  snapshot alone.
 
 ## Database (Supabase)
 
