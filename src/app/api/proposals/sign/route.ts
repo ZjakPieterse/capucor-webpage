@@ -69,6 +69,14 @@ interface ProposalSignRow {
 
 // Decoded byte length of a base64 data URL, computed from the string length so
 // we never materialise the whole binary. (length * 3 / 4) minus padding bytes.
+// The 005 CHECK wants a trimmed name of 2–160 characters. A proposal's business
+// name is 2–120 at creation; if it is somehow unusable, the signer's own name
+// stands in (a sole proprietor contracts in their own name).
+function boundPartyName(businessName: string | null, signatureName: string): string {
+  const name = (businessName ?? '').trim().slice(0, 160).trim();
+  return name.length >= 2 ? name : signatureName.trim().slice(0, 160);
+}
+
 function decodedByteLength(dataUrl: string): number {
   const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
   if (!base64) return 0;
@@ -174,8 +182,11 @@ export async function POST(req: NextRequest) {
         // Who signs for whom, on which terms (migration 005). Written with the
         // pending signature; a re-submit overwrites them, and once the client
         // confirms the status guard above freezes them as the record.
-        client_legal_name: input.clientLegalName,
-        client_registration_number: input.clientRegistrationNumber ?? null,
+        // The business named in the proposal is the party bound (Zjak,
+        // 2026-11-07); the form no longer asks for the registered name or
+        // number, and onboarding checks them against CIPC.
+        client_legal_name: boundPartyName(row.business_name, input.signatureName),
+        client_registration_number: null,
         // No longer asked (2026-11-06, migration 006); null clears a value
         // left by an earlier submit on this proposal.
         client_registered_address: null,

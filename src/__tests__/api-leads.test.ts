@@ -65,7 +65,7 @@ describe('POST /api/leads', () => {
     // keeps its default); the version records which notice the visitor saw.
     expect(inserted).not.toHaveProperty('consent_given');
     expect(inserted).not.toHaveProperty('consent_timestamp');
-    expect(inserted.consent_version).toBe('v4');
+    expect(inserted.consent_version).toBe('v5');
     expect(inserted.consent_language).toBe('en-ZA');
   });
 

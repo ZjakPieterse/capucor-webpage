@@ -97,7 +97,7 @@ export function ScheduleOfServices({
       <SectionLabel>Schedule of services</SectionLabel>
 
       <p className="mb-2 text-sm font-semibold text-foreground">What&apos;s included</p>
-      <ul className="mb-5 grid gap-2 sm:grid-cols-2">
+      <ul className="mb-5 space-y-2">
         {inclusions.map((text) => (
           <li key={text} className="flex items-start gap-2 text-base text-foreground">
             <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

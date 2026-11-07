@@ -21,23 +21,9 @@ type SignMethod = 'typed' | 'drawn' | 'uploaded';
 // the server. Messages and bounds match SignProposalSchema.
 const DetailsSchema = z.object({
   signatureName: z.string().min(2, 'Please type your full name').max(120, 'Name is too long'),
-  clientLegalName: z
-    .string()
-    .trim()
-    .min(2, 'Please enter the registered name of the business')
-    .max(160, 'That name is too long'),
-  clientRegistrationNumber: z
-    .string()
-    .trim()
-    .max(40, 'That registration number is too long')
-    .refine((v) => v === '' || v.length >= 2, 'Please check the registration number'),
 });
 type DetailsValues = z.infer<typeof DetailsSchema>;
-const DETAIL_FIELDS = [
-  'clientLegalName',
-  'clientRegistrationNumber',
-  'signatureName',
-] as const;
+const DETAIL_FIELDS = ['signatureName'] as const;
 
 const CANVAS_W = 600;
 const CANVAS_H = 200;
@@ -50,10 +36,18 @@ const METHODS: { value: SignMethod; label: string; icon: typeof Type }[] = [
   { value: 'uploaded', label: 'Upload', icon: Upload },
 ];
 
-// The registered name is NOT pre-filled from the proposal's business name: that
-// is often a trading name, and a click-through would record it as the legal
-// entity (verifier note, 2026-10-26).
-export function ProposalSignForm({ token, defaultName }: { token: string; defaultName: string }) {
+// The form no longer asks for the registered name or number (Zjak, 2026-11-07):
+// the signer binds the business named in the proposal, shown above the
+// signature, and onboarding checks the registered details against CIPC.
+export function ProposalSignForm({
+  token,
+  defaultName,
+  businessName,
+}: {
+  token: string;
+  defaultName: string;
+  businessName: string;
+}) {
   const [method, setMethod] = useState<SignMethod>('typed');
   const [consentGiven, setConsentGiven] = useState(false);
   const [consentError, setConsentError] = useState('');
@@ -85,8 +79,6 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
     mode: 'onTouched',
     defaultValues: {
       signatureName: defaultName ?? '',
-      clientLegalName: '',
-      clientRegistrationNumber: '',
     },
   });
   // Mirror the name field into local state so the typed preview stays reactive
@@ -225,8 +217,6 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
       method,
       imageDataUrl,
       consentGiven: true as const,
-      clientLegalName: getValues('clientLegalName'),
-      clientRegistrationNumber: getValues('clientRegistrationNumber'),
       authorityConfirmed: true as const,
       website: '',
     };
@@ -305,56 +295,12 @@ export function ProposalSignForm({ token, defaultName }: { token: string; defaul
       </p>
 
       <form onSubmit={onSubmit} className="mt-4 space-y-4" noValidate>
-        {/* Who is signing for whom (engagement-letter gap rows 2 and 3). */}
-        <fieldset className="space-y-4">
-          <legend className="mb-3 text-sm font-semibold text-foreground">The business you&apos;re signing for</legend>
-          <div>
-            <Label htmlFor="clientLegalName" className="mb-1.5 block text-sm">
-              Registered business name
-            </Label>
-            <Input
-              id="clientLegalName"
-              type="text"
-              autoComplete="organization"
-              aria-invalid={errors.clientLegalName ? 'true' : undefined}
-              aria-describedby={errors.clientLegalName ? 'clientLegalName-error' : 'clientLegalName-hint'}
-              {...register('clientLegalName')}
-            />
-            {errors.clientLegalName ? (
-              <p id="clientLegalName-error" className="mt-1 text-xs text-destructive">{errors.clientLegalName.message}</p>
-            ) : (
-              <p id="clientLegalName-hint" className="mt-1 text-xs text-muted-foreground">
-                As registered with CIPC, for example Acme Trading (Pty) Ltd. A sole proprietor enters their own full name.
-              </p>
-            )}
-          </div>
-          <div>
-            <Label htmlFor="clientRegistrationNumber" className="mb-1.5 block text-sm">
-              Registration number <span className="font-normal text-muted-foreground">(if registered)</span>
-            </Label>
-            <Input
-              id="clientRegistrationNumber"
-              type="text"
-              autoComplete="off"
-              placeholder="For example 2021/123456/07"
-              aria-invalid={errors.clientRegistrationNumber ? 'true' : undefined}
-              aria-describedby={
-                errors.clientRegistrationNumber ? 'clientRegistrationNumber-error' : 'clientRegistrationNumber-hint'
-              }
-              {...register('clientRegistrationNumber')}
-            />
-            {errors.clientRegistrationNumber ? (
-              <p id="clientRegistrationNumber-error" className="mt-1 text-xs text-destructive">
-                {errors.clientRegistrationNumber.message}
-              </p>
-            ) : (
-              <p id="clientRegistrationNumber-hint" className="mt-1 text-xs text-muted-foreground">
-                Leave it blank if you trade as a sole proprietor.
-              </p>
-            )}
-          </div>
-        </fieldset>
-
+        {/* Who is bound: the business named in the proposal (Zjak, 2026-11-07).
+            Onboarding checks the registered name and number against CIPC. */}
+        <div>
+          <p className="text-sm text-muted-foreground">You&apos;re signing for</p>
+          <p className="mt-0.5 text-base font-semibold text-foreground">{businessName}</p>
+        </div>
         {/* Method chooser */}
         <p className="border-t border-border pt-4 text-sm font-semibold text-foreground">Your signature</p>
         <div className="grid grid-cols-3 gap-2">

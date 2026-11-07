@@ -100,8 +100,6 @@ const validBody = {
   method: 'typed' as const,
   imageDataUrl: PNG,
   consentGiven: true as const,
-  clientLegalName: 'Pat Trading (Pty) Ltd',
-  clientRegistrationNumber: '2021/123456/07',
   authorityConfirmed: true as const,
 };
 
@@ -227,29 +225,28 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
     expect((await res.json()).field).toBe('signatureName');
   });
 
-  it('stores who signs for whom and the terms version with the pending signature (gap rows 2, 3, 30)', async () => {
-    const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', {
-        ...validBody,
-        clientLegalName: '  Pat Trading (Pty) Ltd  ',
-      }),
-    );
+  it('binds the business named in the proposal and stores the terms version (gap rows 2, 3, 30)', async () => {
+    const res = await POST(makeJsonRequest('http://test/api/proposals/sign', validBody));
     expect(res.status).toBe(200);
     expect(updatePayloads[0]).toMatchObject({
-      client_legal_name: 'Pat Trading (Pty) Ltd',
-      client_registration_number: '2021/123456/07',
+      client_legal_name: 'Pat Trading Co',
+      client_registration_number: null,
       client_registered_address: null,
       signer_authority_confirmed: true,
       terms_version: TERMS_VERSION,
     });
   });
 
-  it('stores no registration number for a sole proprietor who leaves it blank', async () => {
+  it('ignores a registered name and number an old form still sends (2026-11-07)', async () => {
     const res = await POST(
-      makeJsonRequest('http://test/api/proposals/sign', { ...validBody, clientRegistrationNumber: '   ' }),
+      makeJsonRequest('http://test/api/proposals/sign', {
+        ...validBody,
+        clientLegalName: 'Someone Else (Pty) Ltd',
+        clientRegistrationNumber: '2021/123456/07',
+      }),
     );
     expect(res.status).toBe(200);
-    expect(updatePayloads[0]!.client_registration_number).toBeNull();
+    expect(updatePayloads[0]).toMatchObject({ client_legal_name: 'Pat Trading Co', client_registration_number: null });
   });
 
   it('ignores a registered address an old form still sends, and stores none', async () => {
@@ -266,8 +263,6 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
   it.each([
     ['authorityConfirmed', { authorityConfirmed: false }],
     ['authorityConfirmed', { authorityConfirmed: undefined }],
-    ['clientLegalName', { clientLegalName: ' ' }],
-    ['clientRegistrationNumber', { clientRegistrationNumber: 'x' }],
   ])('refuses a signature without valid %s (422, no update)', async (field, over) => {
     const res = await POST(makeJsonRequest('http://test/api/proposals/sign', { ...validBody, ...over }));
     expect(res.status).toBe(422);

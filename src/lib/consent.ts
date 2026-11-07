@@ -9,13 +9,14 @@
 //   v3 (2026-11-06): retention periods for unsigned proposals, data requests
 //       and email delivery records added to /privacy.
 //   v4 (2026-11-06): the sign form no longer asks for a registered address.
+//   v5 (2026-11-07): nor for the registered name or registration number.
 // The e-signature consent on /proposal/<token> is separate and unchanged.
 //
 // Add a new language code here when localised copy ships.
 
-export const CONSENT_VERSION = 'v4';
+export const CONSENT_VERSION = 'v5';
 // Shown as "Last updated" on /privacy. A fixed date, never new Date().
-export const PRIVACY_POLICY_UPDATED = '6 November 2026';
+export const PRIVACY_POLICY_UPDATED = '7 November 2026';
 export const CONSENT_LANGUAGE = 'en-ZA';
 
 // POPIA P4: maximum number of days within which we will respond to a verified
