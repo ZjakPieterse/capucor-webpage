@@ -35,6 +35,7 @@ import { renderSignConfirmEmail } from '@/lib/portal/signEmails';
 import { maskEmail } from '@/lib/maskEmail';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { boundPartyName } from '@/lib/proposal/boundPartyName';
 import { TERMS_VERSION } from '@/config/proposalTerms';
 
 // Minutes a "Confirm & sign" link stays valid.
@@ -174,8 +175,11 @@ export async function POST(req: NextRequest) {
         // Who signs for whom, on which terms (migration 005). Written with the
         // pending signature; a re-submit overwrites them, and once the client
         // confirms the status guard above freezes them as the record.
-        client_legal_name: input.clientLegalName,
-        client_registration_number: input.clientRegistrationNumber ?? null,
+        // The business named in the proposal is the party bound (Zjak,
+        // 2026-11-07); the form no longer asks for the registered name or
+        // number, and onboarding checks them against CIPC.
+        client_legal_name: boundPartyName(row.business_name, input.signatureName),
+        client_registration_number: null,
         // No longer asked (2026-11-06, migration 006); null clears a value
         // left by an earlier submit on this proposal.
         client_registered_address: null,

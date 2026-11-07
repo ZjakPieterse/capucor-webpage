@@ -143,6 +143,7 @@ export const SignProposalSchema = z.object({
   token: z.string().min(16, 'This proposal link is invalid.'),
   signatureName: z
     .string()
+    .trim()
     .min(2, 'Please type your full name')
     .max(120, 'Name is too long'),
   method: z.enum(['typed', 'drawn', 'uploaded'], {
@@ -155,21 +156,9 @@ export const SignProposalSchema = z.object({
   consentGiven: z.literal(true, {
     message: 'Please confirm before signing.',
   }),
-  // Who is bound (engagement-letter gap rows 2 and 3). Bounds match the
-  // proposals CHECKs in migration 005; values arrive trimmed.
-  clientLegalName: z
-    .string()
-    .trim()
-    .min(2, 'Please enter the registered name of the business')
-    .max(160, 'That name is too long'),
-  // Optional: a sole proprietor has none. Blank becomes undefined.
-  clientRegistrationNumber: z
-    .string()
-    .trim()
-    .max(40, 'That registration number is too long')
-    .optional()
-    .transform((v) => (v ? v : undefined))
-    .pipe(z.string().min(2, 'Please check the registration number').optional()),
+  // Who is bound: the business named in the proposal, set by the server from
+  // the proposal row. The form asks no registered name or number (Zjak,
+  // 2026-11-07); onboarding checks them against CIPC.
   // No registered address (Zjak, 2026-11-06): notices go to the proposal email
   // (proposalTerms.ts, notices block), and onboarding collects the address.
   authorityConfirmed: z.literal(true, {

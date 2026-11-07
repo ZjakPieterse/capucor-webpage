@@ -66,8 +66,6 @@ describe('privacy drift guard', () => {
         ],
         "signProposal": [
           "authorityConfirmed",
-          "clientLegalName",
-          "clientRegistrationNumber",
           "consentGiven",
           "imageDataUrl",
           "method",
@@ -104,8 +102,8 @@ describe('privacy drift guard', () => {
     expect(page).not.toMatch(/new Date\(/);
     expect(page).toContain('PRIVACY_POLICY_UPDATED');
     expect({ CONSENT_VERSION, PRIVACY_POLICY_UPDATED }).toEqual({
-      CONSENT_VERSION: 'v4',
-      PRIVACY_POLICY_UPDATED: '6 November 2026',
+      CONSENT_VERSION: 'v5',
+      PRIVACY_POLICY_UPDATED: '7 November 2026',
     });
   });
 });
