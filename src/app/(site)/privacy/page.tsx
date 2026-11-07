@@ -12,7 +12,7 @@ import {
   UNSIGNED_PROPOSAL_RETENTION_DAYS,
 } from '@/lib/consent';
 
-// Privacy notice v4 (Zjak, 2026-11-06; v2 + retention periods = v3; no registered address at signing = v4). Written to POPIA s18(1): what we
+// Privacy notice v4 (Zjak, 2026-11-06; v2 + retention periods = v3; no registered address at signing = v4; no registered name or number at signing = v5). Written to POPIA s18(1): what we
 // collect, who we are, why, whether it is required, the law, transfers abroad,
 // who receives it, and the person's rights, including a complaint to the
 // Information Regulator. Bump CONSENT_VERSION and PRIVACY_POLICY_UPDATED in

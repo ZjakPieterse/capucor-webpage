@@ -35,6 +35,7 @@ import { renderSignConfirmEmail } from '@/lib/portal/signEmails';
 import { maskEmail } from '@/lib/maskEmail';
 import { siteConfig } from '@/config/site';
 import { sendEmail } from '@/lib/email/sendEmail';
+import { boundPartyName } from '@/lib/proposal/boundPartyName';
 import { TERMS_VERSION } from '@/config/proposalTerms';
 
 // Minutes a "Confirm & sign" link stays valid.
@@ -69,14 +70,6 @@ interface ProposalSignRow {
 
 // Decoded byte length of a base64 data URL, computed from the string length so
 // we never materialise the whole binary. (length * 3 / 4) minus padding bytes.
-// The 005 CHECK wants a trimmed name of 2–160 characters. A proposal's business
-// name is 2–120 at creation; if it is somehow unusable, the signer's own name
-// stands in (a sole proprietor contracts in their own name).
-function boundPartyName(businessName: string | null, signatureName: string): string {
-  const name = (businessName ?? '').trim().slice(0, 160).trim();
-  return name.length >= 2 ? name : signatureName.trim().slice(0, 160);
-}
-
 function decodedByteLength(dataUrl: string): number {
   const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
   if (!base64) return 0;

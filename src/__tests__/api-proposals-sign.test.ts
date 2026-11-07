@@ -31,6 +31,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { TERMS_VERSION } from '@/config/proposalTerms';
 import { archiveSignedProposal } from '@/lib/portal/proposalPdf';
 import { POST } from '@/app/api/proposals/sign/route';
+import { boundPartyName } from '@/lib/proposal/boundPartyName';
 
 // A real (tiny) 1×1 PNG data URL — passes the prefix regex and decodes small.
 const PNG =
@@ -235,6 +236,13 @@ describe('POST /api/proposals/sign (Step A — request confirmation)', () => {
       signer_authority_confirmed: true,
       terms_version: TERMS_VERSION,
     });
+  });
+
+  it('binds a trimmed business name, or the signer when the business name is unusable', () => {
+    expect(boundPartyName('  Pat Trading Co  ', 'Pat Patterson')).toBe('Pat Trading Co');
+    expect(boundPartyName('x'.repeat(200), 'Pat Patterson')).toHaveLength(160);
+    expect(boundPartyName(' ', 'Pat Patterson')).toBe('Pat Patterson');
+    expect(boundPartyName(null, 'Pat Patterson')).toBe('Pat Patterson');
   });
 
   it('ignores a registered name and number an old form still sends (2026-11-07)', async () => {

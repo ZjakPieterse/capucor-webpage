@@ -143,6 +143,7 @@ export const SignProposalSchema = z.object({
   token: z.string().min(16, 'This proposal link is invalid.'),
   signatureName: z
     .string()
+    .trim()
     .min(2, 'Please type your full name')
     .max(120, 'Name is too long'),
   method: z.enum(['typed', 'drawn', 'uploaded'], {
