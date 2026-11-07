@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { renderProposalDocumentHtml } from '@/lib/proposal/renderProposalDocumentHtml';
 import type { FairUsageLine } from '@/lib/schedule';
 import { formatZAR, firstOfNextMonth } from '@/lib/utils';
-import { ALLOWANCE_CHANGE_NOTE, FAIR_USAGE } from '@/config/serviceScope';
+import { ALLOWANCE_CHANGE_NOTE, ALWAYS_OUT_OF_SCOPE, FAIR_USAGE } from '@/config/serviceScope';
 
 const PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -40,6 +40,23 @@ function sampleData(overrides: Record<string, unknown> = {}) {
 }
 
 describe('renderProposalDocumentHtml', () => {
+  // Header wording (Zjak, 2026-11-07): the label reads "Proposal & engagement for:"
+  // and the heading is the business name alone, no "For" prefix.
+  it('labels the header "Proposal & engagement for:" above the bare business name', () => {
+    const html = renderProposalDocumentHtml(sampleData());
+    expect(html).toContain('Proposal &amp; engagement for:</p>');
+    expect(html).toMatch(/<h1[^>]*>Pat Trading Co<\/h1>/);
+    expect(html).not.toContain('>For Pat Trading Co<');
+  });
+
+  // SA no longer registers close corporations (Zjak, 2026-11-07).
+  it('never lists close-corporation registrations as excluded', () => {
+    expect(ALWAYS_OUT_OF_SCOPE.join(' ')).not.toMatch(/close.corporation/i);
+    expect(ALWAYS_OUT_OF_SCOPE).toContain(
+      'Company or trust registrations and deregistrations, and any other regulatory registrations',
+    );
+  });
+
   // No overage rate is quoted anywhere (Zjak, 2026-10-08): the signed PDF
   // carries only the one neutral line under the allowances.
   it('quotes no overage rate, only the neutral allowance line', () => {
