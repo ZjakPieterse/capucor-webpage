@@ -69,7 +69,7 @@ export const ALWAYS_OUT_OF_SCOPE: string[] = [
   'PAYE, UIF or SDL employer registration with SARS',
   'SARS audits, verifications, objections and disputes',
   'CIPC or SARS change requests (director, member, address, name or public-officer changes)',
-  'Company, close-corporation or trust registrations and deregistrations',
+  'Company or trust registrations and deregistrations, and any other regulatory registrations',
   'Once-off or ad-hoc projects, and any work not listed in your schedule above',
 ];
 

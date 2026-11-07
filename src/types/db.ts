@@ -3740,6 +3740,7 @@ export type Database = {
           work_item_version: number
         }[]
       }
+      proposal_ref_for: { Args: { p_at: string }; Returns: string }
       request_work_item_approval: {
         Args: {
           p_actor_email: string

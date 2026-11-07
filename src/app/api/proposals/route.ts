@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
   const token = generateOpaqueToken();
   const expiresAt = new Date(Date.now() + PROPOSAL_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-  // Human-readable reference (FT-YYYY-MM-NNNN) assigned by the DB trigger on
+  // Human-readable reference (FT-YYYYMMNNNN, yearly count, since migration 007) assigned by the DB trigger on
   // insert — read it back for the emails.
   let proposalId: string | null = null;
   let refNumber: string | null = null;
