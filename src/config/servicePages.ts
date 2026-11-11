@@ -86,11 +86,11 @@ export const BOOKKEEPING: ServicePage = {
       covered: 'Numbers you can trust.',
     },
     {
-      // The package line since the Premium redesign (2026-10-24): a written
-      // expert verdict in the report, not a meeting.
-      title: 'Insights report and business health check',
+      // The package line since the Premium redesign (2026-10-24), renamed
+      // 2026-11-11: a written review, a call only when the client wants one.
+      title: 'Business review',
       description:
-        "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next. Quarterly on Basic, monthly on Pro and Premium.",
+        "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next, and a call when you want to talk it through. Quarterly on Basic, monthly on Pro and Premium.",
       covered: 'You know what to do next.',
     },
   ],

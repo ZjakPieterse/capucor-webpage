@@ -31,15 +31,15 @@ describe('cumulativeInclusions', () => {
     expect(cumulativeInclusions(CORE, 'basic')).not.toContain('Supplier bills captured and reconciled');
   });
 
-  it('keeps one rhythm and one insights report per schedule: the highest package wins', () => {
+  it('keeps one rhythm and one business review per schedule: the highest package wins', () => {
     const premium = cumulativeInclusions(CORE, 'premium');
     expect(premium.filter((t) => / processing$/.test(t))).toEqual(['Daily processing']);
-    expect(premium.filter((t) => t.includes('insights report'))).toEqual([
-      'Monthly insights report and business health check',
+    expect(premium.filter((t) => t.includes('business review'))).toEqual([
+      'Monthly business review',
     ]);
     const pro = cumulativeInclusions(CORE, 'pro');
-    expect(pro).toContain('Monthly insights report and business health check');
-    expect(pro).not.toContain('Quarterly insights report and business health check');
+    expect(pro).toContain('Monthly business review');
+    expect(pro).not.toContain('Quarterly business review');
     expect(pro).toContain('Weekly processing');
     expect(pro).not.toContain('Monthly processing');
     expect([...premium, ...pro].join(' ')).not.toMatch(/performance review/i);
@@ -132,9 +132,9 @@ describe('reviewInclusions', () => {
   it("keeps one rhythm and one report: the package's own, never a lower one beside it", () => {
     const pro = reviewInclusions(CORE, 'pro').items;
     expect(pro).toContain('Weekly processing');
-    expect(pro).toContain('Monthly insights report and business health check');
+    expect(pro).toContain('Monthly business review');
     expect(pro).not.toContain('Monthly processing');
-    expect(pro).not.toContain('Quarterly insights report and business health check');
+    expect(pro).not.toContain('Quarterly business review');
     const premium = reviewInclusions(CORE, 'premium').items;
     expect(premium.filter((t) => / processing$/.test(t))).toEqual(['Daily processing']);
     expect(premium).not.toContain('Direct Partner Access');

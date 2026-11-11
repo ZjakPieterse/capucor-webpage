@@ -111,20 +111,20 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
   const ALL = new Set(['accounting', 'bookkeeping', 'payroll']);
   const card = (t: 'basic' | 'pro' | 'premium') => visibleItems(t, ALL).map((i) => i.text);
 
-  it('basic: core, monthly processing, quarterly insights and health check, payroll', () => {
+  it('basic: core, monthly processing, quarterly business review, payroll', () => {
     expect(card('basic')).toEqual([
       'Core services included',
       'Monthly processing',
-      'Quarterly insights report and business health check',
+      'Quarterly business review',
       'Payroll processing',
     ]);
   });
 
-  it('pro: adds supplier bills, monthly insights and health check', () => {
+  it('pro: adds supplier bills, monthly business review', () => {
     expect(card('pro')).toEqual([
       'Core services included',
       'Weekly processing',
-      'Monthly insights report and business health check',
+      'Monthly business review',
       'Supplier bills captured and reconciled',
       'Payroll processing',
     ]);
@@ -134,7 +134,7 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
     expect(card('premium')).toEqual([
       'Core services included',
       'Daily processing',
-      'Monthly insights report and business health check',
+      'Monthly business review',
       'Supplier bills captured and reconciled',
       'Weekly KPI pulse',
       'Cash-flow forecast and budget',
@@ -248,6 +248,9 @@ describe('card lines (Premium redesign "more for better", Zjak 2026-10-24)', () 
       'Supplier Processing & Review',
       'Monthly Tax Strategy & Planning',
       'Direct Partner Access',
+      // Renamed to the business review (2026-11-11)
+      'Quarterly insights report and business health check',
+      'Monthly insights report and business health check',
     ];
     const allText = (['basic', 'pro', 'premium'] as const).flatMap((t) =>
       TIER_HIGHLIGHTS[t].map((i) => i.text)
@@ -340,13 +343,13 @@ describe('service-filter behaviour', () => {
   it('Case 2 — accounting only: hides bookkeeping-only items', () => {
     const sel = new Set(['accounting']);
     const basic = visibleItems('basic', sel).map((i) => i.text);
-    expect(basic).toContain('Quarterly insights report and business health check');
+    expect(basic).toContain('Quarterly business review');
     expect(basic).not.toContain('Monthly processing');
     expect(basic).not.toContain('Payroll processing');
 
     const pro = visibleItems('pro', sel).map((i) => i.text);
     expect(pro).not.toContain('Supplier bills captured and reconciled');
-    expect(pro).toContain('Monthly insights report and business health check');
+    expect(pro).toContain('Monthly business review');
   });
 
   it('Case 3 — bookkeeping only: shows the processing items', () => {
@@ -381,7 +384,7 @@ describe('TierComparison accumulation', () => {
   };
 
   it('marks every basic item as covered in basic, pro, and premium', () => {
-    expectCoverage(['Monthly processing', 'Quarterly insights report and business health check'], true, true);
+    expectCoverage(['Monthly processing', 'Quarterly business review'], true, true);
   });
 
   it('marks pro items as covered in pro and premium only', () => {
@@ -440,7 +443,7 @@ describe('package card lines', () => {
       'Annual financial statements',
       'SARS & CIPC submission',
       'Monthly processing',
-      'Quarterly insights report and business health check',
+      'Quarterly business review',
       'Payroll processing',
     ]);
   });
@@ -451,7 +454,7 @@ describe('package card lines', () => {
     expect(TIER_CARD_LEAD.basic).toBeUndefined();
     expect(texts('pro')).toEqual([
       'Weekly processing',
-      'Monthly insights report and business health check',
+      'Monthly business review',
       'Supplier bills captured and reconciled',
     ]);
     expect(texts('premium')).toEqual([

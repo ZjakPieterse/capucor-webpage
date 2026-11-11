@@ -17,7 +17,7 @@ export interface TierHighlightItem {
   calculatorOnly?: boolean;
   /**
    * Items in the same group replace each other as the package goes up (the
-   * rhythm, the insights report). A cumulative list, such as the signed
+   * rhythm, the business review). A cumulative list, such as the signed
    * schedule, keeps only the highest package's item of each group.
    */
   group?: 'rhythm' | 'reports';
@@ -55,9 +55,11 @@ const SUPPLIER_BILLS: TierHighlightItem = {
   tooltip: 'Supplier bills and receipts captured, matched to payments and checked against supplier statements.',
 };
 
-// A written report with an expert verdict, not a meeting (Zjak, 2026-10-24).
-const INSIGHTS_TOOLTIP =
-  "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next.";
+// A report pack with a senior accountant's written review; a call is an
+// option, not part of every review (Zjak, 2026-10-24; renamed "business
+// review" 2026-11-11).
+const BUSINESS_REVIEW_TOOLTIP =
+  "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. You can book a call to talk it through when you need one.";
 
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
@@ -69,9 +71,9 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       group: 'rhythm',
     },
     {
-      text: 'Quarterly insights report and business health check',
+      text: 'Quarterly business review',
       services: ['accounting', 'bookkeeping'],
-      tooltip: INSIGHTS_TOOLTIP,
+      tooltip: BUSINESS_REVIEW_TOOLTIP,
       group: 'reports',
     },
     PAYROLL_SERVICES,
@@ -87,9 +89,9 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
     // Cadence, then the report, then supplier bills (Zjak, 2026-10-27);
     // Premium follows, so the cards grow in the same order.
     {
-      text: 'Monthly insights report and business health check',
+      text: 'Monthly business review',
       services: ['accounting', 'bookkeeping'],
-      tooltip: INSIGHTS_TOOLTIP,
+      tooltip: BUSINESS_REVIEW_TOOLTIP,
       group: 'reports',
     },
     SUPPLIER_BILLS,
@@ -104,9 +106,9 @@ export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
       group: 'rhythm',
     },
     {
-      text: 'Monthly insights report and business health check',
+      text: 'Monthly business review',
       services: ['accounting', 'bookkeeping'],
-      tooltip: INSIGHTS_TOOLTIP,
+      tooltip: BUSINESS_REVIEW_TOOLTIP,
       group: 'reports',
     },
     SUPPLIER_BILLS,
