@@ -27,12 +27,12 @@ describe('comparison table rhythm rows (F03)', () => {
     expect(processing?.replaces).toEqual(['Monthly processing', 'Weekly processing', 'Daily processing']);
     // You capture your own sales invoices (Zjak, 2026-10-24).
     expect(processing?.tooltip).toMatch(/You capture your own sales invoices/);
-    // The insights report and performance review are one row (Premium redesign, 2026-10-24).
-    expect(RHYTHM_ROWS.map((r) => r.label)).toEqual(['Processing', 'Insights report and business health check']);
+    // The business review is one row (Premium redesign, 2026-10-24; renamed 2026-11-11).
+    expect(RHYTHM_ROWS.map((r) => r.label)).toEqual(['Processing', 'Business review']);
     const report = RHYTHM_ROWS[1]!;
     expect(report.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Monthly' });
     expect(report.tooltip).toBe(
-      "A written report on your key numbers, with our expert view of what's going well, what needs attention and what to do next.",
+      "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. If you'd like to talk it through, you can ask for a call.",
     );
     expect(processing?.tooltip).toBe(
       'How often we capture and reconcile your bank, including checking which customers have paid. You capture your own sales invoices; we request bank statements at every monthly close.',
