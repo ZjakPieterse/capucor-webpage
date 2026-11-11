@@ -90,7 +90,7 @@ export const BOOKKEEPING: ServicePage = {
       // 2026-11-11: a written review, a call only when the client wants one.
       title: 'Business review',
       description:
-        "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next, and a call when you want to talk it through. Quarterly on Basic, monthly on Pro and Premium.",
+        "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. If you'd like to talk it through, you can ask for a call. Quarterly on Basic, monthly on Pro and Premium.",
       covered: 'You know what to do next.',
     },
   ],

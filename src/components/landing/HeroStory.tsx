@@ -310,7 +310,7 @@ function buildScenes(d: StoryDates): Scene[] {
         preview: "Books are closed. Two clients owe R 60 500 and are more than 60 days late…",
         before: "Books are closed. Two clients owe ",
         figure: "R 60 500",
-        after: " and are more than 60 days late. Collect it this month and next month’s payroll is covered without the overdraft. The list is in the report.",
+        after: " and are more than 60 days late. Collect it this month and next month’s payroll is covered without the overdraft. The list is in the pack.",
       },
     },
   ];

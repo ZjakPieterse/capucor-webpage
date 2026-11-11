@@ -32,7 +32,7 @@ describe('comparison table rhythm rows (F03)', () => {
     const report = RHYTHM_ROWS[1]!;
     expect(report.values).toEqual({ basic: 'Quarterly', pro: 'Monthly', premium: 'Monthly' });
     expect(report.tooltip).toBe(
-      "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. You can book a call to talk it through when you need one.",
+      "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. If you'd like to talk it through, you can ask for a call.",
     );
     expect(processing?.tooltip).toBe(
       'How often we capture and reconcile your bank, including checking which customers have paid. You capture your own sales invoices; we request bank statements at every monthly close.',

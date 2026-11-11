@@ -59,7 +59,7 @@ const SUPPLIER_BILLS: TierHighlightItem = {
 // option, not part of every review (Zjak, 2026-10-24; renamed "business
 // review" 2026-11-11).
 const BUSINESS_REVIEW_TOOLTIP =
-  "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. You can book a call to talk it through when you need one.";
+  "A report pack on your key numbers, with a senior accountant's written review of what's going well, what needs attention and what to do next. If you'd like to talk it through, you can ask for a call.";
 
 export const TIER_HIGHLIGHTS: Record<string, TierHighlightItem[]> = {
   basic: [
